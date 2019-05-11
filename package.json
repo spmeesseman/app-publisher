@@ -38,8 +38,8 @@
 		"app-publisher": "./build/index.js"
 	},
 	"files": [
-		"build/src/*.js",
-		"build/src/lib",
+		"build/*.js",
+		"build/lib",
 		"script"
 	],
 	"config": {
