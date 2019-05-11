@@ -1,37 +1,47 @@
 {
 	"name": "@spmeesseman/app-publisher",
-	"displayName": "App-Publisher",
-	"description": "App-Publisher",
+	"displayName": "App Publisher",
+	"description": "App Publisher",
 	"publisher": "spmeesseman",
 	"version": "0.0.1",
 	"license": "MIT",
-	"main": "index.js",
 	"devDependencies": {
 		"@semantic-release/changelog": "^3.0.2",
 		"@semantic-release/exec": "^3.3.0",
 		"@semantic-release/git": "^7.0.8",
+		"@types/istanbul": "^0.4.30",
+		"@types/mocha": "^5.2.6",
 		"@types/node": "^12.0.0",
+		"codecov": "^3.2.0",
 		"commitizen": "^3.0.7",
 		"conventional-changelog-spm": "^1.2.3",
 		"cz-conventional-changelog": "^2.1.0",
+		"eslint-plugin-prettier": "^3.0.1",
+		"istanbul": "^0.4.5",
+		"mocha": "^6.1.4",
+		"mocha-junit-reporter": "^1.18.0",
+		"mocha-multi-reporters": "^1.1.7",
+		"remap-istanbul": "^0.13.0",
 		"semantic-release": "^15.13.12",
 		"ts-lint": "^4.5.1",
 		"typescript": "^3.4.5"
 	},
 	"scripts": {
 		"build": "npx tsc -p ./",
-        "compile": "npx tsc -p ./",
-        "watch": "tsc -watch -p ./",
-        "commit": "npx git-cz",
+		"watch": "tsc -watch -p ./",
+		"commit": "npx git-cz",
 		"semantic-release": "semantic-release --no-ci",
 		"semantic-release-dry": "semantic-release --dry-run"
 	},
+	"main": "./build/index.js",
 	"bin": {
 		"app-publisher": "./build/index.js"
 	},
 	"files": [
-		"src"
-    ],
+		"build/src/*.js",
+		"build/src/lib",
+		"script"
+	],
 	"config": {
 		"commitizen": {
 			"path": "cz-conventional-changelog"
