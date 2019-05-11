@@ -25,21 +25,62 @@ param (
 #
 $PROJECTNAME = "",
 #
-# Test mode - Y for 'yes', N for 'no'
 #
-# In test mode, the following holds:
 #
-#     1) Installer is not released/published
-#     2) Email notification will be sent only to $TESTEMAILRECIPIENT
-#     3) Commit package/build file changes (svn) are not made
-#     4) Version tag (svn) is not made
+$DEPLOYSCRIPT = "",
 #
-# Some local files may be changed in test mode (i.e. updated version numbers in build and
-# package files).  These changes should be reverted to original state via SCM
+# To build the installer release, set this flag to "Y"
 #
-$TESTMODE = "Y",
-$TESTMODESVNREVERT = "Y",
-$TESTEMAILRECIPIENT = "smeesseman@pjats.com",
+$INSTALLERRELEASE = "N",
+#
+# The location of the installer build script, this can be a relative to PATHTOROOT 
+# or a full path.
+# Note this parameter applies only to INSTALLRELEASE="Y"
+#
+$INSTALLERSCRIPT = "",
+#
+# The location of this history file, can be a relative or full path.
+#
+$HISTORYFILE = "doc\history.txt",
+$HISTORYLINELEN = 80,
+#
+# The location of this history header file, can be a relative or full path.
+#
+$HISTORYHDRFILE = "install\history-hdr.txt",
+#
+#
+#
+$NOTEPADEDITS = "Y",
+#
+# To build the npm release, set this flag to "Y"
+#
+$NPMRELEASE = "N",
+#
+# NPM user (for NPMRELEASE="Y" only)
+# 
+# NPM username, password, and token should be store as environment variables
+# for security.  The variable names should be:
+#
+#     PJ_NPM_USERNAME
+#     PJ_NPM_PASSWORD
+#     PJ_NPM_TOKEN
+#
+# To create an npm user if you dont have one, run the following command and follow 
+# the prompts:
+#
+#     $ npm adduser --registry=npm.development.pjats.com --scope=@perryjohnson
+#
+#     Locate the file [USERDIR]\.npmrc, copy the created token from within
+#     the file to the environment variable PJ_NPM_TOKEN
+#
+# The project file .npmrc will be used by npm when publishing packages, it reads
+# the NPM environment variables as well.
+#
+$NPMUSER = $Env:PJ_NPM_USERNAME,
+#
+# To build the nuget release, set this flag to "Y"
+#
+$NUGETRELEASE = "N",
 #
 # PATHTOROOT - Set this variable to:
 #
@@ -94,6 +135,12 @@ $PATHTODIST = "install\dist",
 #
 $PATHPREROOT = "",
 #
+# Skip uploading installer to network release folder (primarily used for releasing
+# from hom office where two datacenters cannot be reached at the same time, in this
+# case the installer files are manually copied)
+#
+$SKIPDEPLOYPUSH = "Y",
+#
 # The svn server address, can be domain name or IP
 #
 $SVNSERVER = "10.0.9.60",
@@ -112,14 +159,21 @@ $SVNREPO = "pja",
 #
 $SVNPROTOCOL = "svn",
 #
-# The location of this history file, can be a relative or full path.
+# Test mode - Y for 'yes', N for 'no'
 #
-$HISTORYFILE = "doc\history.txt",
-$HISTORYLINELEN = 80,
+# In test mode, the following holds:
 #
-# The location of this history header file, can be a relative or full path.
+#     1) Installer is not released/published
+#     2) Email notification will be sent only to $TESTEMAILRECIPIENT
+#     3) Commit package/build file changes (svn) are not made
+#     4) Version tag (svn) is not made
 #
-$HISTORYHDRFILE = "install\history-hdr.txt",
+# Some local files may be changed in test mode (i.e. updated version numbers in build and
+# package files).  These changes should be reverted to original state via SCM
+#
+$TESTMODE = "Y",
+$TESTMODESVNREVERT = "Y",
+$TESTEMAILRECIPIENT = "smeesseman@pjats.com",
 #
 # The text tag to use in the history file for preceding the version number.  It should 
 # be one of the following:
@@ -128,65 +182,7 @@ $HISTORYHDRFILE = "install\history-hdr.txt",
 #     2. Build
 #     3. Release
 #
-$VERSIONTEXT = "Version",
-#
-# To build the installer release, set this flag to "Y"
-#
-$INSTALLERRELEASE = "N",
-#
-# The location of the installer build script, this can be a relative to PATHTOROOT 
-# or a full path.
-# Note this parameter applies only to INSTALLRELEASE="Y"
-#
-$INSTALLERFILE = "",
-#
-#
-#
-$INSTALLERCREATEFILE = "",
-#
-#
-#
-$INSTALLERDEPLOYFILE = "",
-#
-# Skip uploading installer to network release folder (primarily used for releasing
-# from hom office where two datacenters cannot be reached at the same time, in this
-# case the installer files are manually copied)
-#
-$INSTALLERSKIPPUSH = "Y",
-#
-# To build the npm release, set this flag to "Y"
-#
-$NPMRELEASE = "N",
-#
-# To build the nuget release, set this flag to "Y"
-#
-$NUGETRELEASE = "N",
-#
-# NPM user (for NPMRELEASE="Y" only)
-# 
-# NPM username, password, and token should be store as environment variables
-# for security.  The variable names should be:
-#
-#     PJ_NPM_USERNAME
-#     PJ_NPM_PASSWORD
-#     PJ_NPM_TOKEN
-#
-# To create an npm user if you dont have one, run the following command and follow 
-# the prompts:
-#
-#     $ npm adduser --registry=npm.development.pjats.com --scope=@perryjohnson
-#
-#     Locate the file [USERDIR]\.npmrc, copy the created token from within
-#     the file to the environment variable PJ_NPM_TOKEN
-#
-# The project file .npmrc will be used by npm when publishing packages, it reads
-# the NPM environment variables as well.
-#
-$NPMUSER = $Env:PJ_NPM_USERNAME,
-#
-#
-#
-$NOTEPADEDITS = "Y"
+$VERSIONTEXT = "Version"
 #
 # ------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------
@@ -195,6 +191,7 @@ $NOTEPADEDITS = "Y"
 # ------------------------------------------------------------------------------------------
 )
 
+$SCRIPTVERSION = "1.0.0"
 $CURRENTVERSION = ""
 $VERSION = "" 
 $BRANCH = ""
@@ -665,7 +662,7 @@ class HistoryFile
 # $targetloc is the unc or web path of the distribution (i.e. the softwareimages drive, the 
 # npm server, or the nuget server)
 #
-function SendReleaseNotification($targetloc)
+function Send-Notification($targetloc)
 {
     # encoding="plain" (from ant)   ps cmd: -Encoding ASCII
     $rlh = New-Object -TypeName HistoryFile
@@ -678,24 +675,11 @@ function SendReleaseNotification($targetloc)
         else {
             send-mailmessage -SmtpServer 10.0.7.50 -BodyAsHtml -From ProductBuild@pjats.com -To $TESTEMAILRECIPIENT -Subject "$PROJECTNAME $VERSION" -Body $EMAILBODY
         }
-        if ($? -eq $true) {
-            write-host -ForegroundColor "darkgreen" "   Success"
-        }
-        else {
-            write-host -ForegroundColor "red" "   Failure"
-        }
+        Check-ExitCode
     }
     catch {
         write-host -ForegroundColor "red" "   Delivery failure"
     }
-}
-
-#
-# TODO - roll back changes to files via scm and call this function on error exits
-#
-function CleanupOnError()
-{
-
 }
 
 #
@@ -760,22 +744,60 @@ Function CheckSpelling($String, $RemoveSpecialChars)
     return $OutString;
 }
 
-function AddToSvnChangelist($SvnFile)
+
+#
+# Function to Remove special character s and punctuations from Input string
+#
+function Clean-String($Str)
+{
+    Foreach($Char in [Char[]]"!@#$%^&*(){}|\/?><,.][+=-_"){$str=$str.replace("$Char",'')}
+    Return $str
+}
+
+function Svn-Changelist-Add($SvnFile)
 {
     write-host "Adding $SvnFile to svn changelist"
     if ($PATHPREROOT -ne "" -and $PATHPREROOT -ne $null) {
         $SvnFile = Join-Path -Path "$PATHPREROOT" -ChildPath "$SvnFile"
     }
-    $script:SVNCHANGELIST = "$script:SVNCHANGELIST $SvnFile"
+    $script:SVNCHANGELIST = "$script:SVNCHANGELIST `"$SvnFile`""
+    #$script:SVNCHANGELIST += "`"$SvnFile`""
 }
 
-#
-# Function to Remove special character s and punctuations from Input string
-#
-Function Clean-String($Str)
+function Svn-Revert()
 {
-    Foreach($Char in [Char[]]"!@#$%^&*(){}|\/?><,.][+=-_"){$str=$str.replace("$Char",'')}
-    Return $str
+    if (![string]::IsNullOrEmpty($SVNCHANGELIST)) 
+    {
+        write-host "Reverting touched files under version control"
+        Invoke-Expression -Command "svn revert $SVNCHANGELIST"
+        Check-ExitCode
+    }
+}
+
+function Check-ExitCode($ExitOnError = $false)
+{
+    #
+    # Check script error code, 0 is success
+    #
+    if ($LASTEXITCODE -eq 0) {
+        write-host -ForegroundColor "darkgreen" "Success"
+    }
+    else {
+        write-host -ForegroundColor "red" "Failure"
+        if ($ExitOnError -eq $true) {
+            Svn-Revert
+            exit
+        }
+    }
+}
+
+function Replace-Version($File, $Old, $New)
+{
+    write-host "Write new version $VERSION to $File"
+    ((Get-Content -path $File -Raw) -replace "$Old", "$New") | Set-Content -NoNewline -Path $File
+    #$FileContent = ((Get-Content -path $File -Raw) -replace "$Old", "$New")
+    #Set-Content -NoNewline -Path $INSTALLERSCRIPT -Value $FileContent
+    Check-ExitCode
 }
 
 #
@@ -786,17 +808,13 @@ Function Clean-String($Str)
 # Set location to root
 #
 set-location -Path $PATHTOROOT
-
-write-host -ForegroundColor "darkblue" "----------------------------------------------------------------"
-write-host -ForegroundColor "darkblue" "Perry Johnson Application Publisher"
-write-host -ForegroundColor "blue" "   Version          : 1.0.0"
-write-host -ForegroundColor "blue" "   Author           : Scott Meesseman"
-write-host -ForegroundColor "darkblue" "----------------------------------------------------------------"
-
 $CWD = Get-Location
-write-host ""
-write-host "   Current working directory is $CWD"
-write-host ""
+write-host -ForegroundColor "darkblue" "----------------------------------------------------------------"
+write-host -ForegroundColor "darkblue" "App Publisher"
+write-host -ForegroundColor "blue"     "   Version   : $SCRIPTVERSION"
+write-host -ForegroundColor "blue"     "   Author    : Scott Meesseman"
+write-host -ForegroundColor "blue"     "   Directory : $CWD"
+write-host -ForegroundColor "darkblue" "----------------------------------------------------------------"
 
 #
 # Write project specific properties
@@ -813,7 +831,9 @@ write-host "   History hdr file : $HISTORYHDRFILE"
 write-host "   Next Version     : $VERSIONTEXT"
 write-host "   NPM user         : $NPMUSER"
 write-host "   Is Install releas: $INSTALLERRELEASE"
-write-host "   Skip Install Push: $INSTALLERSKIPPUSH"
+write-host "   Installer script : $INSTALLERSCRIPT"
+write-host "   Deploy script    : $DEPLOYSCRIPT"
+write-host "   Skip deploy/push : $SKIPDEPLOYPUSH"
 write-host "   Is NPM release   : $NPMRELEASE"
 write-host "   Is Nuget release : $NUGETRELEASE"
 write-host "   Notepad edits    : $NOTEPADEDITS"
@@ -842,52 +862,35 @@ if (!(Test-Path($Env:CODE_HOME))) {
     exit
 }
 
-if (![string]::IsNullOrEmpty($INSTALLERDEPLOYFILE))
+if (![string]::IsNullOrEmpty($DEPLOYSCRIPT))
 {
-    if (!(Test-Path($INSTALLERDEPLOYFILE))) {
-        write-host -ForegroundColor "red" "Defined INSTALLERDEPLOYFILE not found"
+    $ScriptParts = $DEPLOYSCRIPT.Split(' ');
+    if (!(Test-Path($ScriptParts[0]))) {
+        write-host -ForegroundColor "red" "Defined DEPLOYSCRIPT not found"
         exit
     }
 
-    if (!$INSTALLERDEPLOYFILE.EndsWith(".xml")) {
-        write-host -ForegroundColor "red" "Defined INSTALLERDEPLOYFILE must be an ANT script with an 'xml' extension"
-        exit
-    }
-}
-
-if (![string]::IsNullOrEmpty($INSTALLERCREATEFILE))
-{
-    if (!(Test-Path($INSTALLERCREATEFILE))) {
-        write-host -ForegroundColor "red" "Defined INSTALLERCREATEFILE not found"
-        exit
-    }
-
-    if (!$INSTALLERCREATEFILE.EndsWith(".xml")) {
-        write-host -ForegroundColor "red" "Defined INSTALLERDEPLOYFILE must be an ANT script with an 'xml' extension"
-        exit
-    }
-}
-
-if (![string]::IsNullOrEmpty($INSTALLERCREATEFILE) -or ![string]::IsNullOrEmpty($INSTALLERDEPLOYFILE))
-{
-    #
-    # Verify ANT/ANSICON install
-    #
-    if (!(Test-Path("$Env:CODE_HOME\ant"))) {
-        write-hpst -ForegroundColor "red" "The ANT/ANSICON package must be installed to run this script"
-        write-host "Re-run the code-package installer and add the Ant/Ansicon package"
-        exit
-    }
-}
-
-if (![string]::IsNullOrEmpty($INSTALLERFILE))
-{
-    if (!(Test-Path($INSTALLERFILE)))
+    if ($DEPLOYSCRIPT.Contains(".xml")) 
     {
-        write-host -ForegroundColor "red" "Defined INSTALLERFILE not found"
+        # Verify ANT/ANSICON install
+        #
+        if (!(Test-Path("$Env:CODE_HOME\ant"))) {
+            write-hpst -ForegroundColor "red" "The ANT/ANSICON package must be installed to run this script"
+            write-host "Re-run the code-package installer and add the Ant/Ansicon package"
+            exit
+        }
+    }
+}
+
+if (![string]::IsNullOrEmpty($INSTALLERSCRIPT))
+{
+    $ScriptParts = $INSTALLERSCRIPT.Split(' ');
+    if (!(Test-Path($ScriptParts[0]))) {
+        write-host -ForegroundColor "red" "Defined INSTALLERSCRIPT not found"
+        exit
     }
 
-    if ($INSTALLERFILE.Contains(".nsi"))
+    if ($INSTALLERSCRIPT.Contains(".nsi"))
     {
         if (!(Test-Path("$Env:CODE_HOME\nsis"))) {
             write-hpst -ForegroundColor "red" "The NSIS package must be installed to run this script"
@@ -1179,23 +1182,63 @@ if ($CURRENTVERSION -ne $VERSION)
     # Replace all newline pairs with cr/nl pairs as SVN will have sent commit comments back
     # with newlines only
     #
+    [System.Threading.Thread]::Sleep(500);
     Add-Content $HISTORYFILE $COMMITS
     #
     # Add to changelist for svn check in.  This would be the first file modified so just
     # set changelist equal to history file
     #
-    AddToSvnChangelist $HISTORYFILE
+    Svn-Changelist-Add $HISTORYFILE
 }
 else {
     write-host -ForegroundColor "darkyellow" "Version match, not touching history file"
 }
-
 #
 # Allow manual modifications to history file
 #
 if ($NOTEPADEDITS -eq "Y") {
     write-host "Edit history file"
     start-process -filepath "notepad" -args $HISTORYFILE -wait
+}
+
+#
+# Run custom deploy script if specified
+#
+if (![string]::IsNullOrEmpty($DEPLOYSCRIPT))
+{
+    if ($SKIPDEPLOYPUSH -ne "Y")
+    {
+        # Run custom deploy script
+        #
+        write-host "Running custom deploy script"
+
+        if ($TESTMODE -ne "Y") 
+        {
+            if ($DEPLOYSCRIPT.EndsWith(".xml")) {
+                Invoke-Expression -Command "$Env:CODE_HOME\ant\bin\ant.bat " `
+                                  "-logger org.apache.tools.ant.listener.AnsiColorLogger -f $DEPLOYSCRIPT"
+            }
+            elseif ($DEPLOYSCRIPT.EndsWith(".ps1")) {
+                Invoke-Expression -Command ".\$DEPLOYSCRIPT"
+            }
+            elseif ($DEPLOYSCRIPT.EndsWith(".bat")) {
+                Invoke-Expression -Command "cmd /c $DEPLOYSCRIPT"
+            }
+            else {
+                Invoke-Expression -Command "$DEPLOYSCRIPT"
+            }
+            #
+            # Check script error code, 0 is success
+            #
+            Check-ExitCode
+        }
+        else {
+            write-host -ForegroundColor "magenta" "   Test mode, skipping deploy script run"
+        }
+    }
+    else {
+        write-host -ForegroundColor "darkyellow" "   Skipped running custom deploy script (user specified)"
+    }
 }
 
 #
@@ -1206,113 +1249,12 @@ if ($INSTALLERRELEASE -eq "Y")
     $InstallerBuilt = $false
 
     #
-    # Check if this is an ExtJs build.  ExtJs build will be an installer build, but it will
-    # contain both package.json and app.json that will need version updated.  A node_modules
-    # directory will exist, so the current version and next version were extracted by node and
-    # calculated by semver.
+    # Build the installer
     #
-    if ((Test-Path("app.json")) -and (Test-Path("package.json")))
+    if (![string]::IsNullOrEmpty($INSTALLERSCRIPT) -and (Test-Path($INSTALLERSCRIPT)))
     {
-        #
-        # Replace version in app.json
-        #
-        write-host "Write new version $VERSION to app.json"
-        ((Get-Content -path "app.json" -Raw) -replace "version`"[ ]*:[ ]*[`"]$CURRENTVERSION", "version`": `"$VERSION") | Set-Content -NoNewline -Path "app.json"
-        #
-        # Add to app.json svn changelist for check-in
-        #
-        AddToSvnChangelist "app.json"
-        #
-        # Allow manual modifications to app.json
-        #
-        if ($NOTEPADEDITS -eq "Y") {
-            write-host "Edit app.json file"
-            start-process -filepath "notepad" -args "app.json" -wait
-        }
-        #
-        # Replace version in package.json
-        #
-        write-host "Write new version $VERSION to package.json"
-        ((Get-Content -path "package.json" -Raw) -replace "version`"[ ]*:[ ]*[`"]$CURRENTVERSION", "version`": `"$VERSION") | Set-Content -NoNewline -Path "package.json"
-        #
-        # Add to package.json svn changelist for check-in
-        #
-        AddToSvnChangelist "package.json"
-        #
-        # Allow manual modifications to package.json
-        #
-        if ($NOTEPADEDITS -eq "Y") {
-            write-host "Edit package.json file"
-            start-process -filepath "notepad" -args "package.json" -wait
-        }
-        #
-        # Replace version in package-lock.json
-        #
-        if (Test-Path("package-lock.json")) {
-            write-host "Write new version $VERSION to package-lock.json"
-            ((Get-Content -path "package-lock.json" -Raw) -replace "version`"[ ]*:[ ]*[`"]$CURRENTVERSION", "version`": `"$VERSION") | Set-Content -NoNewline -Path "package-lock.json"
-            #
-            # Add to package.json svn changelist for check-in
-            #
-            AddToSvnChangelist "package-lock.json"
-        }
-    }
-
-    #
-    # Build the installer.  Use the 'CreateInstall.xml' script if it exists, if not then
-    # build the defined INSTALLERFILE directly using NSIS
-    #
-    if (![string]::IsNullOrEmpty($INSTALLERCREATEFILE) -and (Test-Path($INSTALLERCREATEFILE))) 
-    {
-        #
-        # Replace version in nsi file
-        #
-        write-host "Write new version $VERSION to $INSTALLERFILE"
-        ((Get-Content -path $INSTALLERFILE -Raw) -replace "`"$CURRENTVERSION`"", "`"$VERSION`"") | Set-Content -NoNewline -Path $INSTALLERFILE
-        #
-        # Add to svn changelist for check-in
-        #
-        AddToSvnChangelist $INSTALLERFILE
-        #
-        # Allow manual modifications to $INSTALLERFILE
-        #
-        if ($NOTEPADEDITS -eq "Y") {
-            write-host "Edit installer file"
-            start-process -filepath "notepad" -wait -args $INSTALLERFILE
-        }
-        #
-        # Run ant $INSTALLERCREATEFILE
-        #
-        write-host "Building executable installer via $INSTALLERCREATEFILE"
-        set-location "install"
-        & $Env:CODE_HOME\ant\bin\ant.bat -logger org.apache.tools.ant.listener.AnsiColorLogger -f $INSTALLERCREATEFILE
-        if ($LASTEXITCODE -eq 0) {
-            write-host -ForegroundColor "darkgreen" "   Success"
-        }
-        else {
-            write-host -ForegroundColor "red" "   Failure"
-        }
-        set-location $PATHTOROOT
-        #
-        $InstallerBuilt = $true
-    }
-    #
-    # Build directly using installer build if no createinstall ant file exists @ install
-    #
-    # Currently supported:
-    #
-    #     NSIS (.nsi)
-    #
-    elseif (![string]::IsNullOrEmpty($INSTALLERFILE) -and (Test-Path($INSTALLERFILE)))
-    {
-        if ($INSTALLERFILE.Contains(".nsi"))
+        if ($INSTALLERSCRIPT.Contains(".nsi"))
         {
-            if (!(Test-Path("$Env:CODE_HOME\nsis"))) {
-                write-hpst -ForegroundColor "red" "The NSIS package must be installed to run this script"
-                write-host "Re-run the code-package installer and add the NSIS package"
-                exit
-            }
-            #
             # Create dist directory if it doesnt exist
             #
             if (!(Test-Path($PATHTODIST))) {
@@ -1322,166 +1264,146 @@ if ($INSTALLERRELEASE -eq "Y")
             #
             # replace version in nsi file
             #
-            write-host "Write new version $VERSION to $INSTALLERFILE"
-            ((Get-Content -path $INSTALLERFILE -Raw) -replace "`"$CURRENTVERSION`"", "`"$VERSION`"") | Set-Content -NoNewline -Path $INSTALLERFILE
+            Replace-Version $INSTALLERSCRIPT "`"$CURRENTVERSION`"" "`"$VERSION`""
             #
             # Add to svn changelist for check-in
             #
-            AddToSvnChangelist $INSTALLERFILE
+            Svn-Changelist-Add $INSTALLERSCRIPT
             #
-            # Allow manual modifications to $INSTALLERFILE
+            # Allow manual modifications to $INSTALLERSCRIPT
             #
             if ($NOTEPADEDITS -eq "Y") {
                 write-host "Edit installer file"
-                start-process -filepath "notepad" -wait -args $INSTALLERFILE
+                start-process -filepath "notepad" -wait -args $INSTALLERSCRIPT
             }
             #
             # Run makensis to create installer
             #
             write-host "Building executable installer"
-            & $Env:CODE_HOME\nsis\makensis.exe $INSTALLERFILE
+            Invoke-Expression -Command "$Env:CODE_HOME\nsis\makensis.exe $INSTALLERSCRIPT"
+            Check-ExitCode
             $InstallerBuilt = $true
         }
         else {
-            write-host -ForegroundColor "red" "Cannot build this installer type ($INSTALLERFILE)"
+            write-host -ForegroundColor "red" "Cannot build this installer type ($INSTALLERSCRIPT)"
         }
     }
     
     if ($InstallerBuilt -eq $true)
     {
-        $NotificationSent = $false;
         $TargetLocation = "\\192.168.68.120\d$\softwareimages\$PROJECTNAME\$VERSION"
+        #
+        # Check if this is an ExtJs build.  ExtJs build will be an installer build, but it will
+        # contain both package.json and app.json that will need version updated.  A node_modules
+        # directory will exist, so the current version was extracted by node and and next version  
+        # was calculated by semver.
+        #
+        if ((Test-Path("app.json")) -and (Test-Path("package.json")))
+        {
+            #
+            # Replace version in app.json
+            #
+            Replace-Version "app.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
+            #
+            # Add to app.json svn changelist for check-in
+            #
+            Svn-Changelist-Add "app.json"
+            #
+            # Allow manual modifications to app.json
+            #
+            if ($NOTEPADEDITS -eq "Y") {
+                write-host "Edit app.json file"
+                start-process -filepath "notepad" -args "app.json" -wait
+            }
+            #
+            # Replace version in package.json
+            #
+            Replace-Version "package.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
+            #
+            # Add to package.json svn changelist for check-in
+            #
+            Svn-Changelist-Add "package.json"
+            #
+            # Allow manual modifications to package.json
+            #
+            if ($NOTEPADEDITS -eq "Y") {
+                write-host "Edit package.json file"
+                start-process -filepath "notepad" -args "package.json" -wait
+            }
+            #
+            # Replace version in package-lock.json
+            #
+            if (Test-Path("package-lock.json")) 
+            {
+                Replace-Version "package-lock.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
+                #
+                # Add to package.json svn changelist for check-in
+                #
+                Svn-Changelist-Add "package-lock.json"
+            }
+        }
         #
         # Check for legacy Deploy.xml script.  The scipt should at least be modified to NOT
         # send the notification email.
         #
-        if ($INSTALLERSKIPPUSH -ne "Y")
+        if ($SKIPDEPLOYPUSH -ne "Y")
         {
-            if (![string]::IsNullOrEmpty($INSTALLERDEPLOYFILE) -and (Test-Path($INSTALLERDEPLOYFILE)))
-            {
-                write-host -ForegroundColor "darkyellow" "---------------------------------------------------------------"
-                write-host -ForegroundColor "darkyellow" "Found deprecated $INSTALLERDEPLOYFILE file"
-                write-host -ForegroundColor "darkyellow" "Remove deploy.xml from project to allow app-publisher to deploy"
-                write-host -ForegroundColor "darkyellow" "---------------------------------------------------------------" 
-                #
-                # Allow manual modifications to deploy.xml file
-                #
-                if ($NOTEPADEDITS -eq "Y") {
-                    write-host "Edit installer file"
-                    start-process -filepath "notepad" -wait -args $INSTALLERDEPLOYFILE
-                }
-                #
-                # Replace version
-                #
-                write-host "Write new version $VERSION to $INSTALLERDEPLOYFILE"
-                ((Get-Content -path $INSTALLERDEPLOYFILE -Raw) -replace "value[ ]*=[ ]*[`"]$CURRENTVERSION", "value=`"$VERSION") | Set-Content -NoNewline -Path $INSTALLERDEPLOYFILE
-                #
-                # Allow manual modifications to $INSTALLERDEPLOYFILE
-                #
-                if ($NOTEPADEDITS -eq "Y") {
-                    write-host "Edit INSTALLERDEPLOYFILE file"
-                    start-process -filepath "notepad" -args $INSTALLERDEPLOYFILE -wait
-                }
-                #
-                # Add to svn changelist for check-in
-                #
-                AddToSvnChangelist $INSTALLERDEPLOYFILE
-                #
-                # Run ant deploy.xml
-                #
-                write-host "Releasing executable installer"
-                if ($TESTMODE -ne "Y") 
-                {
-                    set-location "install"
-                    & $Env:CODE_HOME\ant\bin\ant.bat -logger org.apache.tools.ant.listener.AnsiColorLogger -f Deploy.xml
-                    if ($LASTEXITCODE -eq 0) {
-                        write-host -ForegroundColor "darkgreen" "   Success"
-                    }
-                    else {
-                        write-host -ForegroundColor "red" "   Failure"
-                    }
-                    set-location $PATHTOROOT
-                    #
-                    # Check the contents of $INSTALLERDEPLOYFILE.  If there is a mail task, then the deploy script still
-                    # contains the code to send the email notification.  Set flag to not send notification email
-                    # if this is the case, log warning to remove ant mail task to allow this script to send the
-                    # notification
-                    #
-                    $DeployFileContents = Get-Content -path $INSTALLERDEPLOYFILE -Raw
-                    if ($DeployFileContents.Contains("mailhost=")) {
-                        $NotificationSent = $true
-                        write-host "Notification email sent via deploy.xml"
-                        write-host -ForegroundColor "darkyellow" "Remove email task in deploy.xml to allow this script to send email"
-                    }
-                }
-                else {
-                    write-host -ForegroundColor "magenta" "   Test mode, skipping installer push to network drive"
-                }
-            }
-            else 
+            # Copy dist dir installer and the history file to target location, and pdf docs to Sharepoint
+            #
+            if ($TESTMODE -ne "Y") 
             {
                 #
-                # No deploy.xml file found.  Do basic installer relase, copy dist dir installer and
-                # the history file to target location, and pdf docs to Sharepoint
+                # SoftwareImages Upload
                 #
-                write-host "No deploy file found, perform installer deployment and send notification email"
-                write-host "Deploying files to $TargetLocation"
-                if ($TESTMODE -ne "Y") 
-                {
-                    #
-                    # SoftwareImages Upload
-                    #
-                    # Create directory on softwareimages network drive
-                    # TargetLocation is defined above as it is needed for email notification fn as well
-                    #
+                # Create directory on softwareimages network drive
+                # TargetLocation is defined above as it is needed for email notification fn as well
+                #
+                if (!(Test-Path($TargetLocation))) {
+                    write-host "Create directory $TargetLocation"
                     New-Item -Path "$TargetLocation" -ItemType "directory" | Out-Null
-                    #
-                    # Copy all files in 'dist' directory that start with $PROJECTNAME, and the history file
-                    #
-                    Copy-Item "$PATHTODIST\*","$HISTORYFILE" -Destination "$TargetLocation"
-                    if ($? -eq $true) {
-                        write-host -ForegroundColor "darkgreen" "   Success"
-                    }
-                    else {
-                        write-host -ForegroundColor "red" "   Failure"
-                    }
-                    write-host -ForegroundColor "darkgreen" "   Success"
-
-                    #
-                    # Sharepoint Upload
-                    #
-                    $SharepointServer = 'pjainc.pjvista.com@SSL'
-                    $SharepointShare = "DavWWWRoot"
-                    $SharepointDirectory = "Shared Documents\Tech Support\Application Installation and Configuration"
-                    $SharepointPath = "\\$SharepointServer\$SharepointShare\$SharepointDirectory\$PROJECTNAME\$VERSION"
-                    #
-                    # Create directory on sharpoint share
-                    #
-                    New-Item -Path "$SharepointPath" -ItemType "directory" | Out-Null
-                    #
-                    # Copy all pdf files in 'dist' and 'doc' and 'documentation' directories
-                    #
-                    Copy-Item "$PATHTODIST\*.pdf","doc\*.pdf","documentation\*.pdf" -Destination "$SharepointPath"
+                    Check-ExitCode
                 }
-                else {
-                    write-host -ForegroundColor "magenta" "   Test mode, skipping basic push to network drive"
-                }
+                #
+                # Copy all files in 'dist' directory that start with $PROJECTNAME, and the history file
+                #
+                write-host "Deploying files to $TargetLocation"
+                Copy-Item "$PATHTODIST\*","$HISTORYFILE" -Destination "$TargetLocation"
+                Check-ExitCode
+                #
+                # Sharepoint Upload
+                #
+                $SharepointServer = 'pjainc.pjvista.com@SSL'
+                $SharepointShare = "DavWWWRoot"
+                $SharepointDirectory = "Shared Documents\Tech Support\Application Installation and Configuration"
+                $SharepointPath = "\\$SharepointServer\$SharepointShare\$SharepointDirectory\$PROJECTNAME\$VERSION"
+                #
+                # Create directory on sharpoint share
+                #
+                New-Item -Path "$SharepointPath" -ItemType "directory" | Out-Null
+                #
+                # Copy all pdf files in 'dist' and 'doc' and 'documentation' directories
+                #
+                write-host "Deploying pdf documentation to Sharepoint"
+                Copy-Item "$PATHTODIST\*.pdf","doc\*.pdf","documentation\*.pdf" -Destination "$SharepointPath"
+                Check-ExitCode
+            }
+            else {
+                write-host -ForegroundColor "magenta" "Test mode, skipping basic push to network drive"
             }
         }
         else {
-            write-host -ForegroundColor "darkyellow" "   Skipped installer push to network drive (user specified)"
+            write-host -ForegroundColor "darkyellow" "Skipped installer push to network drive (user specified)"
         }
         #
-        # Release notification email
+        # Send release notification email
         #
-        if ($NotificationSent -eq $false) {
-            SendReleaseNotification $TargetLocation
-        }
+        Send-Notification $TargetLocation
     }
     else {
         write-host -ForegroundColor "darkyellow" "Installer was not built"
         write-host -ForegroundColor "darkyellow" "Check to ensure createinstall.xml or installer build script path is correct"
-        write-host -ForegroundColor "red" "Installer was not built, exiting"
+        write-host -ForegroundColor "red" "Installer was not built or deployed"
+        Svn-Revert
         exit
     }
 }
@@ -1494,17 +1416,13 @@ if ($NPMRELEASE -eq "Y")
     write-host "Releasing npm package"
     if (Test-Path("package.json"))
     {
+        $PublishFailed = $false;
         #
         # replace current version with new version in package.json and package-lock.json
         #
         write-host "Retrieving current version in package.json"
         & npm version --no-git-tag-version $VERSION
-        if ($LASTEXITCODE -eq 0) {
-            write-host -ForegroundColor "darkgreen" "   Success"
-        }
-        else {
-            write-host -ForegroundColor "red" "   Failure"
-        }
+        Check-ExitCode
         #
         # A few modules are shared, do scope replacement if this might be one of them
         #
@@ -1517,16 +1435,13 @@ if ($NPMRELEASE -eq "Y")
         # Publish to npm server
         #
         write-host "Publishing npm package to $NPMSERVER"
-        if ($TESTMODE -ne "Y") {
+        if ($TESTMODE -ne "Y") 
+        {
             & npm publish --access public --registry $NPMSERVER
-            if ($LASTEXITCODE -eq 0) {
-                write-host -ForegroundColor "darkgreen" "   Success"
-            }
-            else {
-                write-host -ForegroundColor "red" "   Failure"
-            }
+            Check-ExitCode
         }
-        else {
+        else 
+        {
             write-host -ForegroundColor "magenta" "   Test mode, performing publish dry run only"
             & npm publish --access public --registry $NPMSERVER --dry-run
             write-host -ForegroundColor "magenta" "   Test mode, dry run publish finished"
@@ -1539,21 +1454,28 @@ if ($NPMRELEASE -eq "Y")
         #
         # Add package.json version changes to changelist for check in to SVN
         #
-        AddToSvnChangelist "package.json"
+        Svn-Changelist-Add "package.json"
         #
         # Add package-lock.json version changes to changelist for check in to SVN
         #
-        if (Test-Path("package-lock.json")) {
+        if (Test-Path("package-lock.json")) 
+        {
             ((Get-Content -path "package-lock.json" -Raw) -replace '@perryjohnson', '@spmeesseman') | Set-Content -NoNewline -Path "package-lock.json"
             #
             # Add package-lock.json version changes to changelist for check in to SVN
             #
-            AddToSvnChangelist "package-lock.json"
+            Svn-Changelist-Add "package-lock.json"
         }
-        #
-        # Release notification email
-        #
-        SendReleaseNotification "$NPMSERVER/$PROJECTNAME"
+        if (!$PublishFailed) {
+            #
+            # Release notification email
+            #
+            Send-Notification "$NPMSERVER/$PROJECTNAME"
+        }
+        else {
+            Svn-Revert
+            exit
+        }
     }
     else {
         write-host -ForegroundColor "darkyellow" "Could not find package.json"
@@ -1563,7 +1485,8 @@ if ($NPMRELEASE -eq "Y")
 #
 # TODO - Nuget Release
 #
-if ($NUGETRELEASE -eq "Y") {
+if ($NUGETRELEASE -eq "Y") 
+{
     write-host "Releasing nuget package"
     #
     # TODO
@@ -1571,7 +1494,7 @@ if ($NUGETRELEASE -eq "Y") {
     #
     # Send release notification email
     #
-    #SendReleaseNotification "$NUGETSERVER/$PROJECTNAME"
+    #Send-Notification "$NUGETSERVER/$PROJECTNAME"
 }
 
 #
@@ -1583,40 +1506,29 @@ if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) {
 
 if (Test-Path(".svn"))
 {
-    $SVNCHANGELIST = $SVNCHANGELIST.Trim()
+    #$SVNCHANGELIST = $SVNCHANGELIST.Trim()
     #
-    # Check version changes in to SVN
+    # Check version changes in to SVN if there's any touched files
     #
-    if ($SVNCHANGELIST -ne "" -and $SVNCHANGELIST -ne $null) 
+    if ($SVNCHANGELIST -ne "") 
     {
         if ($TESTMODE -ne "Y") 
         {
             write-host "Committing touched files to version control"
             write-host "   $SVNCHANGELIST"
-            svn commit $SVNCHANGELIST -m "chore(release): $VERSION [skip ci]"
-            if ($LASTEXITCODE -eq 0) {
-                write-host -ForegroundColor "darkgreen" "   Success"
-            }
-            else {
-                write-host -ForegroundColor "red" "   Failure"
-            }
+            #
+            # Call svn commit
+            #
+            Invoke-Expression -Command "svn commit $SVNCHANGELIST -m `"chore(release): $VERSION [skip ci]`""
+            Check-ExitCode
         }
         else 
         {
-            if ($TESTMODESVNREVERT -eq "Y")
-            {
-                write-host "Reverting touched files under version control"
-                write-host "   $SVNCHANGELIST"
-                svn revert $SVNCHANGELIST
-                if ($LASTEXITCODE -eq 0) {
-                    write-host -ForegroundColor "darkgreen" "   Success"
-                }
-                else {
-                    write-host -ForegroundColor "red" "   Failure"
-                }
+            if ($TESTMODESVNREVERT -eq "Y") {
+                Svn-Revert
             }
-            else {
-                write-host -ForegroundColor "magenta" "   Test mode, skipping package file commit"  
+            if ($TESTMODE -eq "Y") {
+                write-host -ForegroundColor "magenta" "   Test mode, skipping touched file commit"  
             }
         }
     }
@@ -1626,27 +1538,25 @@ if (Test-Path(".svn"))
     #
     # If this is a sub-project within a project, do not tag
     #
-    if ($PATHTOMAINROOT -eq $PATHTOROOT -or $PATHTOMAINROOT -eq "" -or $PATHTOMAINROOT -eq $null)
+    if ($PATHTOMAINROOT -eq $PATHTOROOT -or [string]::IsNullOrEmpty($PATHTOMAINROOT))
     {
-        $TagLocation = "${SVNPROTOCOL}://$SVNSERVER/$SVNREPO/$PROJECTNAME/tags/v$VERSION"
         write-host "Tagging version at $TagLocation"
+        $TagLocation = "${SVNPROTOCOL}://$SVNSERVER/$SVNREPO/$PROJECTNAME/tags/v$VERSION"
         if ($TESTMODE -ne "Y") 
         {
             $TrunkLocation = "${SVNPROTOCOL}://$SVNSERVER/$SVNREPO/$PROJECTNAME/trunk"
-            svn copy "$TrunkLocation" "$TagLocation" -m "chore(release): tag version $VERSION [skip ci]"
-            if ($LASTEXITCODE -eq 0) {
-                write-host -ForegroundColor "darkgreen" "   Success"
-            }
-            else {
-                write-host -ForegroundColor "red" "   Failure"
-            }
+            #
+            # Call svn copy to create 'tag'
+            #
+            & svn copy "$TrunkLocation" "$TagLocation" -m "chore(release): tag version $VERSION [skip ci]"
+            Check-ExitCode
         }
         else {
             write-host -ForegroundColor "magenta" "   Test mode, skipping create version tag"
         }
     }
     else {
-        write-host -ForegroundColor "darkyellow" "This is a sub-project, skipping version tag"
+        write-host -ForegroundColor "darkyellow" "   This is a sub-project, skipping version tag"
     }
 }
 else {
@@ -1655,7 +1565,9 @@ else {
 
 if ($TESTMODE -eq "Y") {
     write-host "Tests completed"
-    write-host -ForegroundColor "magenta" "   Manually revert any auto-touched files via SCM"
+    if ($TESTMODESVNREVERT -ne "Y") {
+        write-host -ForegroundColor "magenta" "   You should manually revert any auto-touched files via SCM"
+    }
 }
 
 write-host "Completed"
