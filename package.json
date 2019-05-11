@@ -1,0 +1,32 @@
+{
+	"name": "@spmeesseman/app-publisher",
+	"displayName": "App-Publisher",
+	"description": "App-Publisher",
+	"publisher": "spmeesseman",
+	"version": "0.0.1",
+	"license": "MIT",
+	"devDependencies": {
+		"@semantic-release/changelog": "^3.0.2",
+		"@semantic-release/exec": "^3.3.0",
+		"@semantic-release/git": "^7.0.8",
+		"commitizen": "^3.0.7",
+		"conventional-changelog-spm": "^1.2.3",
+		"cz-conventional-changelog": "^2.1.0",
+		"semantic-release": "^15.13.12"
+	},
+	"scripts": {
+		"semantic-release": "semantic-release --no-ci",
+		"semantic-release-dry": "semantic-release --dry-run"
+	},
+	"config": {
+		"commitizen": {
+			"path": "cz-conventional-changelog"
+		}
+	},
+	"publishConfig": {
+		"access": "restricted"
+	},
+	"files": [
+		"src"
+	]
+}
