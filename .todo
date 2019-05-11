@@ -1,0 +1,29 @@
+
+
+This file utilizes the ToDo+ extension (fabiospampinato.vscode-todo-plus)
+ALT+S - Started
+ALT+ENTER - Box
+ALT+C - Cancel
+ALT+D - Done
+CTL+SHIFT+A - Archive
+
+Todos:
+
+    Features:
+
+        ☐ Node version of app-publisher @60h
+
+    Known Bugs:
+
+        ☐ Built history section is missing two characters at the end @1h
+    
+    Performance Enhancements:
+
+    Refactoring:
+
+    Style:
+        
+    Tests:
+
+
+End Todos

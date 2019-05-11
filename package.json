@@ -5,19 +5,33 @@
 	"publisher": "spmeesseman",
 	"version": "0.0.1",
 	"license": "MIT",
+	"main": "index.js",
 	"devDependencies": {
 		"@semantic-release/changelog": "^3.0.2",
 		"@semantic-release/exec": "^3.3.0",
 		"@semantic-release/git": "^7.0.8",
+		"@types/node": "^12.0.0",
 		"commitizen": "^3.0.7",
 		"conventional-changelog-spm": "^1.2.3",
 		"cz-conventional-changelog": "^2.1.0",
-		"semantic-release": "^15.13.12"
+		"semantic-release": "^15.13.12",
+		"ts-lint": "^4.5.1",
+		"typescript": "^3.4.5"
 	},
 	"scripts": {
+		"build": "npx tsc -p ./",
+        "compile": "npx tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "commit": "npx git-cz",
 		"semantic-release": "semantic-release --no-ci",
 		"semantic-release-dry": "semantic-release --dry-run"
 	},
+	"bin": {
+		"app-publisher": "./build/index.js"
+	},
+	"files": [
+		"src"
+    ],
 	"config": {
 		"commitizen": {
 			"path": "cz-conventional-changelog"
@@ -25,8 +39,5 @@
 	},
 	"publishConfig": {
 		"access": "restricted"
-	},
-	"files": [
-		"src"
-	]
+	}
 }
