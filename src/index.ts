@@ -1,21 +1,36 @@
 #!/usr/bin/env node
 
 import { CommitAnalyzer } from './lib/commit-analyzer';
+import { exec } from 'shelljs';
 
 const argc = process.argv.splice(2);
+let args: string = "";
 
-if (argc.length != 1) {
+if (argc.length === 0) {
     console.error(`Invalid number of arguments ${argc}`);
     process.exit(1);
 }
 
-const PROJECTNAME = argc[0];
-const PATHTOROOT = argc[1];
+argc.forEach(arg =>
+{
+    args += `${arg} `;
+});
+args = args.trimRight();
 
-if (!PROJECTNAME) {
-    console.error(`Invalid input PROJECTNAME=${PROJECTNAME}`);
-    process.exit(1);
-}
+// argc.forEach(arg =>
+// {
+//     switch (arg)
+//     {
+//         case "PROJECTNAME":
+// 
+//             break;
+//         default:
+//             break;
+//     }
+// });
 
-const commitAnalyzer = new CommitAnalyzer({});
-console.log(`Release level is ${commitAnalyzer.getReleaseLevel()}`);
+//const commitAnalyzer = new CommitAnalyzer({});
+//console.log(`Release level is ${commitAnalyzer.getReleaseLevel()}`);
+
+//exec('powershell ./script/app-installer.ps1', {silent:true}).stdout;
+exec(`powershell ./script/app-installer.ps1 ${args}`)
