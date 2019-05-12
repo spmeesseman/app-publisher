@@ -7,6 +7,7 @@ import { exec } from 'shelljs';
 import * as fs from 'fs';
 import * as gradient from 'gradient-string';
 import chalk from 'chalk';
+import * as path from 'path';
 
 //
 // Display color banner
@@ -107,10 +108,10 @@ if (args.version)
 //
 let config;
 if (fs.existsSync('.publishrc.json')) {
-    config = fs.readFileSync('.publishrc.json').toString();
+    config = fs.readFileSync('.publishrc.json');
 }
 else if (fs.existsSync('.publishrc')) {
-    config = fs.readFileSync('.publishrc').toString();
+    config = fs.readFileSync('.publishrc');
 }
 else {
     util.logError("Config not found!! Exiting");
@@ -216,11 +217,11 @@ else if (args.profile === "pja" || args.profile === "pjr")
         util.logError("Config not found!! Exiting");
         process.exit(100);
     }
-    sArgs = sArgs.trimRight();console.log(sArgs);
+    sArgs = sArgs.trimRight();
     //
     // Launch Powershell task
     //
-    exec(`powershell ./node_modules/@spmeesseman/app-publisher/script/app-installer.ps1 ${args}`);
+    exec(`powershell .\\node_modules\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1 ${args}`);
 }
 
 function displayIntro() 
