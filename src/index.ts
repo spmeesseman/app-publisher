@@ -221,7 +221,7 @@ else if (args.profile === "pja" || args.profile === "pjr")
     //
     // Launch Powershell task
     //
-    exec(`powershell .\\node_modules\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1 ${args}`);
+    exec(`powershell .\\node_modules\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1 ${sArgs}`);
 }
 
 function displayIntro() 
