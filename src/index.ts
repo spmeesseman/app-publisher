@@ -220,7 +220,7 @@ else if (args.profile === "pja" || args.profile === "pjr")
     //
     // Launch Powershell task
     //
-    exec(`powershell ./node_modules/@spmeesseman/app-publisher/script/app-installer.ps1 ${args}`)
+    exec(`powershell ./node_modules/@spmeesseman/app-publisher/script/app-installer.ps1 ${args}`);
 }
 
 function displayIntro() 
