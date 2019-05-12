@@ -1,5 +1,13 @@
 # Change Log
 
+## [1.0.1](https://github.com/spmeesseman/app-publisher/compare/v1.0.0...v1.0.1) (2019-05-12)
+
+
+### Bug Fixes
+
+* launch powershell task on pj publish ([0fc1e21](https://github.com/spmeesseman/app-publisher/commit/0fc1e21))
+* launch powershell task on pj publish ([356219b](https://github.com/spmeesseman/app-publisher/commit/356219b))
+
 # 1.0.0 (2019-05-11)
 
 
