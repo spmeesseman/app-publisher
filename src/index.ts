@@ -91,10 +91,10 @@ if (args.help)
 //
 if (args.version)
 {
-    util.log(gradient('cyan', 'pink').multiline(`----------------------------------------------------------------------------
+    util.log(chalk.bold(gradient('cyan', 'pink').multiline(`----------------------------------------------------------------------------
  App-Builder Version
 ----------------------------------------------------------------------------
-`, {interpolation: 'hsv'}));
+`, {interpolation: 'hsv'})));
     util.log(require('../package.json').version);
     process.exit(0);
 }
@@ -126,7 +126,7 @@ if (args.readConfig)
  Cofiguration file contents
 ----------------------------------------------------------------------------
     `;
-    util.log(gradient('cyan', 'pink').multiline(title, {interpolation: 'hsv'}));
+    util.log(chalk.bold(gradient('cyan', 'pink').multiline(title, {interpolation: 'hsv'})));
     util.log(config.toString());
     process.exit(0);
 }
@@ -220,7 +220,7 @@ else if (args.profile === "pja" || args.profile === "pjr")
     //
     // Launch Powershell task
     //
-    //exec(`powershell ./node_modules/@spmeesseman/app-publisher/script/app-installer.ps1 ${args}`)
+    exec(`powershell ./node_modules/@spmeesseman/app-publisher/script/app-installer.ps1 ${args}`)
 }
 
 function displayIntro() 
@@ -233,7 +233,7 @@ function displayIntro()
  \\__\\\\__| | .//| | .//   | | .//|____/|___/|_|_|/___/|_| \\___|.|_| v${require('../package.json').version} 
         |_|    |_|       |_|                                                    
     `;
-    util.log(gradient('cyan', 'pink').multiline(title, {interpolation: 'hsv'}));
+    util.log(chalk.bold(gradient('cyan', 'pink').multiline(title, {interpolation: 'hsv'})));
 }
 
 
