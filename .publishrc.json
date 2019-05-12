@@ -1,0 +1,29 @@
+{
+    "projectName":      "GEMS2",
+    "script": {
+        "deployscript" : [
+            "..\\..\\script\\upload_build.bat sb --nores",
+            "..\\..\\script\\upload_build.bat gr --nores",
+            "..\\..\\script\\upload_build.bat sf --nores"
+        ]
+    },
+    "historyFile":      "..\\..\\doc\\history.txt",
+    "historyHdrFile":   "..\\..\\install\\history-hdr.txt",
+    "historyLineLen":   80,
+    "installerRelease": "Y",
+    "installerScript":  "..\\..\\install\\GEMS_US_32bit.nsi",
+    "notepadEdits":     "Y",
+    "npmRelease":       "N",
+    "npmUser":          "${PJ_NPM_USERNAME}",
+    "nugetRelease":     "N",
+    "pathtoRoot":       "..\\src\\ui",
+    "pathtoMainRoot":   "..\\..",
+    "pathPreRoot":      "src\\ui",
+    "pathToDist":       "..\\..\\install\\dist",
+    "skipDeployPush":   "Y",
+    "svnRepo":          "pja",
+    "testMode":         "Y",
+    "testModeSvnRevert":"Y",
+    "testEmailRecip":   "smeesseman@pjats.com",
+    "versionText":      "Version"
+}

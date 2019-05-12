@@ -164,7 +164,7 @@ $SVNPROTOCOL = "svn",
 # In test mode, the following holds:
 #
 #     1) Installer is not released/published
-#     2) Email notification will be sent only to $TESTEMAILRECIPIENT
+#     2) Email notification will be sent only to $TESTEMAILRECIP
 #     3) Commit package/build file changes (svn) are not made
 #     4) Version tag (svn) is not made
 #
@@ -173,7 +173,7 @@ $SVNPROTOCOL = "svn",
 #
 $TESTMODE = "Y",
 $TESTMODESVNREVERT = "Y",
-$TESTEMAILRECIPIENT = "smeesseman@pjats.com",
+$TESTEMAILRECIP = "smeesseman@pjats.com",
 #
 # The text tag to use in the history file for preceding the version number.  It should 
 # be one of the following:
@@ -673,7 +673,7 @@ function Send-Notification($targetloc)
             send-mailmessage -SmtpServer 10.0.7.50 -BodyAsHtml -From ProductBuild@pjats.com -To ProductRelease@pjats.com -Subject "$PROJECTNAME $VERSION" -Body $EMAILBODY
         }
         else {
-            send-mailmessage -SmtpServer 10.0.7.50 -BodyAsHtml -From ProductBuild@pjats.com -To $TESTEMAILRECIPIENT -Subject "$PROJECTNAME $VERSION" -Body $EMAILBODY
+            send-mailmessage -SmtpServer 10.0.7.50 -BodyAsHtml -From ProductBuild@pjats.com -To $TESTEMAILRECIP -Subject "$PROJECTNAME $VERSION" -Body $EMAILBODY
         }
         Check-ExitCode
     }
@@ -838,7 +838,7 @@ write-host "   Is NPM release   : $NPMRELEASE"
 write-host "   Is Nuget release : $NUGETRELEASE"
 write-host "   Notepad edits    : $NOTEPADEDITS"
 write-host "   Is test mode     : $TESTMODE"
-write-host "   Test email       : $TESTEMAILRECIPIENT"
+write-host "   Test email       : $TESTEMAILRECIP"
 
 #
 # Define the NPM and Nuget package servers
@@ -862,23 +862,37 @@ if (!(Test-Path($Env:CODE_HOME))) {
     exit
 }
 
-if (![string]::IsNullOrEmpty($DEPLOYSCRIPT))
+#
+# Deploy script(s).  String, or an array of strings
+#
+$IsAnt = $false;
+if ($DEPLOYSCRIPT -is [system.string] -and ![string]::IsNullOrEmpty($DEPLOYSCRIPT))
 {
-    $ScriptParts = $DEPLOYSCRIPT.Split(' ');
-    if (!(Test-Path($ScriptParts[0]))) {
-        write-host -ForegroundColor "red" "Defined DEPLOYSCRIPT not found"
-        exit
-    }
-
-    if ($DEPLOYSCRIPT.Contains(".xml")) 
+    $DEPLOYSCRIPT = @($DEPLOYSCRIPT); #convert to array
+}
+if ($DEPLOYSCRIPT -is [system.array] -and $DEPLOYSCRIPT.Length > 0)
+{
+    foreach ($Script in $DEPLOYSCRIPT) 
     {
-        # Verify ANT/ANSICON install
-        #
-        if (!(Test-Path("$Env:CODE_HOME\ant"))) {
-            write-hpst -ForegroundColor "red" "The ANT/ANSICON package must be installed to run this script"
-            write-host "Re-run the code-package installer and add the Ant/Ansicon package"
+        $ScriptParts = $Script.Split(' ');
+        if (!(Test-Path($ScriptParts[0]))) {
+            write-host -ForegroundColor "red" "Script $Script not found"
             exit
         }
+        if ($Script.Contains(".xml")) {
+            $IsAnt = $true
+        }
+    }
+}
+
+if ($IsAnt -eq $true) 
+{
+    # Verify ANT/ANSICON install
+    #
+    if (!(Test-Path("$Env:CODE_HOME\ant"))) {
+        write-hpst -ForegroundColor "red" "The ANT/ANSICON package must be installed to run this script"
+        write-host "Re-run the code-package installer and add the Ant/Ansicon package"
+        exit
     }
 }
 
@@ -1204,7 +1218,7 @@ if ($NOTEPADEDITS -eq "Y") {
 #
 # Run custom deploy script if specified
 #
-if (![string]::IsNullOrEmpty($DEPLOYSCRIPT))
+if ($DEPLOYSCRIPT.Lenth > 0)
 {
     if ($SKIPDEPLOYPUSH -ne "Y")
     {
@@ -1214,23 +1228,23 @@ if (![string]::IsNullOrEmpty($DEPLOYSCRIPT))
 
         if ($TESTMODE -ne "Y") 
         {
-            if ($DEPLOYSCRIPT.EndsWith(".xml")) {
-                Invoke-Expression -Command "$Env:CODE_HOME\ant\bin\ant.bat " `
-                                  "-logger org.apache.tools.ant.listener.AnsiColorLogger -f $DEPLOYSCRIPT"
+            foreach ($Script in $DEPLOYSCRIPT) 
+            {
+                if ($Script.EndsWith(".xml")) {
+                    Invoke-Expression -Command "$Env:CODE_HOME\ant\bin\ant.bat " `
+                            "-logger org.apache.tools.ant.listener.AnsiColorLogger -f $Script"
+                }
+                elseif ($Script.EndsWith(".ps1")) {
+                    Invoke-Expression -Command ".\$Script"
+                }
+                elseif ($Script.EndsWith(".bat")) {
+                    Invoke-Expression -Command "cmd /c $Script"
+                }
+                else {
+                    Invoke-Expression -Command "$Script"
+                }
+                Check-ExitCode
             }
-            elseif ($DEPLOYSCRIPT.EndsWith(".ps1")) {
-                Invoke-Expression -Command ".\$DEPLOYSCRIPT"
-            }
-            elseif ($DEPLOYSCRIPT.EndsWith(".bat")) {
-                Invoke-Expression -Command "cmd /c $DEPLOYSCRIPT"
-            }
-            else {
-                Invoke-Expression -Command "$DEPLOYSCRIPT"
-            }
-            #
-            # Check script error code, 0 is success
-            #
-            Check-ExitCode
         }
         else {
             write-host -ForegroundColor "magenta" "   Test mode, skipping deploy script run"
