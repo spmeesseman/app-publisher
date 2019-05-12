@@ -6,6 +6,7 @@ import * as util from './util';
 import { exec } from 'shelljs';
 import * as fs from 'fs';
 import * as gradient from 'gradient-string';
+import chalk from 'chalk';
 
 //
 // Display color banner
@@ -13,20 +14,27 @@ import * as gradient from 'gradient-string';
 displayIntro();
 
 //
-// Build arguments object
+// Build command line argument parser
 //
 var ArgumentParser = require('argparse').ArgumentParser;
 var parser = new ArgumentParser({
-    version: require('../package.json').version,
-    addHelp: true,
-    description: 'App-Publisher command line arguments',
+    addHelp: false,
+    description: '',
     prog: 'app-publisher'
 });
 parser.addArgument(
     '--dry-run',
     {
+        dest: 'dryRun',
         action: 'storeTrue',
         help: 'Run the publisher chain in dry/test mode and exit.'
+    }
+);
+parser.addArgument(
+    [ '-h', '--help' ],
+    {
+        help: 'Display help and exit.',
+        action: 'storeTrue'
     }
 );
 parser.addArgument(
@@ -38,12 +46,58 @@ parser.addArgument(
     }
 );
 parser.addArgument(
+    '--read-config',
+    {
+        dest: 'readConfig',
+        action: 'storeTrue',
+        help: 'Display the contents of the configuration file end exit.'
+    }
+);
+parser.addArgument(
     '--verbose',
     {
         action: 'storeTrue',
         help: 'Increase logging verbosity.'
     }
 );
+parser.addArgument(
+    '--version',
+    {
+        help: 'Display version and exit.',
+        action: 'storeTrue'
+    }
+);
+
+//
+// Parse command line arguments
+//
+let args = parser.parseArgs();
+
+//
+// If user specified '-h' or --help', then just display help and exit
+//
+if (args.help)
+{
+    util.log(gradient('cyan', 'pink').multiline(`----------------------------------------------------------------------------
+ App-Publisher Help
+----------------------------------------------------------------------------
+`, {interpolation: 'hsv'}));
+    parser.printHelp();
+    process.exit(0);
+}
+
+//
+// If user specified '--version', then just display version and exit
+//
+if (args.version)
+{
+    util.log(gradient('cyan', 'pink').multiline(`----------------------------------------------------------------------------
+ App-Builder Version
+----------------------------------------------------------------------------
+`, {interpolation: 'hsv'}));
+    util.log(require('../package.json').version);
+    process.exit(0);
+}
 
 //
 // Read config file:
@@ -51,7 +105,6 @@ parser.addArgument(
 //     .publishrc.json
 //     .publishrc
 //
-let args = parser.parseArgs();
 let config;
 if (fs.existsSync('.publishrc.json')) {
     config = fs.readFileSync('.publishrc.json').toString();
@@ -65,11 +118,35 @@ else {
 }
 
 //
+// If user specified '--read-config', then just display config and exit
+//
+if (args.readConfig)
+{
+    let title = `----------------------------------------------------------------------------
+ Cofiguration file contents
+----------------------------------------------------------------------------
+    `;
+    util.log(gradient('cyan', 'pink').multiline(title, {interpolation: 'hsv'}));
+    util.log(config.toString());
+    process.exit(0);
+}
+
+//
+// Set flags if dry run
+//
+if (args.dryRun)
+{
+    config.testMode = "Y";
+    config.testModeSvnRevert = "Y";
+    config.skipDeployPush = "Y";
+}
+
+//
 // Run publish
 //
 if (args.profile === "gen") {
     const commitAnalyzer = new CommitAnalyzer({});
-    console.log(`Test: Release level is ${commitAnalyzer.getReleaseLevel()}`);
+    util.log(`Test: Release level is ${commitAnalyzer.getReleaseLevel()}`);
     util.log('Generic publisher not yet implemented');
 }
 else if (args.profile === "pja" || args.profile === "pjr") 
@@ -153,8 +230,8 @@ function displayIntro()
   _ _ __ _ __   _ __      _ __  _   __| |_ | (_)_____| |  ____  ____
  / _\\' || '_ \\\\| '_ \\\\___| '_ \\\\| \\ \\ |  _\\| | || ___| \\_/ _ \\\\/  _|
  | (_| || |_) || |_) |___| |_) || |_| | |_)| | | \\\\__| __ | __/| |
- \\__\\\\__| | .//| | .//   | | .//|____/|___/|_|_|/___/|_| \\___|.|_|
-        |_|    |_|       |_|                                                     
+ \\__\\\\__| | .//| | .//   | | .//|____/|___/|_|_|/___/|_| \\___|.|_| v${require('../package.json').version} 
+        |_|    |_|       |_|                                                    
     `;
     util.log(gradient('cyan', 'pink').multiline(title, {interpolation: 'hsv'}));
 }
