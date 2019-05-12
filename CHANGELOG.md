@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.0.3](https://github.com/spmeesseman/app-publisher/compare/v1.0.2...v1.0.3) (2019-05-12)
+
+
+### Bug Fixes
+
+* script array property in config file is not parsed correctly ([7f128a2](https://github.com/spmeesseman/app-publisher/commit/7f128a2))
+
 ## [1.0.2](https://github.com/spmeesseman/app-publisher/compare/v1.0.1...v1.0.2) (2019-05-12)
 
 
