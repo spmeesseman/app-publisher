@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.0.7](https://github.com/spmeesseman/app-publisher/compare/v1.0.6...v1.0.7) (2019-05-13)
+
+
+### Bug Fixes
+
+* perryjohnson scoped package does not launch ps script ([a1b26bd](https://github.com/spmeesseman/app-publisher/commit/a1b26bd))
+
 ## [1.0.6](https://github.com/spmeesseman/app-publisher/compare/v1.0.5...v1.0.6) (2019-05-13)
 
 
