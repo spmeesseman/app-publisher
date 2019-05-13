@@ -106,15 +106,15 @@ if (args.version)
 //     .publishrc.json
 //     .publishrc
 //
-let config;
+let fileCfg;
 if (fs.existsSync('.publishrc.json')) {
-    config = fs.readFileSync('.publishrc.json');
+    fileCfg = JSON.parse(fs.readFileSync('.publishrc.json').toString());
 }
 else if (fs.existsSync('.publishrc')) {
-    config = fs.readFileSync('.publishrc');
+    fileCfg = JSON.parse(fs.readFileSync('.publishrc').toString());
 }
 else {
-    util.logError("Config not found!! Exiting");
+    util.logError("Config file not found!! Exiting");
     process.exit(100);
 }
 
@@ -128,19 +128,23 @@ if (args.readConfig)
 ----------------------------------------------------------------------------
     `;
     util.log(chalk.bold(gradient('cyan', 'pink').multiline(title, {interpolation: 'hsv'})));
-    util.log(config.toString());
+    util.log(fileCfg.toString());
     process.exit(0);
 }
 
 //
-// Set flags if dry run
+// Set dry run flags
 //
-if (args.dryRun)
-{
-    config.testMode = "Y";
-    config.testModeSvnRevert = "Y";
-    config.skipDeployPush = "Y";
-}
+let dryCfg = {
+    testMode: args.dryRun ? "Y" : "N",
+    testModeSvnRevert: args.dryRun ? "Y" : "N",
+    skipDeployPush: args.dryRun ? "Y" : "N"
+};
+
+//
+// Merge config
+//
+let config = { ...fileCfg, ...dryCfg };
 
 //
 // Run publish
@@ -211,7 +215,7 @@ else if (args.profile === "pja" || args.profile === "pjr")
                 cProperty = property;
             }
         };
-        visit(config.toString(), visitor);
+        visit(JSON.stringify(config), visitor);
     }
     else {
         util.logError("Config not found!! Exiting");

@@ -346,7 +346,7 @@ class CommitAnalyzer
 {
     [string]get($Commits) 
     {
-        $ReleaseLevel = "patch";
+        $ReleaseLevel = "patch";return $ReleaseLevel;
         #
         # Loop through each line and look at the comment tag.  The comment tag needs to be
         # at the start of the comment, and be appended by a ':' character.  For example:
@@ -396,10 +396,10 @@ class HistoryFile
 {
     [string]getVersion($in, $stringver)
     {
-        return $this.getHistory("", "", 0, $stringver, $false, $in, "", "")
+        return $this.getHistory("", "", 0, $stringver, $false, $in, "", "", "", "")
     }
 
-    [string]getHistory($project, $version, $numsections, $stringver, $listonly, $in, $out, $targetloc)
+    [string]getHistory($project, $version, $numsections, $stringver, $listonly, $in, $out, $targetloc, $npmpkg, $nugetpkg)
     {
         $szInputFile = $in;
         $szOutputFile = $out;
@@ -564,12 +564,25 @@ class HistoryFile
 
         # $iIndex1 is our start index
         # if version is empty, then the script is to return the version
-        if ($version -ne "" -and $version -ne $null -and $targetloc -ne "" -and $targetloc -ne $null)
+        if ($version -ne "" -and $version -ne $null -and (![string]::IsNullOrEmpty($targetloc) -or ![string]::IsNullOrEmpty($npmpkg) -or ![string]::IsNullOrEmpty($nugetpkg)))
         {
             write-host "   Write header text to message"
 
             $szFinalContents = "<b>$project $stringver $version has been released.</b><br><br>"
-            $szFinalContents += "Release Location: $targetloc<br><br>"
+                
+            if (![string]::IsNullOrEmpty($targetloc)) {
+                $szFinalContents += "Release Location: $targetloc<br><br>"
+            }
+
+            if (![string]::IsNullOrEmpty($npmpkg))
+            {
+                $szFinalContents += "NPM Location: $npmpkg<br><br>"
+            }
+
+            if (![string]::IsNullOrEmpty($nugetpkg))
+            {
+                $szFinalContents += "Nuget Location: $nugetpkg<br><br>"
+            }
 
             #
             # Installer release, write unc path to history file
@@ -578,7 +591,7 @@ class HistoryFile
                 $szFinalContents += "Complete History: $targetloc\history.txt<br><br>"
             }
 
-            $szFinalContents += "Most Recent Entry:<br><br>";
+            $szFinalContents += "Most Recent History File Entry:<br><br>";
 
             write-host "   Write $iNumSections history section(s) to message"
 
@@ -662,11 +675,11 @@ class HistoryFile
 # $targetloc is the unc or web path of the distribution (i.e. the softwareimages drive, the 
 # npm server, or the nuget server)
 #
-function Send-Notification($targetloc)
+function Send-Notification($targetloc, $npmloc, $nugetloc)
 {
     # encoding="plain" (from ant)   ps cmd: -Encoding ASCII
     $rlh = New-Object -TypeName HistoryFile
-    $EMAILBODY = $rlh.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $HISTORYFILE, $null, $targetloc);
+    $EMAILBODY = $rlh.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $HISTORYFILE, $null, $targetloc, $npmloc, $nugetloc);
     write-host "Sending release notification email"
     try {
         if ($TESTMODE -ne "Y") {
@@ -1267,6 +1280,13 @@ if ($DEPLOYSCRIPT.Length -gt 0)
 }
 
 #
+# Store location paths depending on publish types
+#
+$TargetNetLocation = ""
+$NpmLocation = ""
+$NugetLocation = ""
+
+#
 # PJ Installer Release
 #
 if ($INSTALLERRELEASE -eq "Y") 
@@ -1316,7 +1336,7 @@ if ($INSTALLERRELEASE -eq "Y")
     
     if ($InstallerBuilt -eq $true)
     {
-        $TargetLocation = "\\192.168.68.120\d$\softwareimages\$PROJECTNAME\$VERSION"
+        $TargetNetLocation = "\\192.168.68.120\d$\softwareimages\$PROJECTNAME\$VERSION"
         #
         # Check if this is an ExtJs build.  ExtJs build will be an installer build, but it will
         # contain both package.json and app.json that will need version updated.  A node_modules
@@ -1381,18 +1401,18 @@ if ($INSTALLERRELEASE -eq "Y")
                 # SoftwareImages Upload
                 #
                 # Create directory on softwareimages network drive
-                # TargetLocation is defined above as it is needed for email notification fn as well
+                # TargetNetLocation is defined above as it is needed for email notification fn as well
                 #
-                if (!(Test-Path($TargetLocation))) {
-                    write-host "Create directory $TargetLocation"
-                    New-Item -Path "$TargetLocation" -ItemType "directory" | Out-Null
+                if (!(Test-Path($TargetNetLocation))) {
+                    write-host "Create directory $TargetNetLocation"
+                    New-Item -Path "$TargetNetLocation" -ItemType "directory" | Out-Null
                     Check-ExitCode
                 }
                 #
                 # Copy all files in 'dist' directory that start with $PROJECTNAME, and the history file
                 #
-                write-host "Deploying files to $TargetLocation"
-                Copy-Item "$PATHTODIST\*","$HISTORYFILE" -Destination "$TargetLocation"
+                write-host "Deploying files to $TargetNetLocation"
+                Copy-Item "$PATHTODIST\*","$HISTORYFILE" -Destination "$TargetNetLocation"
                 Check-ExitCode
                 #
                 # Sharepoint Upload
@@ -1422,7 +1442,9 @@ if ($INSTALLERRELEASE -eq "Y")
         #
         # Send release notification email
         #
-        Send-Notification $TargetLocation
+        if ($NPMRELEASE -ne "Y" -and $NUGETRELEASE -ne "Y") {
+            Send-Notification "$TargetNetLocation" "$NpmLocation" "$NugetLocation"
+        }
     }
     else {
         write-host -ForegroundColor "darkyellow" "Installer was not built"
@@ -1495,7 +1517,10 @@ if ($NPMRELEASE -eq "Y")
             #
             # Release notification email
             #
-            Send-Notification "$NPMSERVER/$PROJECTNAME"
+            $NpmLocation = "$NPMSERVER/" + '@perryjohnson/' + "$PROJECTNAME"
+            if ($NUGETRELEASE -ne "Y") {
+                Send-Notification "$TargetNetLocation" "$NpmLocation" "$NugetLocation"
+            }
         }
         else {
             Svn-Revert
@@ -1519,7 +1544,8 @@ if ($NUGETRELEASE -eq "Y")
     #
     # Send release notification email
     #
-    #Send-Notification "$NUGETSERVER/$PROJECTNAME"
+    $NugetLocation = "$NUGETSERVER/$PROJECTNAME"
+    Send-Notification "$TargetNetLocation" "$NpmLocation" "$NugetLocation"
 }
 
 #
