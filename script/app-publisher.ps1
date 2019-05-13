@@ -20,6 +20,12 @@ param (
 # Modify the below variables per project
 # ------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------
+$APPPUBLISHERVERSION = "1.0.0",
+#
+# The build command to run once versions have been updated in version files (i.e. package.json,
+# history.txt, assemblyinfo.cs, etc)
+#
+$BUILDCOMMAND = "",
 #
 # Name of the project.  This must macth throughout the build files and the SVN project name
 #
@@ -55,6 +61,10 @@ $NOTEPADEDITS = "Y",
 # To build the npm release, set this flag to "Y"
 #
 $NPMRELEASE = "N",
+#
+# The scope of the npm package, empty if none
+#
+$NPMSCOPE = "",
 #
 # NPM user (for NPMRELEASE="Y" only)
 # 
@@ -159,6 +169,10 @@ $SVNREPO = "pja",
 #
 $SVNPROTOCOL = "svn",
 #
+# Whether or not to tag the new version in SVN.  Default is Yes.
+#
+$SVNTAG = "Y",
+#
 # Test mode - Y for 'yes', N for 'no'
 #
 # In test mode, the following holds:
@@ -182,7 +196,11 @@ $TESTEMAILRECIP = "smeesseman@pjats.com",
 #     2. Build
 #     3. Release
 #
-$VERSIONTEXT = "Version"
+$VERSIONTEXT = "Version",
+#
+# Whether or not to write stdout to log file.  Default is Yes
+#
+$WRITELOG = "N"
 #
 # ------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------
@@ -191,7 +209,6 @@ $VERSIONTEXT = "Version"
 # ------------------------------------------------------------------------------------------
 )
 
-$SCRIPTVERSION = "1.0.0"
 $CURRENTVERSION = ""
 $VERSION = "" 
 $BRANCH = ""
@@ -231,14 +248,14 @@ class Svn
         #
         # Get tags
         #
-        write-host("Retrieving most recent tag");
-        $xml = svn log --xml "${Protocol}://$Server/$Repo/$Module/tags" --verbose --limit 50;
-        $path = $null;
+        Log-Message "Retrieving most recent tag"
+        $xml = svn log --xml "${Protocol}://$Server/$Repo/$Module/tags" --verbose --limit 50
+        $path = $null
 
         #
         # Parse log response
         #
-        write-host("Parsing response from SVN");
+        Log-Message("Parsing response from SVN");
         try {
             $path = (([Xml] ($xml)).Log.LogEntry.Paths.Path |
             Where-Object { $_.action -eq 'A' -and $_.kind -eq 'dir' -and $_.InnerText -like '*tags*'} |
@@ -248,36 +265,36 @@ class Svn
             Sort-Object Date -Descending | Select-Object -First 1).path
         }
         catch {
-            write-host -ForegroundColor "red" "Response could not be parsed, invalid module, no commits found, or no version tag exists";
-            return $comments;
+            Log-Message "Response could not be parsed, invalid module, no commits found, or no version tag exists" "red"
+            return $comments
         }
 
-        $rev = (([Xml]($xml)).Log.LogEntry | Where-Object { $_.revision -ne ''} | Select-Object -First 1).revision;
+        $rev = (([Xml]($xml)).Log.LogEntry | Where-Object { $_.revision -ne ''} | Select-Object -First 1).revision
 
-        write-host("   Found version tag:");
-        write-host("      Rev     : $rev");
-        write-host("      Path    : $path");
+        Log-Message "   Found version tag:"
+        Log-Message "      Rev     : $rev"
+        Log-Message "      Path    : $path"
 
         #
         # Retrieve commits since last version tag
         #
-        write-host("Retrieving commits since last version");
-        $xml = svn log --xml "${Protocol}://$Server/$Repo/$Module/trunk" --verbose --limit 50 -r ${rev}:HEAD;
+        Log-Message "Retrieving commits since last version"
+        $xml = svn log --xml "${Protocol}://$Server/$Repo/$Module/trunk" --verbose --limit 50 -r ${rev}:HEAD
 
-        write-host("Parsing response from SVN");
-        write-host("Comments found in commits:");
-        $commentNum = 1;
+        Log-Message "Parsing response from SVN"
+        Log-Message "Comments found in commits:"
+        $commentNum = 1
         
         #
         # Create xml document object from SVN log response
         #
         $xdoc = $null;
         try {
-            $xdoc = [Xml]$xml;
+            $xdoc = [Xml]$xml
         }
         catch {
-            write-host -ForegroundColor "red" "No commits found or no version tag exists";
-            return $comments;
+            Log-Message "No commits found or no version tag exists" "red"
+            return $comments
         }
 
         #
@@ -290,33 +307,33 @@ class Svn
                 $line = "";
                 
                 if ($commentNum -lt 10) {
-                    $line = "$commentNum.  ";
+                    $line = "$commentNum.  "
                 }
                 else {
-                    $line = "$commentNum. ";
+                    $line = "$commentNum. "
                 }
 
                 $msgs = $msg.Split("`n");
                 for ($i = 0; $i -lt $msgs.Length; $i++)
                 {
                     if ($i -gt 0) {
-                        $line += "`r`n";
+                        $line += "`r`n"
                     }
                     $msg = $msgs[$i];
                     if ($msg.Length -gt $LineLen)
                     {
-                        $idx = $msg.LastIndexOf(" ", $LineLen);
-                        $line += $msg.SubString(0, $idx);
+                        $idx = $msg.LastIndexOf(" ", $LineLen)
+                        $line += $msg.SubString(0, $idx)
                         while ($msg.Length -gt $LineLen)
                         {
-                            $msg = $msg.SubString($idx);
+                            $msg = $msg.SubString($idx)
                             $line += "`r`n";
                             if ($msg.Length -gt $LineLen) {
-                                $idx = $msg.LastIndexOf(" ", $LineLen);
-                                $line += $msg.SubString(0, $idx).Trim();
+                                $idx = $msg.LastIndexOf(" ", $LineLen)
+                                $line += $msg.SubString(0, $idx).Trim()
                             }
                             else {
-                                $line += $msg.Trim();
+                                $line += $msg.Trim()
                             }
                         }
                     }
@@ -328,17 +345,17 @@ class Svn
                 $idx = $line.IndexOf("`n");
                 while ($idx -ne -1)
                 {
-                    $line = $line.Substring(0, $idx + 1) + "    " + $line.Substring($idx + 1);
-                    $idx = $line.IndexOf("`n", $idx + 1);
+                    $line = $line.Substring(0, $idx + 1) + "    " + $line.Substring($idx + 1)
+                    $idx = $line.IndexOf("`n", $idx + 1)
                 }
 
-                $comments = $comments + $line + "`r`n`r`n";
+                $comments = $comments + $line + "`r`n`r`n"
             
-                $commentNum++;
+                $commentNum++
             }
         }
 
-        return $comments;
+        return $comments
     }
 }
 
@@ -364,25 +381,25 @@ class CommitAnalyzer
             $linefmt = $line.ToLower();
             if ($linefmt.Contains("breaking change")) # bump major on breaking change
             {
-                write-host "Breaking change found"
+                Log-Message "Breaking change found"
                 $ReleaseLevel = "major";
                 break;
             }
             if ($linefmt.Contains("majfeat: ")) # bump major on major feature
             {
-                write-host "Major feature found"
+                Log-Message "Major feature found"
                 $ReleaseLevel = "major";
                 break;
             }
             if ($linefmt.Contains("feat: ")) # bump minor on feature
             {
-                write-host "Feature found";
+                Log-Message "Feature found";
                 $ReleaseLevel = "minor";
                 break;
             }
             #if ($linefmt.Contains("perf"))
             #{
-            #    write-host "Performance enhancement found";
+            #    Log-Message "Performance enhancement found";
             #    $ReleaseLevel = "minor";
             #    break;
             #}
@@ -410,7 +427,7 @@ class HistoryFile
         # Make sure user entered correct cmd line params
         #
         if (!(Test-Path $szInputFile) -or $szInputFile -eq "" -or $szInputFile -eq $null) {
-            write-host -ForegroundColor "red" "Error: No input file provided"
+            Log-Message "Error: No input file provided" "red"
             exit 101;
         }
 
@@ -425,17 +442,17 @@ class HistoryFile
             $iNumSections = [int32]::Parse($szNumSections);
         }
         catch {
-            write-host -ForegroundColor "red" "   Parse Error - Invalid NumSections parameter"
-            write-host -ForegroundColor "red" "   Error type  : $_.Exception.GetType().FullName"
-            write-host -ForegroundColor "red" "   Error code  : $($_.Exception.ErrorCode)"
-            write-host -ForegroundColor "red" "   Error text  : $($_.Exception.Message)"
+            Log-Message "   Parse Error - Invalid NumSections parameter" "red"
+            Log-Message "   Error type  : $_.Exception.GetType().FullName" "red"
+            Log-Message "   Error code  : $($_.Exception.ErrorCode)" "red"
+            Log-Message "   Error text  : $($_.Exception.Message)" "red"
             exit 101;
         }
 
-        write-host "Extract from history.txt file"
-        write-host "   Input File         : '$szInputFile'"
-        write-host "   Output File        : '$szOutputFile'"
-        write-host "   Num Sections       : '$iNumSections'"
+        Log-Message "Extract from history.txt file"
+        Log-Message "   Input File         : '$szInputFile'"
+        Log-Message "   Output File        : '$szOutputFile'"
+        Log-Message "   Num Sections       : '$iNumSections'"
 
         #
         # Code operation:
@@ -476,7 +493,7 @@ class HistoryFile
             #
             if ($iIndex1 -eq -1)
             {
-                write-host -ForegroundColor "red" "   Last section could not be found (0), exit"
+                Log-Message "   Last section could not be found (0), exit" "red"
                 exit 101
             }
             
@@ -493,7 +510,7 @@ class HistoryFile
             # make sure the newline was found
             if ($iIndex2 -eq -1)
             {
-                write-host -ForegroundColor "red" "   Last section could not be found (1), exit"
+                Log-Message "   Last section could not be found (1), exit" "red"
                 exit 101
             }
 
@@ -503,7 +520,7 @@ class HistoryFile
             #
             if ($iIndex2 -eq -1)
             {
-                write-host -ForegroundColor "red" "   Last section could not be found (2), exit"
+                Log-Message "   Last section could not be found (2), exit" "red"
                 exit 101
             }
             
@@ -540,11 +557,11 @@ class HistoryFile
         #
         if ($bFoundStart -eq 0)
         {
-            write-host -ForegroundColor "red" "   Last section could not be found, exit"
+            Log-Message "   Last section could not be found, exit" "red"
             exit 101
         }
 
-        write-host "   Found version section"
+        Log-Message "   Found version section"
         $szContents = $szContents.Substring($iIndex1)
 
         #
@@ -566,7 +583,7 @@ class HistoryFile
         # if version is empty, then the script is to return the version
         if ($version -ne "" -and $version -ne $null -and (![string]::IsNullOrEmpty($targetloc) -or ![string]::IsNullOrEmpty($npmpkg) -or ![string]::IsNullOrEmpty($nugetpkg)))
         {
-            write-host "   Write header text to message"
+            Log-Message "   Write header text to message"
 
             $szFinalContents = "<b>$project $stringver $version has been released.</b><br><br>"
                 
@@ -593,7 +610,7 @@ class HistoryFile
 
             $szFinalContents += "Most Recent History File Entry:<br><br>";
 
-            write-host "   Write $iNumSections history section(s) to message"
+            Log-Message "   Write $iNumSections history section(s) to message"
 
             if ($listonly -eq $false) {
                 $szFinalContents += $szContents
@@ -614,7 +631,7 @@ class HistoryFile
             #
             if ($iNumSections -gt 1)
             {   
-                write-host "   Re-ordering $iNumSections sections newest to oldest"
+                Log-Message "   Re-ordering $iNumSections sections newest to oldest"
 
                 $sections = @()
                 
@@ -627,9 +644,9 @@ class HistoryFile
                     {
                         $iIndex2  = $szContents.IndexOf("</font>")
                     }
-                    #write-host($iIndex1);
-                    #write-host($iIndex2);
-                    #write-host($szContents.Substring($iIndex1, $iIndex2 - $iIndex1));
+                    #Log-Message($iIndex1);
+                    #Log-Message($iIndex2);
+                    #Log-Message($szContents.Substring($iIndex1, $iIndex2 - $iIndex1));
                     $sections += $szContents.Substring($iIndex1, $iIndex2 - $iIndex1);
                 }  
                 $szContents = "";  
@@ -654,18 +671,41 @@ class HistoryFile
             $iIndex1 = $szContents.IndexOf(">$stringver&nbsp;", 0) + 14
             $iIndex2 = $szContents.IndexOf("<br>", $iIndex1)
             $curversion = $szContents.Substring($iIndex1, $iIndex2 - $iIndex1)
-            write-host("   Found version $curversion")
+            Log-Message("   Found version $curversion")
             return $curversion
         }
 
         if ($szOutputFile -ne "" -and $szOutputFile -ne $null) {
             New-Item -ItemType "file" -Path "$szOutputFile" -Value $szFinalContents | Out-Null
-            write-host "   Saved release history output to $szOutputFile"
+            Log-Message "   Saved release history output to $szOutputFile"
         }
 
-        write-host -ForegroundColor "darkgreen" "   Successful"
+        Log-Message "   Successful" "darkgreen"
 
         return $szFinalContents
+    }
+}
+
+function Log-Message($msg, $color)
+{
+    if ($color) {
+        write-host -ForegroundColor $color $msg
+    }
+    else {
+        write-host $msg
+    }
+
+    if ($WRITELOG -eq "Y") 
+    {
+         # Get current date time
+        $CurrentDateTime = Get-Date -format "yyyy\/MM\/dd HH:mm:ss";
+        # Construct complete message
+        $FormattedMessage = "$CurrentDateTime $msg";
+        # Write the message to the file
+        try {
+            out-file -filepath $LogFileName -Append -inputobject $FormattedMessage  
+        }
+        catch {} 
     }
 }
 
@@ -680,7 +720,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     # encoding="plain" (from ant)   ps cmd: -Encoding ASCII
     $rlh = New-Object -TypeName HistoryFile
     $EMAILBODY = $rlh.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $HISTORYFILE, $null, $targetloc, $npmloc, $nugetloc);
-    write-host "Sending release notification email"
+    Log-Message "Sending release notification email"
     try {
         if ($TESTMODE -ne "Y") {
             send-mailmessage -SmtpServer 10.0.7.50 -BodyAsHtml -From ProductBuild@pjats.com -To ProductRelease@pjats.com -Subject "$PROJECTNAME $VERSION" -Body $EMAILBODY
@@ -691,7 +731,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
         Check-ExitCode
     }
     catch {
-        write-host -ForegroundColor "red" "   Delivery failure"
+        Log-Message "   Delivery failure" "red"
     }
 }
 
@@ -702,7 +742,7 @@ Function CheckSpelling($String, $RemoveSpecialChars)
 {
     $OutString = $String
 
-    write-host "Perform spelling check"
+    Log-Message "Perform spelling check"
 
     if ($RemoveSpecialChars) { 
         $String = Clean-String $String	
@@ -747,10 +787,10 @@ Function CheckSpelling($String, $RemoveSpecialChars)
                 # No error was found in the input string	
                 #
             }
-            write-host -ForegroundColor "darkgreen" "   Success"
+            Log-Message "   Success" "darkgreen"
         }
         catch{
-            write-host -ForegroundColor "red" "   Failure"
+            Log-Message "   Failure" "red"
         }
     }
 
@@ -769,19 +809,21 @@ function Clean-String($Str)
 
 function Svn-Changelist-Add($SvnFile)
 {
-    write-host "Adding $SvnFile to svn changelist"
+    Log-Message "Adding $SvnFile to svn changelist"
     if ($PATHPREROOT -ne "" -and $PATHPREROOT -ne $null) {
         $SvnFile = Join-Path -Path "$PATHPREROOT" -ChildPath "$SvnFile"
     }
-    $script:SVNCHANGELIST = "$script:SVNCHANGELIST `"$SvnFile`""
-    #$script:SVNCHANGELIST += "`"$SvnFile`""
+    if (!$script:SVNCHANGELIST.Contains($SvnFile)) {
+        $script:SVNCHANGELIST = "$script:SVNCHANGELIST `"$SvnFile`""
+        #$script:SVNCHANGELIST += "`"$SvnFile`""
+    }
 }
 
 function Svn-Revert()
 {
     if (![string]::IsNullOrEmpty($SVNCHANGELIST)) 
     {
-        write-host "Reverting touched files under version control"
+        Log-Message "Reverting touched files under version control"
         Invoke-Expression -Command "svn revert $SVNCHANGELIST"
         Check-ExitCode
     }
@@ -793,10 +835,10 @@ function Check-ExitCode($ExitOnError = $false)
     # Check script error code, 0 is success
     #
     if ($LASTEXITCODE -eq 0) {
-        write-host -ForegroundColor "darkgreen" "Success"
+        Log-Message "Success" "darkgreen"
     }
     else {
-        write-host -ForegroundColor "red" "Failure"
+        Log-Message "Failure" "red"
         if ($ExitOnError -eq $true) {
             Svn-Revert
             exit
@@ -806,7 +848,7 @@ function Check-ExitCode($ExitOnError = $false)
 
 function Replace-Version($File, $Old, $New)
 {
-    write-host "Write new version $VERSION to $File"
+    Log-Message "Write new version $VERSION to $File"
     ((Get-Content -path $File -Raw) -replace "$Old", "$New") | Set-Content -NoNewline -Path $File
     #$FileContent = ((Get-Content -path $File -Raw) -replace "$Old", "$New")
     #Set-Content -NoNewline -Path $INSTALLERSCRIPT -Value $FileContent
@@ -822,36 +864,36 @@ function Replace-Version($File, $Old, $New)
 #
 set-location -Path $PATHTOROOT
 $CWD = Get-Location
-write-host -ForegroundColor "darkblue" "----------------------------------------------------------------"
-write-host -ForegroundColor "darkblue" "App Publisher"
-write-host -ForegroundColor "blue"     "   Version   : $SCRIPTVERSION"
-write-host -ForegroundColor "blue"     "   Author    : Scott Meesseman"
-write-host -ForegroundColor "blue"     "   Directory : $CWD"
-write-host -ForegroundColor "darkblue" "----------------------------------------------------------------"
+Log-Message "----------------------------------------------------------------" "darkblue"
+Log-Message " App Publisher" "darkblue"
+Log-Message "   Version   : $APPPUBLISHERVERSION" "cyan"
+Log-Message "   Author    : Scott Meesseman" "cyan"
+Log-Message "   Directory : $CWD" "cyan"
+Log-Message "----------------------------------------------------------------" "darkblue"
 
 #
 # Write project specific properties
 #
-write-host "Project specific script configuration:"
-write-host "   Project          : $PROJECTNAME"
-write-host "   Path to root     : $PATHTOROOT"
-write-host "   SVN server       : $SVNSERVER"
-write-host "   SVN repo         : $SVNREPO"
-write-host "   SVN protocol     : $SVNPROTOCOL"
-write-host "   History file     : $HISTORYFILE"
-write-host "   History file line: $HISTORYLINELEN"
-write-host "   History hdr file : $HISTORYHDRFILE"
-write-host "   Next Version     : $VERSIONTEXT"
-write-host "   NPM user         : $NPMUSER"
-write-host "   Is Install releas: $INSTALLERRELEASE"
-write-host "   Installer script : $INSTALLERSCRIPT"
-write-host "   Deploy script    : $DEPLOYSCRIPT"
-write-host "   Skip deploy/push : $SKIPDEPLOYPUSH"
-write-host "   Is NPM release   : $NPMRELEASE"
-write-host "   Is Nuget release : $NUGETRELEASE"
-write-host "   Notepad edits    : $NOTEPADEDITS"
-write-host "   Is test mode     : $TESTMODE"
-write-host "   Test email       : $TESTEMAILRECIP"
+Log-Message "Project specific script configuration:"
+Log-Message "   Project          : $PROJECTNAME"
+Log-Message "   Path to root     : $PATHTOROOT"
+Log-Message "   SVN server       : $SVNSERVER"
+Log-Message "   SVN repo         : $SVNREPO"
+Log-Message "   SVN protocol     : $SVNPROTOCOL"
+Log-Message "   History file     : $HISTORYFILE"
+Log-Message "   History file line: $HISTORYLINELEN"
+Log-Message "   History hdr file : $HISTORYHDRFILE"
+Log-Message "   Next Version     : $VERSIONTEXT"
+Log-Message "   NPM user         : $NPMUSER"
+Log-Message "   Is Install releas: $INSTALLERRELEASE"
+Log-Message "   Installer script : $INSTALLERSCRIPT"
+Log-Message "   Deploy script    : $DEPLOYSCRIPT"
+Log-Message "   Skip deploy/push : $SKIPDEPLOYPUSH"
+Log-Message "   Is NPM release   : $NPMRELEASE"
+Log-Message "   Is Nuget release : $NUGETRELEASE"
+Log-Message "   Notepad edits    : $NOTEPADEDITS"
+Log-Message "   Is test mode     : $TESTMODE"
+Log-Message "   Test email       : $TESTEMAILRECIP"
 
 #
 # Define the NPM and Nuget package servers
@@ -867,11 +909,24 @@ if ($NPMUSER -eq "") {
 }
 
 #
+# Set up log file
+#
+if ($WRITELOG -eq "Y") 
+{
+    # Determine current date  
+    $CurrentDate = Get-Date -format "yyyyMMddHHmmss";
+    # Define log file name
+    $LogFileName = "${env:LOCALAPPDATA}\Perry Johnson & Associates\app-publisher\log\app-publisher-$CurrentDate.log";
+    # Create the log directory
+    New-Item -ItemType directory -Force -Path "${env:LOCALAPPDATA}\Perry Johnson & Associates\app-publisher\log" | Out-Null;
+}
+
+#
 # Must have code-package installed to run this script
 #
 if (!(Test-Path($Env:CODE_HOME))) {
-    write-hpst -ForegroundColor "red" "Code Package must be installed to run this script"
-    write-host -ForegroundColor "red" "Install Code Package from softwareimages\code-package\x.x.x"
+    Log-Message "Code Package must be installed to run this script" "red"
+    Log-Message "Install Code Package from softwareimages\code-package\x.x.x" "red"
     exit
 }
 
@@ -889,7 +944,7 @@ if ($DEPLOYSCRIPT -is [system.array] -and $DEPLOYSCRIPT.Length -gt 0)
     {
         $ScriptParts = $Script.Split(' ');
         if (!(Test-Path($ScriptParts[0]))) {
-            write-host -ForegroundColor "red" "Script ${ScriptParts[0]} not found"
+            Log-Message "Script ${ScriptParts[0]} not found" "red"
             exit
         }
         if ($Script.Contains(".xml")) {
@@ -906,25 +961,28 @@ if ($IsAnt -eq $true)
     # Verify ANT/ANSICON install
     #
     if (!(Test-Path("$Env:CODE_HOME\ant"))) {
-        write-hpst -ForegroundColor "red" "The ANT/ANSICON package must be installed to run this script"
-        write-host "Re-run the code-package installer and add the Ant/Ansicon package"
+        Log-Message "The ANT/ANSICON package must be installed to run this script" "red"
+        Log-Message "Re-run the code-package installer and add the Ant/Ansicon package"
         exit
     }
 }
 
+#
+# Check installer script
+#
 if (![string]::IsNullOrEmpty($INSTALLERSCRIPT))
 {
     $ScriptParts = $INSTALLERSCRIPT.Split(' ');
     if (!(Test-Path($ScriptParts[0]))) {
-        write-host -ForegroundColor "red" "Defined INSTALLERSCRIPT not found"
+        Log-Message "Defined INSTALLERSCRIPT not found" "red"
         exit
     }
 
     if ($INSTALLERSCRIPT.Contains(".nsi"))
     {
         if (!(Test-Path("$Env:CODE_HOME\nsis"))) {
-            write-hpst -ForegroundColor "red" "The NSIS package must be installed to run this script"
-            write-host "Re-run the code-package installer and add the NSIS package"
+            Log-Message "The NSIS package must be installed to run this script" "red"
+            Log-Message "Re-run the code-package installer and add the NSIS package" "red"
             exit
         }
     }
@@ -938,7 +996,7 @@ if (![string]::IsNullOrEmpty($INSTALLERSCRIPT))
 # most current tag will be used
 #
 if ($COMMITS -eq "") {
-    write-host "Writing svn commits to $Env:TEMP\commits.txt"
+    Log-Message "Writing svn commits to $Env:TEMP\commits.txt"
     $svn = New-Object -TypeName Svn
     $COMMITS = $svn.getComments($SVNPROTOCOL, $SVNSERVER, $SVNREPO, $PROJECTNAME, $HISTORYLINELEN);
     [File]::WriteAllText("$Env:TEMP\commits.txt", $COMMITS); # write to file cant pass it on the cmd line
@@ -950,10 +1008,10 @@ if ($COMMITS -eq "") {
 # how to retrieve the latest commits
 #
 if ($COMMITS -eq "" -or $COMMITS -eq $null) {
-    write-host "Commits since the last version or the version tag could not be found"
+    Log-Message "Commits since the last version or the version tag could not be found"
     $Proceed = read-host -prompt "Proceed anyway? Y[N]"
     if ($Proceed.ToUpper() -eq "N") {
-        write-host -ForegroundColor "red" "User cancelled process, exiting"
+        Log-Message "User cancelled process, exiting" "red"
         exit
     }
 }
@@ -989,7 +1047,7 @@ if ($CURRENTVERSION -eq "")
             {
                 if (Test-Path("package.json"))
                 {
-                    write-host "Using semver to obtain next version number"
+                    Log-Message "Using semver to obtain next version number"
                     #
                     # use package.json properties to retrieve current version
                     #
@@ -1006,17 +1064,17 @@ if ($CURRENTVERSION -eq "")
                     $VERSION = & $Env:CODE_HOME\nodejs\node -e "console.log(require('semver').inc('$CURRENTVERSION', '$RELEASELEVEL'));"
                 } 
                 else {
-                    write-host -ForegroundColor "red" "package.json not found!"
+                    Log-Message "package.json not found!" "red"
                     exit
                 }
             } 
             else {
-                write-host -ForegroundColor "red" "Node not found (have you installed Code Package?)"
+                Log-Message "Node not found (have you installed Code Package?)" "red"
                 exit
             }
         } 
         else {
-            write-host -ForegroundColor "red" "Semver not found.  Run 'npm install --save-dev semver'"
+            Log-Message "Semver not found.  Run 'npm install --save-dev semver'" "red"
             exit
         }
     } 
@@ -1034,22 +1092,22 @@ if ($CURRENTVERSION -eq "")
             #
             # Legacy pj versioning
             #
-            write-host "Using legacy PJ versioning"
-            write-host "The current version is $CURRENTVERSION"
+            Log-Message "Using legacy PJ versioning"
+            Log-Message "The current version is $CURRENTVERSION"
             $VERSION = [System.Int32]::Parse($CURRENTVERSION) + 1
         }
         else {
             #
             # Semantic versioning non-npm project
             #
-            write-host "Using non-npm project semantic versioning"
-            write-host -ForegroundColor "darkyellow" "Semver not found, run 'npm install -g semver' to automate" `
-                                        "semantic versioning of non-NPM projects"
-            write-host "The current version is $CURRENTVERSION"
-            write-host "You must manually input the new version"
+            Log-Message "Using non-npm project semantic versioning"
+            Log-Message "Semver not found, run 'npm install -g semver' to automate" `
+                                        "semantic versioning of non-NPM projects" "darkyellow"
+            Log-Message "The current version is $CURRENTVERSION"
+            Log-Message "You must manually input the new version"
             $VERSION = read-host -prompt "Enter the version #, or C to cancel"
             if ($VERSION.ToUpper() -eq "C") {
-                write-host -ForegroundColor "red" "User cancelled process, exiting"
+                Log-Message "User cancelled process, exiting" "red"
                 exit
             }
         }
@@ -1057,7 +1115,7 @@ if ($CURRENTVERSION -eq "")
 }
 
 if ($CURRENTVERSION -eq "") {
-    write-host -ForegroundColor "red" "Could not determine current version, exiting"
+    Log-Message "Could not determine current version, exiting" "red"
     exit
 }
 
@@ -1092,17 +1150,17 @@ if ($TDATE -eq "") {
 #
 # Output some calculated info to console
 #
-write-host "Current Branch      : $BRANCH"
-write-host "Current Version     : $CURRENTVERSION"
-write-host "Next Version        : $VERSION"
-write-host "Date                : $TDATE"
+Log-Message "Current Branch      : $BRANCH"
+Log-Message "Current Version     : $CURRENTVERSION"
+Log-Message "Next Version        : $VERSION"
+Log-Message "Date                : $TDATE"
 
 #
 # Prepare $HISTORYFILE header
 #
 if ($CURRENTVERSION -ne $VERSION)
 {
-    write-host "Preparing history file"
+    Log-Message "Preparing history file"
     #
     # If history file doesnt exist, create one with the project name as a title
     #
@@ -1114,7 +1172,7 @@ if ($CURRENTVERSION -ne $VERSION)
         New-Item -ItemType "file" -Path "$HISTORYFILE" -Value "$PROJECTNAME`r`n`r`n" | Out-Null
     }
     if (!(Test-Path($HISTORYFILE))) {
-        write-host -ForegroundColor "red" "Could not create history file, exiting"
+        Log-Message "Could not create history file, exiting" "red"
         exit;
     }
     #
@@ -1131,7 +1189,7 @@ if ($CURRENTVERSION -ne $VERSION)
         Add-Content -NoNewline -Path $HISTORYFILE -Value $HISTORYHDRFILE
     }
     else {   
-        write-host -ForegroundColor "darkyellow" " History header template not found"
+        Log-Message "History header template not found" "darkyellow"
         Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n"  
     }                                                      
     Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n"
@@ -1229,14 +1287,349 @@ if ($CURRENTVERSION -ne $VERSION)
     Svn-Changelist-Add $HISTORYFILE
 }
 else {
-    write-host -ForegroundColor "darkyellow" "Version match, not touching history file"
+    Log-Message "Version match, not touching history file" "darkyellow"
 }
 #
 # Allow manual modifications to history file
 #
 if ($NOTEPADEDITS -eq "Y") {
-    write-host "Edit history file"
+    Log-Message "Edit history file"
     start-process -filepath "notepad" -args $HISTORYFILE -wait
+}
+
+#
+# Store location paths depending on publish types
+#
+$TargetNetLocation = ""
+$NpmLocation = ""
+$NugetLocation = ""
+
+#
+# PJ Installer Release
+#
+if ($INSTALLERRELEASE -eq "Y") 
+{
+    $InstallerBuilt = $false
+
+    #
+    # Check if this is an ExtJs build.  ExtJs build will be an installer build, but it will
+    # contain both package.json and app.json that will need version updated.  A node_modules
+    # directory will exist, so the current version was extracted by node and and next version  
+    # was calculated by semver.
+    #
+    if ((Test-Path("app.json")) -and (Test-Path("package.json")))
+    {
+        #
+        # Replace version in app.json
+        #
+        Replace-Version "app.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
+        #
+        # Add to app.json svn changelist for check-in
+        #
+        Svn-Changelist-Add "app.json"
+        #
+        # Allow manual modifications to app.json
+        #
+        if ($NOTEPADEDITS -eq "Y") {
+            Log-Message "Edit app.json file"
+            start-process -filepath "notepad" -args "app.json" -wait
+        }
+        #
+        # Replace version in package.json
+        #
+        Replace-Version "package.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
+        #
+        # Add to package.json svn changelist for check-in
+        #
+        Svn-Changelist-Add "package.json"
+        #
+        # Allow manual modifications to app.json
+        #
+        if ($NOTEPADEDITS -eq "Y") {
+            Log-Message "Edit package.json file"
+            start-process -filepath "notepad" -args "package.json" -wait
+        }
+        #
+        # Replace version in package-lock.json
+        #
+        if (Test-Path("package-lock.json")) 
+        {
+            Replace-Version "package-lock.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
+            #
+            # Add to package.json svn changelist for check-in
+            #
+            Svn-Changelist-Add "package-lock.json"
+        }
+    }
+
+    #
+    # Build
+    #
+    if (![string]::IsNullOrEmpty($BUILDCOMMAND))
+    {
+        Log-Message "Running build command"
+        Invoke-Expression -Command "$BUILDCOMMAND"
+        # Exit on failure
+        Check-ExitCode $true
+    }
+
+    #
+    # Build the installer
+    #
+    if (![string]::IsNullOrEmpty($INSTALLERSCRIPT) -and (Test-Path($INSTALLERSCRIPT)))
+    {
+        if ($INSTALLERSCRIPT.Contains(".nsi"))
+        {
+            # Create dist directory if it doesnt exist
+            #
+            if (!(Test-Path($PATHTODIST))) {
+                Log-Message "Create dist directory"
+                New-Item -Path "$PATHTODIST" -ItemType "directory" | Out-Null
+            }
+            #
+            # replace version in nsi file
+            #
+            Replace-Version $INSTALLERSCRIPT "`"$CURRENTVERSION`"" "`"$VERSION`""
+            #
+            # Add to svn changelist for check-in
+            #
+            Svn-Changelist-Add $INSTALLERSCRIPT
+            #
+            # Allow manual modifications to $INSTALLERSCRIPT
+            #
+            if ($NOTEPADEDITS -eq "Y") {
+                Log-Message "Edit installer file"
+                start-process -filepath "notepad" -wait -args $INSTALLERSCRIPT
+            }
+            #
+            # Run makensis to create installer
+            #
+            Log-Message "Building executable installer"
+            Invoke-Expression -Command "$Env:CODE_HOME\nsis\makensis.exe $INSTALLERSCRIPT"
+            Check-ExitCode
+            $InstallerBuilt = $true
+        }
+        else {
+            Log-Message "Cannot build this installer type ($INSTALLERSCRIPT)" "red"
+        }
+    }
+    
+    if ($InstallerBuilt -eq $true)
+    {
+        $TargetNetLocation = "\\192.168.68.120\d$\softwareimages\$PROJECTNAME\$VERSION"
+        #
+        # Check for legacy Deploy.xml script.  The scipt should at least be modified to NOT
+        # send the notification email.
+        #
+        if ($SKIPDEPLOYPUSH -ne "Y")
+        {
+            # Copy dist dir installer and the history file to target location, and pdf docs to Sharepoint
+            #
+            if ($TESTMODE -ne "Y") 
+            {
+                #
+                # SoftwareImages Upload
+                #
+                # Create directory on softwareimages network drive
+                # TargetNetLocation is defined above as it is needed for email notification fn as well
+                #
+                if (!(Test-Path($TargetNetLocation))) {
+                    Log-Message "Create directory $TargetNetLocation"
+                    New-Item -Path "$TargetNetLocation" -ItemType "directory" | Out-Null
+                    Check-ExitCode
+                }
+                #
+                # Copy all files in 'dist' directory that start with $PROJECTNAME, and the history file
+                #
+                Log-Message "Deploying files to $TargetNetLocation"
+                Copy-Item "$PATHTODIST\*","$HISTORYFILE" -Destination "$TargetNetLocation" | Out-Null
+                Check-ExitCode
+                #
+                # Sharepoint Upload
+                #
+                $SharepointServer = 'pjainc.pjvista.com@SSL'
+                $SharepointShare = "DavWWWRoot"
+                $SharepointDirectory = "Shared Documents\Tech Support\Application Installation and Configuration"
+                $SharepointPath = "\\$SharepointServer\$SharepointShare\$SharepointDirectory\$PROJECTNAME\$VERSION"
+                #
+                # Create directory on sharpoint share
+                #
+                New-Item -Path "$SharepointPath" -ItemType "directory" | Out-Null
+                #
+                # Copy all pdf files in 'dist' and 'doc' and 'documentation' directories
+                #
+                Log-Message "Deploying pdf documentation to Sharepoint"
+                Copy-Item "$PATHTODIST\*.pdf","doc\*.pdf","documentation\*.pdf" -Destination "$SharepointPath" | Out-Null
+                Check-ExitCode
+            }
+            else {
+                Log-Message "Test mode, skipping basic push to network drive" "magenta"
+            }
+        }
+        else {
+            Log-Message "Skipped installer push to network drive (user specified)" "darkyellow"
+        }
+    }
+    else {
+        Log-Message "Installer was not built" "darkyellow"
+        Log-Message "Check to ensure createinstall.xml or installer build script path is correct" "darkyellow"
+        Log-Message "Installer was not built or deployed" "red"
+        Svn-Revert
+        exit
+    }
+}
+
+#
+# NPM Release
+#
+if ($NPMRELEASE -eq "Y") 
+{
+    Log-Message "Releasing npm package"
+    if (Test-Path("package.json"))
+    {
+        $PublishFailed = $false;
+        #
+        # replace current version with new version in package.json and package-lock.json
+        #
+        Log-Message "Retrieving current version in package.json"
+        & npm version --no-git-tag-version $VERSION
+        Check-ExitCode
+        #
+        # A few modules are shared, do scope replacement if this might be one of them
+        #
+        if ([string]::IsNullOrEmpty($NPMSCOPE)) 
+        {
+            Log-Message "Un-scoping package name in package.json"
+            ((Get-Content -path "package.json" -Raw) -replace '@spmeesseman/',"") | Set-Content -NoNewline -Path "package.json"
+            Check-ExitCode
+            if (Test-Path("package-lock.json")) 
+            {
+                Log-Message "Un-scoping package name in package-lock.json"
+                ((Get-Content -path "package-lock.json" -Raw) -replace '@spmeesseman/',"") | Set-Content -NoNewline -Path "package-lock.json"
+                Check-ExitCode
+            }
+        }
+        else 
+        {
+            Log-Message "Scoping package name in package.json"
+            ((Get-Content -path "package.json" -Raw) -replace '@spmeesseman',$NPMSCOPE) | Set-Content -NoNewline -Path "package.json"
+            Check-ExitCode
+            if (Test-Path("package-lock.json")) 
+            {
+                Log-Message "Scoping package name in package-lock.json"
+                ((Get-Content -path "package-lock.json" -Raw) -replace '@spmeesseman',$NPMSCOPE) | Set-Content -NoNewline -Path "package-lock.json"
+                Check-ExitCode
+            }
+        }
+        if (![string]::IsNullOrEmpty($NPMUSER)) 
+        {
+            Log-Message "Applying NPM username to package.json"
+            ((Get-Content -path "package.json" -Raw) -replace 'spmeesseman',"$NPMUSER") | Set-Content -NoNewline -Path "package.json"
+            Check-ExitCode
+        }
+        #
+        # Allow manual modifications to package.json and package-lock.json
+        #
+        if ($NOTEPADEDITS -eq "Y") {
+            Log-Message "Edit package.json file"
+            start-process -filepath "notepad" -args "package.json" -wait
+            if (Test-Path("package-lock.json")) {
+                Log-Message "Edit package-lock.json file"
+                start-process -filepath "notepad" -args "package-lock.json" -wait
+            }
+        }
+        #
+        # Publish to npm server
+        #
+        Log-Message "Publishing npm package to $NPMSERVER"
+        if ($TESTMODE -ne "Y") 
+        {
+            & npm publish --access public --registry $NPMSERVER
+            Check-ExitCode
+        }
+        else 
+        {
+            Log-Message "   Test mode, performing publish dry run only" "magenta"
+            & npm publish --access public --registry $NPMSERVER --dry-run
+            Log-Message "   Test mode, dry run publish finished" "magenta"
+        }
+        #
+        # A few modules are shared, re-do scope replacement if this might be one of them
+        #
+        if (![string]::IsNullOrEmpty($NPMUSER)) 
+        {
+            Log-Message "Re-applying NPM username token to package.json"
+            ((Get-Content -path "package.json" -Raw) -replace "$NPMUSER",'spmeesseman') | Set-Content -NoNewline -Path "package.json"
+            Check-ExitCode
+        }
+        if ([string]::IsNullOrEmpty($NPMSCOPE)) 
+        {
+            Log-Message "Re-scoping package name in package.json"
+            ((Get-Content -path "package.json" -Raw) -replace "`"name`"[ ]*:[ ]*[`"]",'"name": "@spmeesseman/') | Set-Content -NoNewline -Path "package.json"
+            Check-ExitCode
+            if (Test-Path("package-lock.json")) 
+            {
+                Log-Message "Re-scoping package name in package-lock.json"
+                ((Get-Content -path "package-lock.json" -Raw) -replace "`"name`"[ ]*:[ ]*[`"]",'"name": "@spmeesseman/') | Set-Content -NoNewline -Path "package-lock.json"
+                Check-ExitCode
+            }
+        }
+        else 
+        {
+            Log-Message "Re-scoping package name in package.json"
+            ((Get-Content -path "package.json" -Raw) -replace $NPMSCOPE, '@spmeesseman') | Set-Content -NoNewline -Path "package.json"
+            Check-ExitCode
+            if (Test-Path("package-lock.json")) 
+            {
+                Log-Message "Re-scoping package name in package-lock.json"
+                ((Get-Content -path "package-lock.json" -Raw) -replace $NPMSCOPE,'@spmeesseman') | Set-Content -NoNewline -Path "package-lock.json"
+                Check-ExitCode
+            }
+        }
+        #
+        # Add package.json version changes to changelist for check in to SVN
+        #
+        Svn-Changelist-Add "package.json"
+        #
+        # Add package-lock.json version changes to changelist for check in to SVN
+        #
+        if (Test-Path("package-lock.json")) 
+        {
+            ((Get-Content -path "package-lock.json" -Raw) -replace '@perryjohnson', '@spmeesseman') | Set-Content -NoNewline -Path "package-lock.json"
+            #
+            # Add package-lock.json version changes to changelist for check in to SVN
+            #
+            Svn-Changelist-Add "package-lock.json"
+        }
+        if (!$PublishFailed) 
+        {
+            if (![string]::IsNullOrEmpty($NPMSCOPE)) {
+                $NpmLocation = "$NPMSERVER/$NPMSCOPE/$PROJECTNAME"
+            }
+            else {
+                $NpmLocation = "$NPMSERVER/$PROJECTNAME"
+            }
+        }
+        else {
+            Svn-Revert
+            exit
+        }
+    }
+    else {
+        Log-Message "Could not find package.json" "darkyellow"
+    }
+}
+
+#
+# TODO - Nuget Release
+#
+if ($NUGETRELEASE -eq "Y") 
+{
+    Log-Message "Releasing nuget package"
+    #
+    # TODO
+    #
+    #$NugetLocation = "$NUGETSERVER/$PROJECTNAME"
 }
 
 #
@@ -1248,7 +1641,7 @@ if ($DEPLOYSCRIPT.Length -gt 0)
     {
         # Run custom deploy script
         #
-        write-host "Running custom deploy script"
+        Log-Message "Running custom deploy script"
 
         if ($TESTMODE -ne "Y") 
         {
@@ -1271,280 +1664,18 @@ if ($DEPLOYSCRIPT.Length -gt 0)
             }
         }
         else {
-            write-host -ForegroundColor "magenta" "   Test mode, skipping deploy script run"
+            Log-Message "   Test mode, skipping deploy script run" "magenta"
         }
     }
     else {
-        write-host -ForegroundColor "darkyellow" "   Skipped running custom deploy script (user specified)"
+        Log-Message "   Skipped running custom deploy script (user specified)" "darkyellow"
     }
 }
 
 #
-# Store location paths depending on publish types
+# Send release notification email
 #
-$TargetNetLocation = ""
-$NpmLocation = ""
-$NugetLocation = ""
-
-#
-# PJ Installer Release
-#
-if ($INSTALLERRELEASE -eq "Y") 
-{
-    $InstallerBuilt = $false
-
-    #
-    # Build the installer
-    #
-    if (![string]::IsNullOrEmpty($INSTALLERSCRIPT) -and (Test-Path($INSTALLERSCRIPT)))
-    {
-        if ($INSTALLERSCRIPT.Contains(".nsi"))
-        {
-            # Create dist directory if it doesnt exist
-            #
-            if (!(Test-Path($PATHTODIST))) {
-                write-host "Create dist directory"
-                New-Item -Path "$PATHTODIST" -ItemType "directory" | Out-Null
-            }
-            #
-            # replace version in nsi file
-            #
-            Replace-Version $INSTALLERSCRIPT "`"$CURRENTVERSION`"" "`"$VERSION`""
-            #
-            # Add to svn changelist for check-in
-            #
-            Svn-Changelist-Add $INSTALLERSCRIPT
-            #
-            # Allow manual modifications to $INSTALLERSCRIPT
-            #
-            if ($NOTEPADEDITS -eq "Y") {
-                write-host "Edit installer file"
-                start-process -filepath "notepad" -wait -args $INSTALLERSCRIPT
-            }
-            #
-            # Run makensis to create installer
-            #
-            write-host "Building executable installer"
-            Invoke-Expression -Command "$Env:CODE_HOME\nsis\makensis.exe $INSTALLERSCRIPT"
-            Check-ExitCode
-            $InstallerBuilt = $true
-        }
-        else {
-            write-host -ForegroundColor "red" "Cannot build this installer type ($INSTALLERSCRIPT)"
-        }
-    }
-    
-    if ($InstallerBuilt -eq $true)
-    {
-        $TargetNetLocation = "\\192.168.68.120\d$\softwareimages\$PROJECTNAME\$VERSION"
-        #
-        # Check if this is an ExtJs build.  ExtJs build will be an installer build, but it will
-        # contain both package.json and app.json that will need version updated.  A node_modules
-        # directory will exist, so the current version was extracted by node and and next version  
-        # was calculated by semver.
-        #
-        if ((Test-Path("app.json")) -and (Test-Path("package.json")))
-        {
-            #
-            # Replace version in app.json
-            #
-            Replace-Version "app.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
-            #
-            # Add to app.json svn changelist for check-in
-            #
-            Svn-Changelist-Add "app.json"
-            #
-            # Allow manual modifications to app.json
-            #
-            if ($NOTEPADEDITS -eq "Y") {
-                write-host "Edit app.json file"
-                start-process -filepath "notepad" -args "app.json" -wait
-            }
-            #
-            # Replace version in package.json
-            #
-            Replace-Version "package.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
-            #
-            # Add to package.json svn changelist for check-in
-            #
-            Svn-Changelist-Add "package.json"
-            #
-            # Allow manual modifications to package.json
-            #
-            if ($NOTEPADEDITS -eq "Y") {
-                write-host "Edit package.json file"
-                start-process -filepath "notepad" -args "package.json" -wait
-            }
-            #
-            # Replace version in package-lock.json
-            #
-            if (Test-Path("package-lock.json")) 
-            {
-                Replace-Version "package-lock.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
-                #
-                # Add to package.json svn changelist for check-in
-                #
-                Svn-Changelist-Add "package-lock.json"
-            }
-        }
-        #
-        # Check for legacy Deploy.xml script.  The scipt should at least be modified to NOT
-        # send the notification email.
-        #
-        if ($SKIPDEPLOYPUSH -ne "Y")
-        {
-            # Copy dist dir installer and the history file to target location, and pdf docs to Sharepoint
-            #
-            if ($TESTMODE -ne "Y") 
-            {
-                #
-                # SoftwareImages Upload
-                #
-                # Create directory on softwareimages network drive
-                # TargetNetLocation is defined above as it is needed for email notification fn as well
-                #
-                if (!(Test-Path($TargetNetLocation))) {
-                    write-host "Create directory $TargetNetLocation"
-                    New-Item -Path "$TargetNetLocation" -ItemType "directory" | Out-Null
-                    Check-ExitCode
-                }
-                #
-                # Copy all files in 'dist' directory that start with $PROJECTNAME, and the history file
-                #
-                write-host "Deploying files to $TargetNetLocation"
-                Copy-Item "$PATHTODIST\*","$HISTORYFILE" -Destination "$TargetNetLocation"
-                Check-ExitCode
-                #
-                # Sharepoint Upload
-                #
-                $SharepointServer = 'pjainc.pjvista.com@SSL'
-                $SharepointShare = "DavWWWRoot"
-                $SharepointDirectory = "Shared Documents\Tech Support\Application Installation and Configuration"
-                $SharepointPath = "\\$SharepointServer\$SharepointShare\$SharepointDirectory\$PROJECTNAME\$VERSION"
-                #
-                # Create directory on sharpoint share
-                #
-                New-Item -Path "$SharepointPath" -ItemType "directory" | Out-Null
-                #
-                # Copy all pdf files in 'dist' and 'doc' and 'documentation' directories
-                #
-                write-host "Deploying pdf documentation to Sharepoint"
-                Copy-Item "$PATHTODIST\*.pdf","doc\*.pdf","documentation\*.pdf" -Destination "$SharepointPath"
-                Check-ExitCode
-            }
-            else {
-                write-host -ForegroundColor "magenta" "Test mode, skipping basic push to network drive"
-            }
-        }
-        else {
-            write-host -ForegroundColor "darkyellow" "Skipped installer push to network drive (user specified)"
-        }
-        #
-        # Send release notification email
-        #
-        if ($NPMRELEASE -ne "Y" -and $NUGETRELEASE -ne "Y") {
-            Send-Notification "$TargetNetLocation" "$NpmLocation" "$NugetLocation"
-        }
-    }
-    else {
-        write-host -ForegroundColor "darkyellow" "Installer was not built"
-        write-host -ForegroundColor "darkyellow" "Check to ensure createinstall.xml or installer build script path is correct"
-        write-host -ForegroundColor "red" "Installer was not built or deployed"
-        Svn-Revert
-        exit
-    }
-}
-
-#
-# NPM Release
-#
-if ($NPMRELEASE -eq "Y") 
-{
-    write-host "Releasing npm package"
-    if (Test-Path("package.json"))
-    {
-        $PublishFailed = $false;
-        #
-        # replace current version with new version in package.json and package-lock.json
-        #
-        write-host "Retrieving current version in package.json"
-        & npm version --no-git-tag-version $VERSION
-        Check-ExitCode
-        #
-        # A few modules are shared, do scope replacement if this might be one of them
-        #
-        ((Get-Content -path "package.json" -Raw) -replace '@spmeesseman', '@perryjohnson') | Set-Content -NoNewline -Path "package.json"
-        ((Get-Content -path "package.json" -Raw) -replace 'spmeesseman',"$NPMUSER") | Set-Content -NoNewline -Path "package.json"
-        if (Test-Path("package-lock.json")) {
-            ((Get-Content -path "package-lock.json" -Raw) -replace '@spmeesseman', '@perryjohnson') | Set-Content -NoNewline -Path "package-lock.json"
-        }
-        #
-        # Publish to npm server
-        #
-        write-host "Publishing npm package to $NPMSERVER"
-        if ($TESTMODE -ne "Y") 
-        {
-            & npm publish --access public --registry $NPMSERVER
-            Check-ExitCode
-        }
-        else 
-        {
-            write-host -ForegroundColor "magenta" "   Test mode, performing publish dry run only"
-            & npm publish --access public --registry $NPMSERVER --dry-run
-            write-host -ForegroundColor "magenta" "   Test mode, dry run publish finished"
-        }
-        #
-        # A few modules are shared, re-do scope replacement if this might be one of them
-        #
-        ((Get-Content -path "package.json" -Raw) -replace '@perryjohnson', '@spmeesseman') | Set-Content -NoNewline -Path "package.json"
-        ((Get-Content -path "package.json" -Raw) -replace "$NPMUSER","spmeesseman") | Set-Content -NoNewline -Path "package.json"
-        #
-        # Add package.json version changes to changelist for check in to SVN
-        #
-        Svn-Changelist-Add "package.json"
-        #
-        # Add package-lock.json version changes to changelist for check in to SVN
-        #
-        if (Test-Path("package-lock.json")) 
-        {
-            ((Get-Content -path "package-lock.json" -Raw) -replace '@perryjohnson', '@spmeesseman') | Set-Content -NoNewline -Path "package-lock.json"
-            #
-            # Add package-lock.json version changes to changelist for check in to SVN
-            #
-            Svn-Changelist-Add "package-lock.json"
-        }
-        if (!$PublishFailed) {
-            #
-            # Release notification email
-            #
-            $NpmLocation = "$NPMSERVER/" + '@perryjohnson/' + "$PROJECTNAME"
-            if ($NUGETRELEASE -ne "Y") {
-                Send-Notification "$TargetNetLocation" "$NpmLocation" "$NugetLocation"
-            }
-        }
-        else {
-            Svn-Revert
-            exit
-        }
-    }
-    else {
-        write-host -ForegroundColor "darkyellow" "Could not find package.json"
-    }
-}
-
-#
-# TODO - Nuget Release
-#
-if ($NUGETRELEASE -eq "Y") 
-{
-    write-host "Releasing nuget package"
-    #
-    # TODO
-    #
-    #
-    # Send release notification email
-    #
-    $NugetLocation = "$NUGETSERVER/$PROJECTNAME"
+if (![string]::IsNullOrEmpty($TargetNetLocation) -or ![string]::IsNullOrEmpty($NpmLocation) -or ![string]::IsNullOrEmpty($NugetLocation) ) {
     Send-Notification "$TargetNetLocation" "$NpmLocation" "$NugetLocation"
 }
 
@@ -1565,8 +1696,8 @@ if (Test-Path(".svn"))
     {
         if ($TESTMODE -ne "Y") 
         {
-            write-host "Committing touched files to version control"
-            write-host "   $SVNCHANGELIST"
+            Log-Message "Committing touched files to version control"
+            Log-Message "   $SVNCHANGELIST"
             #
             # Call svn commit
             #
@@ -1579,7 +1710,7 @@ if (Test-Path(".svn"))
                 Svn-Revert
             }
             if ($TESTMODE -eq "Y") {
-                write-host -ForegroundColor "magenta" "   Test mode, skipping touched file commit"  
+                Log-Message "   Test mode, skipping touched file commit" "magenta"
             }
         }
     }
@@ -1589,10 +1720,10 @@ if (Test-Path(".svn"))
     #
     # If this is a sub-project within a project, do not tag
     #
-    if ($PATHTOMAINROOT -eq $PATHTOROOT -or [string]::IsNullOrEmpty($PATHTOMAINROOT))
+    if ($SVNTAG -eq "Y")
     {
-        write-host "Tagging version at $TagLocation"
         $TagLocation = "${SVNPROTOCOL}://$SVNSERVER/$SVNREPO/$PROJECTNAME/tags/v$VERSION"
+        Log-Message "Tagging version at $TagLocation"
         if ($TESTMODE -ne "Y") 
         {
             $TrunkLocation = "${SVNPROTOCOL}://$SVNSERVER/$SVNREPO/$PROJECTNAME/trunk"
@@ -1603,25 +1734,25 @@ if (Test-Path(".svn"))
             Check-ExitCode
         }
         else {
-            write-host -ForegroundColor "magenta" "   Test mode, skipping create version tag"
+            Log-Message "   Test mode, skipping create version tag" "magenta"
         }
     }
     else {
-        write-host -ForegroundColor "darkyellow" "   This is a sub-project, skipping version tag"
+        Log-Message "   Skipping version tag, user specified" "darkyellow"
     }
 }
 else {
-    write-host -ForegroundColor "red" "Could not find .svn folder, skipping commit and version tag"
+    Log-Message "Could not find .svn folder, skipping commit and version tag" "red"
 }
 
 if ($TESTMODE -eq "Y") {
-    write-host "Tests completed"
+    Log-Message "Tests completed"
     if ($TESTMODESVNREVERT -ne "Y") {
-        write-host -ForegroundColor "magenta" "   You should manually revert any auto-touched files via SCM"
+        Log-Message "   You should manually revert any auto-touched files via SCM" "magenta"
     }
 }
 
-write-host "Completed"
-write-host -ForegroundColor "darkgreen" "Finished successfully"
+Log-Message "Completed"
+Log-Message "Finished successfully" "darkgreen"
 
 exit
