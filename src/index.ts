@@ -223,6 +223,9 @@ else if (args.profile === "pja" || args.profile === "pjr")
     //
     var ps1Script = ".\\node_modules\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1";
     if (!util.pathExists(ps1Script)) {
+        ps1Script = ".\\node_modules\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1";
+    }
+    if (!util.pathExists(ps1Script)) {
         ps1Script = ".\\script\\app-publisher.ps11";
     }
     if (!util.pathExists(".\\script")) {
