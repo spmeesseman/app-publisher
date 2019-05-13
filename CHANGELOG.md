@@ -1,5 +1,13 @@
 # Change Log
 
+## [1.0.5](https://github.com/spmeesseman/app-publisher/compare/v1.0.4...v1.0.5) (2019-05-13)
+
+
+### Bug Fixes
+
+* if history file directory doesnt already exist, ps script fails ([1f88b80](https://github.com/spmeesseman/app-publisher/commit/1f88b80))
+* setting empty values in config file causes ps script to fail ([6bf8030](https://github.com/spmeesseman/app-publisher/commit/6bf8030))
+
 ## [1.0.4](https://github.com/spmeesseman/app-publisher/compare/v1.0.3...v1.0.4) (2019-05-13)
 
 
