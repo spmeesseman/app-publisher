@@ -221,14 +221,19 @@ else if (args.profile === "pja" || args.profile === "pjr")
     //
     // Find Powershell script
     //
-    var ps1Script = ".\\node_modules\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1";
-    if (!util.pathExists(ps1Script)) {
-        ps1Script = ".\\node_modules\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1";
+    var ps1Script
+    ;
+    if (util.pathExists(".\\node_modules\\@spmeesseman\\app-publisher")) {
+        ps1Script = ".\\node_modules\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1";
     }
-    if (!util.pathExists(ps1Script)) {
+    else if (util.pathExists(".\\node_modules\\@perryjohnson\\app-publisher")) {
         ps1Script = ".\\script\\app-publisher.ps1";
     }
-    if (!util.pathExists(ps1Script)) {
+    else if (util.pathExists(".\\script\\app-publisher.ps1")) {
+        ps1Script = ".\\script\\app-publisher.ps1";
+    }
+
+    if (!ps1Script) {
         util.logError("Could not find powershell script app-publisher.ps1");
         process.exit(102);
     }
