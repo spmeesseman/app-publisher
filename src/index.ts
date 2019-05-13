@@ -3,10 +3,10 @@
 import { visit, JSONVisitor } from 'jsonc-parser';
 import { CommitAnalyzer } from './lib/commit-analyzer';
 import * as util from './util';
-import * as shelljs from 'shelljs';
 import * as fs from 'fs';
 import * as gradient from 'gradient-string';
 import chalk from 'chalk';
+import * as child_process from 'child_process';
 import * as path from 'path';
 
 //
@@ -221,8 +221,7 @@ else if (args.profile === "pja" || args.profile === "pjr")
     //
     // Find Powershell script
     //
-    var ps1Script
-    ;
+    var ps1Script;
     if (util.pathExists(".\\node_modules\\@spmeesseman\\app-publisher")) {
         ps1Script = ".\\node_modules\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1";
     }
@@ -240,16 +239,25 @@ else if (args.profile === "pja" || args.profile === "pjr")
     //
     // Launch Powershell script
     //
-    // Pipe process stdin to powershell prpocess in case of prompting user for input
-    //
-    //process.stdin.pipe(exec(`powershell ${ps1Script} ${sArgs}`, {async:true}).stdin);
-    var child = shelljs.exec(`powershell ${ps1Script} ${sArgs}`, {async:true});
+    var child = child_process.spawn("powershell.exe", [`${ps1Script} ${sArgs}`]);
+    child.stdout.on("data", function(data){
+        var out = data.toString();
+        //if (out.trim()) {
+            out = out.trim();
+        //}
+        if (out) {
+            console.log(out);
+        }
+    });
+    child.stderr.on("data",function(data){
+        console.log("Powershell Errors: " + data);
+    });
     process.stdin.on('data', function(data) {
         if (!child.killed) {
             child.stdin.write(data);
         }
     });
-    child.on('exit', function(code) {
+    child.on("exit",function(code){
         process.exit(code);
     });
 }
