@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.0.11](https://github.com/spmeesseman/app-publisher/compare/v1.0.10...v1.0.11) (2019-05-13)
+
+
+### Bug Fixes
+
+* another try to locate ps1 script properly ([0f7fae0](https://github.com/spmeesseman/app-publisher/commit/0f7fae0))
+
 ## [1.0.10](https://github.com/spmeesseman/app-publisher/compare/v1.0.9...v1.0.10) (2019-05-13)
 
 
