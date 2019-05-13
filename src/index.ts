@@ -195,7 +195,7 @@ else if (args.profile === "pja" || args.profile === "pjr")
                 {
                     sArgs += ("\"" + value + "\",");
                 }
-                else
+                else if (value)
                 {
                     if (!aProperty) {
                         sArgs += ("-" + cProperty + " " + value + " ");
