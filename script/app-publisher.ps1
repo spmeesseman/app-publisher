@@ -1090,8 +1090,16 @@ if ($CURRENTVERSION -ne $VERSION)
     #
     # If history file doesnt exist, create one with the project name as a title
     #
+    $HistoryPath = Split-Path "$HISTORYFILE"
+    if (!(Test-Path($HistoryPath))) {
+        New-Item -ItemType "directory" -Path "$HistoryPath" | Out-Null
+    }
     if (!(Test-Path($HISTORYFILE))) {
         New-Item -ItemType "file" -Path "$HISTORYFILE" -Value "$PROJECTNAME`r`n`r`n" | Out-Null
+    }
+    if (!(Test-Path($HISTORYFILE))) {
+        write-host -ForegroundColor "red" "Could not create history file, exiting"
+        exit;
     }
     #
     # Touch history file with the latest version info, either update existing, or create 
