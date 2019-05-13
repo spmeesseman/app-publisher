@@ -95,7 +95,7 @@ jobs:
         inputs:
           command: custom
           verbose: false
-          customCommand: 'run semantic-release'
+          customCommand: 'run semantic-release --allow-same-version'
         env:
           GH_TOKEN: $(githubToken)
           NPM_TOKEN: $(npmToken)

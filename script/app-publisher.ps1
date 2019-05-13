@@ -346,7 +346,7 @@ class CommitAnalyzer
 {
     [string]get($Commits) 
     {
-        $ReleaseLevel = "patch";return $ReleaseLevel;
+        $ReleaseLevel = "patch";
         #
         # Loop through each line and look at the comment tag.  The comment tag needs to be
         # at the start of the comment, and be appended by a ':' character.  For example:
