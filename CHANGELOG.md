@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.0.8](https://github.com/spmeesseman/app-publisher/compare/v1.0.7...v1.0.8) (2019-05-13)
+
+
+### Bug Fixes
+
+* dev dir run doesnt work ([6b9f9f1](https://github.com/spmeesseman/app-publisher/commit/6b9f9f1))
+
 ## [1.0.7](https://github.com/spmeesseman/app-publisher/compare/v1.0.6...v1.0.7) (2019-05-13)
 
 
