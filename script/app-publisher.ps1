@@ -870,19 +870,22 @@ if ($DEPLOYSCRIPT -is [system.string] -and ![string]::IsNullOrEmpty($DEPLOYSCRIP
 {
     $DEPLOYSCRIPT = @($DEPLOYSCRIPT); #convert to array
 }
-if ($DEPLOYSCRIPT -is [system.array] -and $DEPLOYSCRIPT.Length > 0)
+if ($DEPLOYSCRIPT -is [system.array] -and $DEPLOYSCRIPT.Length -gt 0)
 {
     foreach ($Script in $DEPLOYSCRIPT) 
     {
         $ScriptParts = $Script.Split(' ');
         if (!(Test-Path($ScriptParts[0]))) {
-            write-host -ForegroundColor "red" "Script $Script not found"
+            write-host -ForegroundColor "red" "Script ${ScriptParts[0]} not found"
             exit
         }
         if ($Script.Contains(".xml")) {
             $IsAnt = $true
         }
     }
+}
+else {
+    $DEPLOYSCRIPT = [string[]] @() # initialize to empty array.  see comment above about weird ps eval
 }
 
 if ($IsAnt -eq $true) 
@@ -1226,7 +1229,7 @@ if ($NOTEPADEDITS -eq "Y") {
 #
 # Run custom deploy script if specified
 #
-if ($DEPLOYSCRIPT.Lenth > 0)
+if ($DEPLOYSCRIPT.Length -gt 0)
 {
     if ($SKIPDEPLOYPUSH -ne "Y")
     {
