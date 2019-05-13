@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.0.6](https://github.com/spmeesseman/app-publisher/compare/v1.0.5...v1.0.6) (2019-05-13)
+
+
+### Bug Fixes
+
+* stdin doesnt work during ps script run ([1fcf5fd](https://github.com/spmeesseman/app-publisher/commit/1fcf5fd))
+
 ## [1.0.5](https://github.com/spmeesseman/app-publisher/compare/v1.0.4...v1.0.5) (2019-05-13)
 
 
