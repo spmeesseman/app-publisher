@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.1.1](https://github.com/spmeesseman/app-publisher/compare/v1.1.0...v1.1.1) (2019-05-13)
+
+
+### Code Refactoring
+
+* remove shelljs dependency, use node.child_process ([42b4351](https://github.com/spmeesseman/app-publisher/commit/42b4351))
+
 # [1.1.0](https://github.com/spmeesseman/app-publisher/compare/v1.0.11...v1.1.0) (2019-05-13)
 
 
