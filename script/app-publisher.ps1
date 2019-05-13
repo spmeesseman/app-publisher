@@ -364,25 +364,25 @@ class CommitAnalyzer
             $linefmt = $line.ToLower();
             if ($linefmt.Contains("breaking change")) # bump major on breaking change
             {
-                LogStandalone("Breaking change found");
+                write-host "Breaking change found"
                 $ReleaseLevel = "major";
                 break;
             }
             if ($linefmt.Contains("majfeat: ")) # bump major on major feature
             {
-                LogStandalone("Major feature found");
+                write-host "Major feature found"
                 $ReleaseLevel = "major";
                 break;
             }
             if ($linefmt.Contains("feat: ")) # bump minor on feature
             {
-                LogStandalone("Feature found");
+                write-host "Feature found";
                 $ReleaseLevel = "minor";
                 break;
             }
             #if ($linefmt.Contains("perf"))
             #{
-            #    LogStandalone("Performance enhancement found");
+            #    write-host "Performance enhancement found";
             #    $ReleaseLevel = "minor";
             #    break;
             #}
