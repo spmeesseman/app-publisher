@@ -185,7 +185,7 @@ else if (args.profile === "pja" || args.profile === "pjr")
                 if (cProperty && typeof value === 'string') 
                 {
                     if (!aProperty) {
-                        sArgs += ("-" + cProperty + " \"" + value + "\" ");
+                        sArgs += ("-" + cProperty + " '" + value + "' ");
                     }
                     else {
                         sArgs += ("\"" + value + "\",");
@@ -193,7 +193,7 @@ else if (args.profile === "pja" || args.profile === "pjr")
                 }
                 else if (aProperty && typeof value === 'string')
                 {
-                    sArgs += ("\"" + value + "\",");
+                    sArgs += ("'" + value + "',");
                 }
                 else if (value)
                 {
@@ -221,7 +221,15 @@ else if (args.profile === "pja" || args.profile === "pjr")
     //
     // Launch Powershell task
     //
-    exec(`powershell .\\node_modules\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1 ${sArgs}`);
+    //exec(`powershell .\\node_modules\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1 ${sArgs}`);
+    console.log(sArgs);
+    var child = exec(`powershell .\\node_modules\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1 ${sArgs}`, {async:true});
+    child.stdout.on('data', function(data) {
+        /* ... do something with data ... */
+    });
+    child.stdin.on('data', function(data) {
+        console.log('stdin:' + data);
+    });
 }
 
 function displayIntro() 
