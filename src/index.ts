@@ -14,6 +14,8 @@ import * as path from 'path';
 //
 displayIntro();
 
+let version = require('../package.json').version;
+
 //
 // Build command line argument parser
 //
@@ -93,10 +95,10 @@ if (args.help)
 if (args.version)
 {
     util.log(chalk.bold(gradient('cyan', 'pink').multiline(`----------------------------------------------------------------------------
- App-Builder Version
+ App-Publisher Version
 ----------------------------------------------------------------------------
 `, {interpolation: 'hsv'})));
-    util.log(require('../package.json').version);
+    util.log(version);
     process.exit(0);
 }
 
@@ -108,14 +110,27 @@ if (args.version)
 //
 let fileCfg;
 if (fs.existsSync('.publishrc.json')) {
-    fileCfg = JSON.parse(fs.readFileSync('.publishrc.json').toString());
+    fileCfg = fs.readFileSync('.publishrc.json').toString();
 }
 else if (fs.existsSync('.publishrc')) {
-    fileCfg = JSON.parse(fs.readFileSync('.publishrc').toString());
+    fileCfg = fs.readFileSync('.publishrc').toString();
 }
 else {
     util.logError("Config file not found!! Exiting");
     process.exit(100);
+}
+
+//
+// Replace environment variables
+//
+// Environment variables in .publishconfig should be in the form:
+//
+//     ${VARIABLE_NAME}
+//
+for (var key in process.env) 
+{
+    var envVar = "[$][{]\\b" + key + "\\b[}]";
+    fileCfg = fileCfg.replace(new RegExp(envVar, 'gmi'), process.env[key]);
 }
 
 //
@@ -128,7 +143,7 @@ if (args.readConfig)
 ----------------------------------------------------------------------------
     `;
     util.log(chalk.bold(gradient('cyan', 'pink').multiline(title, {interpolation: 'hsv'})));
-    util.log(fileCfg.toString());
+    util.log(fileCfg);
     process.exit(0);
 }
 
@@ -142,9 +157,15 @@ let dryCfg = {
 };
 
 //
-// Merge config
+// Convert file config to JSON object
+//
+fileCfg = JSON.parse(fileCfg);
+
+//
+// Merge configs
 //
 let config = { ...fileCfg, ...dryCfg };
+
 
 //
 // Run publish
@@ -221,7 +242,8 @@ else if (args.profile === "pja" || args.profile === "pjr")
         util.logError("Config not found!! Exiting");
         process.exit(100);
     }
-    sArgs = sArgs.trimRight();
+    sArgs = sArgs + ` -apppublisherversion ${version}`;
+    
     //
     // Find Powershell script
     //
@@ -240,30 +262,11 @@ else if (args.profile === "pja" || args.profile === "pjr")
         util.logError("Could not find powershell script app-publisher.ps1");
         process.exit(102);
     }
+
     //
     // Launch Powershell script
     //
-    var child = child_process.spawn("powershell.exe", [`${ps1Script} ${sArgs}`]);
-    child.stdout.on("data", function(data){
-        var out = data.toString();
-        //if (out.trim()) {
-            out = out.trim();
-        //}
-        if (out) {
-            console.log(out);
-        }
-    });
-    child.stderr.on("data",function(data){
-        console.log("Powershell Errors: " + data);
-    });
-    process.stdin.on('data', function(data) {
-        if (!child.killed) {
-            child.stdin.write(data);
-        }
-    });
-    child.on("exit",function(code){
-        process.exit(code);
-    });
+    child_process.spawnSync("powershell.exe", [`${ps1Script} ${sArgs}`], { stdio: 'inherit' });
 }
 
 function displayIntro() 
