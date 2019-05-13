@@ -228,7 +228,7 @@ else if (args.profile === "pja" || args.profile === "pjr")
     if (!util.pathExists(ps1Script)) {
         ps1Script = ".\\script\\app-publisher.ps1";
     }
-    if (!util.pathExists(".\\script")) {
+    if (!util.pathExists(ps1Script)) {
         util.logError("Could not find powershell script app-publisher.ps1");
         process.exit(102);
     }
