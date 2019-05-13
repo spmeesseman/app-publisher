@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.0.9](https://github.com/spmeesseman/app-publisher/compare/v1.0.8...v1.0.9) (2019-05-13)
+
+
+### Bug Fixes
+
+* find correct ps1 script before running exec ([46767f5](https://github.com/spmeesseman/app-publisher/commit/46767f5))
+
 ## [1.0.8](https://github.com/spmeesseman/app-publisher/compare/v1.0.7...v1.0.8) (2019-05-13)
 
 
