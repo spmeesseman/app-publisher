@@ -1,5 +1,12 @@
 # Change Log
 
+## [1.0.4](https://github.com/spmeesseman/app-publisher/compare/v1.0.3...v1.0.4) (2019-05-13)
+
+
+### Bug Fixes
+
+* format ps args not passing to ps ([01575a4](https://github.com/spmeesseman/app-publisher/commit/01575a4))
+
 ## [1.0.3](https://github.com/spmeesseman/app-publisher/compare/v1.0.2...v1.0.3) (2019-05-12)
 
 

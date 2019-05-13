@@ -3,7 +3,7 @@
 	"displayName": "App Publisher",
 	"description": "App Publisher",
 	"publisher": "spmeesseman",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"license": "MIT",
 	"dependencies": {
 		"@types/gradient-string": "^1.1.0",
