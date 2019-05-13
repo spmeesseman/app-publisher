@@ -219,17 +219,21 @@ else if (args.profile === "pja" || args.profile === "pjr")
     }
     sArgs = sArgs.trimRight();
     //
-    // Launch Powershell task
+    // Find Powershell script
+    //
+    var ps1Script = ".\\node_modules\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1";
+    if (!util.pathExists(ps1Script)) {
+        ps1Script = ".\\script\\app-publisher.ps11";
+    }
+    if (!util.pathExists(".\\script")) {
+        util.logError("Could not find powershell script app-publisher.ps1");
+        process.exit(102);
+    }
+    //
+    // Launch Powershell script
     //
     //exec(`powershell .\\node_modules\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1 ${sArgs}`);
-    console.log(sArgs);
-    var child = exec(`powershell .\\node_modules\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1 ${sArgs}`, {async:true});
-    child.stdout.on('data', function(data) {
-        /* ... do something with data ... */
-    });
-    child.stdin.on('data', function(data) {
-        console.log('stdin:' + data);
-    });
+    process.stdin.pipe(exec(`powershell .\\script\\app-publisher.ps1 ${sArgs}`, {async:true}).stdin);
 }
 
 function displayIntro() 
