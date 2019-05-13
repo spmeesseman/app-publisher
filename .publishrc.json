@@ -8,6 +8,7 @@
     "installerScript":  "install\\installer-x86.nsi",
     "notepadEdits":     "Y",
     "npmRelease":       "Y",
+    "npmScope":         "@perryjohnson",
     "npmUser":          "${PJ_NPM_USERNAME}",
     "nugetRelease":     "N",
     "pathtoRoot":       ".",
