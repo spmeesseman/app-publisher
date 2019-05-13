@@ -42,6 +42,8 @@
 		"build": "npx tsc -p ./",
 		"watch": "tsc -watch -p ./",
 		"commit": "npx git-cz",
+		"app-publish": "app-publisher -p pja",
+		"app-publish-dry": "app-publisher -p pja --dry-run",
 		"semantic-release": "semantic-release --no-ci",
 		"semantic-release-dry": "semantic-release --dry-run"
 	},
