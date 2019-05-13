@@ -3,7 +3,7 @@
 import { visit, JSONVisitor } from 'jsonc-parser';
 import { CommitAnalyzer } from './lib/commit-analyzer';
 import * as util from './util';
-import { exec } from 'shelljs';
+import * as shelljs from 'shelljs';
 import * as fs from 'fs';
 import * as gradient from 'gradient-string';
 import chalk from 'chalk';
@@ -243,7 +243,7 @@ else if (args.profile === "pja" || args.profile === "pjr")
     // Pipe process stdin to powershell prpocess in case of prompting user for input
     //
     //process.stdin.pipe(exec(`powershell ${ps1Script} ${sArgs}`, {async:true}).stdin);
-    var child = exec(`powershell ${ps1Script} ${sArgs}`, {async:true});
+    var child = shelljs.exec(`powershell ${ps1Script} ${sArgs}`, {async:true});
     process.stdin.on('data', function(data) {
         if (!child.killed) {
             child.stdin.write(data);
