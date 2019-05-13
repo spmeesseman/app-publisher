@@ -1,5 +1,18 @@
 # Change Log
 
+## [1.1.3](https://github.com/spmeesseman/app-publisher/compare/v1.1.2...v1.1.3) (2019-05-13)
+
+
+### Bug Fixes
+
+* environment variable placeholders do not get replaced when config file is read in ([1b7af97](https://github.com/spmeesseman/app-publisher/commit/1b7af97))
+
+
+### Code Refactoring
+
+* add file logging ([d68ad00](https://github.com/spmeesseman/app-publisher/commit/d68ad00))
+* add npm scope to config ([099af0d](https://github.com/spmeesseman/app-publisher/commit/099af0d))
+
 ## [1.1.2](https://github.com/spmeesseman/app-publisher/compare/v1.1.1...v1.1.2) (2019-05-13)
 
 
