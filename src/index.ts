@@ -237,7 +237,7 @@ else if (args.profile === "pja" || args.profile === "pjr")
     //
     // Pipe process stdin to powershell prpocess in case of prompting user for input
     //
-    process.stdin.pipe(exec(`powershell .\\script\\app-publisher.ps1 ${sArgs}`, {async:true}).stdin);
+    process.stdin.pipe(exec(`powershell ${ps1Script} ${sArgs}`, {async:true}).stdin);
 }
 
 function displayIntro() 
