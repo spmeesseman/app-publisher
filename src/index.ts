@@ -227,7 +227,7 @@ else if (args.profile === "pja" || args.profile === "pjr")
         ps1Script = ".\\node_modules\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1";
     }
     else if (util.pathExists(".\\node_modules\\@perryjohnson\\app-publisher")) {
-        ps1Script = ".\\script\\app-publisher.ps1";
+        ps1Script = ".\\node_modules\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1";
     }
     else if (util.pathExists(".\\script\\app-publisher.ps1")) {
         ps1Script = ".\\script\\app-publisher.ps1";
@@ -242,7 +242,16 @@ else if (args.profile === "pja" || args.profile === "pjr")
     //
     // Pipe process stdin to powershell prpocess in case of prompting user for input
     //
-    process.stdin.pipe(exec(`powershell ${ps1Script} ${sArgs}`, {async:true}).stdin);
+    //process.stdin.pipe(exec(`powershell ${ps1Script} ${sArgs}`, {async:true}).stdin);
+    var child = exec(`powershell ${ps1Script} ${sArgs}`, {async:true});
+    process.stdin.on('data', function(data) {
+        if (!child.killed) {
+            child.stdin.write(data);
+        }
+    });
+    child.on('exit', function(code) {
+        process.exit(code);
+    });
 }
 
 function displayIntro() 
