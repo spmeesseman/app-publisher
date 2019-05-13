@@ -226,7 +226,7 @@ else if (args.profile === "pja" || args.profile === "pjr")
         ps1Script = ".\\node_modules\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1";
     }
     if (!util.pathExists(ps1Script)) {
-        ps1Script = ".\\script\\app-publisher.ps11";
+        ps1Script = ".\\script\\app-publisher.ps1";
     }
     if (!util.pathExists(".\\script")) {
         util.logError("Could not find powershell script app-publisher.ps1");
@@ -235,7 +235,8 @@ else if (args.profile === "pja" || args.profile === "pjr")
     //
     // Launch Powershell script
     //
-    //exec(`powershell .\\node_modules\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1 ${sArgs}`);
+    // Pipe process stdin to powershell prpocess in case of prompting user for input
+    //
     process.stdin.pipe(exec(`powershell .\\script\\app-publisher.ps1 ${sArgs}`, {async:true}).stdin);
 }
 
