@@ -1,5 +1,17 @@
 # Change Log
 
+# [1.1.0](https://github.com/spmeesseman/app-publisher/compare/v1.0.11...v1.1.0) (2019-05-13)
+
+
+### Bug Fixes
+
+* a file called 0 is being created when ps script is run and deployscript config is empty ([4d4ff3e](https://github.com/spmeesseman/app-publisher/commit/4d4ff3e))
+
+
+### Features
+
+* ps1 pj publish launch from nodejs ([871e529](https://github.com/spmeesseman/app-publisher/commit/871e529))
+
 ## [1.0.11](https://github.com/spmeesseman/app-publisher/compare/v1.0.10...v1.0.11) (2019-05-13)
 
 
