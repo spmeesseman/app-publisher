@@ -11,9 +11,13 @@
 	"bugs": {
 		"email": "spmeesseman@pjats.com"
 	},
+	"homepage": "https://github.com/spmeesseman/app-publisher/blob/master/README.md",
 	"repository": {
-		"type": "svn",
-		"url": "https://svn.development.pjats.com/pja/app-publisher/trunk"
+		"type": "git",
+		"url": "https://github.com/spmeesseman/app-publisher.git"
+	},
+	"bugs": {
+		"url": "https://github.com/spmeesseman/app-publisher/issues"
 	},
 	"dependencies": {
 		"@types/gradient-string": "^1.1.0",
@@ -52,8 +56,8 @@
 		"commit": "npx git-cz",
 		"app-publish": "app-publisher -p pja",
 		"app-publish-dry": "app-publisher -p pja --dry-run",
-		"semantic-release": "semantic-release --no-ci",
-		"semantic-release-dry": "semantic-release --dry-run"
+		"semantic-release": "semantic-release --no-ci --allow-same-version",
+		"semantic-release-dry": "semantic-release --dry-run --allow-same-version"
 	},
 	"main": "./build/index.js",
 	"bin": {

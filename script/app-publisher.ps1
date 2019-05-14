@@ -1619,7 +1619,7 @@ if ($INSTALLERRELEASE -eq "Y")
         # send the notification email.
         #
         if ($SKIPDEPLOYPUSH -ne "Y")
-        {Log-Message "????????" "cyan"
+        {
             # Copy dist dir installer and the history file to target location, and pdf docs to Sharepoint
             #
             if ($TESTMODE -ne "Y") 
