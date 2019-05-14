@@ -19,6 +19,7 @@
     "pathtoMainRoot":   "",
     "pathPreRoot":      "",
     "pathToDist":       "install\\dist",
+    "skipDeployPush":   "Y",
     "svnRepo":          "pja",
     "testEmailRecip":   "smeesseman@pjats.com",
     "versionText":      "Version"
