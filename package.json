@@ -40,7 +40,6 @@
 	},
 	"scripts": {
 		"build": "npx tsc -p ./",
-		"watch": "tsc -watch -p ./",
 		"commit": "npx git-cz",
 		"app-publish": "app-publisher -p pja",
 		"app-publish-dry": "app-publisher -p pja --dry-run",
