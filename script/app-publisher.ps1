@@ -25,7 +25,7 @@ $APPPUBLISHERVERSION = "1.0.0",
 # The build command to run once versions have been updated in version files (i.e. package.json,
 # history.txt, assemblyinfo.cs, etc)
 #
-$BUILDCOMMAND = "",
+$BUILDCOMMAND = @(),
 #
 # Name of the project.  This must macth throughout the build files and the SVN project name
 #
@@ -33,7 +33,7 @@ $PROJECTNAME = "",
 #
 #
 #
-$DEPLOYSCRIPT = "",
+$DEPLOYCOMMAND = @(),
 #
 # To build the installer release, set this flag to "Y"
 #
@@ -44,6 +44,11 @@ $INSTALLERRELEASE = "N",
 # Note this parameter applies only to INSTALLRELEASE="Y"
 #
 $INSTALLERSCRIPT = "",
+#
+# Interactive (prompts for version after extracting what we think should be the next 
+# version)
+#
+$INTERACTIVE = "N",
 #
 # The location of this history file, can be a relative or full path.
 #
@@ -209,18 +214,6 @@ $WRITELOG = "N"
 # ------------------------------------------------------------------------------------------
 )
 
-$CURRENTVERSION = ""
-$VERSION = "" 
-$BRANCH = ""
-$COMMITS = ""
-$TDATE = ""
-
-#
-# Define a variable to track changed files for check-in to SVN
-# This will be a space delimited list of quoted strings/paths
-#
-$SVNCHANGELIST = ""
-
 #
 # Define some script classes:
 #
@@ -258,7 +251,7 @@ class Svn
         Log-Message("Parsing response from SVN");
         try {
             $path = (([Xml] ($xml)).Log.LogEntry.Paths.Path |
-            Where-Object { $_.action -eq 'A' -and $_.kind -eq 'dir' -and $_.InnerText -like '*tags*'} |
+            Where-Object { $_.action -eq 'A' -and $_.kind -eq 'dir' -and $_.InnerText -like '*tags/v[1-9]*'} |
             Select-Object -Property @(
                 @{N='date'; E={$_.ParentNode.ParentNode.Date}},
                 @{N='path'; E={$_.InnerText}} )|
@@ -429,6 +422,10 @@ class HistoryFile
         if (!(Test-Path $szInputFile) -or $szInputFile -eq "" -or $szInputFile -eq $null) {
             Log-Message "Error: No input file provided" "red"
             exit 101;
+        }
+
+        if ([string]::IsNullOrEmpty($stringver)) {
+            $stringver = "Version"
         }
 
         if ($szOutputFile -eq $null) {
@@ -668,7 +665,7 @@ class HistoryFile
         if ($version -eq "" -or $version -eq $null) 
         {
             #return latest version #
-            $iIndex1 = $szContents.IndexOf(">$stringver&nbsp;", 0) + 14
+            $iIndex1 = $szContents.IndexOf(">$stringver&nbsp;", 0) + $stringver.Length + 7
             $iIndex2 = $szContents.IndexOf("<br>", $iIndex1)
             $curversion = $szContents.Substring($iIndex1, $iIndex2 - $iIndex1)
             Log-Message("   Found version $curversion")
@@ -738,7 +735,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
 #
 # Function to check spelling in text
 #
-Function CheckSpelling($String, $RemoveSpecialChars)
+function CheckSpelling($String, $RemoveSpecialChars)
 {
     $OutString = $String
 
@@ -824,12 +821,29 @@ function Svn-Revert()
     if (![string]::IsNullOrEmpty($SVNCHANGELIST)) 
     {
         Log-Message "Reverting touched files under version control"
-        Invoke-Expression -Command "svn revert $SVNCHANGELIST"
+        Invoke-Expression -Command "svn revert -R $SVNCHANGELIST"
         Check-ExitCode
     }
 }
 
 function Check-ExitCode($ExitOnError = $false)
+{
+    #
+    # Check script error code, 0 is success
+    #
+    if ($?) {
+        Log-Message "Success" "darkgreen"
+    }
+    else {
+        Log-Message "Failure" "red"
+        if ($ExitOnError -eq $true) {
+            Svn-Revert
+            exit
+        }
+    }
+}
+
+function Check-ExitCodeNative($ExitOnError = $false)
 {
     #
     # Check script error code, 0 is success
@@ -855,9 +869,229 @@ function Replace-Version($File, $Old, $New)
     Check-ExitCode
 }
 
+function Run-Scripts($ScriptType, $Scripts, $ExitOnError, $RunInTestMode = $false)
+{
+    if ($Scripts.Length -gt 0)
+    {
+        # Run custom script
+        #
+        Log-Message "Running custom $ScriptType script(s)"
+
+        if ($TESTMODE -ne "Y" -or $RunInTestMode) 
+        {
+            foreach ($Script in $Scripts) 
+            {
+                Invoke-Expression -Command "$Script"
+                Check-ExitCode $ExitOnError
+            }
+        }
+        else {
+            Log-Message "   Test mode, skipping script run" "magenta"
+        }
+    }
+}
+
+
+function Prepare-ExtJsBuild()
+{
+    #
+    # Replace version in app.json
+    #
+    Replace-Version "app.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
+    #
+    # Add to app.json svn changelist for check-in
+    #
+    Svn-Changelist-Add "app.json"
+    #
+    # Allow manual modifications to app.json
+    #
+    if ($NOTEPADEDITS -eq "Y") {
+        Log-Message "Edit app.json file"
+        start-process -filepath "notepad" -args "app.json" -wait
+    }
+    #
+    # Replace version in package.json - technically sencha cmd desnt need this updated, but
+    # we still keep in sync with app.json
+    #
+    Replace-Version "package.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
+    #
+    # Add to package.json svn changelist for check-in
+    #
+    Svn-Changelist-Add "package.json"
+    #
+    # Allow manual modifications to package.json
+    #
+    if ($NOTEPADEDITS -eq "Y") {
+        Log-Message "Edit package.json file"
+        start-process -filepath "notepad" -args "package.json" -wait
+    }
+    #
+    # Replace version in package-lock.json
+    #
+    if (Test-Path("package-lock.json")) 
+    {
+        Replace-Version "package-lock.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
+        #
+        # Add to package.json svn changelist for check-in
+        #
+        Svn-Changelist-Add "package-lock.json"
+    }
+}
+
+
+function Prepare-DotNetBuild($AssemblyInfoLocation)
+{
+    $TMPVERSION = $VERSION.ToString()
+    $TMPCURRENTVERSION = $CURRENTVERSION.ToString()
+    #
+    # Manipulate version if necessary
+    #
+    if (!$TMPVERSION.Contains("."))
+    {
+        #
+        # TODO - translate block version to a real maj.min.patch version
+        #
+        Log-Message "Could not replace version in assemblyinfo.cs, change manually" "red"
+    }
+    #
+    # TODO - Replace version in app.json
+    #
+    #Replace-Version $AssemblyInfoLocation "version`"[ ]*:[ ]*[`"]$TMPCURRENTVERSION" "version`": `"$TMPVERSION"
+    #
+    # Add to app.json svn changelist for check-in
+    #
+    Svn-Changelist-Add $AssemblyInfoLocation
+    #
+    # Allow manual modifications to assembly file
+    #
+    if ($NOTEPADEDITS -eq "Y") {
+        Log-Message "Edit $AssemblyInfoLocation file"
+        start-process -filepath "notepad" -args $AssemblyInfoLocation -wait
+    }
+}
+
+
+function Prepare-PackageJson()
+{
+    #
+    # A few modules are shared, do scope replacement if this might be one of them
+    #
+    if ([string]::IsNullOrEmpty($NPMSCOPE)) 
+    {
+        Log-Message "Un-scoping package name in package.json"
+        ((Get-Content -path "package.json" -Raw) -replace '@spmeesseman/',"") | Set-Content -NoNewline -Path "package.json"
+        Check-ExitCode
+        if (Test-Path("package-lock.json")) 
+        {
+            Log-Message "Un-scoping package name in package-lock.json"
+            ((Get-Content -path "package-lock.json" -Raw) -replace '@spmeesseman/',"") | Set-Content -NoNewline -Path "package-lock.json"
+            Check-ExitCode
+        }
+    }
+    else 
+    {
+        Log-Message "Scoping package name in package.json"
+        ((Get-Content -path "package.json" -Raw) -replace '@spmeesseman',$NPMSCOPE) | Set-Content -NoNewline -Path "package.json"
+        Check-ExitCode
+        if (Test-Path("package-lock.json")) 
+        {
+            Log-Message "Scoping package name in package-lock.json"
+            ((Get-Content -path "package-lock.json" -Raw) -replace '@spmeesseman',$NPMSCOPE) | Set-Content -NoNewline -Path "package-lock.json"
+            Check-ExitCode
+        }
+    }
+    if (![string]::IsNullOrEmpty($NPMUSER)) 
+    {
+        Log-Message "Applying NPM username to package.json"
+        ((Get-Content -path "package.json" -Raw) -replace 'spmeesseman',"$NPMUSER") | Set-Content -NoNewline -Path "package.json"
+        Check-ExitCode
+    }
+    #
+    # Allow manual modifications to package.json and package-lock.json
+    #
+    if ($NOTEPADEDITS -eq "Y") {
+        Log-Message "Edit package.json file"
+        start-process -filepath "notepad" -args "package.json" -wait
+        if (Test-Path("package-lock.json")) {
+            Log-Message "Edit package-lock.json file"
+            start-process -filepath "notepad" -args "package-lock.json" -wait
+        }
+    }
+}
+
+
+function Restore-PackageJson()
+{
+    #
+    # A few modules are shared, re-do scope replacement if this might be one of them
+    #
+    if (![string]::IsNullOrEmpty($NPMUSER)) 
+    {
+        Log-Message "Re-applying NPM username token to package.json"
+        ((Get-Content -path "package.json" -Raw) -replace "$NPMUSER",'spmeesseman') | Set-Content -NoNewline -Path "package.json"
+        Check-ExitCode
+    }
+    if ([string]::IsNullOrEmpty($NPMSCOPE)) 
+    {
+        Log-Message "Re-scoping package name in package.json"
+        ((Get-Content -path "package.json" -Raw) -replace "`"name`"[ ]*:[ ]*[`"]",'"name": "@spmeesseman/') | Set-Content -NoNewline -Path "package.json"
+        Check-ExitCode
+    }
+    else 
+    {
+        Log-Message "Re-scoping package name in package.json"
+        ((Get-Content -path "package.json" -Raw) -replace $NPMSCOPE, '@spmeesseman') | Set-Content -NoNewline -Path "package.json"
+        Check-ExitCode
+    }
+    #
+    # Add package.json version changes to changelist for check in to SVN
+    #
+    Svn-Changelist-Add "package.json"
+    #
+    # Add package-lock.json version changes to changelist for check in to SVN
+    #
+    if (Test-Path("package-lock.json")) 
+    {
+        if ([string]::IsNullOrEmpty($NPMSCOPE)) 
+        {
+            Log-Message "Re-scoping package name in package-lock.json"
+            ((Get-Content -path "package-lock.json" -Raw) -replace "`"name`"[ ]*:[ ]*[`"]",'"name": "@spmeesseman/') | Set-Content -NoNewline -Path "package-lock.json"
+            Check-ExitCode
+        }
+        else 
+        {
+            Log-Message "Re-scoping package name in package-lock.json"
+            ((Get-Content -path "package-lock.json" -Raw) -replace $NPMSCOPE,'@spmeesseman') | Set-Content -NoNewline -Path "package-lock.json"
+            Check-ExitCode
+        }
+        #
+        # Add package-lock.json version changes to changelist for check in to SVN
+        #
+        Svn-Changelist-Add "package-lock.json"
+    }
+}
+
+#***************************************************************************#
+
+#####  #####  #####  ###  ##### #####     #####  #   #  #####  #####  #   #
+#      #      #   #   #   #   #   #       #      ##  #    #    #   #   # #
+#####  #      ####    #   #####   #       ####   # # #    #    ####     #
+    #  #      #  #    #   #       #       #      #  ##    #    #  #     #
+#####  #####  #   #  ###  #       #       #####  #   #    #    #   #    #
+
+#***************************************************************************#
+
+$CURRENTVERSION = ""
+$VERSION = "" 
+$BRANCH = ""
+$COMMITS = ""
+$TDATE = ""
+
 #
-# !!! SCRIPT ENTRY POINT !!!
+# Define a variable to track changed files for check-in to SVN
+# This will be a space delimited list of quoted strings/paths
 #
+$SVNCHANGELIST = ""
 
 #
 # Set location to root
@@ -887,7 +1121,8 @@ Log-Message "   Next Version     : $VERSIONTEXT"
 Log-Message "   NPM user         : $NPMUSER"
 Log-Message "   Is Install releas: $INSTALLERRELEASE"
 Log-Message "   Installer script : $INSTALLERSCRIPT"
-Log-Message "   Deploy script    : $DEPLOYSCRIPT"
+Log-Message "   Build script     : $BUILDCOMMAND"
+Log-Message "   Deploy script    : $DEPLOYCOMMAND"
 Log-Message "   Skip deploy/push : $SKIPDEPLOYPUSH"
 Log-Message "   Is NPM release   : $NPMRELEASE"
 Log-Message "   Is Nuget release : $NUGETRELEASE"
@@ -900,6 +1135,14 @@ Log-Message "   Test email       : $TESTEMAILRECIP"
 #
 $NPMSERVER = "http://npm.development.pjats.com";
 $NUGETSERVER = "http://nuget.development.pjats.com/nuget";
+
+#
+# Check valid params
+#
+if ($INSTALLERRELEASE -eq "Y" -and [string]::IsNullOrEmpty($PATHTODIST)) {
+    Log-Message "pathToDist cannot be empty for installer build" "red"
+    exit 1
+}
 
 #
 # Set default npm user if one was not specified
@@ -931,43 +1174,6 @@ if (!(Test-Path($Env:CODE_HOME))) {
 }
 
 #
-# Deploy script(s).  String, or an array of strings
-#
-$IsAnt = $false;
-if ($DEPLOYSCRIPT -is [system.string] -and ![string]::IsNullOrEmpty($DEPLOYSCRIPT))
-{
-    $DEPLOYSCRIPT = @($DEPLOYSCRIPT); #convert to array
-}
-if ($DEPLOYSCRIPT -is [system.array] -and $DEPLOYSCRIPT.Length -gt 0)
-{
-    foreach ($Script in $DEPLOYSCRIPT) 
-    {
-        $ScriptParts = $Script.Split(' ');
-        if (!(Test-Path($ScriptParts[0]))) {
-            Log-Message "Script ${ScriptParts[0]} not found" "red"
-            exit
-        }
-        if ($Script.Contains(".xml")) {
-            $IsAnt = $true
-        }
-    }
-}
-else {
-    $DEPLOYSCRIPT = [string[]] @() # initialize to empty array.  see comment above about weird ps eval
-}
-
-if ($IsAnt -eq $true) 
-{
-    # Verify ANT/ANSICON install
-    #
-    if (!(Test-Path("$Env:CODE_HOME\ant"))) {
-        Log-Message "The ANT/ANSICON package must be installed to run this script" "red"
-        Log-Message "Re-run the code-package installer and add the Ant/Ansicon package"
-        exit
-    }
-}
-
-#
 # Check installer script
 #
 if (![string]::IsNullOrEmpty($INSTALLERSCRIPT))
@@ -986,6 +1192,18 @@ if (![string]::IsNullOrEmpty($INSTALLERSCRIPT))
             exit
         }
     }
+}
+
+#
+# Convert commands to arrays, if string
+#
+if ($DEPLOYCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($DEPLOYCOMMAND))
+{
+    $DEPLOYCOMMAND = @($DEPLOYCOMMAND); #convert to array
+}
+if ($BUILDCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($BUILDCOMMAND))
+{
+    $BUILDCOMMAND = @($BUILDCOMMAND); #convert to array
 }
 
 #
@@ -1298,6 +1516,22 @@ if ($NOTEPADEDITS -eq "Y") {
 }
 
 #
+# Create dist directory if it doesnt exist
+#
+if ($INSTALLERRELEASE -eq "Y")
+{
+    if (!(Test-Path($PATHTODIST))) {
+        Log-Message "Create dist directory"
+        New-Item -Path "$PATHTODIST" -ItemType "directory" | Out-Null
+    }
+    #
+    # Copy history file to dist directory
+    #
+    Copy-Item -Path "$HISTORYFILE" -Force -Destination "$PATHTODIST" | Out-Null
+    Svn-Changelist-Add $PATHTODIST
+}
+
+#
 # Store location paths depending on publish types
 #
 $TargetNetLocation = ""
@@ -1317,61 +1551,30 @@ if ($INSTALLERRELEASE -eq "Y")
     # directory will exist, so the current version was extracted by node and and next version  
     # was calculated by semver.
     #
-    if ((Test-Path("app.json")) -and (Test-Path("package.json")))
-    {
-        #
-        # Replace version in app.json
-        #
-        Replace-Version "app.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
-        #
-        # Add to app.json svn changelist for check-in
-        #
-        Svn-Changelist-Add "app.json"
-        #
-        # Allow manual modifications to app.json
-        #
-        if ($NOTEPADEDITS -eq "Y") {
-            Log-Message "Edit app.json file"
-            start-process -filepath "notepad" -args "app.json" -wait
-        }
-        #
-        # Replace version in package.json
-        #
-        Replace-Version "package.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
-        #
-        # Add to package.json svn changelist for check-in
-        #
-        Svn-Changelist-Add "package.json"
-        #
-        # Allow manual modifications to app.json
-        #
-        if ($NOTEPADEDITS -eq "Y") {
-            Log-Message "Edit package.json file"
-            start-process -filepath "notepad" -args "package.json" -wait
-        }
-        #
-        # Replace version in package-lock.json
-        #
-        if (Test-Path("package-lock.json")) 
-        {
-            Replace-Version "package-lock.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
-            #
-            # Add to package.json svn changelist for check-in
-            #
-            Svn-Changelist-Add "package-lock.json"
-        }
+    if ((Test-Path("app.json")) -and (Test-Path("package.json"))) {
+        Prepare-ExtJsBuild
     }
 
     #
-    # Build
+    # If this is a .NET build
     #
-    if (![string]::IsNullOrEmpty($BUILDCOMMAND))
-    {
-        Log-Message "Running build command"
-        Invoke-Expression -Command "$BUILDCOMMAND"
-        # Exit on failure
-        Check-ExitCode $true
+    if ((Test-Path("assemblyinfo.cs"))) {
+        Prepare-DotNetBuild "assemblyinfo.cs"
     }
+    elseif ((Test-Path("properties\assemblyinfo.cs"))) {
+        Prepare-DotNetBuild "properties\assemblyinfo.cs"
+    }
+    elseif ((Test-Path("src\assemblyinfo.cs"))) {
+        Prepare-DotNetBuild "src\assemblyinfo.cs"
+    }
+    elseif ((Test-Path("src\properties\assemblyinfo.cs"))) {
+        Prepare-DotNetBuild "src\properties\assemblyinfo.cs"
+    }
+
+    #
+    # Build if specified
+    #
+    Run-Scripts "build" $BUILDCOMMAND $true $true
 
     #
     # Build the installer
@@ -1380,12 +1583,6 @@ if ($INSTALLERRELEASE -eq "Y")
     {
         if ($INSTALLERSCRIPT.Contains(".nsi"))
         {
-            # Create dist directory if it doesnt exist
-            #
-            if (!(Test-Path($PATHTODIST))) {
-                Log-Message "Create dist directory"
-                New-Item -Path "$PATHTODIST" -ItemType "directory" | Out-Null
-            }
             #
             # replace version in nsi file
             #
@@ -1422,7 +1619,7 @@ if ($INSTALLERRELEASE -eq "Y")
         # send the notification email.
         #
         if ($SKIPDEPLOYPUSH -ne "Y")
-        {
+        {Log-Message "????????" "cyan"
             # Copy dist dir installer and the history file to target location, and pdf docs to Sharepoint
             #
             if ($TESTMODE -ne "Y") 
@@ -1491,53 +1688,17 @@ if ($NPMRELEASE -eq "Y")
         #
         # replace current version with new version in package.json and package-lock.json
         #
-        Log-Message "Retrieving current version in package.json"
+        Log-Message "Setting new version $VERSION in package.json"
         & npm version --no-git-tag-version $VERSION
-        Check-ExitCode
+        Check-ExitCodeNative
         #
-        # A few modules are shared, do scope replacement if this might be one of them
         #
-        if ([string]::IsNullOrEmpty($NPMSCOPE)) 
-        {
-            Log-Message "Un-scoping package name in package.json"
-            ((Get-Content -path "package.json" -Raw) -replace '@spmeesseman/',"") | Set-Content -NoNewline -Path "package.json"
-            Check-ExitCode
-            if (Test-Path("package-lock.json")) 
-            {
-                Log-Message "Un-scoping package name in package-lock.json"
-                ((Get-Content -path "package-lock.json" -Raw) -replace '@spmeesseman/',"") | Set-Content -NoNewline -Path "package-lock.json"
-                Check-ExitCode
-            }
-        }
-        else 
-        {
-            Log-Message "Scoping package name in package.json"
-            ((Get-Content -path "package.json" -Raw) -replace '@spmeesseman',$NPMSCOPE) | Set-Content -NoNewline -Path "package.json"
-            Check-ExitCode
-            if (Test-Path("package-lock.json")) 
-            {
-                Log-Message "Scoping package name in package-lock.json"
-                ((Get-Content -path "package-lock.json" -Raw) -replace '@spmeesseman',$NPMSCOPE) | Set-Content -NoNewline -Path "package-lock.json"
-                Check-ExitCode
-            }
-        }
-        if (![string]::IsNullOrEmpty($NPMUSER)) 
-        {
-            Log-Message "Applying NPM username to package.json"
-            ((Get-Content -path "package.json" -Raw) -replace 'spmeesseman',"$NPMUSER") | Set-Content -NoNewline -Path "package.json"
-            Check-ExitCode
-        }
         #
-        # Allow manual modifications to package.json and package-lock.json
+        Prepare-PackageJson
         #
-        if ($NOTEPADEDITS -eq "Y") {
-            Log-Message "Edit package.json file"
-            start-process -filepath "notepad" -args "package.json" -wait
-            if (Test-Path("package-lock.json")) {
-                Log-Message "Edit package-lock.json file"
-                start-process -filepath "notepad" -args "package-lock.json" -wait
-            }
-        }
+        # Build if specified
+        #
+        Run-Scripts "build" $BUILDCOMMAND $true $true
         #
         # Publish to npm server
         #
@@ -1545,7 +1706,7 @@ if ($NPMRELEASE -eq "Y")
         if ($TESTMODE -ne "Y") 
         {
             & npm publish --access public --registry $NPMSERVER
-            Check-ExitCode
+            Check-ExitCodeNative
         }
         else 
         {
@@ -1554,60 +1715,19 @@ if ($NPMRELEASE -eq "Y")
             Log-Message "   Test mode, dry run publish finished" "magenta"
         }
         #
-        # A few modules are shared, re-do scope replacement if this might be one of them
         #
-        if (![string]::IsNullOrEmpty($NPMUSER)) 
-        {
-            Log-Message "Re-applying NPM username token to package.json"
-            ((Get-Content -path "package.json" -Raw) -replace "$NPMUSER",'spmeesseman') | Set-Content -NoNewline -Path "package.json"
-            Check-ExitCode
-        }
-        if ([string]::IsNullOrEmpty($NPMSCOPE)) 
-        {
-            Log-Message "Re-scoping package name in package.json"
-            ((Get-Content -path "package.json" -Raw) -replace "`"name`"[ ]*:[ ]*[`"]",'"name": "@spmeesseman/') | Set-Content -NoNewline -Path "package.json"
-            Check-ExitCode
-            if (Test-Path("package-lock.json")) 
-            {
-                Log-Message "Re-scoping package name in package-lock.json"
-                ((Get-Content -path "package-lock.json" -Raw) -replace "`"name`"[ ]*:[ ]*[`"]",'"name": "@spmeesseman/') | Set-Content -NoNewline -Path "package-lock.json"
-                Check-ExitCode
-            }
-        }
-        else 
-        {
-            Log-Message "Re-scoping package name in package.json"
-            ((Get-Content -path "package.json" -Raw) -replace $NPMSCOPE, '@spmeesseman') | Set-Content -NoNewline -Path "package.json"
-            Check-ExitCode
-            if (Test-Path("package-lock.json")) 
-            {
-                Log-Message "Re-scoping package name in package-lock.json"
-                ((Get-Content -path "package-lock.json" -Raw) -replace $NPMSCOPE,'@spmeesseman') | Set-Content -NoNewline -Path "package-lock.json"
-                Check-ExitCode
-            }
-        }
         #
-        # Add package.json version changes to changelist for check in to SVN
+        Restore-PackageJson
         #
-        Svn-Changelist-Add "package.json"
         #
-        # Add package-lock.json version changes to changelist for check in to SVN
         #
-        if (Test-Path("package-lock.json")) 
-        {
-            ((Get-Content -path "package-lock.json" -Raw) -replace '@perryjohnson', '@spmeesseman') | Set-Content -NoNewline -Path "package-lock.json"
-            #
-            # Add package-lock.json version changes to changelist for check in to SVN
-            #
-            Svn-Changelist-Add "package-lock.json"
-        }
         if (!$PublishFailed) 
         {
-            if (![string]::IsNullOrEmpty($NPMSCOPE)) {
-                $NpmLocation = "$NPMSERVER/$NPMSCOPE/$PROJECTNAME"
+            if (![string]::IsNullOrEmpty($NPMSCOPE)) { # VERDACCIO NPM server type URL
+                $NpmLocation = "$NPMSERVER/-/web/detail/$NPMSCOPE/$PROJECTNAME"
             }
             else {
-                $NpmLocation = "$NPMSERVER/$PROJECTNAME"
+                $NpmLocation = "$NPMSERVER/-/web/detail/$PROJECTNAME"
             }
         }
         else {
@@ -1621,11 +1741,15 @@ if ($NPMRELEASE -eq "Y")
 }
 
 #
-# TODO - Nuget Release
+# TODO - Nuget Release / .NET
 #
 if ($NUGETRELEASE -eq "Y") 
 {
     Log-Message "Releasing nuget package"
+    #
+    # Build if specified
+    #
+    #Run-Scripts "build" $BUILDCOMMAND $true
     #
     # TODO
     #
@@ -1635,41 +1759,12 @@ if ($NUGETRELEASE -eq "Y")
 #
 # Run custom deploy script if specified
 #
-if ($DEPLOYSCRIPT.Length -gt 0)
+if ($SKIPDEPLOYPUSH -ne "Y")
 {
-    if ($SKIPDEPLOYPUSH -ne "Y")
-    {
-        # Run custom deploy script
-        #
-        Log-Message "Running custom deploy script"
-
-        if ($TESTMODE -ne "Y") 
-        {
-            foreach ($Script in $DEPLOYSCRIPT) 
-            {
-                if ($Script.EndsWith(".xml")) {
-                    Invoke-Expression -Command "$Env:CODE_HOME\ant\bin\ant.bat " `
-                            "-logger org.apache.tools.ant.listener.AnsiColorLogger -f $Script"
-                }
-                elseif ($Script.EndsWith(".ps1")) {
-                    Invoke-Expression -Command ".\$Script"
-                }
-                elseif ($Script.EndsWith(".bat")) {
-                    Invoke-Expression -Command "cmd /c $Script"
-                }
-                else {
-                    Invoke-Expression -Command "$Script"
-                }
-                Check-ExitCode
-            }
-        }
-        else {
-            Log-Message "   Test mode, skipping deploy script run" "magenta"
-        }
-    }
-    else {
-        Log-Message "   Skipped running custom deploy script (user specified)" "darkyellow"
-    }
+    Run-Scripts "deploy" $DEPLOYCOMMAND $false $false
+}
+else {
+    Log-Message "   Skipped running custom deploy script (user specified)" "darkyellow"
 }
 
 #
@@ -1731,7 +1826,7 @@ if (Test-Path(".svn"))
             # Call svn copy to create 'tag'
             #
             & svn copy "$TrunkLocation" "$TagLocation" -m "chore(release): tag version $VERSION [skip ci]"
-            Check-ExitCode
+            Check-ExitCodeNative
         }
         else {
             Log-Message "   Test mode, skipping create version tag" "magenta"
