@@ -1,6 +1,10 @@
 {
     "projectName":      "app-publisher",
-    "deployscript":     "",
+    "command": {
+        "buildCommand": [
+            "npm run build"
+        ]
+    },
     "historyFile":      "doc\\history.txt",
     "historyHdrFile":   "install\\history-hdr.txt",
     "historyLineLen":   80,
