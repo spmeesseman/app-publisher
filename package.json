@@ -9,15 +9,12 @@
 		"email": "spmeesseman@pjats.com"
 	},
 	"bugs": {
-		"email": "spmeesseman@pjats.com"
+		"url": "https://github.com/spmeesseman/app-publisher/issues"
 	},
 	"homepage": "https://github.com/spmeesseman/app-publisher/blob/master/README.md",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/spmeesseman/app-publisher.git"
-	},
-	"bugs": {
-		"url": "https://github.com/spmeesseman/app-publisher/issues"
 	},
 	"dependencies": {
 		"@types/gradient-string": "^1.1.0",

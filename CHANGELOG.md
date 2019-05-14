@@ -1,5 +1,24 @@
 # Change Log
 
+## [1.1.4](https://github.com/spmeesseman/app-publisher/compare/v1.1.3...v1.1.4) (2019-05-14)
+
+
+### Bug Fixes
+
+* env var placeholder in publishrc not replaced at runtime ([b4e1cc2](https://github.com/spmeesseman/app-publisher/commit/b4e1cc2))
+
+
+### Build System
+
+* **app-publisher:** add build command to publishrc [skip ci] ([abb0801](https://github.com/spmeesseman/app-publisher/commit/abb0801))
+* **npm:** remove shelljs dep, add person and repo info [skip ci] ([2314d45](https://github.com/spmeesseman/app-publisher/commit/2314d45))
+* **npm:** remove watch script command [skip ci] ([b1a761c](https://github.com/spmeesseman/app-publisher/commit/b1a761c))
+
+
+### Code Refactoring
+
+* re-add git repo tag used by semantic-release ([68a07d4](https://github.com/spmeesseman/app-publisher/commit/68a07d4))
+
 ## [1.1.3](https://github.com/spmeesseman/app-publisher/compare/v1.1.2...v1.1.3) (2019-05-13)
 
 
