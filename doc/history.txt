@@ -23,3 +23,54 @@ May 13th, 2019
 
 1.  Initial Release
 
+
+Version 1.1.3
+May 14th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  .NET Runtime                : Powershell 5                          *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+
+    Package upload to npm.development.pjats.com fails.
+
+
+Version 1.1.4
+May 14th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  .NET Runtime                : Powershell 5                          *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+
+    Environment variable placeholders in .publishconfig do not get replaced at
+    runtime.
+

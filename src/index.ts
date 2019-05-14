@@ -147,19 +147,20 @@ if (args.readConfig)
     process.exit(0);
 }
 
-//
-// Set dry run flags
-//
-let dryCfg = {
-    testMode: args.dryRun ? "Y" : "N",
-    testModeSvnRevert: args.dryRun ? "Y" : "N",
-    skipDeployPush: args.dryRun ? "Y" : "N"
-};
 
 //
 // Convert file config to JSON object
 //
 fileCfg = JSON.parse(fileCfg);
+
+//
+// Set dry run flags
+//
+let dryCfg = {
+    testMode: args.dryRun ? "Y" : "N",
+    testModeSvnRevert: args.dryRun ? "Y" : (fileCfg.testModeSvnRevert ? fileCfg.testModeSvnRevert : "N"),
+    skipDeployPush: args.dryRun ? "Y" : (fileCfg.skipDeployPush ? fileCfg.skipDeployPush : "N")
+};
 
 //
 // Merge configs
