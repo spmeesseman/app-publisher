@@ -10,24 +10,27 @@
 
 * Subversion integration
 
-## Installation
-
-This module can be installed in other ways aside from a local npm/yarn/pnpm:
-
-* As a global node install
-* Installed with Code-Package Installer
-* Installed with Windows Installer
-
 ## Publishing Steps
 
-The steps performed during publish are:
+The steps performed during app-publish are:
 
 * Determine next version
 * Auto-populate history file with commit messages since last version
 * Update all versioned files with new version
+* Run application specific build scripts
 * Build installer if required
+* Upload distribution files to network drive
 * Publish NPM package if required
 * Publish Nuget package if required
+* Run application specific deploy scripts
 * Check all modifications into SVN
 * Tag with new version in SVN
 * Send release email
+
+## Windows Installer
+
+[Download the Windows Installer](file://///192.168.68.120/d$/softwareimages/code-package/2.1.0/code-package-x64.exe)
+
+## Usage
+
+Details coming soon...
