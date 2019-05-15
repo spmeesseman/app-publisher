@@ -1520,7 +1520,7 @@ if ($INTERACTIVE -eq "Y")
 {
     Log-Message "Enter the new version"
     $NewVersion = read-host -prompt "Enter the version #, or C to cancel [$VERSION]"
-    if ($VERSION.ToUpper() -eq "C") {
+    if ($NewVersion.ToUpper() -eq "C") {
         Log-Message "User cancelled process, exiting" "red"
         exit
     }
@@ -1725,7 +1725,17 @@ if ($INSTALLERRELEASE -eq "Y")
     # Copy history file to dist directory
     #
     Copy-Item -Path "$HISTORYFILE" -Force -Destination "$PATHTODIST" | Out-Null
-    Svn-Changelist-Add $PATHTODIST
+    #
+    # If dist dir is under version control, add it to the changelist
+    #
+    $TestPathVc = $PATHTODIST;
+    if ($PATHPREROOT -ne "" -and $PATHPREROOT -ne $null) {
+        $TestPathVc = Join-Path -Path "$PATHPREROOT" -ChildPath "$TestPathVc"
+    }
+    & svn info "$TestPathVc"
+    if ($LASTEXITCODE -eq 0) {
+        Svn-Changelist-Add $PATHTODIST
+    }
 }
 
 #
