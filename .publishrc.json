@@ -10,6 +10,7 @@
     "historyLineLen":   80,
     "installerRelease": "Y",
     "installerScript":  "install\\installer-x86.nsi",
+    "interactive":      "Y",
     "notepadEdits":     "Y",
     "npmRelease":       "Y",
     "npmScope":         "@perryjohnson",

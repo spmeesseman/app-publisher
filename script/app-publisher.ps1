@@ -1,6 +1,15 @@
 using namespace System.IO
 using namespace System.Text.RegularExpressions
 
+#*********************************************************************************************#
+
+#####  ##   ##  ###      #     ###  #   #  #####    #####    #    #####    #     ##   ##  #####
+#      # # # #  #  #     #      #   ##  #  #        #   #   # #   #   #   # #    # # # #  #
+#      #  #  #  #   #    #      #   # # #  ####     #####  #####  ####   #####   #  #  #  #####
+#      #     #  #  #     #      #   #  ##  #        #      #   #  #  #   #   #   #     #      #
+#####  #     #  ###      ####  ###  #   #  #####    #      #   #  #   #  #   #   #     #  #####
+
+#*********************************************************************************************#
 #
 # Command line args are for future semantic-release chain.  Currently, the below variables 
 # are $in this script.
@@ -213,6 +222,16 @@ $WRITELOG = "N"
 # ------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------
 )
+
+#**************************************************************#
+
+#####  #       #    #####  #####  #####  ##### 
+#      #      # #   #      #      #      #     
+#      #     #####  #####  #####  ####   ##### 
+#      #     #   #      #      #  #          # 
+#####  ####  #   #  #####  #####  #####  ##### 
+
+#**************************************************************#
 
 #
 # Define some script classes:
@@ -683,6 +702,16 @@ class HistoryFile
     }
 }
 
+#************************************************************************#
+
+#####  #   #  #   #  #####  #####  ###  #####  #   #  #####
+#      #   #  ##  #  #        #     #   #   #  ##  #  #    
+####   #   #  # # #  #        #     #   #   #  # # #  #####
+#      #   #  #  ##  #        #     #   #   #  #  ##      #
+#      #####  #   #  #####    #    ###  #####  #   #  #####
+
+#************************************************************************#
+
 function Log-Message($msg, $color)
 {
     if ($color) {
@@ -974,7 +1003,39 @@ function Prepare-DotNetBuild($AssemblyInfoLocation)
 function Prepare-PackageJson()
 {
     #
+    # Replace current version with new version in package.json and package-lock.json
+    #
+    Log-Message "Setting new version $VERSION in package.json"
+    & npm version --no-git-tag-version $VERSION
+    Check-ExitCodeNative
+    #
     # A few modules are shared, do scope replacement if this might be one of them
+    #
+    $GitUrl = "https://github.com/spmeesseman/$PROJECTNAME"
+    $SvnUrl = "http://$SVNSERVER/$SVNREPO/$PROJECTNAME/trunk"
+    #
+    # Replace GIT tags - repo
+    #
+    Log-Message "Setting repository in package.json"
+    ((Get-Content -path "package.json" -Raw) -replace "$GitUrl.git","$SvnUrl") | Set-Content -NoNewline -Path "package.json"
+    Check-ExitCode
+    Log-Message "Setting repository type in package.json"
+    ((Get-Content -path "package.json" -Raw) -replace '"git"','"svn"') | Set-Content -NoNewline -Path "package.json"
+    Check-ExitCode
+    #
+    # TODO - Replace GIT tags - bugs
+    #
+    Log-Message "Setting bugs in package.json"
+    ((Get-Content -path "package.json" -Raw) -replace "$GitUrl/issues","http://bugzilla.development.pjats.com/$PROJECTNAME") | Set-Content -NoNewline -Path "package.json"
+    Check-ExitCode
+    #
+    # TODO - Replace GIT tags - homepage 
+    #
+    #Log-Message "Setting homepage in package.json"
+    #((Get-Content -path "package.json" -Raw) -replace "$GitUrl/blob/master/README.md","$SvnUrl/README.md") | Set-Content -NoNewline -Path "package.json"
+    #Check-ExitCode
+    #
+    # Scope
     #
     if ([string]::IsNullOrEmpty($NPMSCOPE)) 
     {
@@ -1000,11 +1061,24 @@ function Prepare-PackageJson()
             Check-ExitCode
         }
     }
+    #
+    # NPM username
+    #
     if (![string]::IsNullOrEmpty($NPMUSER)) 
     {
         Log-Message "Applying NPM username to package.json"
         ((Get-Content -path "package.json" -Raw) -replace 'spmeesseman',"$NPMUSER") | Set-Content -NoNewline -Path "package.json"
         Check-ExitCode
+    }
+    #
+    # Add package.json/package-lock.json version changes to changelist for check in to SVN
+    #
+    Svn-Changelist-Add "package.json"
+    if (Test-Path("package-lock.json")) {
+        #
+        # Add package-lock.json version changes to changelist for check in to SVN
+        #
+        Svn-Changelist-Add "package-lock.json"
     }
     #
     # Allow manual modifications to package.json and package-lock.json
@@ -1025,12 +1099,41 @@ function Restore-PackageJson()
     #
     # A few modules are shared, re-do scope replacement if this might be one of them
     #
+    $GitUrl = "https://github.com/spmeesseman/$PROJECTNAME"
+    $SvnUrl = "http://$SVNSERVER/$SVNREPO/$PROJECTNAME/trunk"
+    #
+    # Replace GIT tags - repo
+    #
+    Log-Message "Setting repository in package.json"
+    ((Get-Content -path "package.json" -Raw) -replace "$SvnUrl","$GitUrl.git") | Set-Content -NoNewline -Path "package.json"
+    Check-ExitCode
+    Log-Message "Setting repository in package.json"
+    ((Get-Content -path "package.json" -Raw) -replace '"svn"','"git"') | Set-Content -NoNewline -Path "package.json"
+    Check-ExitCode
+    #
+    # TODO - Replace GIT tags - bugs
+    #
+    Log-Message "Setting bugs in package.json"
+    ((Get-Content -path "package.json" -Raw) -replace "http://bugzilla.pjats.com/$PROJECTNAME","$GitUrl/issues") | Set-Content -NoNewline -Path "package.json"
+    Check-ExitCode
+    #
+    # TODO - Replace GIT tags - homepage 
+    #
+    #Log-Message "Setting homepage in package.json"
+    #((Get-Content -path "package.json" -Raw) -replace "$SvnUrl/README.md","$GitUrl/blob/master/README.md") | Set-Content -NoNewline -Path "package.json"
+    #Check-ExitCode
+    #
+    # NPM user
+    #
     if (![string]::IsNullOrEmpty($NPMUSER)) 
     {
         Log-Message "Re-applying NPM username token to package.json"
         ((Get-Content -path "package.json" -Raw) -replace "$NPMUSER",'spmeesseman') | Set-Content -NoNewline -Path "package.json"
         Check-ExitCode
     }
+    #
+    # Scope - package.json
+    #
     if ([string]::IsNullOrEmpty($NPMSCOPE)) 
     {
         Log-Message "Re-scoping package name in package.json"
@@ -1044,11 +1147,7 @@ function Restore-PackageJson()
         Check-ExitCode
     }
     #
-    # Add package.json version changes to changelist for check in to SVN
-    #
-    Svn-Changelist-Add "package.json"
-    #
-    # Add package-lock.json version changes to changelist for check in to SVN
+    # Scope - package-lock.json
     #
     if (Test-Path("package-lock.json")) 
     {
@@ -1064,12 +1163,9 @@ function Restore-PackageJson()
             ((Get-Content -path "package-lock.json" -Raw) -replace $NPMSCOPE,'@spmeesseman') | Set-Content -NoNewline -Path "package-lock.json"
             Check-ExitCode
         }
-        #
-        # Add package-lock.json version changes to changelist for check in to SVN
-        #
-        Svn-Changelist-Add "package-lock.json"
     }
 }
+
 
 #***************************************************************************#
 
@@ -1111,22 +1207,26 @@ Log-Message "----------------------------------------------------------------" "
 Log-Message "Project specific script configuration:"
 Log-Message "   Project          : $PROJECTNAME"
 Log-Message "   Path to root     : $PATHTOROOT"
+Log-Message "   Path to main root: $PATHTOMAINROOT"
+Log-Message "   Path pre root    : $PATHPREROOT"
 Log-Message "   SVN server       : $SVNSERVER"
 Log-Message "   SVN repo         : $SVNREPO"
 Log-Message "   SVN protocol     : $SVNPROTOCOL"
+Log-Message "   SVN tag          : $SVNTAG"
 Log-Message "   History file     : $HISTORYFILE"
 Log-Message "   History file line: $HISTORYLINELEN"
 Log-Message "   History hdr file : $HISTORYHDRFILE"
-Log-Message "   Next Version     : $VERSIONTEXT"
-Log-Message "   NPM user         : $NPMUSER"
+Log-Message "   Version text     : $VERSIONTEXT"
 Log-Message "   Is Install releas: $INSTALLERRELEASE"
 Log-Message "   Installer script : $INSTALLERSCRIPT"
+Log-Message "   Is NPM release   : $NPMRELEASE"
+Log-Message "   NPM user         : $NPMUSER"
+Log-Message "   Is Nuget release : $NUGETRELEASE"
 Log-Message "   Build script     : $BUILDCOMMAND"
 Log-Message "   Deploy script    : $DEPLOYCOMMAND"
 Log-Message "   Skip deploy/push : $SKIPDEPLOYPUSH"
-Log-Message "   Is NPM release   : $NPMRELEASE"
-Log-Message "   Is Nuget release : $NUGETRELEASE"
 Log-Message "   Notepad edits    : $NOTEPADEDITS"
+Log-Message "   Is interactive   : $INTERACTIVE"
 Log-Message "   Is test mode     : $TESTMODE"
 Log-Message "   Test email       : $TESTEMAILRECIP"
 
@@ -1135,6 +1235,80 @@ Log-Message "   Test email       : $TESTEMAILRECIP"
 #
 $NPMSERVER = "http://npm.development.pjats.com";
 $NUGETSERVER = "http://nuget.development.pjats.com/nuget";
+
+#
+# Convert any Y/N vars to upper case and check validity
+#
+if (![string]::IsNullOrEmpty($TESTMODE)) {
+    $TESTMODE = $TESTMODE.ToUpper()
+    if ($TESTMODE -ne "Y" -and $TESTMODE -ne "N") {
+        Log-Message "Invalid value specified for testMode, accepted values are y/n/Y/N" "red"
+        exit 1
+    }
+}
+if (![string]::IsNullOrEmpty($INSTALLERRELEASE)) {
+    $INSTALLERRELEASE = $INSTALLERRELEASE.ToUpper()
+    if ($INSTALLERRELEASE -ne "Y" -and $INSTALLERRELEASE -ne "N") {
+        Log-Message "Invalid value specified for installerRelease, accepted values are y/n/Y/N" "red"
+        exit 1
+    }
+}
+if (![string]::IsNullOrEmpty($NPMRELEASE)) {
+    $NPMRELEASE = $NPMRELEASE.ToUpper()
+    if ($NPMRELEASE -ne "Y" -and $NPMRELEASE -ne "N") {
+        Log-Message "Invalid value specified for npmRelease, accepted values are y/n/Y/N" "red"
+        exit 1
+    }
+}
+if (![string]::IsNullOrEmpty($NUGETRELEASE)) {
+    $NUGETRELEASE = $NUGETRELEASE.ToUpper()
+    if ($NUGETRELEASE -ne "Y" -and $NUGETRELEASE -ne "N") {
+        Log-Message "Invalid value specified for nugetRelease, accepted values are y/n/Y/N" "red"
+        exit 1
+    }
+}
+if (![string]::IsNullOrEmpty($SKIPDEPLOYPUSH)) {
+    $SKIPDEPLOYPUSH = $SKIPDEPLOYPUSH.ToUpper()
+    if ($SKIPDEPLOYPUSH -ne "Y" -and $SKIPDEPLOYPUSH -ne "N") {
+        Log-Message "Invalid value specified for skipDeployPush, accepted values are y/n/Y/N" "red"
+        exit 1
+    }
+}
+if (![string]::IsNullOrEmpty($TESTMODESVNREVERT)) {
+    $TESTMODESVNREVERT = $TESTMODESVNREVERT.ToUpper()
+    if ($TESTMODESVNREVERT -ne "Y" -and $TESTMODESVNREVERT -ne "N") {
+        Log-Message "Invalid value specified for testModeSvnRevert, accepted values are y/n/Y/N" "red"
+        exit 1
+    }
+}
+if (![string]::IsNullOrEmpty($WRITELOG)) {
+    $WRITELOG = $WRITELOG.ToUpper()
+    if ($WRITELOG -ne "Y" -and $WRITELOG -ne "N") {
+        Log-Message "Invalid value specified for writeLog, accepted values are y/n/Y/N" "red"
+        exit 1
+    }
+}
+if (![string]::IsNullOrEmpty($NOTEPADEDITS)) {
+    $NOTEPADEDITS = $NOTEPADEDITS.ToUpper()
+    if ($NOTEPADEDITS -ne "Y" -and $NOTEPADEDITS -ne "N") {
+        Log-Message "Invalid value specified for notepadEdits, accepted values are y/n/Y/N" "red"
+        exit 1
+    }
+}
+if (![string]::IsNullOrEmpty($INTERACTIVE)) {
+    $INTERACTIVE = $INTERACTIVE.ToUpper()
+    if ($INTERACTIVE -ne "Y" -and $INTERACTIVE -ne "N") {
+        Log-Message "Invalid value specified for interactive, accepted values are y/n/Y/N" "red"
+        exit 1
+    }
+}
+if (![string]::IsNullOrEmpty($SVNTAG)) {
+    $SVNTAG = $SVNTAG.ToUpper()
+    if ($SVNTAG -ne "Y" -and $SVNTAG -ne "N") {
+        Log-Message "Invalid value specified for svnTag, accepted values are y/n/Y/N" "red"
+        exit 1
+    }
+}
 
 #
 # Check valid params
@@ -1254,6 +1428,8 @@ if ($COMMITS -eq "" -or $COMMITS -eq $null) {
 #
 if ($CURRENTVERSION -eq "") 
 {
+    Log-Message "Calculating next version number"
+
     if (Test-Path("node_modules"))
     {
         if (Test-Path("node_modules\semver"))
@@ -1311,7 +1487,6 @@ if ($CURRENTVERSION -eq "")
             # Legacy pj versioning
             #
             Log-Message "Using legacy PJ versioning"
-            Log-Message "The current version is $CURRENTVERSION"
             $VERSION = [System.Int32]::Parse($CURRENTVERSION) + 1
         }
         else {
@@ -1321,19 +1496,41 @@ if ($CURRENTVERSION -eq "")
             Log-Message "Using non-npm project semantic versioning"
             Log-Message "Semver not found, run 'npm install -g semver' to automate" `
                                         "semantic versioning of non-NPM projects" "darkyellow"
-            Log-Message "The current version is $CURRENTVERSION"
-            Log-Message "You must manually input the new version"
-            $VERSION = read-host -prompt "Enter the version #, or C to cancel"
-            if ($VERSION.ToUpper() -eq "C") {
-                Log-Message "User cancelled process, exiting" "red"
-                exit
-            }
         }
     }
 }
 
 if ($CURRENTVERSION -eq "") {
-    Log-Message "Could not determine current version, exiting" "red"
+    Log-Message "Could not determine current version, correct issue and re-run publish" "red"
+    exit
+}
+
+Log-Message "The current version is $CURRENTVERSION"
+
+if (![string]::IsNullOrEmpty($VERSION)) 
+{
+    Log-Message "The suggested new version is $VERSION"
+}
+else {
+    Log-Message "New version could not be determined, you must manually input the new version"
+    $INTERACTIVE = "Y"
+}
+
+if ($INTERACTIVE -eq "Y") 
+{
+    Log-Message "Enter the new version"
+    $NewVersion = read-host -prompt "Enter the version #, or C to cancel [$VERSION]"
+    if ($VERSION.ToUpper() -eq "C") {
+        Log-Message "User cancelled process, exiting" "red"
+        exit
+    }
+    if (![string]::IsNullOrEmpty($NewVersion)) {
+        $VERSION = $NewVersion
+    }
+}
+
+if ([string]::IsNullOrEmpty($VERSION)) {
+    Log-Message "Invalid next version, exiting" "red"
     exit
 }
 
@@ -1554,9 +1751,14 @@ if ($INSTALLERRELEASE -eq "Y")
     if ((Test-Path("app.json")) -and (Test-Path("package.json"))) {
         Prepare-ExtJsBuild
     }
-
     #
-    # If this is a .NET build
+    # Check to see if its a npm managed project, update package.json if required
+    #
+    elseif ((Test-Path("package.json"))) {
+        Prepare-PackageJson
+    }
+    #
+    # If this is a .NET build, update assemblyinfo file
     #
     if ((Test-Path("assemblyinfo.cs"))) {
         Prepare-DotNetBuild "assemblyinfo.cs"
@@ -1570,12 +1772,10 @@ if ($INSTALLERRELEASE -eq "Y")
     elseif ((Test-Path("src\properties\assemblyinfo.cs"))) {
         Prepare-DotNetBuild "src\properties\assemblyinfo.cs"
     }
-
     #
     # Build if specified
     #
     Run-Scripts "build" $BUILDCOMMAND $true $true
-
     #
     # Build the installer
     #
@@ -1610,7 +1810,16 @@ if ($INSTALLERRELEASE -eq "Y")
             Log-Message "Cannot build this installer type ($INSTALLERSCRIPT)" "red"
         }
     }
-    
+    #
+    # If this is an npm managed project, but not ExtJs, then restore package.json to original
+    # state, minus the version number
+    #
+    if ((Test-Path("package.json")) -and !(Test-Path("app.json"))) {
+        Restore-PackageJson
+    }
+    #
+    # If the installer was successfully built, proceed, otherwise display error and exit
+    #
     if ($InstallerBuilt -eq $true)
     {
         $TargetNetLocation = "\\192.168.68.120\d$\softwareimages\$PROJECTNAME\$VERSION"
@@ -1685,12 +1894,6 @@ if ($NPMRELEASE -eq "Y")
     if (Test-Path("package.json"))
     {
         $PublishFailed = $false;
-        #
-        # replace current version with new version in package.json and package-lock.json
-        #
-        Log-Message "Setting new version $VERSION in package.json"
-        & npm version --no-git-tag-version $VERSION
-        Check-ExitCodeNative
         #
         #
         #

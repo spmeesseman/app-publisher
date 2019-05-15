@@ -74,3 +74,34 @@ May 14th, 2019
     Environment variable placeholders in .publishconfig do not get replaced at
     runtime.
 
+
+Version 1.1.5
+May 15th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  .NET Runtime                : Powershell 5                          *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+
+    After installing package globally, the app-builder command throws an error
+    that it cannot find the publish script.
+
+2.  Bug Fix
+
+    Non-npm released installer projects managed by npm are failing to change the
+    package.json version.
+

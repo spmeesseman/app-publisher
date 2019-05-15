@@ -167,7 +167,6 @@ let dryCfg = {
 //
 let config = { ...fileCfg, ...dryCfg };
 
-
 //
 // Run publish
 //
@@ -183,70 +182,79 @@ else if (args.profile === "pja" || args.profile === "pjr")
     let aProperty: string;
 
     //
+    // Set svn repo
+    //
+    if (!config.svnRepo) {
+        config.svnRepo = args.profile;
+    }
+
+    //
     // Format config for powershell script arguments
     //
-    if (config) 
+    let visitor: JSONVisitor = 
     {
-        let visitor: JSONVisitor = {
-            onError() { cProperty = undefined; },
-            onObjectEnd() 
-            { 
-                cProperty = undefined;
-                aProperty = undefined;
-            },
-            onArrayBegin(offset: number, length: number, startLine: number, startCharacter: number)
+        onError() { cProperty = undefined; },
+        onObjectEnd() 
+        { 
+            cProperty = undefined;
+            aProperty = undefined;
+        },
+        onArrayBegin(offset: number, length: number, startLine: number, startCharacter: number)
+        {
+            aProperty = cProperty;
+            sArgs += ("-" + cProperty + " ");
+        },
+        onArrayEnd(offset: number, length: number, startLine: number, startCharacter: number)
+        {
+            aProperty = undefined;
+            if (sArgs.endsWith(",")) {
+                sArgs = sArgs.substring(0, sArgs.length - 1) + " ";
+            } 
+        },
+        onLiteralValue(value: any, offset: number, _length: number) 
+        {
+            if (cProperty && typeof value === 'string') 
             {
-                aProperty = cProperty;
-                sArgs += ("-" + cProperty + " ");
-            },
-            onArrayEnd(offset: number, length: number, startLine: number, startCharacter: number)
-            {
-                aProperty = undefined;
-                if (sArgs.endsWith(",")) {
-                    sArgs = sArgs.substring(0, sArgs.length - 1) + " ";
-                } 
-            },
-            onLiteralValue(value: any, offset: number, _length: number) 
-            {
-                if (cProperty && typeof value === 'string') 
-                {
-                    if (!aProperty) {
-                        sArgs += ("-" + cProperty + " '" + value + "' ");
-                    }
-                    else {
-                        sArgs += ("\"" + value + "\",");
-                    }
+                if (!aProperty) {
+                    sArgs += ("-" + cProperty + " '" + value + "' ");
                 }
-                else if (aProperty && typeof value === 'string')
-                {
-                    sArgs += ("'" + value + "',");
+                else {
+                    sArgs += ("\"" + value + "\",");
                 }
-                else if (value)
-                {
-                    if (!aProperty) {
-                        sArgs += ("-" + cProperty + " " + value + " ");
-                    }
-                    else {
-                        sArgs += (value + ",");
-                    }
-                }
-                cProperty = undefined;
-            },
-            onObjectProperty(property: string, offset: number, _length: number) 
-            {
-                cProperty = property;
             }
-        };
-        visit(JSON.stringify(config), visitor);
-    }
-    else {
-        util.logError("Config not found!! Exiting");
-        process.exit(100);
-    }
+            else if (aProperty && typeof value === 'string')
+            {
+                sArgs += ("'" + value + "',");
+            }
+            else if (value)
+            {
+                if (!aProperty) {
+                    sArgs += ("-" + cProperty + " " + value + " ");
+                }
+                else {
+                    sArgs += (value + ",");
+                }
+            }
+            cProperty = undefined;
+        },
+        onObjectProperty(property: string, offset: number, _length: number) 
+        {
+            cProperty = property;
+        }
+    };
+    visit(JSON.stringify(config), visitor);
+
     sArgs = sArgs + ` -apppublisherversion ${version}`;
     
     //
     // Find Powershell script
+    //
+    // Perform search in the following order:
+    //
+    //     1. Local node_modules
+    //     2. Local script dir
+    //     3. Global node_modules
+    //     4. Windows install
     //
     var ps1Script;
     if (util.pathExists(".\\node_modules\\@spmeesseman\\app-publisher")) {
@@ -257,6 +265,29 @@ else if (args.profile === "pja" || args.profile === "pjr")
     }
     else if (util.pathExists(".\\script\\app-publisher.ps1")) {
         ps1Script = ".\\script\\app-publisher.ps1";
+    }
+    else 
+    {
+        if (process.env.CODE_HOME)
+        {
+            // Check global node_modules
+            //
+            let gModuleDir = process.env.CODE_HOME + "\\nodejs\\node_modules";
+            if (util.pathExists(gModuleDir + "\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1")) {
+                ps1Script = gModuleDir + "\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1";
+            }
+            else if (util.pathExists(gModuleDir + "\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1")) {
+                ps1Script = gModuleDir + "\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1";
+            }
+        }
+        // Check windows install
+        //
+        else if (process.env.APP_PUBLISHER_HOME)
+        {
+            if (util.pathExists(process.env.APP_PUBLISHER_HOME + "\\app-publisher.ps1")) {
+                ps1Script = ".\\app-publisher.ps1";
+            }
+        }
     }
 
     if (!ps1Script) {
