@@ -1,5 +1,14 @@
 # Change Log
 
+## [1.1.6](https://github.com/spmeesseman/app-publisher/compare/v1.1.5...v1.1.6) (2019-05-16)
+
+
+### Bug Fixes
+
+* if installerscript is not specified the existing installer is not being uploaded from dist dir [skip ci] ([0970b83](https://github.com/spmeesseman/app-publisher/commit/0970b83))
+* if release is installer and npm, error occurs when trying to sent package.json version twice (non-fatal) ([e570f8a](https://github.com/spmeesseman/app-publisher/commit/e570f8a))
+* the check to see if dist dir is under version control fails, causes commit to still fail ([5375ea6](https://github.com/spmeesseman/app-publisher/commit/5375ea6))
+
 ## [1.1.5](https://github.com/spmeesseman/app-publisher/compare/v1.1.4...v1.1.5) (2019-05-16)
 
 
