@@ -1,5 +1,23 @@
 # Change Log
 
+## [1.1.5](https://github.com/spmeesseman/app-publisher/compare/v1.1.4...v1.1.5) (2019-05-16)
+
+
+### Bug Fixes
+
+* dist path is being added to changelist even if it is not under version control, causing svn commit to fail at end of publish ([fc3e1b3](https://github.com/spmeesseman/app-publisher/commit/fc3e1b3))
+
+
+### Build System
+
+* **npm:** package.json cleanup [skip ci] ([770a948](https://github.com/spmeesseman/app-publisher/commit/770a948))
+
+
+### Documentation
+
+* **readme:** update info [skip ci] ([96235e1](https://github.com/spmeesseman/app-publisher/commit/96235e1))
+* **readme:** update info [skip ci] ([75cedc9](https://github.com/spmeesseman/app-publisher/commit/75cedc9))
+
 ## [1.1.4](https://github.com/spmeesseman/app-publisher/compare/v1.1.3...v1.1.4) (2019-05-14)
 
 
