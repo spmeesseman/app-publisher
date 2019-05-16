@@ -190,6 +190,13 @@ $SVNREPO = "pja",
 #     1. svn
 #     2. https
 #
+$SVNPROJECTNAME = "",
+#
+# The SVN protocol to use for SVN commands.  It should be one of the following:
+#
+#     1. svn
+#     2. https
+#
 $SVNPROTOCOL = "svn",
 #
 # Whether or not to tag the new version in SVN.  Default is Yes.
@@ -1352,6 +1359,17 @@ if (![string]::IsNullOrEmpty($SVNTAG)) {
 #
 # Check valid params
 #
+
+if (![string]::IsNullOrEmpty($PATHTOROOT) -and [string]::IsNullOrEmpty($PATHPREROOT)) {
+    Log-Message "pathPreRoot must be specified with pathToRoot" "red"
+    exit 1
+}
+
+if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($PATHTOROOT)) {
+    Log-Message "pathPreRoot must be specified with pathToRoot" "red"
+    exit 1
+}
+
 if ($INSTALLERRELEASE -eq "Y" -and [string]::IsNullOrEmpty($PATHTODIST)) {
     Log-Message "pathToDist must be specified for installer build" "red"
     exit 1
@@ -1410,7 +1428,11 @@ if ($POSTBUILDCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($POSTBUI
 if ($COMMITS -eq "") {
     Log-Message "Writing svn commits to $Env:TEMP\commits.txt"
     $svn = New-Object -TypeName Svn
-    $COMMITS = $svn.getComments($SVNPROTOCOL, $SVNSERVER, $SVNREPO, $PROJECTNAME, $HISTORYLINELEN);
+    $project = $PROJECTNAME
+    if (![string]::IsNullOrEmpty($SVNPROJECTNAME)) {
+        $project = $SVNPROJECTNAME
+    }
+    $COMMITS = $svn.getComments($SVNPROTOCOL, $SVNSERVER, $SVNREPO, $project, $HISTORYLINELEN);
     [File]::WriteAllText("$Env:TEMP\commits.txt", $COMMITS); # write to file cant pass it on the cmd line
 }
 
@@ -1514,8 +1536,7 @@ if ($CURRENTVERSION -eq "")
             # Semantic versioning non-npm project
             #
             Log-Message "Using non-npm project semantic versioning"
-            Log-Message "Semver not found, run 'npm install -g semver' to automate" `
-                                        "semantic versioning of non-NPM projects" "darkyellow"
+            Log-Message "Semver not found, run 'npm install -g semver' to automate semantic versioning of non-NPM projects" "darkyellow"
         }
     }
 }
@@ -1752,9 +1773,21 @@ if ($INSTALLERRELEASE -eq "Y")
     if ($PATHPREROOT -ne "" -and $PATHPREROOT -ne $null) {
         $TestPathVc = Join-Path -Path "$PATHPREROOT" -ChildPath "$TestPathVc"
     }
+    #
+    # Change dircetory to svn root that contains the .svn folder to isse SVN commands
+    #
+    if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) {
+        set-location $PATHTOMAINROOT
+    }
     & svn info "$TestPathVc"
     if ($LASTEXITCODE -eq 0) {
         Svn-Changelist-Add $PATHTODIST
+    }
+    #
+    # Change directory back to project root
+    #
+    if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) {
+        set-location $PATHPREROOT
     }
 }
 
