@@ -1022,7 +1022,7 @@ function Prepare-PackageJson()
     # Replace current version with new version in package.json and package-lock.json
     #
     Log-Message "Setting new version $VERSION in package.json"
-    & npm version --no-git-tag-version $VERSION
+    & npm version --no-git-tag-version --allow-same-version $VERSION
     Check-ExitCodeNative
     #
     # A few modules are shared, do scope replacement if this might be one of them
