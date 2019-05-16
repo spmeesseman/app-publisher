@@ -1028,7 +1028,7 @@ function Prepare-PackageJson()
     # A few modules are shared, do scope replacement if this might be one of them
     #
     $GitUrl = "https://github.com/spmeesseman/$PROJECTNAME"
-    $SvnUrl = "http://$SVNSERVER/$SVNREPO/$PROJECTNAME/trunk"
+    $SvnUrl = "https://$SVNSERVER/$SVNREPO/$PROJECTNAME/trunk"
     #
     # Replace GIT tags - repo
     #
@@ -1039,17 +1039,17 @@ function Prepare-PackageJson()
     ((Get-Content -path "package.json" -Raw) -replace '"git"','"svn"') | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
-    # TODO - Replace GIT tags - bugs
+    # Replace GIT tags - bugs
     #
     Log-Message "Setting bugs in package.json"
-    ((Get-Content -path "package.json" -Raw) -replace "$GitUrl/issues","http://bugzilla.development.pjats.com/$PROJECTNAME") | Set-Content -NoNewline -Path "package.json"
+    ((Get-Content -path "package.json" -Raw) -replace "$GitUrl/issues","https://bugzilla.development.pjats.com/$PROJECTNAME") | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
-    # TODO - Replace GIT tags - homepage 
+    # Replace GIT tags - homepage 
     #
-    #Log-Message "Setting homepage in package.json"
-    #((Get-Content -path "package.json" -Raw) -replace "$GitUrl/blob/master/README.md","$SvnUrl/README.md") | Set-Content -NoNewline -Path "package.json"
-    #Check-ExitCode
+    Log-Message "Setting homepage in package.json"
+    ((Get-Content -path "package.json" -Raw) -replace "$GitUrl/blob/master/README.md","$SvnUrl/README.md") | Set-Content -NoNewline -Path "package.json"
+    Check-ExitCode
     #
     # Scope
     #
@@ -1116,7 +1116,7 @@ function Restore-PackageJson()
     # A few modules are shared, re-do scope replacement if this might be one of them
     #
     $GitUrl = "https://github.com/spmeesseman/$PROJECTNAME"
-    $SvnUrl = "http://$SVNSERVER/$SVNREPO/$PROJECTNAME/trunk"
+    $SvnUrl = "https://$SVNSERVER/$SVNREPO/$PROJECTNAME/trunk"
     #
     # Replace GIT tags - repo
     #
@@ -1127,17 +1127,17 @@ function Restore-PackageJson()
     ((Get-Content -path "package.json" -Raw) -replace '"svn"','"git"') | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
-    # TODO - Replace GIT tags - bugs
+    # Replace GIT tags - bugs
     #
     Log-Message "Setting bugs in package.json"
-    ((Get-Content -path "package.json" -Raw) -replace "http://bugzilla.development.pjats.com/$PROJECTNAME","$GitUrl/issues") | Set-Content -NoNewline -Path "package.json"
+    ((Get-Content -path "package.json" -Raw) -replace "https://bugzilla.development.pjats.com/$PROJECTNAME","$GitUrl/issues") | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
-    # TODO - Replace GIT tags - homepage 
+    #  Replace GIT tags - homepage 
     #
-    #Log-Message "Setting homepage in package.json"
-    #((Get-Content -path "package.json" -Raw) -replace "$SvnUrl/README.md","$GitUrl/blob/master/README.md") | Set-Content -NoNewline -Path "package.json"
-    #Check-ExitCode
+    Log-Message "Setting homepage in package.json"
+    ((Get-Content -path "package.json" -Raw) -replace "$SvnUrl/README.md","$GitUrl/blob/master/README.md") | Set-Content -NoNewline -Path "package.json"
+    Check-ExitCode
     #
     # NPM user
     #
@@ -1250,7 +1250,7 @@ Log-Message "   Test email       : $TESTEMAILRECIP"
 #
 # Define the NPM and Nuget package servers
 #
-$NPMSERVER = "http://npm.development.pjats.com";
+$NPMSERVER = "https://npm.development.pjats.com";
 $NUGETSERVER = "http://nuget.development.pjats.com/nuget";
 
 #
