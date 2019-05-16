@@ -1360,13 +1360,13 @@ if (![string]::IsNullOrEmpty($SVNTAG)) {
 # Check valid params
 #
 
-if (![string]::IsNullOrEmpty($PATHTOROOT) -and [string]::IsNullOrEmpty($PATHPREROOT)) {
-    Log-Message "pathPreRoot must be specified with pathToRoot" "red"
+if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and [string]::IsNullOrEmpty($PATHPREROOT)) {
+    Log-Message "pathPreRoot must be specified with pathToMainRoot" "red"
     exit 1
 }
 
-if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($PATHTOROOT)) {
-    Log-Message "pathPreRoot must be specified with pathToRoot" "red"
+if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($PATHTOMAINROOT)) {
+    Log-Message "pathToMainRoot must be specified with pathPreRoot" "red"
     exit 1
 }
 
@@ -1785,8 +1785,9 @@ if ($INSTALLERRELEASE -eq "Y")
     }
     #
     # Change directory back to project root
+    # PATHTOPREROOT will be defined if PATHTOMAINROOT is
     #
-    if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) {
+    if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) { 
         set-location $PATHPREROOT
     }
 }
