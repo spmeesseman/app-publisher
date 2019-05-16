@@ -54,6 +54,10 @@ $INSTALLERRELEASE = "N",
 #
 $INSTALLERSCRIPT = "",
 #
+# Set to Y if a custom specified build command builds the installer
+#
+$INSTALLERSKIPBUILD = "N",
+#
 # Interactive (prompts for version after extracting what we think should be the next 
 # version)
 #
@@ -158,6 +162,11 @@ $PATHTODIST = "install\dist",
 # the .svn folder.
 #
 $PATHPREROOT = "",
+#
+# The build command to run once versions have been updated in version files (i.e. package.json,
+# history.txt, assemblyinfo.cs, etc)
+#
+$POSTBUILDCOMMAND = @(),
 #
 # Skip uploading installer to network release folder (primarily used for releasing
 # from hom office where two datacenters cannot be reached at the same time, in this
@@ -1114,7 +1123,7 @@ function Restore-PackageJson()
     # TODO - Replace GIT tags - bugs
     #
     Log-Message "Setting bugs in package.json"
-    ((Get-Content -path "package.json" -Raw) -replace "http://bugzilla.pjats.com/$PROJECTNAME","$GitUrl/issues") | Set-Content -NoNewline -Path "package.json"
+    ((Get-Content -path "package.json" -Raw) -replace "http://bugzilla.development.pjats.com/$PROJECTNAME","$GitUrl/issues") | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
     # TODO - Replace GIT tags - homepage 
@@ -1222,8 +1231,9 @@ Log-Message "   Installer script : $INSTALLERSCRIPT"
 Log-Message "   Is NPM release   : $NPMRELEASE"
 Log-Message "   NPM user         : $NPMUSER"
 Log-Message "   Is Nuget release : $NUGETRELEASE"
-Log-Message "   Build script     : $BUILDCOMMAND"
-Log-Message "   Deploy script    : $DEPLOYCOMMAND"
+Log-Message "   Build cmd        : $BUILDCOMMAND"
+Log-Message "   Post Build cmd   : $BUILDCOMMAND"
+Log-Message "   Deploy cmd       : $DEPLOYCOMMAND"
 Log-Message "   Skip deploy/push : $SKIPDEPLOYPUSH"
 Log-Message "   Notepad edits    : $NOTEPADEDITS"
 Log-Message "   Is interactive   : $INTERACTIVE"
@@ -1235,6 +1245,35 @@ Log-Message "   Test email       : $TESTEMAILRECIP"
 #
 $NPMSERVER = "http://npm.development.pjats.com";
 $NUGETSERVER = "http://nuget.development.pjats.com/nuget";
+
+#
+# Set default npm user if one was not specified on cmd line
+#
+if ($NPMUSER -eq "") {
+    $NPMUSER = "smeesseman";
+}
+
+#
+# Must have code-package installed to run this script
+#
+if (!(Test-Path($Env:CODE_HOME))) {
+    Log-Message "Code Package must be installed to run this script" "red"
+    Log-Message "Install Code Package from softwareimages\code-package\x.x.x" "red"
+    exit 1
+}
+
+#
+# Set up log file
+#
+if ($WRITELOG -eq "Y") 
+{
+    # Determine current date  
+    $CurrentDate = Get-Date -format "yyyyMMddHHmmss";
+    # Define log file name
+    $LogFileName = "${env:LOCALAPPDATA}\Perry Johnson & Associates\app-publisher\log\app-publisher-$CurrentDate.log";
+    # Create the log directory
+    New-Item -ItemType directory -Force -Path "${env:LOCALAPPDATA}\Perry Johnson & Associates\app-publisher\log" | Out-Null;
+}
 
 #
 # Convert any Y/N vars to upper case and check validity
@@ -1314,48 +1353,24 @@ if (![string]::IsNullOrEmpty($SVNTAG)) {
 # Check valid params
 #
 if ($INSTALLERRELEASE -eq "Y" -and [string]::IsNullOrEmpty($PATHTODIST)) {
-    Log-Message "pathToDist cannot be empty for installer build" "red"
+    Log-Message "pathToDist must be specified for installer build" "red"
     exit 1
-}
-
-#
-# Set default npm user if one was not specified
-#
-if ($NPMUSER -eq "") {
-    $NPMUSER = "smeesseman";
-}
-
-#
-# Set up log file
-#
-if ($WRITELOG -eq "Y") 
-{
-    # Determine current date  
-    $CurrentDate = Get-Date -format "yyyyMMddHHmmss";
-    # Define log file name
-    $LogFileName = "${env:LOCALAPPDATA}\Perry Johnson & Associates\app-publisher\log\app-publisher-$CurrentDate.log";
-    # Create the log directory
-    New-Item -ItemType directory -Force -Path "${env:LOCALAPPDATA}\Perry Johnson & Associates\app-publisher\log" | Out-Null;
-}
-
-#
-# Must have code-package installed to run this script
-#
-if (!(Test-Path($Env:CODE_HOME))) {
-    Log-Message "Code Package must be installed to run this script" "red"
-    Log-Message "Install Code Package from softwareimages\code-package\x.x.x" "red"
-    exit
 }
 
 #
 # Check installer script
 #
-if (![string]::IsNullOrEmpty($INSTALLERSCRIPT))
+if ($INSTALLERRELEASE -eq "Y") 
 {
+    if ([string]::IsNullOrEmpty($INSTALLERSCRIPT)) {
+        Log-Message "installerScript must be specified for installer build" "red"
+        exit 1
+    }
+
     $ScriptParts = $INSTALLERSCRIPT.Split(' ');
     if (!(Test-Path($ScriptParts[0]))) {
         Log-Message "Defined INSTALLERSCRIPT not found" "red"
-        exit
+        exit 1
     }
 
     if ($INSTALLERSCRIPT.Contains(".nsi"))
@@ -1363,9 +1378,10 @@ if (![string]::IsNullOrEmpty($INSTALLERSCRIPT))
         if (!(Test-Path("$Env:CODE_HOME\nsis"))) {
             Log-Message "The NSIS package must be installed to run this script" "red"
             Log-Message "Re-run the code-package installer and add the NSIS package" "red"
-            exit
+            exit 1
         }
     }
+
 }
 
 #
@@ -1378,6 +1394,10 @@ if ($DEPLOYCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($DEPLOYCOMM
 if ($BUILDCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($BUILDCOMMAND))
 {
     $BUILDCOMMAND = @($BUILDCOMMAND); #convert to array
+}
+if ($POSTBUILDCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($POSTBUILDCOMMAND))
+{
+    $POSTBUILDCOMMAND = @($POSTBUILDCOMMAND); #convert to array
 }
 
 #
@@ -1783,31 +1803,37 @@ if ($INSTALLERRELEASE -eq "Y")
         Prepare-DotNetBuild "src\properties\assemblyinfo.cs"
     }
     #
-    # Build if specified
+    # Version bump installer script
+    #
+    if ($INSTALLERSCRIPT.Contains(".nsi"))
+    {
+        #
+        # replace version in nsi file
+        #
+        Replace-Version $INSTALLERSCRIPT "`"$CURRENTVERSION`"" "`"$VERSION`""
+        #
+        # Add to svn changelist for check-in
+        #
+        Svn-Changelist-Add $INSTALLERSCRIPT
+        #
+        # Allow manual modifications to $INSTALLERSCRIPT
+        #
+        if ($NOTEPADEDITS -eq "Y") {
+            Log-Message "Edit installer file"
+            start-process -filepath "notepad" -wait -args $INSTALLERSCRIPT
+        }
+    }
+    #
+    # Run custom build scipts if specified
     #
     Run-Scripts "build" $BUILDCOMMAND $true $true
     #
     # Build the installer
     #
-    if (![string]::IsNullOrEmpty($INSTALLERSCRIPT) -and (Test-Path($INSTALLERSCRIPT)))
+    if ($INSTALLERNOBUILD -ne "Y")
     {
         if ($INSTALLERSCRIPT.Contains(".nsi"))
         {
-            #
-            # replace version in nsi file
-            #
-            Replace-Version $INSTALLERSCRIPT "`"$CURRENTVERSION`"" "`"$VERSION`""
-            #
-            # Add to svn changelist for check-in
-            #
-            Svn-Changelist-Add $INSTALLERSCRIPT
-            #
-            # Allow manual modifications to $INSTALLERSCRIPT
-            #
-            if ($NOTEPADEDITS -eq "Y") {
-                Log-Message "Edit installer file"
-                start-process -filepath "notepad" -wait -args $INSTALLERSCRIPT
-            }
             #
             # Run makensis to create installer
             #
@@ -1830,7 +1856,7 @@ if ($INSTALLERRELEASE -eq "Y")
     #
     # If the installer was successfully built, proceed, otherwise display error and exit
     #
-    if ($InstallerBuilt -eq $true)
+    if ($InstallerBuilt -eq $true -or $INSTALLERSKIPBUILD -eq "Y")
     {
         $TargetNetLocation = "\\192.168.68.120\d$\softwareimages\$PROJECTNAME\$VERSION"
         #
@@ -1968,6 +1994,11 @@ if ($NUGETRELEASE -eq "Y")
     #
     #$NugetLocation = "$NUGETSERVER/$PROJECTNAME"
 }
+
+#
+# Run post build scripts if specified
+#
+Run-Scripts "postBuild" $DEPLOYCOMMAND $true $true
 
 #
 # Run custom deploy script if specified
