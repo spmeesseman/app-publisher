@@ -105,3 +105,48 @@ May 15th, 2019
     Non-npm released installer projects managed by npm are failing to change the
     package.json version.
 
+
+Version 1.1.6
+May 15th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  .NET Runtime                : Powershell 5                          *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+
+    To interactively approve the calculated new version number, use the
+    following parameter on the command line or in publishrc:
+
+    cli:
+
+        -interactive Y
+
+    .publishrc:
+
+        "interactive": "Y"
+
+2.  Bug Fix
+
+    For "installer type" builds, the dist path is being added to the Subversion 
+    changelist even if it is not under version control, causing the commit to 
+    fail at end of the publish process.
+
+3.  Bug Fix
+
+    If the published release is both "installer type" and "npm type", a (non-
+    fatal) error occurs when trying to set the package.json version twice.
+
