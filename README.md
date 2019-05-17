@@ -30,7 +30,7 @@ The steps performed during app-publish are:
 
 ## Windows Installer
 
-[Download the Windows Installer](file://///192.168.68.120/d$/softwareimages/code-package/2.1.0/code-package-x64.exe)
+[Download the Windows Installer](file://///192.168.68.120/d$/softwareimages/app-publisher/2.1.0/code-package-x64.exe)
 
 ## Usage
 
