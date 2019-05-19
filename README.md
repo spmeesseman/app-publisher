@@ -7,26 +7,36 @@
 
 > This package provides a semantic version style release mechanism as an option to the popular semantic-release modules.
 
+## Table of Contents
+
+- [App Publisher](#App-Publisher)
+  - [Description](#Description)
+  - [Table of Contents](#Table-of-Contents)
+  - [Features](#Features)
+  - [Publishing Steps](#Publishing-Steps)
+  - [Windows Installer](#Windows-Installer)
+  - [Usage](#Usage)
+
 ## Features
 
-* Subversion integration
+- Subversion integration
 
 ## Publishing Steps
 
 The steps performed during app-publish are:
 
-* Determine next version
-* Auto-populate history file with commit messages since last version
-* Update all versioned files with new version
-* Run application specific build scripts
-* Build installer if required
-* Upload distribution files to network drive
-* Publish NPM package if required
-* Publish Nuget package if required
-* Run application specific deploy scripts
-* Check all modifications into SVN
-* Tag with new version in SVN
-* Send release email
+- Determine next version
+- Auto-populate history file with commit messages since last version
+- Update all versioned files with new version
+- Run application specific build scripts
+- Build installer if required
+- Upload distribution files to network drive
+- Publish NPM package if required
+- Publish Nuget package if required
+- Run application specific deploy scripts
+- Check all modifications into SVN
+- Tag with new version in SVN
+- Send release email
 
 ## Windows Installer
 
