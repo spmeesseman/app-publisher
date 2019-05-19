@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+        <title>App Publisher</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.2/dist/katex.min.css" integrity="sha384-yFRtMMDnQtDRO8rLpMIKrtPCD5jdktao2TV19YiZYWMDkUR5GQZR/NOVTdquEx1j" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+        <link href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css" rel="stylesheet" type="text/css">
+        <style>
+.task-list-item { list-style-type: none; } .task-list-item-checkbox { margin-left: -20px; vertical-align: middle; }
+</style>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        
+        <script src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script>
+    </head>
+    <body>
+        <h1 id="app-publisher">App Publisher</h1>
+<p><a href="https://github.com/semantic-release/semantic-release"><img src="https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg" alt="semantic-release"></a>
+<a href="https://npm.development.pjats.com/-/web/detail/@perryjohnson/app-publisher"><img src="https://app1.development.pjats.com/res/img/app-publisher-badge.svg" alt="app-publisher"></a></p>
+<h2 id="description">Description</h2>
+<blockquote>
+<p>This package provides a semantic version style release mechanism as an option to the popular semantic-release modules.</p>
+</blockquote>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#App-Publisher">App Publisher</a>
+<ul>
+<li><a href="#Description">Description</a></li>
+<li><a href="#Table-of-Contents">Table of Contents</a></li>
+<li><a href="#Features">Features</a></li>
+<li><a href="#Publishing-Steps">Publishing Steps</a></li>
+<li><a href="#Windows-Installer">Windows Installer</a></li>
+<li><a href="#Usage">Usage</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="features">Features</h2>
+<ul>
+<li>Subversion integration</li>
+</ul>
+<h2 id="publishing-steps">Publishing Steps</h2>
+<p>The steps performed during app-publish are:</p>
+<ul>
+<li>Determine next version</li>
+<li>Auto-populate history file with commit messages since last version</li>
+<li>Update all versioned files with new version</li>
+<li>Run application specific build scripts</li>
+<li>Build installer if required</li>
+<li>Upload distribution files to network drive</li>
+<li>Publish NPM package if required</li>
+<li>Publish Nuget package if required</li>
+<li>Run application specific deploy scripts</li>
+<li>Check all modifications into SVN</li>
+<li>Tag with new version in SVN</li>
+<li>Send release email</li>
+</ul>
+<h2 id="windows-installer">Windows Installer</h2>
+<p>[Download the Windows Installer](file://///192.168.68.120/d$/softwareimages/app-publisher/2.1.0/code-package-x64.exe)</p>
+<h2 id="usage">Usage</h2>
+<p>Details coming soon...</p>
+
+    </body>
+    </html>
