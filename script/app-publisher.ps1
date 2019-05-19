@@ -1048,7 +1048,7 @@ function Prepare-PackageJson()
     # Replace GIT tags - homepage 
     #
     Log-Message "Setting homepage in package.json"
-    ((Get-Content -path "package.json" -Raw) -replace "$GitUrl/blob/master/README.md","$SvnUrl/README.md") | Set-Content -NoNewline -Path "package.json"
+    ((Get-Content -path "package.json" -Raw) -replace "$GitUrl/blob/master/README.md","$SvnUrl/README.html") | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
     # Scope
@@ -1136,7 +1136,7 @@ function Restore-PackageJson()
     #  Replace GIT tags - homepage 
     #
     Log-Message "Setting homepage in package.json"
-    ((Get-Content -path "package.json" -Raw) -replace "$SvnUrl/README.md","$GitUrl/blob/master/README.md") | Set-Content -NoNewline -Path "package.json"
+    ((Get-Content -path "package.json" -Raw) -replace "$SvnUrl/README.html","$GitUrl/blob/master/README.md") | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
     # NPM user
