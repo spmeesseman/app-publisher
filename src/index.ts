@@ -298,7 +298,16 @@ else if (args.profile === "pja" || args.profile === "pjr")
     //
     // Launch Powershell script
     //
-    child_process.spawnSync("powershell.exe", [`${ps1Script} ${sArgs}`], { stdio: 'inherit' });
+    child_process.spawnSync("powershell.exe", [`${ps1Script} ${sArgs}`], { stdio: 'inherit'});
+    // let child = child_process.spawn("powershell.exe", [`${ps1Script} ${sArgs}`], { stdio: ['pipe', 'inherit', 'inherit'] });
+    // process.stdin.on('data', function(data) {
+    //     if (!child.killed) {
+    //         child.stdin.write(data);
+    //     }
+    // });
+    // child.on('exit', function(code) {
+    //     process.exit(code);
+    // });
 }
 
 function displayIntro() 

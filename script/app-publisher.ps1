@@ -972,10 +972,7 @@ function Prepare-ExtJsBuild()
     #
     # Allow manual modifications to app.json
     #
-    if ($NOTEPADEDITS -eq "Y") {
-        Log-Message "Edit app.json file"
-        start-process -filepath "notepad" -args "app.json" -wait
-    }
+    Edit-File "app.json"
     #
     # Replace version in package.json - technically sencha cmd desnt need this updated, but
     # we still keep in sync with app.json
@@ -988,10 +985,7 @@ function Prepare-ExtJsBuild()
     #
     # Allow manual modifications to package.json
     #
-    if ($NOTEPADEDITS -eq "Y") {
-        Log-Message "Edit package.json file"
-        start-process -filepath "notepad" -args "package.json" -wait
-    }
+    Edit-File "package.json"
     #
     # Replace version in package-lock.json
     #
@@ -1031,10 +1025,7 @@ function Prepare-DotNetBuild($AssemblyInfoLocation)
     #
     # Allow manual modifications to assembly file
     #
-    if ($NOTEPADEDITS -eq "Y") {
-        Log-Message "Edit $AssemblyInfoLocation file"
-        start-process -filepath "notepad" -args $AssemblyInfoLocation -wait
-    }
+    Edit-File $AssemblyInfoLocation
 }
 
 
@@ -1121,13 +1112,9 @@ function Prepare-PackageJson()
     #
     # Allow manual modifications to package.json and package-lock.json
     #
-    if ($NOTEPADEDITS -eq "Y") {
-        Log-Message "Edit package.json file"
-        start-process -filepath "notepad" -args "package.json" -wait
-        if (Test-Path("package-lock.json")) {
-            Log-Message "Edit package-lock.json file"
-            start-process -filepath "notepad" -args "package-lock.json" -wait
-        }
+    Edit-File "package.json"
+    if (Test-Path("package-lock.json")) {
+        Edit-File "package-lock.json"
     }
 }
 
@@ -1200,6 +1187,72 @@ function Restore-PackageJson()
             Log-Message "Re-scoping package name in package-lock.json"
             ((Get-Content -path "package-lock.json" -Raw) -replace $NPMSCOPE,'@spmeesseman') | Set-Content -NoNewline -Path "package-lock.json"
             Check-ExitCode
+        }
+    }
+}
+
+
+function Edit-File($File, $SeekToEnd = $false)
+{
+    if (![string]::IsNullOrEmpty($File) -and (Test-Path($File)))
+    {
+        if ($NOTEPADEDITS -eq "Y") 
+        {
+            Log-Message "Edit $File"
+            #
+            # Create scripting shell for process activation and sendkeys
+            #
+            $WSShell = New-Object -ComObject WScript.Shell
+            #
+            # Start Notepad process ro edit specified file
+            #
+            $NotepadProcess = Start-Process -filepath "notepad" -args $File -PassThru
+            #
+            # Wait until Notepad has finished loading and is ready
+            #
+            $NotepadProcess.WaitForInputIdle() | Out-Null;
+            #
+            # Next is some crazy hack.  For whatever reason, starting the powershell process from
+            # node in an embedded VSCode terminal, it would launch the notepad window but the VSCode
+            # window would remain in the foreground, with the notepad window behind.  This behavior
+            # was seen in the past when messing around with VSCode tasks.json tasks, where if the
+            # "ant" application was started using the full path, notepad windows would come up on
+            # top, but if ant was called just by the program name (as it was registered in PATH), the
+            # notepad wnidows displayed the same strange behavior.  Still not quite sure how this
+            # is happening.  Therefore this hack to solve the issue:
+            #
+            #     1.  Find the main VSCode window (there are at least a half dozen Code processes 
+            #         running at any given time)
+            #
+            #     2. Activate the VSCode window.
+            #
+            #     3. Activate the Notepad window.
+            #
+            # This seems to work, but why?
+            #
+            # Another methos was found that might work if there are ever problems with this, but using
+            # an external library, leaving for reference:
+            #
+            #     powershell gallery module Install-Module -Name Pscx gives Set-ForegroundWindow function
+            #     Set-ForegroundWindow $NotepadProcess.MainWindowHandle
+            #
+            #
+            $CodeProcess = Get-Process Code | Where-Object {$_.mainWindowTitle} | Out-Null
+            if ($CodeProces -ne $null) {
+                $Tmp = $WSShell.AppActivate($CodeProces.Id) # Set to variable to avoid cmdlet stdout
+            }
+            $Tmp = $WSShell.AppActivate($NotepadProcess.Id) # Set to variable to avoid cmdlet stdout
+            #
+            # If specified, send CTRL+{END} key combination to notepad process to place cursor at end
+            # of the file being edited.  Useful for large files (i.e. changelog/history).
+            #
+            if ($SeekToEnd -eq $true) {
+                $WSShell.sendkeys("^{END}");
+            }
+            #
+            # Wait for the notepad process to be closed by the user
+            #
+            Wait-Process -Id $NotepadProcess.Id
         }
     }
 }
@@ -1769,13 +1822,10 @@ else {
 #
 # Allow manual modifications to history file
 #
-if ($NOTEPADEDITS -eq "Y") {
-    Log-Message "Edit history file"
-    start-process -filepath "notepad" -args $HISTORYFILE -wait
-}
+Edit-File $HISTORYFILE $true
 
 #
-# Store location paths depending on publish types
+# Store location paths depending on publish typess
 #
 $TargetNetLocation = ""
 $NpmLocation = ""
@@ -1870,10 +1920,7 @@ if ($INSTALLERRELEASE -eq "Y")
             #
             # Allow manual modifications to $INSTALLERSCRIPT
             #
-            if ($NOTEPADEDITS -eq "Y") {
-                Log-Message "Edit installer file"
-                start-process -filepath "notepad" -wait -args $INSTALLERSCRIPT
-            }
+            Edit-File $INSTALLERSCRIPT
         }
     }
     #
