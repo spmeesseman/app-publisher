@@ -1191,6 +1191,7 @@ function Restore-PackageJson()
     }
 }
 
+$FirstEditFileDone = $false
 
 function Edit-File($File, $SeekToEnd = $false)
 {
@@ -1236,11 +1237,27 @@ function Edit-File($File, $SeekToEnd = $false)
             #     powershell gallery module Install-Module -Name Pscx gives Set-ForegroundWindow function
             #     Set-ForegroundWindow $NotepadProcess.MainWindowHandle
             #
+            # Update - 5/22/19 - Found that activating the vscode window is not necessary provided
+            # we call sendkeys on the fist notepad edit before calling acticate?????  Really, really strange.
             #
-            $CodeProcess = Get-Process Code | Where-Object {$_.mainWindowTitle} | Out-Null
-            if ($CodeProces -ne $null) {
-                $Tmp = $WSShell.AppActivate($CodeProces.Id) # Set to variable to avoid cmdlet stdout
+            #$CodeProcess = Get-Process Code | Where-Object {$_.mainWindowTitle}
+            #
+            # Heres an even bigger hack than the one mentioned above.  If the "interactive" flag is set
+            # the above hack doesnt work for the fist notepad window opened after inputting the version 
+            # number manually.  Subsequent notepad windows work fine with the above mentioned workaround.
+            # If this is the first notepad edit, then do some extra hackish stuff, like activate the
+            # Code window and call SendKeys, the keys are not received by the Code window, but without
+            # this the notepad window opens in the background as described above.
+            #
+            if ($INTERACTIVE -eq "Y" -and $FirstEditFileDone -eq $false)
+            {
+                #$Tmp = $WSShell.AppActivate($CodeProcess.Id)
+                $WSShell.sendkeys("^{END}");
+                $script:FirstEditFileDone = $true
             }
+            #if ($CodeProcess -ne $null) {write-host "here2"
+                #$Tmp = $WSShell.AppActivate($CodeProcess.Id) # Set to variable to avoid cmdlet stdout
+            #}
             $Tmp = $WSShell.AppActivate($NotepadProcess.Id) # Set to variable to avoid cmdlet stdout
             #
             # If specified, send CTRL+{END} key combination to notepad process to place cursor at end
@@ -1544,7 +1561,7 @@ if ($COMMITS -eq "" -or $COMMITS -eq $null) {
 #
 if ($CURRENTVERSION -eq "") 
 {
-    Log-Message "test mode"
+    Log-Message "Calculate next version number"
 
     if (Test-Path("node_modules"))
     {
@@ -1823,6 +1840,9 @@ else {
 # Allow manual modifications to history file
 #
 Edit-File $HISTORYFILE $true
+Edit-File $HISTORYFILE $true
+Edit-File $HISTORYFILE $true
+exit
 
 #
 # Store location paths depending on publish typess
