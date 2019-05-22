@@ -871,7 +871,21 @@ function Svn-Revert()
     if (![string]::IsNullOrEmpty($SVNCHANGELIST)) 
     {
         Log-Message "Reverting touched files under version control"
-        Invoke-Expression -Command "svn revert -R $SVNCHANGELIST"
+        $SvnRevertList = ""
+        $SvnRevertListParts = $SVNCHANGELIST.Split(" ")
+        for ($i = 0; $i -lt $SvnRevertListParts.Length; $i++)
+        {
+            & svn info $SvnRevertListParts[$i]
+            if ($LASTEXITCODE -eq 0) {
+                $SvnRevertList = "$SvnRevertList ${SvnRevertListParts[$i]}"
+            }
+            else { # delete unversioned file
+                Log-Message "   Deleting unversioned ${SvnRevertListParts[$i]}"
+                Remove-Item –path $SvnRevertListParts[$i] –Recurse | Out-Null
+            }
+        }
+        $SvnRevertList = $SvnRevertList.Trim()
+        Invoke-Expression -Command "svn revert -R $SvnRevertList"
         Check-ExitCode
     }
 }
