@@ -1761,6 +1761,8 @@ if ($CURRENTVERSION -ne $VERSION)
     $COMMITS = $COMMITS.Replace("fix: ", "Bug Fix`r`n`r`n    ")
     $COMMITS = $COMMITS.Replace("perf: ", "Performance Enhancement`r`n`r`n    ")
     $COMMITS = $COMMITS.Replace("refactor: ", "Code Refactoring`r`n`r`n    ")
+    $COMMITS = $COMMITS.Replace("style: ", "Code Styling`r`n`r`n    ")
+    $COMMITS = $COMMITS.Replace("test: ", "Tests`r`n`r`n    ")
     #
     # Replace commit tags with full text (scoped)
     #
@@ -1780,7 +1782,7 @@ if ($CURRENTVERSION -ne $VERSION)
     # Take any parenthesized scopes, remove the prenthesis and line break the message
     # that follows
     #
-    [Match] $match = [Regex]::Match($COMMITS, "[(][a-zA-Z]*[)]\s*[:][ ]");
+    [Match] $match = [Regex]::Match($COMMITS, "[(][a-z\- A-Z]*[)]\s*[:][ ]");
     while ($match.Success) {
         $NewText = $match.Value.Replace("(", "")
         $NewText = $NewText.Replace(")", "")
@@ -1797,15 +1799,6 @@ if ($CURRENTVERSION -ne $VERSION)
         if ($match.Value.Contains("`r`n`r`n")) { # ps regex is buggy on [\r\n]{2}
             $COMMITS = $COMMITS.Replace($match.Value, $match.Value.ToUpper())
         }
-        $match = $match.NextMatch()
-    }
-    #
-    # Typically when writing the commit messages periods arent used at the end.  Add one
-    # if there isn't
-    #
-    [Match] $match = [Regex]::Match($COMMITS, "[a-z][^.]\s*$");
-    while ($match.Success) {
-        $COMMITS = $COMMITS.Replace($match.Value, "${match.Value}.`r`n")
         $match = $match.NextMatch()
     }
     #
@@ -1840,9 +1833,6 @@ else {
 # Allow manual modifications to history file
 #
 Edit-File $HISTORYFILE $true
-Edit-File $HISTORYFILE $true
-Edit-File $HISTORYFILE $true
-exit
 
 #
 # Store location paths depending on publish typess
