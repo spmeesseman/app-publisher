@@ -872,21 +872,24 @@ function Svn-Revert()
     {
         Log-Message "Reverting touched files under version control"
         $SvnRevertList = ""
-        $SvnRevertListParts = $SVNCHANGELIST.Split(" ")
+        $SvnRevertListParts = $SVNCHANGELIST.Split(' ')
         for ($i = 0; $i -lt $SvnRevertListParts.Length; $i++)
         {
             & svn info $SvnRevertListParts[$i]
             if ($LASTEXITCODE -eq 0) {
-                $SvnRevertList = "$SvnRevertList ${SvnRevertListParts[$i]}"
+                Log-Message "Reverting versioned $($SvnRevertListParts[$i])"
+                $SvnRevertList = "$SvnRevertList $($SvnRevertListParts[$i])"
             }
             else { # delete unversioned file
-                Log-Message "   Deleting unversioned ${SvnRevertListParts[$i]}"
-                Remove-Item –path $SvnRevertListParts[$i] –Recurse | Out-Null
+                Log-Message "Deleting unversioned $($SvnRevertListParts[$i])"
+                Remove-Item -path $SvnRevertListParts[$i].Replace("`"", "") -Recurse | Out-Null
             }
         }
-        $SvnRevertList = $SvnRevertList.Trim()
-        Invoke-Expression -Command "svn revert -R $SvnRevertList"
-        Check-ExitCode
+        if (![string]::IsNullOrEmpty($SvnRevertList)) {
+            $SvnRevertList = $SvnRevertList.Trim()
+            Invoke-Expression -Command "svn revert -R $SvnRevertList"
+            Check-ExitCode
+        }
     }
 }
 
@@ -1611,11 +1614,11 @@ if ($TDATE -eq "") {
     $Day = $date.Day.ToString()
     $Month = get-date -format "MMMM"
     $Year = get-date -format "yyyy"
-    switch ($Day) 
+    switch ($Day[$Day.Length - 1]) 
     {
-        "1" { $Day = "1st"; break }
-        "2" { $Day = "2nd"; break }
-        "3" { $Day = "3rd"; break }
+        "1" { $Day = "${Day}st"; break }
+        "2" { $Day = "${Day}nd"; break }
+        "3" { $Day = "${Day}rd"; break }
         default { $Day = "${Day}th"; break }
     }
     $TDATE = "$Month $Day, $Year"
