@@ -931,14 +931,12 @@ function Replace-Version($File, $Old, $New)
 {
     Log-Message "Write new version $VERSION to $File"
     ((Get-Content -path $File -Raw) -replace "$Old", "$New") | Set-Content -NoNewline -Path $File
-    #$FileContent = ((Get-Content -path $File -Raw) -replace "$Old", "$New")
-    #Set-Content -NoNewline -Path $INSTALLERSCRIPT -Value $FileContent
     Check-ExitCode
 }
 
 function Run-Scripts($ScriptType, $Scripts, $ExitOnError, $RunInTestMode = $false)
 {
-    if ($Scripts.Length -gt 0)
+    if ($Scripts.Length -gt 0 -and !$script:BuildCmdsRun.Contains($ScriptType))
     {
         # Run custom script
         #
@@ -955,6 +953,8 @@ function Run-Scripts($ScriptType, $Scripts, $ExitOnError, $RunInTestMode = $fals
         else {
             Log-Message "   Test mode, skipping script run" "magenta"
         }
+
+        $script:BuildCmdsRun += $ScriptType
     }
 }
 
@@ -1195,8 +1195,10 @@ $FirstEditFileDone = $false
 
 function Edit-File($File, $SeekToEnd = $false)
 {
-    if (![string]::IsNullOrEmpty($File) -and (Test-Path($File)))
+    if (![string]::IsNullOrEmpty($File) -and (Test-Path($File)) -and !$VersionFilesEdited.Contains($File))
     {
+        $script:VersionFilesEdited += $File
+
         if ($NOTEPADEDITS -eq "Y") 
         {
             Log-Message "Edit $File"
@@ -1296,6 +1298,13 @@ $TDATE = ""
 # This will be a space delimited list of quoted strings/paths
 #
 $SVNCHANGELIST = ""
+#
+# A flag to set if the build commands are run, which technically could happen up
+# to 3 times if installerRelease, npmRelease, and nugetRelease command line
+# params are all set to "Y"
+#
+$BuildCmdsRun = @()
+$VersionFilesEdited = @()
 
 #
 # Set location to root
