@@ -1772,6 +1772,7 @@ if ($CURRENTVERSION -ne $VERSION)
     $COMMITS = $COMMITS.Replace("refactor: ", "Code Refactoring`r`n`r`n    ")
     $COMMITS = $COMMITS.Replace("style: ", "Code Styling`r`n`r`n    ")
     $COMMITS = $COMMITS.Replace("test: ", "Tests`r`n`r`n    ")
+    $COMMITS = $COMMITS.Replace("project: ", "Project Structure`r`n`r`n    ")
     #
     # Replace commit tags with full text (scoped)
     #
@@ -1787,6 +1788,9 @@ if ($CURRENTVERSION -ne $VERSION)
     $COMMITS = $COMMITS.Replace("fix(", "Bug Fix(")
     $COMMITS = $COMMITS.Replace("perf(", "Performance Enhancement(")
     $COMMITS = $COMMITS.Replace("refactor(", "Code Refactoring(")
+    $COMMITS = $COMMITS.Replace("project(", "Project Structure(")
+    $COMMITS = $COMMITS.Replace("test(", "Tests(")
+    $COMMITS = $COMMITS.Replace("style(", "Code Styling(")
     #
     # Take any parenthesized scopes, remove the prenthesis and line break the message
     # that follows
@@ -2138,7 +2142,8 @@ if (![string]::IsNullOrEmpty($TargetNetLocation) -or ![string]::IsNullOrEmpty($N
 }
 
 #
-# Change dircetory to svn root that contains the .svn folder to isse SVN commands
+# Change dircetory to svn root that contains the .svn folder to isse SVN commands,
+# all paths in the changelist will be relative to this root
 #
 if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) {
     set-location $PATHTOMAINROOT
