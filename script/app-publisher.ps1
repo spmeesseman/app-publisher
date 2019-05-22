@@ -58,6 +58,11 @@ $INSTALLERSCRIPT = "",
 #
 $INSTALLERSKIPBUILD = "N",
 #
+# Use the contents of the PATHTODIST directory for the release files, dont build an
+# installer.
+#
+$INSTALLEREXDIST = "N",
+#
 # Interactive (prompts for version after extracting what we think should be the next 
 # version)
 #
@@ -1378,7 +1383,7 @@ if ($INSTALLERRELEASE -eq "Y" -and [string]::IsNullOrEmpty($PATHTODIST)) {
 #
 # Check installer script
 #
-if ($INSTALLERRELEASE -eq "Y") 
+if ($INSTALLERRELEASE -eq "Y" -and $INSTALLEREXDIST -ne "Y") 
 {
     if ([string]::IsNullOrEmpty($INSTALLERSCRIPT)) {
         Log-Message "installerScript must be specified for installer build" "red"
@@ -1399,7 +1404,6 @@ if ($INSTALLERRELEASE -eq "Y")
             exit 1
         }
     }
-
 }
 
 #
@@ -1470,7 +1474,7 @@ if ($COMMITS -eq "" -or $COMMITS -eq $null) {
 #
 if ($CURRENTVERSION -eq "") 
 {
-    Log-Message "Calculating next version number"
+    Log-Message "test mode"
 
     if (Test-Path("node_modules"))
     {
@@ -1754,10 +1758,21 @@ if ($NOTEPADEDITS -eq "Y") {
 }
 
 #
-# Create dist directory if it doesnt exist
+# Store location paths depending on publish types
 #
-if ($INSTALLERRELEASE -eq "Y")
+$TargetNetLocation = ""
+$NpmLocation = ""
+$NugetLocation = ""
+
+#
+# PJ Installer Release
+#
+if ($INSTALLERRELEASE -eq "Y") 
 {
+    $InstallerBuilt = $false
+    #
+    # Create dist directory if it doesnt exist
+    #
     if (!(Test-Path($PATHTODIST))) {
         Log-Message "Create dist directory"
         New-Item -Path "$PATHTODIST" -ItemType "directory" | Out-Null
@@ -1790,22 +1805,6 @@ if ($INSTALLERRELEASE -eq "Y")
     if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) { 
         set-location $PATHPREROOT
     }
-}
-
-#
-# Store location paths depending on publish types
-#
-$TargetNetLocation = ""
-$NpmLocation = ""
-$NugetLocation = ""
-
-#
-# PJ Installer Release
-#
-if ($INSTALLERRELEASE -eq "Y") 
-{
-    $InstallerBuilt = $false
-
     #
     # Check if this is an ExtJs build.  ExtJs build will be an installer build, but it will
     # contain both package.json and app.json that will need version updated.  A node_modules
@@ -1839,22 +1838,25 @@ if ($INSTALLERRELEASE -eq "Y")
     #
     # Version bump installer script
     #
-    if ($INSTALLERSCRIPT.Contains(".nsi"))
+    if ($INSTALLEREXDIST -ne "Y")
     {
-        #
-        # replace version in nsi file
-        #
-        Replace-Version $INSTALLERSCRIPT "`"$CURRENTVERSION`"" "`"$VERSION`""
-        #
-        # Add to svn changelist for check-in
-        #
-        Svn-Changelist-Add $INSTALLERSCRIPT
-        #
-        # Allow manual modifications to $INSTALLERSCRIPT
-        #
-        if ($NOTEPADEDITS -eq "Y") {
-            Log-Message "Edit installer file"
-            start-process -filepath "notepad" -wait -args $INSTALLERSCRIPT
+        if ($INSTALLERSCRIPT.Contains(".nsi"))
+        {
+            #
+            # replace version in nsi file
+            #
+            Replace-Version $INSTALLERSCRIPT "`"$CURRENTVERSION`"" "`"$VERSION`""
+            #
+            # Add to svn changelist for check-in
+            #
+            Svn-Changelist-Add $INSTALLERSCRIPT
+            #
+            # Allow manual modifications to $INSTALLERSCRIPT
+            #
+            if ($NOTEPADEDITS -eq "Y") {
+                Log-Message "Edit installer file"
+                start-process -filepath "notepad" -wait -args $INSTALLERSCRIPT
+            }
         }
     }
     #
@@ -1864,7 +1866,7 @@ if ($INSTALLERRELEASE -eq "Y")
     #
     # Build the installer
     #
-    if ($INSTALLERNOBUILD -ne "Y")
+    if ($INSTALLEREXDIST -ne "Y")
     {
         if ($INSTALLERSCRIPT.Contains(".nsi"))
         {
@@ -1890,7 +1892,7 @@ if ($INSTALLERRELEASE -eq "Y")
     #
     # If the installer was successfully built, proceed, otherwise display error and exit
     #
-    if ($InstallerBuilt -eq $true -or $INSTALLERSKIPBUILD -eq "Y")
+    if ($InstallerBuilt -eq $true -or $INSTALLERSKIPBUILD -eq "Y" -or $INSTALLEREXDIST -eq "Y")
     {
         $TargetNetLocation = "\\192.168.68.120\d$\softwareimages\$PROJECTNAME\$VERSION"
         #
@@ -1943,7 +1945,7 @@ if ($INSTALLERRELEASE -eq "Y")
             }
         }
         else {
-            Log-Message "Skipped installer push to network drive (user specified)" "darkyellow"
+            Log-Message "Skipped installer push to network drive (user specified)" "magenta"
         }
     }
     else {
@@ -2042,7 +2044,7 @@ if ($SKIPDEPLOYPUSH -ne "Y")
     Run-Scripts "deploy" $DEPLOYCOMMAND $false $false
 }
 else {
-    Log-Message "   Skipped running custom deploy script (user specified)" "darkyellow"
+    Log-Message "   Skipped running custom deploy script (user specified)" "magenta"
 }
 
 #
