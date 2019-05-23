@@ -1042,6 +1042,7 @@ function Prepare-PackageJson()
     #
     $GitUrl = "https://github.com/spmeesseman/$PROJECTNAME"
     $SvnUrl = "https://$SVNSERVER/$SVNREPO/$PROJECTNAME/trunk"
+    $IssuesUrl = "https://issues.development.pjats.com"
     #
     # Replace GIT tags - repo
     #
@@ -1055,13 +1056,13 @@ function Prepare-PackageJson()
     # Replace GIT tags - bugs
     #
     Log-Message "Setting bugs in package.json"
-    ((Get-Content -path "package.json" -Raw) -replace "$GitUrl/issues","https://bugzilla.development.pjats.com/$PROJECTNAME") | Set-Content -NoNewline -Path "package.json"
+    ((Get-Content -path "package.json" -Raw) -replace "$GitUrl/issues","$IssuesUrl/$PROJECTNAME/report/1") | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
     # Replace GIT tags - homepage 
     #
     Log-Message "Setting homepage in package.json"
-    ((Get-Content -path "package.json" -Raw) -replace "$GitUrl/blob/master/README.md","$SvnUrl/README.html") | Set-Content -NoNewline -Path "package.json"
+    ((Get-Content -path "package.json" -Raw) -replace "$GitUrl/blob/master/README.md","$IssuesUrl/$PROJECTNAME/browser/$PROJECTNAME/trunk/README.md") | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
     # Scope
@@ -1126,6 +1127,7 @@ function Restore-PackageJson()
     #
     $GitUrl = "https://github.com/spmeesseman/$PROJECTNAME"
     $SvnUrl = "https://$SVNSERVER/$SVNREPO/$PROJECTNAME/trunk"
+    $IssuesUrl = "https://issues.development.pjats.com"
     #
     # Replace GIT tags - repo
     #
@@ -1139,13 +1141,13 @@ function Restore-PackageJson()
     # Replace GIT tags - bugs
     #
     Log-Message "Setting bugs in package.json"
-    ((Get-Content -path "package.json" -Raw) -replace "https://bugzilla.development.pjats.com/$PROJECTNAME","$GitUrl/issues") | Set-Content -NoNewline -Path "package.json"
+    ((Get-Content -path "package.json" -Raw) -replace "$IssuesUrl/$PROJECTNAME/report/1","$GitUrl/issues") | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
     #  Replace GIT tags - homepage 
     #
     Log-Message "Setting homepage in package.json"
-    ((Get-Content -path "package.json" -Raw) -replace "$SvnUrl/README.html","$GitUrl/blob/master/README.md") | Set-Content -NoNewline -Path "package.json"
+    ((Get-Content -path "package.json" -Raw) -replace "$IssuesUrl/$PROJECTNAME/browser/$PROJECTNAME/trunk/README.md","$GitUrl/blob/master/README.md") | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
     # NPM user
