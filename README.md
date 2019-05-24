@@ -13,15 +13,30 @@
   - [Description](#Description)
   - [Table of Contents](#Table-of-Contents)
   - [Features](#Features)
-  - [Publishing Steps](#Publishing-Steps)
-  - [Windows Installer](#Windows-Installer)
+  - [Installation](#Installation)
   - [Usage](#Usage)
+  - [Publishing Steps Performed](#Publishing-Steps-Performed)
+  - [Windows Installer](#Windows-Installer)
 
 ## Features
 
 - Subversion integration
 
-## Publishing Steps
+## Installation
+
+To instal app-publisher globally for ceonvenience, run the following command
+
+    $ npm install -g app-publisher
+
+To install locally per project, run the following command from the directory containing the projects package.json file:
+
+    $ npm install app-publisher
+
+## Usage
+
+Todo...
+
+## Publishing Steps Performed
 
 The steps performed during app-publish are:
 
@@ -29,10 +44,10 @@ The steps performed during app-publish are:
 - Auto-populate history file with commit messages since last version
 - Update all versioned files with new version
 - Run application specific build scripts
-- Build installer if required
+- Build installer if specified
 - Upload distribution files to network drive
-- Publish NPM package if required
-- Publish Nuget package if required
+- Build and publish NPM package if specified
+- Build and publish Nuget package if specified
 - Run application specific deploy scripts
 - Check all modifications into SVN
 - Tag with new version in SVN
@@ -40,8 +55,4 @@ The steps performed during app-publish are:
 
 ## Windows Installer
 
-[Download the Windows Installer](file://///192.168.68.120/d$/softwareimages/app-publisher/2.1.0/code-package-x64.exe)
-
-## Usage
-
-Details coming soon...
+[Download the Windows Installer](file://///192.168.68.120/d$/softwareimages/app-publisher/1.2.1/app-publisher.exe)
