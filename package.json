@@ -1,6 +1,6 @@
 {
 	"name": "@spmeesseman/app-publisher",
-	"version": "1.1.6",
+	"version": "1.2.0",
 	"displayName": "App Publisher",
 	"description": "App Publisher",
 	"license": "MIT",
@@ -10,7 +10,7 @@
 	"bugs": {
 		"url": "https://github.com/spmeesseman/app-publisher/issues"
 	},
-	"homepage": "https://github.com/spmeesseman/app-publisher/blob/master/README.html",
+	"homepage": "https://github.com/spmeesseman/app-publisher/blob/master/README.md",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/spmeesseman/app-publisher.git"
