@@ -1041,32 +1041,37 @@ function Prepare-PackageJson()
     # A few modules are shared, do scope replacement if this might be one of them
     #
     $GitUrl = "https://github.com/spmeesseman/$PROJECTNAME"
-    $SvnUrl = "https://$SVNSERVER/$SVNREPO/$PROJECTNAME/trunk"
+    $SvnUrl = "https://svn.development.pjats.com/$SVNREPO/$PROJECTNAME/trunk"
     $IssuesUrl = "https://issues.development.pjats.com"
     #
     # Replace GIT tags - repo
     #
+    [System.Threading.Thread]::Sleep(100);
     Log-Message "Setting repository in package.json"
     ((Get-Content -path "package.json" -Raw) -replace "$GitUrl.git","$SvnUrl") | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
+    [System.Threading.Thread]::Sleep(100);
     Log-Message "Setting repository type in package.json"
     ((Get-Content -path "package.json" -Raw) -replace '"git"','"svn"') | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
     # Replace GIT tags - bugs
     #
+    [System.Threading.Thread]::Sleep(100);
     Log-Message "Setting bugs in package.json"
     ((Get-Content -path "package.json" -Raw) -replace "$GitUrl/issues","$IssuesUrl/$PROJECTNAME/report/1") | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
     # Replace GIT tags - homepage 
     #
+    [System.Threading.Thread]::Sleep(100);
     Log-Message "Setting homepage in package.json"
     ((Get-Content -path "package.json" -Raw) -replace "$GitUrl/blob/master/README.md","$IssuesUrl/$PROJECTNAME/browser/$PROJECTNAME/trunk/README.md") | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
     # Scope
     #
+    [System.Threading.Thread]::Sleep(100);
     if ([string]::IsNullOrEmpty($NPMSCOPE)) 
     {
         Log-Message "Un-scoping package name in package.json"
@@ -1096,6 +1101,7 @@ function Prepare-PackageJson()
     #
     if (![string]::IsNullOrEmpty($NPMUSER)) 
     {
+        [System.Threading.Thread]::Sleep(100);
         Log-Message "Applying NPM username to package.json"
         ((Get-Content -path "package.json" -Raw) -replace 'spmeesseman',"$NPMUSER") | Set-Content -NoNewline -Path "package.json"
         Check-ExitCode
@@ -1135,12 +1141,14 @@ function Restore-PackageJson()
     ((Get-Content -path "package.json" -Raw) -replace "$SvnUrl","$GitUrl.git") | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     Log-Message "Setting repository in package.json"
+    [System.Threading.Thread]::Sleep(100);
     ((Get-Content -path "package.json" -Raw) -replace '"svn"','"git"') | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
     # Replace GIT tags - bugs
     #
     Log-Message "Setting bugs in package.json"
+    [System.Threading.Thread]::Sleep(100);
     ((Get-Content -path "package.json" -Raw) -replace "$IssuesUrl/$PROJECTNAME/report/1","$GitUrl/issues") | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
@@ -1150,17 +1158,9 @@ function Restore-PackageJson()
     ((Get-Content -path "package.json" -Raw) -replace "$IssuesUrl/$PROJECTNAME/browser/$PROJECTNAME/trunk/README.md","$GitUrl/blob/master/README.md") | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
-    # NPM user
-    #
-    if (![string]::IsNullOrEmpty($NPMUSER)) 
-    {
-        Log-Message "Re-applying NPM username token to package.json"
-        ((Get-Content -path "package.json" -Raw) -replace "$NPMUSER",'spmeesseman') | Set-Content -NoNewline -Path "package.json"
-        Check-ExitCode
-    }
-    #
     # Scope - package.json
     #
+    [System.Threading.Thread]::Sleep(100);
     if ([string]::IsNullOrEmpty($NPMSCOPE)) 
     {
         Log-Message "Re-scoping package name in package.json"
@@ -1171,6 +1171,16 @@ function Restore-PackageJson()
     {
         Log-Message "Re-scoping package name in package.json"
         ((Get-Content -path "package.json" -Raw) -replace $NPMSCOPE, '@spmeesseman') | Set-Content -NoNewline -Path "package.json"
+        Check-ExitCode
+    }
+    #
+    # NPM user
+    #
+    [System.Threading.Thread]::Sleep(100);
+    if (![string]::IsNullOrEmpty($NPMUSER)) 
+    {
+        Log-Message "Re-applying NPM username token to package.json"
+        ((Get-Content -path "package.json" -Raw) -replace "$NPMUSER",'spmeesseman') | Set-Content -NoNewline -Path "package.json"
         Check-ExitCode
     }
     #
@@ -1768,13 +1778,15 @@ if ($CURRENTVERSION -ne $VERSION)
     $COMMITS = $COMMITS.Replace("chore: ", "Chore`r`n`r`n    ")
     $COMMITS = $COMMITS.Replace("docs: ", "Documentation`r`n`r`n    ")
     $COMMITS = $COMMITS.Replace("feat: ", "Feature`r`n`r`n    ")
-    $COMMITS = $COMMITS.Replace("featmin: ", "Feature`r`n`r`n    ")
+    $COMMITS = $COMMITS.Replace("featmin: ", "Minor Feature`r`n`r`n    ")
+    $COMMITS = $COMMITS.Replace("minfeat: ", "Minor Feature`r`n`r`n    ")
     $COMMITS = $COMMITS.Replace("fix: ", "Bug Fix`r`n`r`n    ")
     $COMMITS = $COMMITS.Replace("perf: ", "Performance Enhancement`r`n`r`n    ")
     $COMMITS = $COMMITS.Replace("refactor: ", "Code Refactoring`r`n`r`n    ")
     $COMMITS = $COMMITS.Replace("style: ", "Code Styling`r`n`r`n    ")
     $COMMITS = $COMMITS.Replace("test: ", "Tests`r`n`r`n    ")
     $COMMITS = $COMMITS.Replace("project: ", "Project Structure`r`n`r`n    ")
+    $COMMITS = $COMMITS.Replace("layout: ", "Layout`r`n`r`n    ")
     #
     # Replace commit tags with full text (scoped)
     #
@@ -1786,13 +1798,15 @@ if ($CURRENTVERSION -ne $VERSION)
     $COMMITS = $COMMITS.Replace("chore(", "Chore(")
     $COMMITS = $COMMITS.Replace("docs(", "Documentation(")
     $COMMITS = $COMMITS.Replace("feat(", "Feature(")
-    $COMMITS = $COMMITS.Replace("featmin(", "Feature(")
+    $COMMITS = $COMMITS.Replace("featmin(", "Minor Feature(")
+    $COMMITS = $COMMITS.Replace("minfeat(", "Minor Feature(")
     $COMMITS = $COMMITS.Replace("fix(", "Bug Fix(")
     $COMMITS = $COMMITS.Replace("perf(", "Performance Enhancement(")
     $COMMITS = $COMMITS.Replace("refactor(", "Code Refactoring(")
     $COMMITS = $COMMITS.Replace("project(", "Project Structure(")
     $COMMITS = $COMMITS.Replace("test(", "Tests(")
     $COMMITS = $COMMITS.Replace("style(", "Code Styling(")
+    $COMMITS = $COMMITS.Replace("layout(", "Layout(")
     #
     # Take any parenthesized scopes, remove the prenthesis and line break the message
     # that follows
