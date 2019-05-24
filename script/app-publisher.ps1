@@ -1103,7 +1103,7 @@ function Prepare-PackageJson()
     {
         [System.Threading.Thread]::Sleep(100);
         Log-Message "Applying NPM username to package.json"
-        ((Get-Content -path "package.json" -Raw) -replace 'spmeesseman',"$NPMUSER") | Set-Content -NoNewline -Path "package.json"
+        ((Get-Content -path "package.json" -Raw) -replace 'Scott Meesseman',"$NPMUSER") | Set-Content -NoNewline -Path "package.json"
         Check-ExitCode
     }
     #
@@ -1180,7 +1180,7 @@ function Restore-PackageJson()
     if (![string]::IsNullOrEmpty($NPMUSER)) 
     {
         Log-Message "Re-applying NPM username token to package.json"
-        ((Get-Content -path "package.json" -Raw) -replace "$NPMUSER",'spmeesseman') | Set-Content -NoNewline -Path "package.json"
+        ((Get-Content -path "package.json" -Raw) -replace "$NPMUSER",'Scott Meesseman') | Set-Content -NoNewline -Path "package.json"
         Check-ExitCode
     }
     #
@@ -1369,8 +1369,8 @@ $NUGETSERVER = "http://nuget.development.pjats.com/nuget";
 #
 # Set default npm user if one was not specified on cmd line
 #
-if ($NPMUSER -eq "") {
-    $NPMUSER = "smeesseman";
+if ([string]::IsNullOrEmpty($NPMUSER) -or $NPMUSER.Contains("$")) {
+    $NPMUSER = "Scott Meesseman";
 }
 
 #
