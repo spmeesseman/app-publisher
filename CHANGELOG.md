@@ -1,4 +1,42 @@
-# Change Log
+# APP-PUBLISHER CHANGE LOG
+
+## [1.2.0](https://github.com/spmeesseman/app-publisher/compare/v1.1.6...v1.2.0) (2019-05-16)
+
+### Documentation
+
+* **readme:** Add app-publisher badge to readme page
+* **readme:** Add table of contents
+        
+### Bug Fixes
+
+* Set proper homepage, bugs, and repository links in package.json per project on publish run.  These links populate into the pages of the private NPM registry when published.  Project dependent, these links equate to:
+
+	"bugs": {
+		"url": "https://issues.development.pjats.com/project/ticket/report/1"
+	},
+	"homepage": "https://issues.development.pjats.com/project",
+	"repository": {
+		"type": "svn",
+		"url": "https://issues.development.pjats.com/project/browser/trunk"
+	}
+
+* If a new file is created during publish in dry run mode (i.e. a new history file), delete that unversioned file when the rest of the touched files get reverted in SVN.
+
+* When using the flag "notePadEdits" flag to manually edit version files during the publish, the Notepad windows are not opening in foreground when started by the NodeJS executable in Visual Studio Code.
+
+* The last few characters of random history file entries are being stripped when the history file is auto-populated from version control comments.
+
+* If two release types are being built, build commands and version file edits are happening twice.
+
+* The commit sbuject tag "project" tag is not being converted to its proper title when the history file is auto-populated from version control comments.
+
+### Features
+
+
+* Add flag for projects that will upload files found in the "dist" directory but do not require auto-running a defined installer script:
+
+	installerExDist
+
 
 ## [1.1.6](https://github.com/spmeesseman/app-publisher/compare/v1.1.5...v1.1.6) (2019-05-16)
 
