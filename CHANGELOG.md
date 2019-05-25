@@ -1,3 +1,5 @@
+
+
 # APP-PUBLISHER CHANGE LOG
 
 ## [1.2.0](https://github.com/spmeesseman/app-publisher/compare/v1.1.6...v1.2.0) (2019-05-16)

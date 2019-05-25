@@ -20,6 +20,7 @@
 		"@types/shelljs": "^0.8.5",
 		"argparse": "^1.0.10",
 		"chalk": "^2.4.2",
+		"conventional-changelog-spm": "^1.2.3",
 		"gradient-string": "^1.2.0",
 		"jsonc-parser": "^2.1.0",
 		"minimatch": "^3.0.4"
@@ -40,16 +41,15 @@
 		"mocha-multi-reporters": "^1.1.7",
 		"prettier": "^1.17.0",
 		"remap-istanbul": "^0.13.0",
-		"semantic-release": "^15.13.12",
+		"semantic-release": "^15.13.14",
 		"tslint": "^5.16.0",
 		"typescript": "^3.4.5"
 	},
 	"scripts": {
 		"build": "npx tsc -p ./",
-		"commit": "npx git-cz",
 		"app-publish": "app-publisher -p pja",
 		"app-publish-dry": "app-publisher -p pja --dry-run",
-		"semantic-release": "semantic-release --no-ci --allow-same-version",
+		"semantic-release": "semantic-release --allow-same-version --no-ci",
 		"semantic-release-dry": "semantic-release --dry-run --allow-same-version"
 	},
 	"main": "./build/index.js",
