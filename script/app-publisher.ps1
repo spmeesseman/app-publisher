@@ -31,6 +31,10 @@ param (
 # ------------------------------------------------------------------------------------------
 $APPPUBLISHERVERSION = "1.0.0",
 #
+# Author publishing package
+#
+$AUTHOR = $Env:UserName,
+#
 # The build command to run once versions have been updated in version files (i.e. package.json,
 # history.txt, assemblyinfo.cs, etc)
 #
@@ -88,28 +92,6 @@ $NPMRELEASE = "N",
 # The scope of the npm package, empty if none
 #
 $NPMSCOPE = "",
-#
-# NPM user (for NPMRELEASE="Y" only)
-# 
-# NPM username, password, and token should be store as environment variables
-# for security.  The variable names should be:
-#
-#     PJ_NPM_USERNAME
-#     PJ_NPM_PASSWORD
-#     PJ_NPM_TOKEN
-#
-# To create an npm user if you dont have one, run the following command and follow 
-# the prompts:
-#
-#     $ npm adduser --registry=npm.development.pjats.com --scope=@perryjohnson
-#
-#     Locate the file [USERDIR]\.npmrc, copy the created token from within
-#     the file to the environment variable PJ_NPM_TOKEN
-#
-# The project file .npmrc will be used by npm when publishing packages, it reads
-# the NPM environment variables as well.
-#
-$NPMUSER = $Env:PJ_NPM_USERNAME,
 #
 # To build the nuget release, set this flag to "Y"
 #
@@ -181,7 +163,7 @@ $SKIPDEPLOYPUSH = "Y",
 #
 # The svn server address, can be domain name or IP
 #
-$SVNSERVER = "10.0.9.60",
+$SVNSERVER = "svn.development.pjats.com",
 #
 # The SVN repository.  It should be one of the following:
 #
@@ -1044,7 +1026,7 @@ function Prepare-PackageJson()
     $SvnUrl = "https://svn.development.pjats.com/$SVNREPO/$PROJECTNAME/trunk"
     $IssuesUrl = "https://issues.development.pjats.com"
     #
-    # Replace GIT tags - repo
+    # Replace repo
     #
     [System.Threading.Thread]::Sleep(100);
     Log-Message "Setting repository in package.json"
@@ -1055,14 +1037,14 @@ function Prepare-PackageJson()
     ((Get-Content -path "package.json" -Raw) -replace '"git"','"svn"') | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
-    # Replace GIT tags - bugs
+    # Replace bugs
     #
     [System.Threading.Thread]::Sleep(100);
     Log-Message "Setting bugs in package.json"
     ((Get-Content -path "package.json" -Raw) -replace "$GitUrl/issues","$IssuesUrl/$PROJECTNAME/report/1") | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
-    # Replace GIT tags - homepage 
+    # Replace homepage 
     #
     [System.Threading.Thread]::Sleep(100);
     Log-Message "Setting homepage in package.json"
@@ -1097,13 +1079,17 @@ function Prepare-PackageJson()
         }
     }
     #
-    # NPM username
+    # Author
     #
-    if (![string]::IsNullOrEmpty($NPMUSER)) 
+    if (![string]::IsNullOrEmpty($AUTHOR)) 
     {
         [System.Threading.Thread]::Sleep(100);
-        Log-Message "Applying NPM username to package.json"
-        ((Get-Content -path "package.json" -Raw) -replace 'Scott Meesseman',"$NPMUSER") | Set-Content -NoNewline -Path "package.json"
+        Log-Message "Applying author to package.json"
+        ((Get-Content -path "package.json" -Raw) -replace 'Scott Meesseman',"$AUTHOR") | Set-Content -NoNewline -Path "package.json"
+        [System.Threading.Thread]::Sleep(100);
+        ((Get-Content -path "package.json" -Raw) -replace 'spmeesseman',"$AUTHOR") | Set-Content -NoNewline -Path "package.json"
+        [System.Threading.Thread]::Sleep(100);
+        ((Get-Content -path "package.json" -Raw) -replace 'smeesseman',"$AUTHOR") | Set-Content -NoNewline -Path "package.json"
         Check-ExitCode
     }
     #
@@ -1131,11 +1117,11 @@ function Restore-PackageJson()
     #
     # A few modules are shared, re-do scope replacement if this might be one of them
     #
-    $GitUrl = "https://github.com/spmeesseman/$PROJECTNAME"
-    $SvnUrl = "https://$SVNSERVER/$SVNREPO/$PROJECTNAME/trunk"
-    $IssuesUrl = "https://issues.development.pjats.com"
+    $GitUrl = "https://github.com/spmeesseman/$PROJECTNAME"    # git sematic release test url
+    $SvnUrl = "https://$SVNSERVER/$SVNREPO/$PROJECTNAME/trunk" # production url
+    $IssuesUrl = "https://issues.development.pjats.com"        # production url
     #
-    # Replace GIT tags - repo
+    # Replace repo
     #
     Log-Message "Setting repository in package.json"
     ((Get-Content -path "package.json" -Raw) -replace "$SvnUrl","$GitUrl.git") | Set-Content -NoNewline -Path "package.json"
@@ -1145,14 +1131,14 @@ function Restore-PackageJson()
     ((Get-Content -path "package.json" -Raw) -replace '"svn"','"git"') | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
-    # Replace GIT tags - bugs
+    # Replace bugs
     #
     Log-Message "Setting bugs in package.json"
     [System.Threading.Thread]::Sleep(100);
     ((Get-Content -path "package.json" -Raw) -replace "$IssuesUrl/$PROJECTNAME/report/1","$GitUrl/issues") | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
     #
-    #  Replace GIT tags - homepage 
+    #  Replace homepage 
     #
     Log-Message "Setting homepage in package.json"
     ((Get-Content -path "package.json" -Raw) -replace "$IssuesUrl/$PROJECTNAME/browser/$PROJECTNAME/trunk/README.md","$GitUrl/blob/master/README.md") | Set-Content -NoNewline -Path "package.json"
@@ -1163,24 +1149,24 @@ function Restore-PackageJson()
     [System.Threading.Thread]::Sleep(100);
     if ([string]::IsNullOrEmpty($NPMSCOPE)) 
     {
-        Log-Message "Re-scoping package name in package.json"
+        Log-Message "Re-scoping default package name in package.json"
         ((Get-Content -path "package.json" -Raw) -replace "`"name`"[ ]*:[ ]*[`"]",'"name": "@spmeesseman/') | Set-Content -NoNewline -Path "package.json"
         Check-ExitCode
     }
     else 
     {
-        Log-Message "Re-scoping package name in package.json"
+        Log-Message "Re-scoping default package name in package.json"
         ((Get-Content -path "package.json" -Raw) -replace $NPMSCOPE, '@spmeesseman') | Set-Content -NoNewline -Path "package.json"
         Check-ExitCode
     }
     #
-    # NPM user
+    # Author
     #
     [System.Threading.Thread]::Sleep(100);
-    if (![string]::IsNullOrEmpty($NPMUSER)) 
+    if (![string]::IsNullOrEmpty($AUTHOR)) 
     {
-        Log-Message "Re-applying NPM username token to package.json"
-        ((Get-Content -path "package.json" -Raw) -replace "$NPMUSER",'Scott Meesseman') | Set-Content -NoNewline -Path "package.json"
+        Log-Message "Re-applying default author to package.json"
+        ((Get-Content -path "package.json" -Raw) -replace "$AUTHOR",'Scott Meesseman') | Set-Content -NoNewline -Path "package.json"
         Check-ExitCode
     }
     #
@@ -1190,13 +1176,13 @@ function Restore-PackageJson()
     {
         if ([string]::IsNullOrEmpty($NPMSCOPE)) 
         {
-            Log-Message "Re-scoping package name in package-lock.json"
+            Log-Message "Re-scoping default package name in package-lock.json"
             ((Get-Content -path "package-lock.json" -Raw) -replace "`"name`"[ ]*:[ ]*[`"]",'"name": "@spmeesseman/') | Set-Content -NoNewline -Path "package-lock.json"
             Check-ExitCode
         }
         else 
         {
-            Log-Message "Re-scoping package name in package-lock.json"
+            Log-Message "Re-scoping default package name in package-lock.json"
             ((Get-Content -path "package-lock.json" -Raw) -replace $NPMSCOPE,'@spmeesseman') | Set-Content -NoNewline -Path "package-lock.json"
             Check-ExitCode
         }
@@ -1317,6 +1303,25 @@ $SVNCHANGELIST = ""
 #
 $BuildCmdsRun = @()
 $VersionFilesEdited = @()
+#
+# Set default author if one was not specified on cmd line or enviroment variable UserName
+#
+if ([string]::IsNullOrEmpty($AUTHOR)) 
+{
+    if ([string]::IsNullOrEmpty($Env:UserName)) 
+    {
+        if ([string]::IsNullOrEmpty($Env:USER)) 
+        {
+            $AUTHOR = "smeesseman"
+        }
+        else {
+            $AUTHOR = $Env:USER
+        }
+    }
+    else {
+        $AUTHOR = $Env:UserName
+    }
+}
 
 #
 # Set location to root
@@ -1349,7 +1354,7 @@ Log-Message "   Version text     : $VERSIONTEXT"
 Log-Message "   Is Install releas: $INSTALLERRELEASE"
 Log-Message "   Installer script : $INSTALLERSCRIPT"
 Log-Message "   Is NPM release   : $NPMRELEASE"
-Log-Message "   NPM user         : $NPMUSER"
+Log-Message "   NPM user         : $AUTHOR"
 Log-Message "   Is Nuget release : $NUGETRELEASE"
 Log-Message "   Build cmd        : $BUILDCOMMAND"
 Log-Message "   Post Build cmd   : $BUILDCOMMAND"
@@ -1365,13 +1370,6 @@ Log-Message "   Test email       : $TESTEMAILRECIP"
 #
 $NPMSERVER = "https://npm.development.pjats.com";
 $NUGETSERVER = "http://nuget.development.pjats.com/nuget";
-
-#
-# Set default npm user if one was not specified on cmd line
-#
-if ([string]::IsNullOrEmpty($NPMUSER) -or $NPMUSER.Contains("$")) {
-    $NPMUSER = "Scott Meesseman";
-}
 
 #
 # Must have code-package installed to run this script
