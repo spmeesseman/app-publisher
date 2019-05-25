@@ -48,8 +48,8 @@
 	},
 	"scripts": {
 		"build": "npx tsc -p ./",
-		"app-publish": "app-publisher -p pja",
-		"app-publish-dry": "app-publisher -p pja --dry-run",
+		"app-publish": "app-publisher -p ps",
+		"app-publish-dry": "app-publisher -p ps --dry-run",
 		"semantic-release": "semantic-release --allow-same-version --no-ci",
 		"semantic-release-dry": "semantic-release --dry-run --allow-same-version"
 	},
