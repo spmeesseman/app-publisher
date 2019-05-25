@@ -1,6 +1,34 @@
-
-
 # APP-PUBLISHER CHANGE LOG
+
+## Version 1.3.0 (May 25th, 2019)
+
+### Chores
+
+- add json module dependency for manipulating package.json
+- add txt-to-md script for future use
+- regression fix version replacement in package-lock.json
+- semantic release updates
+
+### Documentation
+
+- **readme:** add initial config param section
+- **readme:** update info
+
+### Features
+
+- add marked down commit entry generation for changelog.md file edit
+
+### Bug Fixes
+
+- invalid subversion url using old ip, occassionally a file locked error occurs when package.json goes through text replacements
+
+### Code Refactoring
+
+- add config param author, remove npmuser.
+
+	author inherits from enviroment variable UserName or USER by default.
+
+- npm user replacement becomes author replacement
 
 ## [1.2.0](https://github.com/spmeesseman/app-publisher/compare/v1.1.6...v1.2.0) (2019-05-16)
 
@@ -231,3 +259,4 @@
 ### Minor Features
 
 * output success/failure after writing version to file ([030d4a8](https://github.com/spmeesseman/app-publisher/commit/030d4a8))
+
