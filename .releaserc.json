@@ -1,4 +1,5 @@
 {
+    "preset": "spm",
     "plugins": [
         [
             "@semantic-release/commit-analyzer",
@@ -20,12 +21,6 @@
                         "MAJOR RELEASE"
                     ]
                 }
-            }
-        ],
-        [
-            "@semantic-release/exec", 
-            {
-                "generateNotesCmd": "cmd /c notepad CHANGELOG.md"
             }
         ],
         "@semantic-release/npm",
