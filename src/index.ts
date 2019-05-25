@@ -8,6 +8,7 @@ import * as gradient from 'gradient-string';
 import chalk from 'chalk';
 import * as child_process from 'child_process';
 import * as path from 'path';
+import { exit } from 'shelljs';
 
 //
 // Display color banner
@@ -44,8 +45,8 @@ parser.addArgument(
     [ '-p', '--profile' ],
     {
         help: 'The publish profile to use.',
-        choices: [ 'gen', 'pja', 'pjr' ],
-        defaultValue: 'gen'
+        choices: [ 'node', 'ps' ],
+        defaultValue: 'node'
     }
 );
 parser.addArgument(
@@ -168,146 +169,160 @@ let dryCfg = {
 let config = { ...fileCfg, ...dryCfg };
 
 //
+//
+//
+if (!config.runs)
+{
+    config.runs = [{}];
+}
+
+//
 // Run publish
 //
-if (args.profile === "gen") {
-    const commitAnalyzer = new CommitAnalyzer({});
-    util.log(`Test: Release level is ${commitAnalyzer.getReleaseLevel()}`);
-    util.log('Generic publisher not yet implemented');
-}
-else if (args.profile === "pja" || args.profile === "pjr") 
+for (var run in config.runs)
 {
-    let sArgs = "";
-    let cProperty: string;
-    let aProperty: string;
+    config = { ...fileCfg, ...config.runs[run] };
 
-    //
-    // Set svn repo
-    //
-    if (!config.svnRepo) {
-        config.svnRepo = args.profile;
+    if (!args.profile || args.profile === "node") {
+        //const commitAnalyzer = new CommitAnalyzer({});
+        util.log('Generic publisher not yet implemented, use --profile=ps');
     }
-
-    //
-    // Format config for powershell script arguments
-    //
-    let visitor: JSONVisitor = 
+    else if (args.profile === "ps") 
     {
-        onError() { cProperty = undefined; },
-        onObjectEnd() 
-        { 
-            cProperty = undefined;
-            aProperty = undefined;
-        },
-        onArrayBegin(offset: number, length: number, startLine: number, startCharacter: number)
-        {
-            aProperty = cProperty;
-            sArgs += ("-" + cProperty + " ");
-        },
-        onArrayEnd(offset: number, length: number, startLine: number, startCharacter: number)
-        {
-            aProperty = undefined;
-            if (sArgs.endsWith(",")) {
-                sArgs = sArgs.substring(0, sArgs.length - 1) + " ";
-            } 
-        },
-        onLiteralValue(value: any, offset: number, _length: number) 
-        {
-            if (cProperty && typeof value === 'string') 
-            {
-                if (!aProperty) {
-                    sArgs += ("-" + cProperty + " '" + value + "' ");
-                }
-                else {
-                    sArgs += ("\"" + value + "\",");
-                }
-            }
-            else if (aProperty && typeof value === 'string')
-            {
-                sArgs += ("'" + value + "',");
-            }
-            else if (value)
-            {
-                if (!aProperty) {
-                    sArgs += ("-" + cProperty + " " + value + " ");
-                }
-                else {
-                    sArgs += (value + ",");
-                }
-            }
-            cProperty = undefined;
-        },
-        onObjectProperty(property: string, offset: number, _length: number) 
-        {
-            cProperty = property;
-        }
-    };
-    visit(JSON.stringify(config), visitor);
-
-    sArgs = sArgs + ` -apppublisherversion ${version}`;
-    
-    //
-    // Find Powershell script
-    //
-    // Perform search in the following order:
-    //
-    //     1. Local node_modules
-    //     2. Local script dir
-    //     3. Global node_modules
-    //     4. Windows install
-    //
-    var ps1Script;
-    if (util.pathExists(".\\node_modules\\@spmeesseman\\app-publisher")) {
-        ps1Script = ".\\node_modules\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1";
-    }
-    else if (util.pathExists(".\\node_modules\\@perryjohnson\\app-publisher")) {
-        ps1Script = ".\\node_modules\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1";
-    }
-    else if (util.pathExists(".\\script\\app-publisher.ps1")) {
-        ps1Script = ".\\script\\app-publisher.ps1";
-    }
-    else 
-    {
-        if (process.env.CODE_HOME)
-        {
-            // Check global node_modules
-            //
-            let gModuleDir = process.env.CODE_HOME + "\\nodejs\\node_modules";
-            if (util.pathExists(gModuleDir + "\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1")) {
-                ps1Script = gModuleDir + "\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1";
-            }
-            else if (util.pathExists(gModuleDir + "\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1")) {
-                ps1Script = gModuleDir + "\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1";
-            }
-        }
-        // Check windows install
+        let sArgs = "";
+        let cProperty: string;
+        let aProperty: string;
+        let inRuns: boolean;
         //
-        else if (process.env.APP_PUBLISHER_HOME)
+        // Format config for powershell script arguments
+        //
+        let visitor: JSONVisitor = 
         {
-            if (util.pathExists(process.env.APP_PUBLISHER_HOME + "\\app-publisher.ps1")) {
-                ps1Script = ".\\app-publisher.ps1";
+            onError() { cProperty = undefined; },
+            onObjectEnd() 
+            { 
+                cProperty = undefined;
+                aProperty = undefined;
+            },
+            onArrayBegin(offset: number, length: number, startLine: number, startCharacter: number)
+            {
+                aProperty = cProperty;
+                sArgs += ("-" + cProperty + " ");
+            },
+            onArrayEnd(offset: number, length: number, startLine: number, startCharacter: number)
+            {
+                inRuns = false;
+                aProperty = undefined;
+                if (sArgs.endsWith(",")) {
+                    sArgs = sArgs.substring(0, sArgs.length - 1) + " ";
+                } 
+            },
+            onLiteralValue(value: any, offset: number, _length: number) 
+            {
+                if (!inRuns)
+                {
+                    if (cProperty && typeof value === 'string') 
+                    {
+                        if (!aProperty) {
+                            sArgs += ("-" + cProperty + " '" + value + "' ");
+                        }
+                        else {
+                            sArgs += ("\"" + value + "\",");
+                        }
+                    }
+                    else if (aProperty && typeof value === 'string')
+                    {
+                        sArgs += ("'" + value + "',");
+                    }
+                    else if (cProperty && value)
+                    {
+                        if (!aProperty) {
+                            sArgs += ("-" + cProperty + " " + value + " ");
+                        }
+                        else {
+                            sArgs += (value + ",");
+                        }
+                    }
+                }
+                cProperty = undefined;
+            },
+            onObjectProperty(property: string, offset: number, _length: number) 
+            {
+                if (property === "runs") {
+                    inRuns = true;
+                }
+                else { 
+                    cProperty = property;
+                }
+            }
+        };
+        visit(JSON.stringify(config), visitor);
+
+        sArgs = sArgs + ` -apppublisherversion ${version}`;
+
+        //
+        // Find Powershell script
+        //
+        // Perform search in the following order:
+        //
+        //     1. Local node_modules
+        //     2. Local script dir
+        //     3. Global node_modules
+        //     4. Windows install
+        //
+        var ps1Script;
+        if (util.pathExists(".\\node_modules\\@spmeesseman\\app-publisher")) {
+            ps1Script = ".\\node_modules\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1";
+        }
+        else if (util.pathExists(".\\node_modules\\@perryjohnson\\app-publisher")) {
+            ps1Script = ".\\node_modules\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1";
+        }
+        else if (util.pathExists(".\\script\\app-publisher.ps1")) {
+            ps1Script = ".\\script\\app-publisher.ps1";
+        }
+        else 
+        {
+            if (process.env.CODE_HOME)
+            {
+                // Check global node_modules
+                //
+                let gModuleDir = process.env.CODE_HOME + "\\nodejs\\node_modules";
+                if (util.pathExists(gModuleDir + "\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1")) {
+                    ps1Script = gModuleDir + "\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1";
+                }
+                else if (util.pathExists(gModuleDir + "\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1")) {
+                    ps1Script = gModuleDir + "\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1";
+                }
+            }
+            // Check windows install
+            //
+            else if (process.env.APP_PUBLISHER_HOME)
+            {
+                if (util.pathExists(process.env.APP_PUBLISHER_HOME + "\\app-publisher.ps1")) {
+                    ps1Script = ".\\app-publisher.ps1";
+                }
             }
         }
-    }
 
-    if (!ps1Script) {
-        util.logError("Could not find powershell script app-publisher.ps1");
-        process.exit(102);
-    }
+        if (!ps1Script) {
+            util.logError("Could not find powershell script app-publisher.ps1");
+            process.exit(102);
+        }
 
-    //
-    // Launch Powershell script
-    //
-    child_process.spawnSync("powershell.exe", [`${ps1Script} ${sArgs}`], { stdio: 'inherit'});
-    // let child = child_process.spawn("powershell.exe", [`${ps1Script} ${sArgs}`], { stdio: ['pipe', 'inherit', 'inherit'] });
-    // process.stdin.on('data', function(data) {
-    //     if (!child.killed) {
-    //         child.stdin.write(data);
-    //     }
-    // });
-    // child.on('exit', function(code) {
-    //     process.exit(code);
-    // });
+        //
+        // Launch Powershell script
+        //
+        child_process.spawnSync("powershell.exe", [`${ps1Script} ${sArgs}`], { stdio: 'inherit'});
+        // let child = child_process.spawn("powershell.exe", [`${ps1Script} ${sArgs}`], { stdio: ['pipe', 'inherit', 'inherit'] });
+        // process.stdin.on('data', function(data) {
+        //     if (!child.killed) {
+        //         child.stdin.write(data);
+        //     }
+        // });
+        // child.on('exit', function(code) {
+        //     process.exit(code);
+        // });
+    }
 }
 
 function displayIntro() 

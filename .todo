@@ -11,11 +11,13 @@ Todos:
 
     Features:
 
-        ☐ Node version of app-publisher @60h
+        ☐ Node version of app-publisher @180h
+        ☐ Redo repository configurations, accept git and svn, and both
 
     Known Bugs:
 
-        ☐ Built history section is missing two characters at the end @1h
+        ☐ If changelog or history file is created, SVN check in fails since files have not been added to vc yet @1h
+        ✔ Built history section is missing two characters at the end @1h @done(19-05-25 13:27)
     
     Performance Enhancements:
 
@@ -24,6 +26,8 @@ Todos:
     Style:
         
     Tests:
+
+        ☐ Create initial tests @8h
 
 
 End Todos

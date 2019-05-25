@@ -48,6 +48,29 @@ $CHANGELOGFILE = "CHANGELOG.md",
 #
 $DEPLOYCOMMAND = @(),
 #
+#
+#
+$EMAILNOTIFICATION = "Y",
+#
+# The git repo urls
+#
+$GITREPO = "",
+$GITHOMEPAGE = "",
+$GITBUGS = "",
+#
+# Whether or not to tag the new version in SVN.  Default is Yes.
+#
+$GITTAG = "Y",
+#
+# The location of this history file, can be a relative or full path.
+#
+$HISTORYFILE = "doc\history.txt",
+$HISTORYLINELEN = 80,
+#
+# The location of this history header file, can be a relative or full path.
+#
+$HISTORYHDRFILE = "install\history-hdr.txt",
+#
 # To build the installer release, set this flag to "Y"
 #
 $INSTALLERRELEASE = "N",
@@ -72,18 +95,13 @@ $INSTALLEREXDIST = "N",
 #
 $INTERACTIVE = "N",
 #
-# The location of this history file, can be a relative or full path.
-#
-$HISTORYFILE = "doc\history.txt",
-$HISTORYLINELEN = 80,
-#
-# The location of this history header file, can be a relative or full path.
-#
-$HISTORYHDRFILE = "install\history-hdr.txt",
-#
 #
 #
 $NOTEPADEDITS = "Y",
+#
+#
+#
+$NPMREGISTRY = "https://npm.development.pjats.com",
 #
 # To build the npm release, set this flag to "Y"
 #
@@ -96,6 +114,10 @@ $NPMSCOPE = "",
 # To build the nuget release, set this flag to "Y"
 #
 $NUGETRELEASE = "N",
+#
+#
+#
+$NUGETREGISTRY = "https://nuget.development.pjats.com/nuget",
 #
 # PATHTOROOT - Set this variable to:
 #
@@ -154,36 +176,25 @@ $PATHPREROOT = "",
 #
 $POSTBUILDCOMMAND = @(),
 #
+#
+#
+$REPO = "",
+$REPOTYPE = "svn",
+$REPOBRANCH = "trunk",
+$BUGS = "",
+$HOMEPAGE = "",
+#
 # Skip uploading installer to network release folder (primarily used for releasing
 # from hom office where two datacenters cannot be reached at the same time, in this
 # case the installer files are manually copied)
 #
 $SKIPDEPLOYPUSH = "Y",
 #
-# The svn server address, can be domain name or IP
+# The svn urls
 #
-$SVNSERVER = "svn.development.pjats.com",
-#
-# The SVN repository.  It should be one of the following:
-#
-#     1. pja
-#     2. pjr
-#
-$SVNREPO = "pja",
-#
-# The SVN protocol to use for SVN commands.  It should be one of the following:
-#
-#     1. svn
-#     2. https
-#
-$SVNPROJECTNAME = "",
-#
-# The SVN protocol to use for SVN commands.  It should be one of the following:
-#
-#     1. svn
-#     2. https
-#
-$SVNPROTOCOL = "svn",
+$SVNREPO = "",
+$SVNHOMEPAGE = "",
+$SVNBUGS = "",
 #
 # Whether or not to tag the new version in SVN.  Default is Yes.
 #
@@ -245,20 +256,15 @@ $WRITELOG = "N"
 
 class Svn
 {
-    [array]getCommits($Protocol, $Server, $Repo, $Module)
+    [array]getCommits($Repo, $Branch)
     {
         $comments = @()
-
-        if ($Module -eq "")
-        {
-            return $comments;
-        }
 
         #
         # Get tags
         #
         Log-Message "Retrieving most recent tag"
-        $xml = svn log --xml "${Protocol}://$Server/$Repo/$Module/tags" --verbose --limit 50
+        $xml = svn log --xml "$Repo/tags" --verbose --limit 50
         $path = $null
 
         #
@@ -288,7 +294,7 @@ class Svn
         # Retrieve commits since last version tag
         #
         Log-Message "Retrieving commits since last version"
-        $xml = svn log --xml "${Protocol}://$Server/$Repo/$Module/trunk" --verbose --limit 50 -r ${rev}:HEAD
+        $xml = svn log --xml "$Repo/$Branch" --verbose --limit 50 -r ${rev}:HEAD
 
         Log-Message "Parsing response from SVN"
 
@@ -1062,6 +1068,11 @@ function Prepare-DotNetBuild($AssemblyInfoLocation)
     Edit-File $AssemblyInfoLocation
 }
 
+$DefaultRepo = ""
+$DefaultRepoType = ""
+$DefaultHomePage = ""
+$DefaultBugs = ""
+$DefaultName = ""
 
 function Prepare-PackageJson()
 {
@@ -1076,79 +1087,92 @@ function Prepare-PackageJson()
     Check-ExitCodeNative
     Replace-Version "package.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
     #
-    # A few modules are shared, do scope replacement if this might be one of them
+    # Save original values
     #
-    $GitUrl = "https://github.com/spmeesseman/$PROJECTNAME"
-    $SvnUrl = "https://svn.development.pjats.com/$SVNREPO/$PROJECTNAME/trunk"
-    $IssuesUrl = "https://issues.development.pjats.com"
+    Log-Message "Saving repository in package.json"
+    $DefaultRepo = & .\node_modules\.bin\json -f package.json repository.url
+    Check-ExitCodeNative
+    Log-Message "Saving repository type in package.json"
+    $DefaultRepoType = & .\node_modules\.bin\json -f package.json repository.type
+    Check-ExitCodeNative
+    Log-Message "Saving homepage in package.json"
+    $DefaultHomePage = & .\node_modules\.bin\json -f package.json homepage
+    Check-ExitCodeNative
+    Log-Message "Saving bugs page in package.json"
+    $DefaultBugs = & .\node_modules\.bin\json -f package.json repository.bugs.url
+    Check-ExitCodeNative
+    Log-Message "Saving package name in package.json"
+    $DefaultName = & .\node_modules\.bin\json -f package.json name
+    Check-ExitCodeNative
     #
-    # Replace repo
+    # Set repo
     #
-    [System.Threading.Thread]::Sleep(100);
     Log-Message "Setting repository in package.json"
-    ((Get-Content -path "package.json" -Raw) -replace "$GitUrl.git","$SvnUrl") | Set-Content -NoNewline -Path "package.json"
-    Check-ExitCode
-    [System.Threading.Thread]::Sleep(100);
+    & .\node_modules\.bin\json -I -4 -f package.json -e "this.repository.url='$REPO/$REPOBRANCH'"
+    Check-ExitCodeNative
+    #
+    # Set repo type
+    #
     Log-Message "Setting repository type in package.json"
-    ((Get-Content -path "package.json" -Raw) -replace '"git"','"svn"') | Set-Content -NoNewline -Path "package.json"
-    Check-ExitCode
+    & .\node_modules\.bin\json -I -4 -f package.json -e "this.repository.type='$REPOTYPE'"
+    Check-ExitCodeNative
     #
-    # Replace bugs
+    # Set bugs
     #
-    [System.Threading.Thread]::Sleep(100);
-    Log-Message "Setting bugs in package.json"
-    ((Get-Content -path "package.json" -Raw) -replace "$GitUrl/issues","$IssuesUrl/$PROJECTNAME/report/1") | Set-Content -NoNewline -Path "package.json"
-    Check-ExitCode
+    Log-Message "Setting bugs page in package.json"
+    & .\node_modules\.bin\json -I -4 -f package.json -e "this.bugs.url='$BUGS'"
+    Check-ExitCodeNative
     #
-    # Replace homepage 
+    # Set homepage 
     #
-    [System.Threading.Thread]::Sleep(100);
     Log-Message "Setting homepage in package.json"
-    ((Get-Content -path "package.json" -Raw) -replace "$GitUrl/blob/master/README.md","$IssuesUrl/$PROJECTNAME/browser/$PROJECTNAME/trunk/README.md") | Set-Content -NoNewline -Path "package.json"
+    & .\node_modules\.bin\json -I -4 -f package.json -e "this.homepage='$HOMEPAGE'"
+    Check-ExitCodeNative
+    #
+    # Scope/name - package.json
+    #
+    if (![string]::IsNullOrEmpty($NPMSCOPE))
+    {
+        Log-Message "Setting package name in package.json"
+        & .\node_modules\.bin\json -I -4 -f package.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
+        Check-ExitCodeNative
+        #
+        # Scope - package-lock.json
+        #
+        if (Test-Path("package-lock.json")) 
+        {
+            Log-Message "Setting package name in package-lock.json"
+            & .\node_modules\.bin\json -I -4 -f package-lock.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
+            Check-ExitCodeNative
+        }
+        #
+        # Add package.json/package-lock.json version changes to changelist for check in to SVN
+        #
+        Svn-Changelist-Add "package.json"
+        if (Test-Path("package-lock.json")) {
+            #
+            # Add package-lock.json version changes to changelist for check in to SVN
+            #
+            Svn-Changelist-Add "package-lock.json"
+        }
+    }
+    #
+    #
+    #
+    Log-Message "Set windows line feeds in package.json"
+    ((Get-Content -path $File -Raw) -replace "`n", "`r`n") | Set-Content -NoNewline -Path "package.json"
     Check-ExitCode
-    #
-    # Scope
-    #
-    [System.Threading.Thread]::Sleep(100);
-    if ([string]::IsNullOrEmpty($NPMSCOPE)) 
-    {
-        Log-Message "Un-scoping package name in package.json"
-        ((Get-Content -path "package.json" -Raw) -replace '@spmeesseman/',"") | Set-Content -NoNewline -Path "package.json"
-        Check-ExitCode
-        if (Test-Path("package-lock.json")) 
-        {
-            Log-Message "Un-scoping package name in package-lock.json"
-            ((Get-Content -path "package-lock.json" -Raw) -replace '@spmeesseman/',"") | Set-Content -NoNewline -Path "package-lock.json"
-            Check-ExitCode
-        }
-    }
-    else 
-    {
-        Log-Message "Scoping package name in package.json"
-        ((Get-Content -path "package.json" -Raw) -replace '@spmeesseman',$NPMSCOPE) | Set-Content -NoNewline -Path "package.json"
-        Check-ExitCode
-        if (Test-Path("package-lock.json")) 
-        {
-            Log-Message "Scoping package name in package-lock.json"
-            ((Get-Content -path "package-lock.json" -Raw) -replace '@spmeesseman',$NPMSCOPE) | Set-Content -NoNewline -Path "package-lock.json"
-            Check-ExitCode
-        }
-    }
-    #
-    # Add package.json/package-lock.json version changes to changelist for check in to SVN
-    #
-    Svn-Changelist-Add "package.json"
-    if (Test-Path("package-lock.json")) {
-        #
-        # Add package-lock.json version changes to changelist for check in to SVN
-        #
-        Svn-Changelist-Add "package-lock.json"
-    }
     #
     # Allow manual modifications to package.json and package-lock.json
     #
     Edit-File "package.json"
-    if (Test-Path("package-lock.json")) {
+    if (Test-Path("package-lock.json")) 
+    {
+        #
+        #
+        Log-Message "Set windows line feeds in package.json"
+        ((Get-Content -path $File -Raw) -replace "`n", "`r`n") | Set-Content -NoNewline -Path "package.json"
+        Check-ExitCode
         Edit-File "package-lock.json"
     }
 }
@@ -1157,66 +1181,45 @@ function Prepare-PackageJson()
 function Restore-PackageJson()
 {
     #
-    # A few modules are shared, re-do scope replacement if this might be one of them
+    # Set repo
     #
-    $GitUrl = "https://github.com/spmeesseman/$PROJECTNAME"    # git sematic release test url
-    $SvnUrl = "https://$SVNSERVER/$SVNREPO/$PROJECTNAME/trunk" # production url
-    $IssuesUrl = "https://issues.development.pjats.com"        # production url
+    Log-Message "Re-setting default repository in package.json"
+    & .\node_modules\.bin\json -I -4 -f package.json -e "this.repository.url='$DefaultRepo'"
+    Check-ExitCodeNative
     #
-    # Replace repo
+    # Set repo type
     #
-    Log-Message "Setting repository in package.json"
-    ((Get-Content -path "package.json" -Raw) -replace "$SvnUrl","$GitUrl.git") | Set-Content -NoNewline -Path "package.json"
-    Check-ExitCode
-    Log-Message "Setting repository in package.json"
-    [System.Threading.Thread]::Sleep(100);
-    ((Get-Content -path "package.json" -Raw) -replace '"svn"','"git"') | Set-Content -NoNewline -Path "package.json"
-    Check-ExitCode
+    Log-Message "Re-setting default repository type in package.json"
+    & .\node_modules\.bin\json -I -4 -f package.json -e "this.repository.type='$DefaultRepoType'"
+    Check-ExitCodeNative
     #
-    # Replace bugs
+    # Set bugs
     #
-    Log-Message "Setting bugs in package.json"
-    [System.Threading.Thread]::Sleep(100);
-    ((Get-Content -path "package.json" -Raw) -replace "$IssuesUrl/$PROJECTNAME/report/1","$GitUrl/issues") | Set-Content -NoNewline -Path "package.json"
-    Check-ExitCode
+    Log-Message "Re-setting default bugs page in package.json"
+    & .\node_modules\.bin\json -I -4 -f package.json -e "this.bugs.url='$DefaultBugs'"
+    Check-ExitCodeNative
     #
-    #  Replace homepage 
+    # Set homepage 
     #
-    Log-Message "Setting homepage in package.json"
-    ((Get-Content -path "package.json" -Raw) -replace "$IssuesUrl/$PROJECTNAME/browser/$PROJECTNAME/trunk/README.md","$GitUrl/blob/master/README.md") | Set-Content -NoNewline -Path "package.json"
-    Check-ExitCode
+    Log-Message "Re-setting default homepage in package.json"
+    & .\node_modules\.bin\json -I -4 -f package.json -e "this.homepage='$DefaultHomePage'"
+    Check-ExitCodeNative
     #
-    # Scope - package.json
+    # Scope/name - package.json
     #
-    [System.Threading.Thread]::Sleep(100);
-    if ([string]::IsNullOrEmpty($NPMSCOPE)) 
+    if (![string]::IsNullOrEmpty($NPMSCOPE))
     {
-        Log-Message "Re-scoping default package name in package.json"
-        ((Get-Content -path "package.json" -Raw) -replace "`"name`"[ ]*:[ ]*[`"]",'"name": "@spmeesseman/') | Set-Content -NoNewline -Path "package.json"
-        Check-ExitCode
-    }
-    else 
-    {
-        Log-Message "Re-scoping default package name in package.json"
-        ((Get-Content -path "package.json" -Raw) -replace $NPMSCOPE, '@spmeesseman') | Set-Content -NoNewline -Path "package.json"
-        Check-ExitCode
-    }
-    #
-    # Scope - package-lock.json
-    #
-    if (Test-Path("package-lock.json")) 
-    {
-        if ([string]::IsNullOrEmpty($NPMSCOPE)) 
+        Log-Message "Re-setting default package name in package.json"
+        & .\node_modules\.bin\json -I -4 -f package.json -e "this.name='$DefaultName'"
+        Check-ExitCodeNative
+        #
+        # Scope - package-lock.json
+        #
+        if (Test-Path("package-lock.json")) 
         {
             Log-Message "Re-scoping default package name in package-lock.json"
-            ((Get-Content -path "package-lock.json" -Raw) -replace "`"name`"[ ]*:[ ]*[`"]",'"name": "@spmeesseman/') | Set-Content -NoNewline -Path "package-lock.json"
-            Check-ExitCode
-        }
-        else 
-        {
-            Log-Message "Re-scoping default package name in package-lock.json"
-            ((Get-Content -path "package-lock.json" -Raw) -replace $NPMSCOPE,'@spmeesseman') | Set-Content -NoNewline -Path "package-lock.json"
-            Check-ExitCode
+            & .\node_modules\.bin\json -I -4 -f package-lock.json -e "this.name='$DefaultName'"
+            Check-ExitCodeNative
         }
     }
 }
@@ -1319,7 +1322,6 @@ function Edit-File($File, $SeekToEnd = $false)
 
 $CURRENTVERSION = ""
 $VERSION = "" 
-$BRANCH = ""
 $COMMITS = @()
 $TDATE = ""
 
@@ -1356,10 +1358,11 @@ Log-Message "   Project          : $PROJECTNAME"
 Log-Message "   Path to root     : $PATHTOROOT"
 Log-Message "   Path to main root: $PATHTOMAINROOT"
 Log-Message "   Path pre root    : $PATHPREROOT"
-Log-Message "   SVN server       : $SVNSERVER"
-Log-Message "   SVN repo         : $SVNREPO"
-Log-Message "   SVN protocol     : $SVNPROTOCOL"
+Log-Message "   VC Repo          : $REPO"
+Log-Message "   VC Branch        : $REPOBRANCH"
 Log-Message "   SVN tag          : $SVNTAG"
+Log-Message "   Bugs Page        : $BUGS"
+Log-Message "   Home Page        : $HOMEPAGE"
 Log-Message "   History file     : $HISTORYFILE"
 Log-Message "   History file line: $HISTORYLINELEN"
 Log-Message "   History hdr file : $HISTORYHDRFILE"
@@ -1367,6 +1370,8 @@ Log-Message "   Version text     : $VERSIONTEXT"
 Log-Message "   Is Install releas: $INSTALLERRELEASE"
 Log-Message "   Installer script : $INSTALLERSCRIPT"
 Log-Message "   Is NPM release   : $NPMRELEASE"
+Log-Message "   NPM registry     : $NPMREGISTRY"
+Log-Message "   NPM scope        : $NPMSCOPE"
 Log-Message "   Is Nuget release : $NUGETRELEASE"
 Log-Message "   Build cmd        : $BUILDCOMMAND"
 Log-Message "   Post Build cmd   : $BUILDCOMMAND"
@@ -1376,12 +1381,6 @@ Log-Message "   Notepad edits    : $NOTEPADEDITS"
 Log-Message "   Is interactive   : $INTERACTIVE"
 Log-Message "   Is test mode     : $TESTMODE"
 Log-Message "   Test email       : $TESTEMAILRECIP"
-
-#
-# Define the NPM and Nuget package servers
-#
-$NPMSERVER = "https://npm.development.pjats.com";
-$NUGETSERVER = "http://nuget.development.pjats.com/nuget";
 
 #
 # Must have code-package installed to run this script
@@ -1525,6 +1524,92 @@ if ($INSTALLERRELEASE -eq "Y" -and $INSTALLEREXDIST -ne "Y")
 }
 
 #
+# Set up repo and other pacjkage.json properties
+#
+if ($REPOTYPE -eq "svn" -or [string]::IsNullOrEmpty($REPOTYPE))
+{
+    $REPOTYPE = "svn"
+    if ([string]::IsNullOrEmpty($REPO))
+    {
+        if (![string]::IsNullOrEmpty($SVNREPO)) {
+            $REPO = $SVNREPO
+        }
+        else {
+            $REPO = "https://svn.development.pjats.com/repos/pja/" + $PROJECTNAME + "/$REPOBRANCH"
+        }
+    }
+    if ([string]::IsNullOrEmpty($BUGS))
+    {
+        if (![string]::IsNullOrEmpty($SVNBUGS)) {
+            $BUGS = $SVNBUGS
+        }
+        else {
+            $BUGS = "https://projects.development.pjats.com/" + $PROJECTNAME + "/ticket/1"
+        }
+    }
+    if ([string]::IsNullOrEmpty($HOMEPAGE))
+    {
+        if (![string]::IsNullOrEmpty($SVNHOMEPAGE)) {
+            $HOMEPAGE = $SVNHOMEPAGE
+        }
+        else {
+            $HOMEPAGE = "https://projects.development.pjats.com/" + $PROJECTNAME
+        }
+    }
+    if ([string]::IsNullOrEmpty($REPOBRANCH)) {
+        $REPOBRANCH = "trunk"
+    }
+    #
+    $SVNREPO = $REPO
+    $SVNHOMEPAGE= $HOMEPAGE
+    $SVNBUGS = $BUGS
+    #
+    if ($REPOBRANCH -ne "trunk" -and !$REPOBRANCH.StartsWith("branches")) {
+        Log-Message "Invalid repository configuration - no branch specified" "red"
+        exit 1
+    }
+
+}
+elseif ($REPOTYPE -eq "git")
+{
+    if ([string]::IsNullOrEmpty($REPO))
+    {
+        if (![string]::IsNullOrEmpty($GITREPO)) {
+            $REPO = $GITREPO
+        }
+        else {
+            $REPO = "https://github.com/spmeesseman/" + $PROJECTNAME + ".git"
+        }
+    }
+    if ([string]::IsNullOrEmpty($BUGS))
+    {
+        if (![string]::IsNullOrEmpty($GITBUGS)) {
+            $BUGS = $GITBUGS
+        }
+        else {
+            $BUGS = "https://github.com/spmeesseman/" + $PROJECTNAME + "/issues"
+        }
+    }
+    if ([string]::IsNullOrEmpty($HOMEPAGE))
+    {
+        if (![string]::IsNullOrEmpty($GITHOMEPAGE)) {
+            $HOMEPAGE = $GITHOMEPAGE
+        }
+        else {
+            $HOMEPAGE = "https://github.com/spmeesseman/" + $PROJECTNAME
+        }
+    }
+    $GITREPO = $REPO
+    $GITHOMEPAGE= $HOMEPAGE
+    $GITBUGS = $BUGS
+}
+else 
+{
+    Log-Message "Invalid repository configuration" "red"
+    exit 1
+}
+
+#
 # Convert commands to arrays, if string
 #
 if ($DEPLOYCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($DEPLOYCOMMAND))
@@ -1547,12 +1632,17 @@ if ($POSTBUILDCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($POSTBUI
 # order to successfully obtain the latest commit messages.  If it does not exist, the
 # most current tag will be used
 #
-Log-Message "Getting SVN commits made since prior release"
-$project = $PROJECTNAME
-if (![string]::IsNullOrEmpty($SVNPROJECTNAME)) {
-    $project = $SVNPROJECTNAME
+if ($REPOTYPE -eq "svn") {
+    Log-Message "Getting SVN commits made since prior release"
+    $project = $PROJECTNAME
+    if (![string]::IsNullOrEmpty($SVNPROJECTNAME)) {
+        $project = $SVNPROJECTNAME
+    }
+    $COMMITS = $ClsSvn.getCommits($SVNREPO, $REPOBRANCH);
 }
-$COMMITS = $ClsSvn.getCommits($SVNPROTOCOL, $SVNSERVER, $SVNREPO, $project);
+elseif ($REPOTYPE -eq "git") {
+    Log-Message "Git commit retrieval not supported as of yet" "darkyellow"
+}
 
 #
 # Check to ensure we got commits since last version.  If not, prompt user whether or
@@ -1694,8 +1784,8 @@ if ([string]::IsNullOrEmpty($VERSION)) {
 #
 # Set branch if empty (not currently used 4/22/2019)
 #
-if ($BRANCH -eq "") {
-    $BRANCH = "trunk"
+if ($REPOBRANCH -eq "") {
+    $REPOBRANCH = "trunk"
 }
 
 #
@@ -2231,16 +2321,16 @@ if ($NPMRELEASE -eq "Y")
         #
         # Publish to npm server
         #
-        Log-Message "Publishing npm package to $NPMSERVER"
+        Log-Message "Publishing npm package to $NPMREGISTRY"
         if ($TESTMODE -ne "Y") 
         {
-            & npm publish --access public --registry $NPMSERVER
+            & npm publish --access public --registry $NPMREGISTRY
             Check-ExitCodeNative
         }
         else 
         {
             Log-Message "   Test mode, performing publish dry run only" "magenta"
-            & npm publish --access public --registry $NPMSERVER --dry-run
+            & npm publish --access public --registry $NPMREGISTRY --dry-run
             Log-Message "   Test mode, dry run publish finished" "magenta"
         }
         #
@@ -2253,10 +2343,10 @@ if ($NPMRELEASE -eq "Y")
         if (!$PublishFailed) 
         {
             if (![string]::IsNullOrEmpty($NPMSCOPE)) { # VERDACCIO NPM server type URL
-                $NpmLocation = "$NPMSERVER/-/web/detail/$NPMSCOPE/$PROJECTNAME"
+                $NpmLocation = "$NPMREGISTRY/-/web/detail/$NPMSCOPE/$PROJECTNAME"
             }
             else {
-                $NpmLocation = "$NPMSERVER/-/web/detail/$PROJECTNAME"
+                $NpmLocation = "$NPMREGISTRY/-/web/detail/$PROJECTNAME"
             }
         }
         else {
@@ -2282,7 +2372,7 @@ if ($NUGETRELEASE -eq "Y")
     #
     # TODO
     #
-    #$NugetLocation = "$NUGETSERVER/$PROJECTNAME"
+    #$NugetLocation = "$NUGETREGISTRY/$PROJECTNAME"
 }
 
 #
@@ -2304,75 +2394,92 @@ else {
 #
 # Send release notification email
 #
-if (![string]::IsNullOrEmpty($TargetNetLocation) -or ![string]::IsNullOrEmpty($NpmLocation) -or ![string]::IsNullOrEmpty($NugetLocation) ) {
-    Send-Notification "$TargetNetLocation" "$NpmLocation" "$NugetLocation"
+if ($EMAILNOTIFICATION -eq "Y") {
+    if (![string]::IsNullOrEmpty($TargetNetLocation) -or ![string]::IsNullOrEmpty($NpmLocation) -or ![string]::IsNullOrEmpty($NugetLocation) ) {
+        Send-Notification "$TargetNetLocation" "$NpmLocation" "$NugetLocation"
+    }
 }
 
-#
-# Change dircetory to svn root that contains the .svn folder to isse SVN commands,
-# all paths in the changelist will be relative to this root
-#
-if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) {
-    set-location $PATHTOMAINROOT
-}
-
-if (Test-Path(".svn"))
+if (![string]::IsNullOrEmpty($SVNREPO))
 {
-    #$SVNCHANGELIST = $SVNCHANGELIST.Trim()
     #
-    # Check version changes in to SVN if there's any touched files
+    # Change dircetory to svn root that contains the .svn folder to isse SVN commands,
+    # all paths in the changelist will be relative to this root
     #
-    if ($SVNCHANGELIST -ne "") 
-    {
-        if ($TESTMODE -ne "Y") 
-        {
-            Log-Message "Committing touched files to version control"
-            Log-Message "   $SVNCHANGELIST"
-            #
-            # Call svn commit
-            #
-            Invoke-Expression -Command "svn commit $SVNCHANGELIST -m `"chore(release): $VERSION [skip ci]`""
-            Check-ExitCode
-        }
-        else 
-        {
-            if ($TESTMODESVNREVERT -eq "Y") {
-                Svn-Revert
-            }
-            if ($TESTMODE -eq "Y") {
-                Log-Message "   Test mode, skipping touched file commit" "magenta"
-            }
-        }
+    if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) {
+        set-location $PATHTOMAINROOT
     }
 
-    #
-    # Create version tag
-    #
-    # If this is a sub-project within a project, do not tag
-    #
-    if ($SVNTAG -eq "Y")
+    if (Test-Path(".svn"))
     {
-        $TagLocation = "${SVNPROTOCOL}://$SVNSERVER/$SVNREPO/$PROJECTNAME/tags/v$VERSION"
-        Log-Message "Tagging version at $TagLocation"
-        if ($TESTMODE -ne "Y") 
+        #$SVNCHANGELIST = $SVNCHANGELIST.Trim()
+        #
+        # Check version changes in to SVN if there's any touched files
+        #
+        if ($SVNCHANGELIST -ne "") 
         {
-            $TrunkLocation = "${SVNPROTOCOL}://$SVNSERVER/$SVNREPO/$PROJECTNAME/trunk"
-            #
-            # Call svn copy to create 'tag'
-            #
-            & svn copy "$TrunkLocation" "$TagLocation" -m "chore(release): tag version $VERSION [skip ci]"
-            Check-ExitCodeNative
+            if ($TESTMODE -ne "Y") 
+            {
+                Log-Message "Committing touched files to version control"
+                Log-Message "   $SVNCHANGELIST"
+                #
+                # Call svn commit
+                #
+                Invoke-Expression -Command "svn commit $SVNCHANGELIST -m `"chore(release): $VERSION [skip ci]`""
+                Check-ExitCode
+            }
+            else 
+            {
+                if ($TESTMODESVNREVERT -eq "Y") {
+                    Svn-Revert
+                }
+                if ($TESTMODE -eq "Y") {
+                    Log-Message "   Test mode, skipping touched file commit" "magenta"
+                }
+            }
+        }
+
+        #
+        # Create version tag
+        #
+        # If this is a sub-project within a project, do not tag
+        #
+        if ($SVNTAG -eq "Y")
+        {
+            $TagLocation = "$SVNREPO/tags/v$VERSION"
+            Log-Message "Tagging version at $TagLocation"
+            if ($TESTMODE -ne "Y") 
+            {
+                #
+                # Call svn copy to create 'tag'
+                #
+                & svn copy "$SVNREPO" "$TagLocation" -m "chore(release): tag version $VERSION [skip ci]"
+                Check-ExitCodeNative
+            }
+            else {
+                Log-Message "   Test mode, skipping create version tag" "magenta"
+            }
         }
         else {
-            Log-Message "   Test mode, skipping create version tag" "magenta"
+            Log-Message "   Skipping version tag, user specified" "darkyellow"
         }
     }
     else {
-        Log-Message "   Skipping version tag, user specified" "darkyellow"
+        Log-Message "Could not find .svn folder, skipping commit and version tag" "red"
     }
 }
-else {
-    Log-Message "Could not find .svn folder, skipping commit and version tag" "red"
+
+#
+# GIT
+#
+if (![string]::IsNullOrEmpty($GITREPO))
+{
+    if ($REPOTYPE -ne "git")
+    {
+        Log-Message "Git commits with non-Git commits not yet supported" "darkyellow"
+    }
+
+    Log-Message "Git commits not yet supported" "darkyellow"
 }
 
 if ($TESTMODE -eq "Y") {

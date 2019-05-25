@@ -10,18 +10,35 @@
     "historyLineLen":   80,
     "installerRelease": "Y",
     "installerScript":  "install\\installer-x86.nsi",
-    "interactive":      "Y",
+    "interactive":      "N",
     "notepadEdits":     "Y",
     "npmRelease":       "Y",
-    "npmScope":         "@perryjohnson",
-    "npmUser":          "${PJ_NPM_USERNAME}",
     "nugetRelease":     "N",
     "pathtoRoot":       ".",
     "pathtoMainRoot":   "",
     "pathPreRoot":      "",
     "pathToDist":       "install\\dist",
     "skipDeployPush":   "Y",
-    "svnRepo":          "pja",
     "testEmailRecip":   "smeesseman@pjats.com",
-    "versionText":      "Version"
+    "versionText":      "Version",
+    "runs": [
+    {
+        "repoBranch":   "trunk",
+        "repo":         "https://svn.development.pjats.com/repos/pja/app-publisher",
+        "homePage":     "https://projects.development.pjats.com/app-publisher",
+        "bugs":         "https://projects.development.pjats.com/app-publisher/ticket/1",
+        "npmRegistry":  "https://npm.development.pjats.com",
+        "npmScope":     "@perryjohnson"
+    },{
+        "repoBranch":   "master",
+        "repo":         "https://github.com/spmeesseman/app-publisher.git",
+        "homePage":     "https://github.com/spmeesseman/app-publisher/blob/master/README.md",
+        "bugs":         "https://github.com/spmeesseman/app-publisher/issues",
+        "npmRegistry":  "https://registry.npmjs.org",
+        "notepadEdits": "N",
+        "npmScope":     "@spmeesseman",
+        "githubRelease":"Y",
+        "installerRelease": "N",
+        "emailNotification": "N"
+    }]
 }
