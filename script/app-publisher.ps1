@@ -1067,13 +1067,13 @@ function Prepare-PackageJson()
 {
     #
     # Replace current version with new version in package.json and package-lock.json
-    # 5/25/19 - Use regext text replacement instead of npm version command, sencha packages will contain 
+    # 5/25/19 - Use regext text replacement after npm version command, sencha packages will contain 
     # two version tags, on for the main package.json field, and one in the sencha object definition, we 
     # want to replace them both
     #
     Log-Message "Setting new version $VERSION in package.json"
-    #& npm version --no-git-tag-version --allow-same-version $VERSION
-    #Check-ExitCodeNative
+    & npm version --no-git-tag-version --allow-same-version $VERSION
+    Check-ExitCodeNative
     Replace-Version "package.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
     #
     # A few modules are shared, do scope replacement if this might be one of them

@@ -23,6 +23,12 @@
                 }
             }
         ],
+        [
+            "@semantic-release/exec", 
+            {
+                "analyzeCommitsCmd": "echo feat"
+            }
+        ],
         "@semantic-release/npm",
         "@semantic-release/github",
         "@semantic-release/git"
