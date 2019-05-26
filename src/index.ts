@@ -7,8 +7,6 @@ import * as fs from 'fs';
 import * as gradient from 'gradient-string';
 import chalk from 'chalk';
 import * as child_process from 'child_process';
-import * as path from 'path';
-import { exit } from 'shelljs';
 
 //
 // Display color banner
@@ -177,6 +175,7 @@ if (!config.runs)
 }
 
 let runCt = 0;
+let reposCommited:Array<string> = [];
 
 //
 // Run publish
@@ -261,9 +260,26 @@ for (var run in config.runs)
         };
         visit(JSON.stringify(config), visitor);
 
+        //
+        // Manipulate some config if required
+        //
+        if (!config.repoType) {
+            config.repoType = "svn";
+        }
+        if (reposCommited.indexOf(config.repoType)) 
+        {
+            sArgs = sArgs + " -skipCommit Y";
+            if (!sArgs.includes(" -vcTag N")) {
+                sArgs = sArgs.replace("-vcTag Y", "");
+                sArgs = sArgs + " -vcTag N";
+            }
+        }
+        else {
+            reposCommited.push(config.repoType);
+        }
         sArgs = sArgs + ` -apppublisherversion ${version}`;
         sArgs = sArgs + ` -run ${runCt}`;
-        
+
         //
         // Find Powershell script
         //
