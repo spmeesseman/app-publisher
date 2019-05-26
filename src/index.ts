@@ -176,11 +176,14 @@ if (!config.runs)
     config.runs = [{}];
 }
 
+let runCt = 0;
+
 //
 // Run publish
 //
 for (var run in config.runs)
 {
+    runCt++;
     config = { ...fileCfg, ...config.runs[run] };
 
     if (!args.profile || args.profile === "node") {
@@ -259,7 +262,8 @@ for (var run in config.runs)
         visit(JSON.stringify(config), visitor);
 
         sArgs = sArgs + ` -apppublisherversion ${version}`;
-
+        sArgs = sArgs + ` -run ${runCt}`;
+        
         //
         // Find Powershell script
         //
