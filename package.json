@@ -63,11 +63,12 @@
 		"build/lib",
 		"script"
 	],
-	"config": {
-		"commitizen": {
-			"path": "cz-conventional-changelog"
-		}
-	},
+	"keywords": [
+		"release",
+		"publish",
+		"svn",
+		"git"
+	],
 	"publishConfig": {
 		"access": "restricted"
 	}
