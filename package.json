@@ -55,7 +55,8 @@
 	},
 	"main": "./build/index.js",
 	"bin": {
-		"app-publisher": "./build/index.js"
+		"app-publisher": "./build/index.js",
+		"app-publisher-json": "./node_modules/json/lib/json.js"
 	},
 	"files": [
 		"build/*.js",
