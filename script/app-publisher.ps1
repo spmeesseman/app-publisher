@@ -58,9 +58,9 @@ $GITREPO = "",
 $GITHOMEPAGE = "",
 $GITBUGS = "",
 #
-# Whether or not to tag the new version in SVN.  Default is Yes.
 #
-$GITTAG = "Y",
+#
+$GITHUBRELEASE = "N",
 #
 # The location of this history file, can be a relative or full path.
 #
@@ -1499,11 +1499,18 @@ if (![string]::IsNullOrEmpty($NPMRELEASE)) {
         Log-Message "Invalid value specified for npmRelease, accepted values are y/n/Y/N" "red"
         exit 1
     }
-}
+}$
 if (![string]::IsNullOrEmpty($NUGETRELEASE)) {
     $NUGETRELEASE = $NUGETRELEASE.ToUpper()
     if ($NUGETRELEASE -ne "Y" -and $NUGETRELEASE -ne "N") {
         Log-Message "Invalid value specified for nugetRelease, accepted values are y/n/Y/N" "red"
+        exit 1
+    }
+}
+if (![string]::IsNullOrEmpty($GITHUBRELEASE)) {
+    $GITHUBRELEASE = $GITHUBRELEASE.ToUpper()
+    if ($GITHUBRELEASE -ne "Y" -and $GITHUBRELEASE -ne "N") {
+        Log-Message "Invalid value specified for githubRelease, accepted values are y/n/Y/N" "red"
         exit 1
     }
 }
@@ -1546,7 +1553,6 @@ if (![string]::IsNullOrEmpty($VCTAG)) {
 #
 # Check valid params
 #
-
 if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and [string]::IsNullOrEmpty($PATHPREROOT)) {
     Log-Message "pathPreRoot must be specified with pathToMainRoot" "red"
     exit 1
@@ -1571,13 +1577,11 @@ if ($INSTALLERRELEASE -eq "Y" -and $INSTALLEREXDIST -ne "Y")
         Log-Message "installerScript must be specified for installer build" "red"
         exit 1
     }
-
     $ScriptParts = $INSTALLERSCRIPT.Split(' ');
     if (!(Test-Path($ScriptParts[0]))) {
         Log-Message "Defined INSTALLERSCRIPT not found" "red"
         exit 1
     }
-
     if ($INSTALLERSCRIPT.Contains(".nsi"))
     {
         if (!(Test-Path("$Env:CODE_HOME\nsis"))) {
@@ -1710,7 +1714,7 @@ if ($POSTBUILDCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($POSTBUI
 #
 if ($CURRENTVERSION -eq "") 
 {
-    Log-Message "Calculate next version number"
+    Log-Message "Retrieve current version and calculate next version number"
 
     if (Test-Path("node_modules"))
     {
@@ -1848,7 +1852,7 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
     #
     if ($REPOTYPE -eq "svn") {
         Log-Message "Getting SVN commits made since prior release"
-        $COMMITS = $ClsSvn.getCommits($SVNREPO, $REPOBRANCH)
+        $COMMITS = $ClsSvn.getCommits($REPO, $REPOBRANCH)
     }
     elseif ($REPOTYPE -eq "git") {
         Log-Message "Git commit retrieval not supported as of yet" "darkyellow"
@@ -2446,6 +2450,22 @@ if ($NPMRELEASE -eq "Y")
 if ($NUGETRELEASE -eq "Y") 
 {
     Log-Message "Releasing nuget package"
+    #
+    # Build if specified
+    #
+    #Run-Scripts "build" $BUILDCOMMAND $true
+    #
+    # TODO
+    #
+    #$NugetLocation = "$NUGETREGISTRY/$PROJECTNAME"
+}
+
+#
+# TODO - Nuget Release / .NET
+#
+if ($GITHUBRELEASE -eq "Y") 
+{
+    Log-Message "Releasing dist to GitHub"
     #
     # Build if specified
     #
