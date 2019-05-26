@@ -101,7 +101,7 @@ $TEXTEDITOR = "notepad++",
 #
 #
 #
-$NPMREGISTRY = "https://npm.development.pjats.com",
+$NPMREGISTRY = "https://registry.npmjs.org",
 #
 # To build the npm release, set this flag to "Y"
 #
@@ -184,9 +184,10 @@ $REPOBRANCH = "trunk",
 $BUGS = "",
 $HOMEPAGE = "",
 #
-#
+# Set by internal application
 #
 $RUN = 1,
+$SKIPCOMMIT = "N",
 #
 # Skip uploading installer to network release folder (primarily used for releasing
 # from hom office where two datacenters cannot be reached at the same time, in this
@@ -898,15 +899,47 @@ function Clean-String($Str)
     Return $str
 }
 
-function Svn-Changelist-Add($SvnFile)
+function Vc-Changelist-AddRemove($VcFile)
 {
-    Log-Message "Adding $SvnFile to svn changelist"
     if ($PATHPREROOT -ne "" -and $PATHPREROOT -ne $null) {
-        $SvnFile = Join-Path -Path "$PATHPREROOT" -ChildPath "$SvnFile"
+        $VcFile = Join-Path -Path "$PATHPREROOT" -ChildPath "$VcFile"
     }
-    if (!$script:VCCHANGELIST.Contains($SvnFile)) {
-        $script:VCCHANGELIST = "$script:VCCHANGELIST `"$SvnFile`""
-        #$script:VCCHANGELIST += "`"$SvnFile`""
+    if (!$script:VCCHANGELISTRMV.Contains($VcFile)) {
+        Log-Message "Adding $VcFile to failure/testrun vc removelist"
+        $script:VCCHANGELISTRMV = "$script:VCCHANGELISTRMV `"$VcFile`""
+    }
+}
+
+function Vc-Changelist-Add($VcFile)
+{
+    if ($PATHPREROOT -ne "" -and $PATHPREROOT -ne $null) {
+        $VcFile = Join-Path -Path "$PATHPREROOT" -ChildPath "$VcFile"
+    }
+    if (!$script:VCCHANGELIST.Contains($VcFile)) {
+        Log-Message "Adding $VcFile to vc changelist"
+        $script:VCCHANGELIST = "$script:VCCHANGELIST `"$VcFile`""
+    }
+}
+
+function Vc-Changelist-AddMulti($VcFile)
+{
+    if ($PATHPREROOT -ne "" -and $PATHPREROOT -ne $null) {
+        $VcFile = Join-Path -Path "$PATHPREROOT" -ChildPath "$VcFile"
+    }
+    if (!$script:VCCHANGELISTMLT.Contains($VcFile)) {
+        Log-Message "Adding $VcFile to multi-publish vc changelist"
+        $script:VCCHANGELISTMLT = "$script:VCCHANGELISTMLT `"$VcFile`""
+    }
+}
+
+function Vc-Changelist-AddNew($VcFile)
+{
+    if ($PATHPREROOT -ne "" -and $PATHPREROOT -ne $null) {
+        $VcFile = Join-Path -Path "$PATHPREROOT" -ChildPath "$VcFile"
+    }
+    if (!$script:VCCHANGELISTADD.Contains($VcFile)) {
+        Log-Message "Adding $VcFile to vc 'add' changelist"
+        $script:VCCHANGELISTADD = "$script:VCCHANGELISTADD `"$VcFile`""
     }
 }
 
@@ -914,33 +947,65 @@ function Vc-Revert()
 {
     if (![string]::IsNullOrEmpty($VCCHANGELIST)) 
     {
-        Log-Message "Reverting touched files under version control"
-        Log-Message "Stored List:  $VCCHANGELIST"
+        Log-Message "Removing new files / reverting touched files under version control"
+        Log-Message "Stored Commit List: $VCCHANGELIST"
+        Log-Message "Stored Add List   : $VCCHANGELISTADD"
+        Log-Message "Stored Remove List: $VCCHANGELISTADD"
+
+        $VcRevertList = ""
+        $VcRevertListParts = $VCCHANGELISTRMV.Trim().Split(' ')
+
+        for ($i = 0; $i -lt $VcRevertListParts.Length; $i++)
+        {
+            if (Test-Path($VcRevertListParts[$i].Replace("`"", ""))) 
+            {
+                Log-Message "Deleting unversioned $($VcRevertListParts[$i]) from fs"
+                Remove-Item -path $VcRevertListParts[$i].Replace("`"", "") -Recurse | Out-Null
+            }
+        }
+
+        $VcRevertList = ""
+        $VcRevertListParts = $VCCHANGELISTADD.Trim().Split(' ')
+
+        for ($i = 0; $i -lt $VcRevertListParts.Length; $i++)
+        {
+            if (Test-Path($VcRevertListParts[$i].Replace("`"", ""))) 
+            {
+                Log-Message "Deleting unversioned $($VcRevertListParts[$i]) from fs"
+                Remove-Item -path $VcRevertListParts[$i].Replace("`"", "") -Recurse | Out-Null
+            }
+        }
+
+        $VcRevertList = ""
+        $VcRevertListParts = $VCCHANGELIST.Trim().Split(' ')
 
         if ($REPOTYPE -eq "svn")
         {
-            $SvnRevertList = ""
-            $SvnRevertListParts = $VCCHANGELIST.Trim().Split(' ')
-            for ($i = 0; $i -lt $SvnRevertListParts.Length; $i++)
+            for ($i = 0; $i -lt $VcRevertListParts.Length; $i++)
             {
-                if ($SvnRevertListParts[$i] -eq "") {
+                if ($VcRevertListParts[$i] -eq "") {
                     continue;
                 }
-                & svn info --no-newline --show-item kind $SvnRevertListParts[$i]
-                if ($LASTEXITCODE -eq 0) {
-                    Log-Message " - Adding versioned $($SvnRevertListParts[$i]) to revert list"
-                    $SvnRevertList = "$SvnRevertList $($SvnRevertListParts[$i])"
-                }
-                else { # delete unversioned file
-                    Log-Message "Deleting unversioned $($SvnRevertListParts[$i]) from fs"
-                    Remove-Item -path $SvnRevertListParts[$i].Replace("`"", "") -Recurse | Out-Null
+                if (Test-Path($VcRevertListParts[$i].Replace("`"", "")))
+                {
+                    & svn info --no-newline --show-item kind $VcRevertListParts[$i]
+                    if ($LASTEXITCODE -eq 0) 
+                    {
+                        Log-Message " - Adding versioned $($VcRevertListParts[$i]) to revert list"
+                        $VcRevertList = "$VcRevertList $($VcRevertListParts[$i])"
+                    }
+                    elseif (Test-Path($VcRevertListParts[$i].Replace("`"", ""))) # delete unversioned file 
+                    {
+                        Log-Message " - Deleting unversioned $($VcRevertListParts[$i]) from fs"
+                        Remove-Item -path $VcRevertListParts[$i].Replace("`"", "") -Recurse | Out-Null
+                    }
                 }
             }
-            if (![string]::IsNullOrEmpty($SvnRevertList)) 
+            if (![string]::IsNullOrEmpty($VcRevertList)) 
             {
-                $SvnRevertList = $SvnRevertList.Trim()
-                Log-Message "Versioned List:  $SvnRevertList"
-                Invoke-Expression -Command "svn revert -R $SvnRevertList"
+                $VcRevertList = $VcRevertList.Trim()
+                Log-Message "Versioned List:  $VcRevertList"
+                Invoke-Expression -Command "svn revert -R $VcRevertList"
                 Check-ExitCode
             }
             else {
@@ -949,18 +1014,48 @@ function Vc-Revert()
         }
         elseif ($REPOTYPE -eq "git") 
         {
-            if (![string]::IsNullOrEmpty($SvnRevertList)) 
+            for ($i = 0; $i -lt $VcRevertListParts.Length; $i++)
             {
-                $SvnRevertList = $SvnRevertList.Trim()
-                Log-Message "Versioned List:  $SvnRevertList"
-                Invoke-Expression -Command "git stash push --keep-index --include-untracked -- $SvnRevertList"
+                if ($VcRevertListParts[$i] -eq "") {
+                    continue;
+                }
+                if (Test-Path($VcRevertListParts[$i].Replace("`"", "")))
+                {
+                    & git ls-files --error-unmatch $VcRevertListParts[$i]
+                    if ($LASTEXITCODE -eq 0) {
+                        Log-Message " - Adding versioned $($VcRevertListParts[$i]) to revert list"
+                        $VcRevertList = "$VcRevertList $($VcRevertListParts[$i])"
+                    }
+                    else { # delete unversioned file
+                        Log-Message "Deleting unversioned $($VcRevertListParts[$i]) from fs"
+                        Remove-Item -path $VcRevertListParts[$i].Replace("`"", "") -Recurse | Out-Null
+                    }
+                }
+            }
+            if (![string]::IsNullOrEmpty($VcRevertList)) 
+            {
+                $VcRevertList = $VcRevertList.Trim()
+                Log-Message "Versioned List:  $VcRevertList"
+                Invoke-Expression -Command "git stash push -- $VcRevertList"
                 Check-ExitCode
-                Invoke-Expression -Command " git stash drop"
+                Invoke-Expression -Command "git stash drop"
                 Check-ExitCode
             }
             else {
                 Log-Message "0 versioned files to revert"
             }
+            # if (![string]::IsNullOrEmpty($VCCHANGELIST)) 
+            # {
+            #     Log-Message "Versioned List:  $VCCHANGELIST"
+            #     #Invoke-Expression -Command "git stash push --keep-index --include-untracked -- $VCCHANGELIST"
+            #     Invoke-Expression -Command "git stash push --include-untracked"
+            #     Check-ExitCode
+            #     Invoke-Expression -Command " git stash drop"
+            #     Check-ExitCode
+            # }
+            # else {
+            #     Log-Message "0 versioned files to revert"
+            # }
         }
     }
 }
@@ -1038,9 +1133,9 @@ function Prepare-ExtJsBuild()
     #
     Replace-Version "app.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
     #
-    # Add to app.json svn changelist for check-in
+    # Add to app.json vc changelist for check-in
     #
-    Svn-Changelist-Add "app.json"
+    Vc-Changelist-Add "app.json"
     #
     # Allow manual modifications to app.json
     #
@@ -1051,9 +1146,9 @@ function Prepare-ExtJsBuild()
     #
     Replace-Version "package.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
     #
-    # Add to package.json svn changelist for check-in
+    # Add to package.json vc changelist for check-in
     #
-    Svn-Changelist-Add "package.json"
+    Vc-Changelist-Add "package.json"
     #
     # Allow manual modifications to package.json
     #
@@ -1065,9 +1160,9 @@ function Prepare-ExtJsBuild()
     {
         Replace-Version "package-lock.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
         #
-        # Add to package.json svn changelist for check-in
+        # Add to package.json vc changelist for check-in
         #
-        Svn-Changelist-Add "package-lock.json"
+        Vc-Changelist-Add "package-lock.json"
     }
 }
 
@@ -1091,9 +1186,9 @@ function Prepare-DotNetBuild($AssemblyInfoLocation)
     #
     #Replace-Version $AssemblyInfoLocation "version`"[ ]*:[ ]*[`"]$TMPCURRENTVERSION" "version`": `"$TMPVERSION"
     #
-    # Add to app.json svn changelist for check-in
+    # Add to app.json vc changelist for check-in
     #
-    Svn-Changelist-Add $AssemblyInfoLocation
+    Vc-Changelist-Add $AssemblyInfoLocation
     #
     # Allow manual modifications to assembly file
     #
@@ -1122,43 +1217,55 @@ function Prepare-PackageJson()
     # Save original values
     #
     Log-Message "Saving repository in package.json"
-    $DefaultRepo = & .\node_modules\.bin\json -f package.json repository.url
+    $script:DefaultRepo = & app-publisher-json -f package.json repository.url
     Check-ExitCodeNative
+    Log-Message "Repository: $DefaultRepo"
     Log-Message "Saving repository type in package.json"
-    $DefaultRepoType = & .\node_modules\.bin\json -f package.json repository.type
+    $script:DefaultRepoType = & app-publisher-json -f package.json repository.type
     Check-ExitCodeNative
+    Log-Message "Repository Type: $DefaultRepoType"
     Log-Message "Saving homepage in package.json"
-    $DefaultHomePage = & .\node_modules\.bin\json -f package.json homepage
+    $script:DefaultHomePage = & app-publisher-json -f package.json homepage
     Check-ExitCodeNative
+    Log-Message "Homepage: $DefaultHomePage"
     Log-Message "Saving bugs page in package.json"
-    $DefaultBugs = & .\node_modules\.bin\json -f package.json repository.bugs.url
+    $script:DefaultBugs = & app-publisher-json -f package.json bugs.url
     Check-ExitCodeNative
+    Log-Message "Bugs page: $DefaultBugs"
     Log-Message "Saving package name in package.json"
-    $DefaultName = & .\node_modules\.bin\json -f package.json name
+    $script:DefaultName = & app-publisher-json -f package.json name
     Check-ExitCodeNative
+    Log-Message "Package name: $DefaultName"
     #
     # Set repo
     #
-    Log-Message "Setting repository in package.json: $REPO/$REPOBRANCH"
-    & .\node_modules\.bin\json -I -4 -f package.json -e "this.repository.url='$REPO/$REPOBRANCH'"
+    if ($REPOTYPE -eq "svn")
+    {
+        Log-Message "Setting repository in package.json: $REPO/$REPOBRANCH"
+        & app-publisher-json -I -4 -f package.json -e "this.repository.url='$REPO/$REPOBRANCH'"
+    }
+    else {
+        Log-Message "Setting repository in package.json: $REPO"
+        & app-publisher-json -I -4 -f package.json -e "this.repository.url='$REPO'"
+    }
     Check-ExitCodeNative
     #
     # Set repo type
     #
     Log-Message "Setting repository type in package.json: $REPOTYPE"
-    & .\node_modules\.bin\json -I -4 -f package.json -e "this.repository.type='$REPOTYPE'"
+    & app-publisher-json -I -4 -f package.json -e "this.repository.type='$REPOTYPE'"
     Check-ExitCodeNative
     #
     # Set bugs
     #
     Log-Message "Setting bugs page in package.json: $BUGS"
-    & .\node_modules\.bin\json -I -4 -f package.json -e "this.bugs.url='$BUGS'"
+    & app-publisher-json -I -4 -f package.json -e "this.bugs.url='$BUGS'"
     Check-ExitCodeNative
     #
     # Set homepage 
     #
     Log-Message "Setting homepage in package.json: $HOMEPAGE"
-    & .\node_modules\.bin\json -I -4 -f package.json -e "this.homepage='$HOMEPAGE'"
+    & app-publisher-json -I -4 -f package.json -e "this.homepage='$HOMEPAGE'"
     Check-ExitCodeNative
     #
     # Scope/name - package.json
@@ -1166,7 +1273,7 @@ function Prepare-PackageJson()
     if (![string]::IsNullOrEmpty($NPMSCOPE))
     {
         Log-Message "Setting package name in package.json: $NPMSCOPE/$PROJECTNAME"
-        & .\node_modules\.bin\json -I -4 -f package.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
+        & app-publisher-json -I -4 -f package.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
         Check-ExitCodeNative
         #
         # Scope - package-lock.json
@@ -1174,20 +1281,11 @@ function Prepare-PackageJson()
         if (Test-Path("package-lock.json")) 
         {
             Log-Message "Setting package name in package-lock.json: $NPMSCOPE/$PROJECTNAME"
-            & .\node_modules\.bin\json -I -4 -f package-lock.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
+            & app-publisher-json -I -4 -f package-lock.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
             Check-ExitCodeNative
         }
-        #
-        # Add package.json/package-lock.json version changes to changelist for check in to SVN
-        #
-        Svn-Changelist-Add "package.json"
-        if (Test-Path("package-lock.json")) {
-            #
-            # Add package-lock.json version changes to changelist for check in to SVN
-            #
-            Svn-Changelist-Add "package-lock.json"
-        }
     }
+    
     #
     # The json utility will output line feed only, replace with windows stle crlf
     #
@@ -1197,6 +1295,7 @@ function Prepare-PackageJson()
     #
     # Allow manual modifications to package.json and package-lock.json
     #
+    Vc-Changelist-Add "package.json"
     Edit-File "package.json"
     if (Test-Path("package-lock.json")) 
     {
@@ -1205,6 +1304,7 @@ function Prepare-PackageJson()
         #Log-Message "Set windows line feeds in package-lock.json"
         #((Get-Content -path "package-lock.json" -Raw) -replace "`n", "`r`n") | Set-Content -NoNewline -Path "package-lock.json"
         #Check-ExitCode
+        Vc-Changelist-Add "package-lock.json"
         Edit-File "package-lock.json"
     }
 }
@@ -1216,25 +1316,25 @@ function Restore-PackageJson()
     # Set repo
     #
     Log-Message "Re-setting default repository in package.json: $DefaultRepo"
-    & .\node_modules\.bin\json -I -4 -f package.json -e "this.repository.url='$DefaultRepo'"
+    & app-publisher-json -I -4 -f package.json -e "this.repository.url='$DefaultRepo'"
     Check-ExitCodeNative
     #
     # Set repo type
     #
     Log-Message "Re-setting default repository type in package.json: $DefaultRepoType"
-    & .\node_modules\.bin\json -I -4 -f package.json -e "this.repository.type='$DefaultRepoType'"
+    & app-publisher-json -I -4 -f package.json -e "this.repository.type='$DefaultRepoType'"
     Check-ExitCodeNative
     #
     # Set bugs
     #
     Log-Message "Re-setting default bugs page in package.json: $DefaultBugs"
-    & .\node_modules\.bin\json -I -4 -f package.json -e "this.bugs.url='$DefaultBugs'"
+    & app-publisher-json -I -4 -f package.json -e "this.bugs.url='$DefaultBugs'"
     Check-ExitCodeNative
     #
     # Set homepage 
     #
     Log-Message "Re-setting default homepage in package.json: $DefaultHomePage"
-    & .\node_modules\.bin\json -I -4 -f package.json -e "this.homepage='$DefaultHomePage'"
+    & app-publisher-json -I -4 -f package.json -e "this.homepage='$DefaultHomePage'"
     Check-ExitCodeNative
     #
     # Scope/name - package.json
@@ -1242,7 +1342,7 @@ function Restore-PackageJson()
     if (![string]::IsNullOrEmpty($NPMSCOPE))
     {
         Log-Message "Re-setting default package name in package.json: $DefaultName"
-        & .\node_modules\.bin\json -I -4 -f package.json -e "this.name='$DefaultName'"
+        & app-publisher-json -I -4 -f package.json -e "this.name='$DefaultName'"
         Check-ExitCodeNative
         #
         # Scope - package-lock.json
@@ -1250,7 +1350,7 @@ function Restore-PackageJson()
         if (Test-Path("package-lock.json")) 
         {
             Log-Message "Re-scoping default package name in package-lock.json: $DefaultName"
-            & .\node_modules\.bin\json -I -4 -f package-lock.json -e "this.name='$DefaultName'"
+            & app-publisher-json -I -4 -f package-lock.json -e "this.name='$DefaultName'"
             Check-ExitCodeNative
             #
             # The json utility will output line feed only, replace with windows stle crlf
@@ -1319,10 +1419,6 @@ function Edit-File($File, $SeekToEnd = $false)
             # Update - 5/22/19 - Found that activating the vscode window is not necessary provided
             # we call sendkeys on the fist notepad edit before calling acticate?????  Really, really strange.
             #
-            if ($FirstEditFileDone -eq $false) {
-                $CodeProcess = Get-Process "Code" | Where-Object {$_.mainWindowTitle}
-            }
-            #
             # Heres an even bigger hack than the one mentioned above.  If the "interactive" flag is set
             # the above hack doesnt work for the fist notepad window opened after inputting the version 
             # number manually.  Subsequent notepad windows work fine with the above mentioned workaround.
@@ -1330,14 +1426,18 @@ function Edit-File($File, $SeekToEnd = $false)
             # Code window and call SendKeys, the keys are not received by the Code window, but without
             # this the notepad window opens in the background as described above.
             #
-            if ($INTERACTIVE -eq "Y" -and $FirstEditFileDone -eq $false)
+            #if ($CodeProcess -ne $null) {
+            #    $Tmp = $WSShell.AppActivate($CodeProcess.Id) # Set to variable to avoid cmdlet stdout
+            #}
+            if ($FirstEditFileDone -eq $false) # -and $INTERACTIVE -eq "Y")
             {
-                #$Tmp = $WSShell.AppActivate($CodeProcess.Id)
-                $WSShell.sendkeys("^{END}");
+                $CodeProcess = Get-Process "Code" | Where-Object {$_.mainWindowTitle}
+                if ($CodeProcess -ne $null) {
+                    $Tmp = $WSShell.AppActivate($CodeProcess.Id)
+                    $Tmp = $WSShell.AppActivate($TextEditorProcess.Id)
+                    $WSShell.sendkeys("{END}");
+                }
                 $script:FirstEditFileDone = $true
-            }
-            if ($CodeProcess -ne $null) {
-                $Tmp = $WSShell.AppActivate($CodeProcess.Id) # Set to variable to avoid cmdlet stdout
             }
             $Tmp = $WSShell.AppActivate($TextEditorProcess.Id) # Set to variable to avoid cmdlet stdout
             #
@@ -1370,12 +1470,16 @@ $CURRENTVERSION = ""
 $VERSION = "" 
 $COMMITS = @()
 $TDATE = ""
+$REPOSCOMMITED = @()
 
 #
 # Define a variable to track changed files for check-in to SVN
 # This will be a space delimited list of quoted strings/paths
 #
 $VCCHANGELIST = ""
+$VCCHANGELISTADD = ""
+$VCCHANGELISTRMV = ""
+$VCCHANGELISTMLT = ""
 #
 # A flag to set if the build commands are run, which technically could happen up
 # to 3 times if installerRelease, npmRelease, and nugetRelease command line
@@ -1499,7 +1603,7 @@ if (![string]::IsNullOrEmpty($NPMRELEASE)) {
         Log-Message "Invalid value specified for npmRelease, accepted values are y/n/Y/N" "red"
         exit 1
     }
-}$
+}
 if (![string]::IsNullOrEmpty($NUGETRELEASE)) {
     $NUGETRELEASE = $NUGETRELEASE.ToUpper()
     if ($NUGETRELEASE -ne "Y" -and $NUGETRELEASE -ne "N") {
@@ -1904,7 +2008,7 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
     #
     # Process $HISTORYFILE
     #
-    if ($CURRENTVERSION -ne $VERSION)
+    if ($CURRENTVERSION -ne $VERSION -and ![string]::IsNullOrEmpty($HISTORYFILE))
     {
         $TmpCommits = $ClsHistoryFile.createSectionFromCommits($COMMITS, $HISTORYLINELEN)
 
@@ -1913,15 +2017,32 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
         # If history file doesnt exist, create one with the project name as a title
         #
         $HistoryPath = Split-Path "$HISTORYFILE"
-        if ($HistoryPath -ne "" -and !(Test-Path($HistoryPath))) {
+        if ($HistoryPath -ne "" -and !(Test-Path($HistoryPath))) 
+        {
             New-Item -ItemType "directory" -Path "$HistoryPath" | Out-Null
+            #
+            # Add to changelist for svn check in.  This would be the first file modified so just
+            # set changelist equal to history file
+            #
+            #Vc-Changelist-AddNew "$HistoryPath"
+            Vc-Changelist-AddRemove "$HistoryPath"
+            Vc-Changelist-Add "$HistoryPath"
         }
-        if (!(Test-Path($HISTORYFILE))) {
+        if (!(Test-Path($HISTORYFILE))) 
+        {
             New-Item -ItemType "file" -Path "$HISTORYFILE" -Value "$PROJECTNAME`r`n`r`n" | Out-Null
+            #
+            # Add to changelist for svn check in.  This would be the first file modified so just
+            # set changelist equal to history file
+            #
+            Vc-Changelist-AddRemove "$HistoryPath"
+            Vc-Changelist-AddNew $HISTORYFILE
+            Vc-Changelist-Add $HISTORYFILE
         }
-        if (!(Test-Path($HISTORYFILE))) {
+        if (!(Test-Path($HISTORYFILE))) 
+        {
             Log-Message "Could not create history file, exiting" "red"
-            exit;
+            exit 107;
         }
         #
         # Touch history file with the latest version info, either update existing, or create 
@@ -1932,7 +2053,8 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
         Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n"                        #
         Add-Content -NoNewline -Path $HISTORYFILE -Value "$VERSIONTEXT $VERSION`r`n"   # Version x.y.z
         Add-Content -NoNewline -Path $HISTORYFILE -Value "$TDATE`r`n"                  # May 9, 2019
-        if (Test-Path($HISTORYHDRFILE)) {
+        if (Test-Path($HISTORYHDRFILE)) 
+        {
             $HISTORYHDRFILE = Get-Content $HISTORYHDRFILE -Raw 
             Add-Content -NoNewline -Path $HISTORYFILE -Value $HISTORYHDRFILE
         }
@@ -2033,7 +2155,7 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
         # Add to changelist for svn check in.  This would be the first file modified so just
         # set changelist equal to history file
         #
-        Svn-Changelist-Add $HISTORYFILE
+        Vc-Changelist-Add $HISTORYFILE
     }
     else {
         Log-Message "Version match, not touching history file" "darkyellow"
@@ -2041,8 +2163,14 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
     #
     # Allow manual modifications to history file
     #
-    if (![string]::IsNullOrEmpty($CHANGELOGFILE)) {
+    if (![string]::IsNullOrEmpty($HISTORYFILE)) 
+    {
         Edit-File $HISTORYFILE $true
+        #
+        # Add to changelist for vc check in.  This would be the first file modified so just
+        # set changelist equal to history file
+        #
+        Vc-Changelist-Add $HISTORYFILE
     }
 
     #
@@ -2050,6 +2178,7 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
     #
     if ($CURRENTVERSION -ne $VERSION -and ![string]::IsNullOrEmpty($CHANGELOGFILE))
     {
+        $NewChangelog = $false
         $TmpCommits = ""
         $LastSection = ""
         $Sectionless = @()
@@ -2060,22 +2189,34 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
         # If changelog markdown file doesnt exist, create one with the project name as a title
         #
         $ChangeLogPath = Split-Path "$CHANGELOGFILE"
-        if ($ChangeLogPath -ne "" -and !(Test-Path($ChangeLogPath))) {
+        if ($ChangeLogPath -ne "" -and !(Test-Path($ChangeLogPath))) 
+        {
             New-Item -ItemType "directory" -Path "$ChangeLogPath" | Out-Null
+            Vc-Changelist-AddRemove "$ChangeLogPath"
+            Vc-Changelist-Add "$ChangeLogPath"
         }
-        if (!(Test-Path($CHANGELOGFILE))) {
-            New-Item -ItemType "file" -Path "$CHANGELOGFILE" -Value "$ChangeLogTitle`r`n" | Out-Null
+        if (!(Test-Path($CHANGELOGFILE))) 
+        {
+            New-Item -ItemType "file" -Path "$CHANGELOGFILE" -Value "$ChangeLogTitle`r`n`r`n" | Out-Null
+            Vc-Changelist-AddRemove $CHANGELOGFILE
+            Vc-Changelist-AddNew $CHANGELOGFILE
+            Vc-Changelist-Add $CHANGELOGFILE
+            $NewChangelog = $true
         }
-        if (!(Test-Path($CHANGELOGFILE))) {
+        if (!(Test-Path($CHANGELOGFILE))) 
+        {
+            Vc-Revert
             Log-Message "Could not create changelog file, exiting" "red"
-            exit;
+            exit 108
         }
         #
         # Touch changelog file with the latest commits
         #
         # Add lines 'version', 'date', then the header content
-        #                         
-        $TmpCommits = "`r`n"
+        #  
+        if (!$NewChangelog) {                       
+            $TmpCommits = "`r`n"
+        }
         $TmpCommits += "## $VERSIONTEXT $VERSION ($TDATE)`r`n"
         #
         # Loop through the commits and build the markdown for appending to the changelog
@@ -2168,15 +2309,16 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
         # Write the formatted commits text to the top of $CHANGELOGFILE, but underneath the
         # changelog title
         #
+        $TmpCommits = $TmpCommits.Trim();
         $ChangeLogContents = Get-Content $CHANGELOGFILE | Out-String
-        $ChangeLogContents = $ChangeLogContents.Replace("$ChangeLogTitle`r`n`r`n", "");
-        $ChangeLogContents = "$ChangeLogTitle`r`n$TmpCommits`r`n$ChangeLogContents"
+        $ChangeLogContents = $ChangeLogContents.Replace("$ChangeLogTitle", "").Trim();
+        $ChangeLogContents = "$ChangeLogTitle`r`n`r`n$TmpCommits`r`n`r`n$ChangeLogContents`r`n"
         Set-Content $CHANGELOGFILE $ChangeLogContents
         #
         # Add to changelist for svn check in.  This would be the first file modified so just
         # set changelist equal to history file
         #
-        Svn-Changelist-Add $CHANGELOGFILE
+        Vc-Changelist-Add $CHANGELOGFILE
     }
     else {
         Log-Message "Version match, not touching changelog file" "darkyellow"
@@ -2186,6 +2328,11 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
     #
     if (![string]::IsNullOrEmpty($CHANGELOGFILE)) {
         Edit-File $CHANGELOGFILE
+        #
+        # Add to changelist for svn check in.  This would be the first file modified so just
+        # set changelist equal to history file
+        #
+        Vc-Changelist-Add $CHANGELOGFILE
     }
 }
 
@@ -2201,6 +2348,7 @@ $NugetLocation = ""
 #
 if ($INSTALLERRELEASE -eq "Y") 
 {
+    $DistDirCreated = $false
     $InstallerBuilt = $false
     #
     # Create dist directory if it doesnt exist
@@ -2208,11 +2356,19 @@ if ($INSTALLERRELEASE -eq "Y")
     if (!(Test-Path($PATHTODIST))) {
         Log-Message "Create dist directory"
         New-Item -Path "$PATHTODIST" -ItemType "directory" | Out-Null
+        Vc-Changelist-AddRemove "$PATHTODIST"
     }
     #
     # Copy history file to dist directory
     #
-    Copy-Item -Path "$HISTORYFILE" -Force -Destination "$PATHTODIST" | Out-Null
+    $DistHistoryFileExists = $true
+    if (!(Test-Path("$PATHTODIST\$HISTORYFILE"))) 
+    {
+        $HistoryFileName = [Path]::GetFileName($HISTORYFILE);
+        Vc-Changelist-AddRemove "$PATHTODIST\$HistoryFileName"
+    }
+    Copy-Item -Path "$HISTORYFILE" -PassThru -Force -Destination "$PATHTODIST" | Out-Null
+    #Vc-Changelist-Add "$PATHTODIST\$HISTORYFILE"
     #
     # If dist dir is under version control, add it to the changelist
     #
@@ -2223,19 +2379,28 @@ if ($INSTALLERRELEASE -eq "Y")
     #
     # Change dircetory to svn root that contains the .svn folder to isse SVN commands
     #
-    if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) {
-        set-location $PATHTOMAINROOT
-    }
-    & svn info "$TestPathVc"
-    if ($LASTEXITCODE -eq 0) {
-        Svn-Changelist-Add $PATHTODIST
-    }
-    #
-    # Change directory back to project root
-    # PATHTOPREROOT will be defined if PATHTOMAINROOT is
-    #
-    if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) { 
-        set-location $PATHPREROOT
+    if (!$DistDirCreated)
+    {
+        if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) {
+            set-location $PATHTOMAINROOT
+        }
+        if ($REPOTYPE -eq "svn") {
+            & svn info "$TestPathVc"
+        }
+        else {
+            & git ls-files --error-unmatch "$TestPathVc"
+        }
+        if ($LASTEXITCODE -eq 0) {
+            Vc-Changelist-Add "$PATHTODIST"
+            Vc-Changelist-AddMulti "$PATHTODIST"
+        }
+        #
+        # Change directory back to project root
+        # PATHTOPREROOT will be defined if PATHTOMAINROOT is
+        #
+        if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) { 
+            set-location $PATHPREROOT
+        }
     }
     #
     # Check if this is an ExtJs build.  ExtJs build will be an installer build, but it will
@@ -2279,9 +2444,9 @@ if ($INSTALLERRELEASE -eq "Y")
             #
             Replace-Version $INSTALLERSCRIPT "`"$CURRENTVERSION`"" "`"$VERSION`""
             #
-            # Add to svn changelist for check-in
+            # Add to vc changelist for check-in
             #
-            Svn-Changelist-Add $INSTALLERSCRIPT
+            Vc-Changelist-Add $INSTALLERSCRIPT
             #
             # Allow manual modifications to $INSTALLERSCRIPT
             #
@@ -2521,13 +2686,38 @@ if ($REPOTYPE -eq "svn")
         {
             if ($TESTMODE -ne "Y") 
             {
-                Log-Message "Committing touched files to SVN version control"
-                Log-Message "   $VCCHANGELIST"
-                #
-                # Call svn commit
-                #
-                Invoke-Expression -Command "svn commit $VCCHANGELIST -m `"chore(release): $VERSION [skip ci]`""
-                Check-ExitCode
+                if ($SKIPCOMMIT -ne "Y")
+                {
+                    # SVN add
+                    #
+                    if ($VCCHANGELISTADD -ne "")
+                    {
+                        Log-Message "Adding unversioned touched files to GIT version control"
+                        Log-Message "   $VCCHANGELISTADD"
+                        Invoke-Expression -Command "svn add $VCCHANGELISTADD"
+                        Check-ExitCode
+                    }
+                    Log-Message "Committing touched files to SVN version control"
+                    Log-Message "   $VCCHANGELIST"
+                    #
+                    # SVN commit
+                    #
+                    Invoke-Expression -Command "svn commit $VCCHANGELIST -m `"chore(release): $VERSION [skip ci]`""
+                    Check-ExitCode
+                }
+                elseif (![string]::IsNullOrEmpty($VCCHANGELISTMLT)) 
+                {
+                    Log-Message "Committing touched multi-publish files to SVN version control"
+                    Log-Message "   $VCCHANGELISTMLT"
+                    #
+                    # SVN commit
+                    #
+                    Invoke-Expression -Command "svn commit $VCCHANGELISTMLT -m `"chore(release-mlt): $VERSION [skip ci]`""
+                    Check-ExitCode
+                }
+                else {
+                    Log-Message "Skipping touched file SVN commit, user specified" "darkyellow"
+                }
             }
             else 
             {
@@ -2585,15 +2775,42 @@ elseif ($REPOTYPE -eq "git")
         {
             if ($TESTMODE -ne "Y") 
             {
-                Log-Message "Committing touched files to GIT version control"
-                Log-Message "   $VCCHANGELIST"
-                #
-                # Call git commit and then push
-                #
-                Invoke-Expression -Command "git commit --quiet -m `"chore(release): $VERSION [skip ci]`" -- $VCCHANGELIST"
-                Check-ExitCode
-                Invoke-Expression -Command "git push origin ${REPOBRANCH}:${REPOBRANCH}"
-                Check-ExitCode
+                if ($SKIPCOMMIT -ne "Y")
+                {
+                    # GIT add
+                    #
+                    if ($VCCHANGELISTADD -ne "")
+                    {
+                        Log-Message "Adding unversioned touched files to GIT version control"
+                        Log-Message "   $VCCHANGELISTADD"
+                        Invoke-Expression -Command "git add -- $VCCHANGELISTADD"
+                        Check-ExitCode
+                    }
+                    #
+                    # GIT commit and GIT push
+                    #
+                    Log-Message "Committing touched files to GIT version control"
+                    Log-Message "   $VCCHANGELIST"
+                    Invoke-Expression -Command "git commit --quiet -m `"chore(release): $VERSION [skip ci]`" -- $VCCHANGELIST"
+                    Check-ExitCode
+                    Invoke-Expression -Command "git push origin ${REPOBRANCH}:${REPOBRANCH}"
+                    Check-ExitCode
+                }
+                elseif (![string]::IsNullOrEmpty($VCCHANGELISTMLT)) 
+                {
+                    Log-Message "Committing touched multi-publish files to SVN version control"
+                    Log-Message "   $VCCHANGELISTMLT"
+                    #
+                    # GIT commit
+                    #
+                    Invoke-Expression -Command "git commit --quiet -m `"chore(release-mlt): $VERSION [skip ci]`" -- $VCCHANGELISTMLT"
+                    Check-ExitCode
+                    Invoke-Expression -Command "git push origin ${REPOBRANCH}:${REPOBRANCH}"
+                    Check-ExitCode
+                }
+                else {
+                    Log-Message "Skipping touched file GIT commit, user specified" "darkyellow"
+                }
             }
             else 
             {
