@@ -1671,7 +1671,154 @@ if ($POSTBUILDCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($POSTBUI
     $POSTBUILDCOMMAND = @($POSTBUILDCOMMAND); #convert to array
 }
 
-if ($RUN -eq 1)
+#
+# Calculate next version number
+#
+# If this is an NPM project, we use node to determine the current version in package.json
+# For all other project types, we parse the history file for the current version.
+#
+# Currently projects are versioned in one of two ways:
+#
+#     1. Legacy PJ version (100, 101, 102)
+#     2. Semantically versioned (major.minor.patch)
+#
+# If this is a semantically versioned project (whether the version was obtained via node or 
+# history file parsing), we will use semver to calculate the next version if possible.  If 
+# semver is not available, prompt user for next version number.
+#
+# If this is a legacy PJ versioned project, the verison obtained in the history will be
+# incremented by +1.
+#
+if ($CURRENTVERSION -eq "") 
+{
+    Log-Message "Calculate next version number"
+
+    if (Test-Path("node_modules"))
+    {
+        if (Test-Path("node_modules\semver"))
+        {
+            #
+            # Using semver to get next version #
+            #
+            if (Test-Path("${Env:CODE_HOME}\nodejs\node.exe"))
+            {
+                if (Test-Path("package.json"))
+                {
+                    Log-Message "Using semver to obtain next version number"
+                    #
+                    # use package.json properties to retrieve current version
+                    #
+                    $CURRENTVERSION = & $Env:CODE_HOME\nodejs\node -e "console.log(require('./package.json').version);"
+                    #
+                    # use semver to retrieve next version
+                    # Analyze the commits to determine major, minor, patch release
+                    #
+                    $RELEASELEVEL = $ClsCommitAnalyzer.get($COMMITS)
+                    #
+                    # Get next version
+                    #
+                    if ($RUN -eq 1 -or $TESTMODE -eq "Y") {
+                        $VERSION = & $Env:CODE_HOME\nodejs\node -e "console.log(require('semver').inc('$CURRENTVERSION', '$RELEASELEVEL'));"
+                    }
+                    else {
+                        $VERSION = $CURRENTVERSION
+                    }
+                } 
+                else {
+                    Log-Message "package.json not found!" "red"
+                    exit
+                }
+            } 
+            else {
+                Log-Message "Node not found (have you installed Code Package?)" "red"
+                exit
+            }
+        } 
+        else {
+            Log-Message "Semver not found.  Run 'npm install --save-dev semver'" "red"
+            exit
+        }
+    } 
+    #elseif ((Test-Path("AssemblyInfo.cs")) -or (Test-Path("Properties\AssemblyInfo.cs")))
+    #{
+        #
+        # TODO - Parse AssemblyInfo.cs for current version 
+        #
+    #}
+    else 
+    {
+        $CURRENTVERSION = $ClsHistoryFile.getVersion($HISTORYFILE, $VERSIONTEXT)
+        if (!$CURRENTVERSION.Contains(".")) {
+            #
+            # Legacy pj versioning
+            #
+            Log-Message "Using legacy PJ versioning"
+            if ($RUN -eq 1 -or $TESTMODE -eq "Y") {
+                $VERSION = [System.Int32]::Parse($CURRENTVERSION) + 1
+            }
+            else {
+                $VERSION = $CURRENTVERSION
+            }
+        }
+        else {
+            #
+            # Semantic versioning non-npm project
+            #
+            Log-Message "Using non-npm project semantic versioning"
+            Log-Message "Semver not found, run 'npm install -g semver' to automate semantic versioning of non-NPM projects" "darkyellow"
+        }
+    }
+}
+
+if ($CURRENTVERSION -eq "") {
+    Log-Message "Could not determine current version, correct issue and re-run publish" "red"
+    exit
+}
+
+Log-Message "The current version is $CURRENTVERSION"
+
+if (![string]::IsNullOrEmpty($VERSION)) 
+{
+    Log-Message "The suggested new version is $VERSION"
+}
+else {
+    Log-Message "New version could not be determined, you must manually input the new version"
+    $INTERACTIVE = "Y"
+    if ($RUN -gt 1) {
+        Log-Message "Could not pass through version number in multiple run, exiting" "red"
+        exit 102
+    }
+}
+
+if ($INTERACTIVE -eq "Y" -and $RUN -eq 1) 
+{
+    Log-Message "Enter the new version"
+    $NewVersion = read-host -prompt "Enter the version #, or C to cancel [$VERSION]"
+    if ($NewVersion.ToUpper() -eq "C") {
+        Log-Message "User cancelled process, exiting" "red"
+        exit 0
+    }
+    if (![string]::IsNullOrEmpty($NewVersion)) {
+        $VERSION = $NewVersion
+    }
+}
+
+if ([string]::IsNullOrEmpty($VERSION)) {
+    Log-Message "Invalid next version, exiting" "red"
+    exit 103
+}
+
+#
+# Certain tasks only need to be done once if there are multiple publish runs configured to run.
+# If running in test mode, changes in each run are reverted, so treat every run like the 1st
+#
+# These tasks include:
+#
+#     1. Get commit comments since last version tag
+#     2. Populate and edit history text file
+#     3. Populate and edit changelog markdown file
+#
+if ($RUN -eq 1 -or $TESTMODE -eq "Y")
 {
     #
     # Get commit messages since last version
@@ -1682,11 +1829,7 @@ if ($RUN -eq 1)
     #
     if ($REPOTYPE -eq "svn") {
         Log-Message "Getting SVN commits made since prior release"
-        $project = $PROJECTNAME
-        if (![string]::IsNullOrEmpty($SVNPROJECTNAME)) {
-            $project = $SVNPROJECTNAME
-        }
-        $COMMITS = $ClsSvn.getCommits($SVNREPO, $REPOBRANCH);
+        $COMMITS = $ClsSvn.getCommits($SVNREPO, $REPOBRANCH)
     }
     elseif ($REPOTYPE -eq "git") {
         Log-Message "Git commit retrieval not supported as of yet" "darkyellow"
@@ -1702,138 +1845,8 @@ if ($RUN -eq 1)
         $Proceed = read-host -prompt "Proceed anyway? Y[N]"
         if ($Proceed.ToUpper() -eq "N") {
             Log-Message "User cancelled process, exiting" "red"
-            exit
+            exit 0
         }
-    }
-
-    #
-    # Calculate next version number
-    #
-    # If this is an NPM project, we use node to determine the current version in package.json
-    # For all other project types, we parse the history file for the current version.
-    #
-    # Currently projects are versioned in one of two ways:
-    #
-    #     1. Legacy PJ version (100, 101, 102)
-    #     2. Semantically versioned (major.minor.patch)
-    #
-    # If this is a semantically versioned project (whether the version was obtained via node or 
-    # history file parsing), we will use semver to calculate the next version if possible.  If 
-    # semver is not available, prompt user for next version number.
-    #
-    # If this is a legacy PJ versioned project, the verison obtained in the history will be
-    # incremented by +1.
-    #
-    if ($CURRENTVERSION -eq "") 
-    {
-        Log-Message "Calculate next version number"
-
-        if (Test-Path("node_modules"))
-        {
-            if (Test-Path("node_modules\semver"))
-            {
-                #
-                # Using semver to get next version #
-                #
-                if (Test-Path("${Env:CODE_HOME}\nodejs\node.exe"))
-                {
-                    if (Test-Path("package.json"))
-                    {
-                        Log-Message "Using semver to obtain next version number"
-                        #
-                        # use package.json properties to retrieve current version
-                        #
-                        $CURRENTVERSION = & $Env:CODE_HOME\nodejs\node -e "console.log(require('./package.json').version);"
-                        #
-                        # use semver to retrieve next version
-                        # Analyze the commits to determine major, minor, patch release
-                        #
-                        $RELEASELEVEL = $ClsCommitAnalyzer.get($COMMITS)
-                        #
-                        # Get next version
-                        #
-                        $VERSION = & $Env:CODE_HOME\nodejs\node -e "console.log(require('semver').inc('$CURRENTVERSION', '$RELEASELEVEL'));"
-                    } 
-                    else {
-                        Log-Message "package.json not found!" "red"
-                        exit
-                    }
-                } 
-                else {
-                    Log-Message "Node not found (have you installed Code Package?)" "red"
-                    exit
-                }
-            } 
-            else {
-                Log-Message "Semver not found.  Run 'npm install --save-dev semver'" "red"
-                exit
-            }
-        } 
-        #elseif ((Test-Path("AssemblyInfo.cs")) -or (Test-Path("Properties\AssemblyInfo.cs")))
-        #{
-            #
-            # TODO - Parse AssemblyInfo.cs for current version 
-            #
-        #}
-        else 
-        {
-            $CURRENTVERSION = $ClsHistoryFile.getVersion($HISTORYFILE, $VERSIONTEXT)
-            if (!$CURRENTVERSION.Contains(".")) {
-                #
-                # Legacy pj versioning
-                #
-                Log-Message "Using legacy PJ versioning"
-                $VERSION = [System.Int32]::Parse($CURRENTVERSION) + 1
-            }
-            else {
-                #
-                # Semantic versioning non-npm project
-                #
-                Log-Message "Using non-npm project semantic versioning"
-                Log-Message "Semver not found, run 'npm install -g semver' to automate semantic versioning of non-NPM projects" "darkyellow"
-            }
-        }
-    }
-
-    if ($CURRENTVERSION -eq "") {
-        Log-Message "Could not determine current version, correct issue and re-run publish" "red"
-        exit
-    }
-
-    Log-Message "The current version is $CURRENTVERSION"
-
-    if (![string]::IsNullOrEmpty($VERSION)) 
-    {
-        Log-Message "The suggested new version is $VERSION"
-    }
-    else {
-        Log-Message "New version could not be determined, you must manually input the new version"
-        $INTERACTIVE = "Y"
-    }
-
-    if ($INTERACTIVE -eq "Y") 
-    {
-        Log-Message "Enter the new version"
-        $NewVersion = read-host -prompt "Enter the version #, or C to cancel [$VERSION]"
-        if ($NewVersion.ToUpper() -eq "C") {
-            Log-Message "User cancelled process, exiting" "red"
-            exit
-        }
-        if (![string]::IsNullOrEmpty($NewVersion)) {
-            $VERSION = $NewVersion
-        }
-    }
-
-    if ([string]::IsNullOrEmpty($VERSION)) {
-        Log-Message "Invalid next version, exiting" "red"
-        exit
-    }
-
-    #
-    # Set branch if empty (not currently used 4/22/2019)
-    #
-    if ($REPOBRANCH -eq "") {
-        $REPOBRANCH = "trunk"
     }
 
     #
