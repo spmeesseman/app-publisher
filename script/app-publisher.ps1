@@ -202,7 +202,7 @@ $SVNBUGS = "",
 #
 # Whether or not to tag the new version in SVN.  Default is Yes.
 #
-$SVNTAG = "Y",
+$VCTAG = "Y",
 #
 # Test mode - Y for 'yes', N for 'no'
 #
@@ -1406,7 +1406,7 @@ Log-Message "   Path to main root: $PATHTOMAINROOT"
 Log-Message "   Path pre root    : $PATHPREROOT"
 Log-Message "   VC Repo          : $REPO"
 Log-Message "   VC Branch        : $REPOBRANCH"
-Log-Message "   SVN tag          : $SVNTAG"
+Log-Message "   SVN tag          : $VCTAG"
 Log-Message "   Bugs Page        : $BUGS"
 Log-Message "   Home Page        : $HOMEPAGE"
 Log-Message "   History file     : $HISTORYFILE"
@@ -1535,9 +1535,9 @@ if (![string]::IsNullOrEmpty($INTERACTIVE)) {
         exit 1
     }
 }
-if (![string]::IsNullOrEmpty($SVNTAG)) {
-    $SVNTAG = $SVNTAG.ToUpper()
-    if ($SVNTAG -ne "Y" -and $SVNTAG -ne "N") {
+if (![string]::IsNullOrEmpty($VCTAG)) {
+    $VCTAG = $VCTAG.ToUpper()
+    if ($VCTAG -ne "Y" -and $VCTAG -ne "N") {
         Log-Message "Invalid value specified for svnTag, accepted values are y/n/Y/N" "red"
         exit 1
     }
@@ -2501,7 +2501,7 @@ if ($REPOTYPE -eq "svn")
         {
             if ($TESTMODE -ne "Y") 
             {
-                Log-Message "Committing touched files to version control"
+                Log-Message "Committing touched files to SVN version control"
                 Log-Message "   $VCCHANGELIST"
                 #
                 # Call svn commit
@@ -2515,7 +2515,7 @@ if ($REPOTYPE -eq "svn")
                     Vc-Revert
                 }
                 if ($TESTMODE -eq "Y") {
-                    Log-Message "   Test mode, skipping touched file commit" "magenta"
+                    Log-Message "   Test mode, skipping touched file SVN commit" "magenta"
                 }
             }
         }
@@ -2525,16 +2525,16 @@ if ($REPOTYPE -eq "svn")
         #
         # If this is a sub-project within a project, do not tag
         #
-        if ($SVNTAG -eq "Y")
+        if ($VCTAG -eq "Y")
         {
-            $TagLocation = "$SVNREPO/tags/v$VERSION"
-            Log-Message "Tagging version at $TagLocation"
+            $TagLocation = "$REPO/tags/v$VERSION"
+            Log-Message "Tagging SVN version at $TagLocation"
             if ($TESTMODE -ne "Y") 
             {
                 #
                 # Call svn copy to create 'tag'
                 #
-                & svn copy "$SVNREPO" "$TagLocation" -m "chore(release): tag version $VERSION [skip ci]"
+                & svn copy "$REPO/$REPOBRANCH" "$TagLocation" -m "chore(release): tag version $VERSION [skip ci]"
                 Check-ExitCodeNative
             }
             else {
@@ -2565,7 +2565,7 @@ elseif ($REPOTYPE -eq "git")
         {
             if ($TESTMODE -ne "Y") 
             {
-                Log-Message "Committing touched files to version control"
+                Log-Message "Committing touched files to GIT version control"
                 Log-Message "   $VCCHANGELIST"
                 #
                 # Call git commit and then push
@@ -2581,7 +2581,7 @@ elseif ($REPOTYPE -eq "git")
                     Vc-Revert
                 }
                 if ($TESTMODE -eq "Y") {
-                    Log-Message "   Test mode, skipping touched file commit" "magenta"
+                    Log-Message "   Test mode, skipping touched file GIT commit" "magenta"
                 }
             }
         }
@@ -2591,16 +2591,15 @@ elseif ($REPOTYPE -eq "git")
         #
         # If this is a sub-project within a project, do not tag
         #
-        if ($SVNTAG -eq "Y")
+        if ($VCTAG -eq "Y")
         {
-            $TagLocation = "$SVNREPO/tags/v$VERSION"
-            Log-Message "Tagging version at $TagLocation"
+            Log-Message "Tagging GIT version"
             if ($TESTMODE -ne "Y") 
             {
                 #
                 # Call git copy to create 'tag'
                 #
-                & svn copy "$SVNREPO" "$TagLocation" -m "chore(release): tag version $VERSION [skip ci]"
+                & git tag -a "v$VERSION" -m "chore(release): tag version $VERSION [skip ci]"
                 Check-ExitCodeNative
             }
             else {
