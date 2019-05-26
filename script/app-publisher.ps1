@@ -910,38 +910,56 @@ function Svn-Changelist-Add($SvnFile)
     }
 }
 
-function Svn-Revert()
+function Vc-Revert()
 {
     if (![string]::IsNullOrEmpty($SVNCHANGELIST)) 
     {
         Log-Message "Reverting touched files under version control"
         Log-Message "Stored List:  $SVNCHANGELIST"
-        $SvnRevertList = ""
-        $SvnRevertListParts = $SVNCHANGELIST.Trim().Split(' ')
-        for ($i = 0; $i -lt $SvnRevertListParts.Length; $i++)
+        if ($REPOTYPE -eq "svn")
         {
-            if ($SvnRevertListParts[$i] -eq "") {
-                continue;
+            $SvnRevertList = ""
+            $SvnRevertListParts = $SVNCHANGELIST.Trim().Split(' ')
+            for ($i = 0; $i -lt $SvnRevertListParts.Length; $i++)
+            {
+                if ($SvnRevertListParts[$i] -eq "") {
+                    continue;
+                }
+                & svn info --no-newline --show-item kind $SvnRevertListParts[$i]
+                if ($LASTEXITCODE -eq 0) {
+                    Log-Message " - Adding versioned $($SvnRevertListParts[$i]) to revert list"
+                    $SvnRevertList = "$SvnRevertList $($SvnRevertListParts[$i])"
+                }
+                else { # delete unversioned file
+                    Log-Message "Deleting unversioned $($SvnRevertListParts[$i]) from fs"
+                    Remove-Item -path $SvnRevertListParts[$i].Replace("`"", "") -Recurse | Out-Null
+                }
             }
-            & svn info --no-newline --show-item kind $SvnRevertListParts[$i]
-            if ($LASTEXITCODE -eq 0) {
-                Log-Message " - Adding versioned $($SvnRevertListParts[$i]) to revert list"
-                $SvnRevertList = "$SvnRevertList $($SvnRevertListParts[$i])"
+            if (![string]::IsNullOrEmpty($SvnRevertList)) 
+            {
+                $SvnRevertList = $SvnRevertList.Trim()
+                Log-Message "Versioned List:  $SvnRevertList"
+                Invoke-Expression -Command "svn revert -R $SvnRevertList"
+                Check-ExitCode
             }
-            else { # delete unversioned file
-                Log-Message "Deleting unversioned $($SvnRevertListParts[$i]) from fs"
-                Remove-Item -path $SvnRevertListParts[$i].Replace("`"", "") -Recurse | Out-Null
+            else {
+                Log-Message "0 versioned files to revert"
             }
         }
-        if (![string]::IsNullOrEmpty($SvnRevertList)) 
+        elseif ($REPOTYPE -eq "git") 
         {
-            $SvnRevertList = $SvnRevertList.Trim()
-            Log-Message "Versioned List:  $SvnRevertList"
-            Invoke-Expression -Command "svn revert -R $SvnRevertList"
-            Check-ExitCode
-        }
-        else {
-            Log-Message "0 versioned files to revert"
+            if (![string]::IsNullOrEmpty($SvnRevertList)) 
+            {
+                $SvnRevertList = $SvnRevertList.Trim()
+                Log-Message "Versioned List:  $SvnRevertList"
+                Invoke-Expression -Command "git stash save --keep-index --include-untracked $SvnRevertList"
+                Check-ExitCode
+                Invoke-Expression -Command " git stash drop"
+                Check-ExitCode
+            }
+            else {
+                Log-Message "0 versioned files to revert"
+            }
         }
     }
 }
@@ -2462,16 +2480,16 @@ if ($EMAILNOTIFICATION -eq "Y") {
     }
 }
 
+ #
+# Change dircetory to svn/git root that contains the .svn/.git folder to isse SVN commands,
+# all paths in the changelist will be relative to this root
+#
+if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) {
+    set-location $PATHTOMAINROOT
+}
+
 if (![string]::IsNullOrEmpty($SVNREPO))
 {
-    #
-    # Change dircetory to svn root that contains the .svn folder to isse SVN commands,
-    # all paths in the changelist will be relative to this root
-    #
-    if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) {
-        set-location $PATHTOMAINROOT
-    }
-
     if (Test-Path(".svn"))
     {
         #$SVNCHANGELIST = $SVNCHANGELIST.Trim()
@@ -2536,12 +2554,64 @@ if (![string]::IsNullOrEmpty($SVNREPO))
 #
 if (![string]::IsNullOrEmpty($GITREPO))
 {
-    if ($REPOTYPE -ne "git")
+    if (Test-Path(".svn"))
     {
-        Log-Message "Git commits with non-Git commits not yet supported" "darkyellow"
-    }
+        #$SVNCHANGELIST = $SVNCHANGELIST.Trim()
+        #
+        # Check version changes in to SVN if there's any touched files
+        #
+        if ($SVNCHANGELIST -ne "") 
+        {
+            if ($TESTMODE -ne "Y") 
+            {
+                Log-Message "Committing touched files to version control"
+                Log-Message "   $SVNCHANGELIST"
+                #
+                # Call svn commit
+                #
+                Invoke-Expression -Command "svn commit $SVNCHANGELIST -m `"chore(release): $VERSION [skip ci]`""
+                git commit --quiet -m 'chore: progress checkin on latest features' --
+                Check-ExitCode
+            }
+            else 
+            {
+                if ($TESTMODESVNREVERT -eq "Y") {
+                    Git-Revert
+                }
+                if ($TESTMODE -eq "Y") {
+                    Log-Message "   Test mode, skipping touched file commit" "magenta"
+                }
+            }
+        }
 
-    Log-Message "Git commits not yet supported" "darkyellow"
+        #
+        # Create version tag
+        #
+        # If this is a sub-project within a project, do not tag
+        #
+        if ($SVNTAG -eq "Y")
+        {
+            $TagLocation = "$SVNREPO/tags/v$VERSION"
+            Log-Message "Tagging version at $TagLocation"
+            if ($TESTMODE -ne "Y") 
+            {
+                #
+                # Call git copy to create 'tag'
+                #
+                & svn copy "$SVNREPO" "$TagLocation" -m "chore(release): tag version $VERSION [skip ci]"
+                Check-ExitCodeNative
+            }
+            else {
+                Log-Message "   Test mode, skipping create version tag" "magenta"
+            }
+        }
+        else {
+            Log-Message "   Skipping version tag, user specified" "darkyellow"
+        }
+    }
+    else {
+        Log-Message "Could not find .git folder, skipping commit and version tag" "red"
+    }
 }
 
 if ($TESTMODE -eq "Y") {
