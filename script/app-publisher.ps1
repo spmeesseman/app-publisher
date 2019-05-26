@@ -1414,7 +1414,7 @@ function Edit-File($File, $SeekToEnd = $false)
             # an external library, leaving for reference:
             #
             #     powershell gallery module Install-Module -Name Pscx gives Set-ForegroundWindow function
-            #     Set-ForegroundWindow $NotepadProcess.MainWindowHandle
+            #     Set-ForegroundWindow $TextEditorProcess.MainWindowHandle
             #
             # Update - 5/22/19 - Found that activating the vscode window is not necessary provided
             # we call sendkeys on the fist notepad edit before calling acticate?????  Really, really strange.
@@ -1970,12 +1970,11 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
     if ($COMMITS -eq $null -or $COMMITS.Length -eq 0) {
         Log-Message "Commits since the last version or the version tag could not be found"
         $Proceed = read-host -prompt "Proceed anyway? Y[N]"
-        if ($Proceed.ToUpper() -eq "N") {
+        if ($Proceed.ToUpper() -ne "Y") {
             Log-Message "User cancelled process, exiting" "red"
             exit 0
         }
     }
-
     #
     # Get formatted date in the form:
     #
@@ -2024,7 +2023,7 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
             # Add to changelist for svn check in.  This would be the first file modified so just
             # set changelist equal to history file
             #
-            #Vc-Changelist-AddNew "$HistoryPath"
+            Vc-Changelist-AddNew "$HistoryPath"
             Vc-Changelist-AddRemove "$HistoryPath"
             Vc-Changelist-Add "$HistoryPath"
         }
@@ -2192,6 +2191,7 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
         if ($ChangeLogPath -ne "" -and !(Test-Path($ChangeLogPath))) 
         {
             New-Item -ItemType "directory" -Path "$ChangeLogPath" | Out-Null
+            Vc-Changelist-AddNew "$ChangeLogPath"
             Vc-Changelist-AddRemove "$ChangeLogPath"
             Vc-Changelist-Add "$ChangeLogPath"
         }
