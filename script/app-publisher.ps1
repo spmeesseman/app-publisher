@@ -254,81 +254,100 @@ $WRITELOG = "N"
 #
 # Define some script classes:
 #
-#     Svn
+#     Vc
 #     HistoryFile
 #     AnalyzeCommits
 #
 
-class Svn
+class Vc
 {
-    [array]getCommits($Repo, $Branch)
+    [array]getCommits($RepoType, $Repo, $Branch, $CurrentVersion)
     {
         $comments = @()
 
-        #
-        # Get tags
-        #
-        Log-Message "Retrieving most recent tag"
-        $xml = svn log --xml "$Repo/tags" --verbose --limit 50
-        $path = $null
-
-        #
-        # Parse log response
-        #
-        Log-Message("Parsing response from SVN");
-        try {
-            $path = (([Xml] ($xml)).Log.LogEntry.Paths.Path |
-            Where-Object { $_.action -eq 'A' -and $_.kind -eq 'dir' -and $_.InnerText -like '*tags/v[1-9]*'} |
-            Select-Object -Property @(
-                @{N='date'; E={$_.ParentNode.ParentNode.Date}},
-                @{N='path'; E={$_.InnerText}} )|
-            Sort-Object Date -Descending | Select-Object -First 1).path
-        }
-        catch {
-            Log-Message "Response could not be parsed, invalid module, no commits found, or no version tag exists" "red"
-            return $comments
-        }
-
-        $rev = (([Xml]($xml)).Log.LogEntry | Where-Object { $_.revision -ne ''} | Select-Object -First 1).revision
-
-        Log-Message "   Found version tag:"
-        Log-Message "      Rev     : $rev"
-        Log-Message "      Path    : $path"
-
-        #
-        # Retrieve commits since last version tag
-        #
-        Log-Message "Retrieving commits since last version"
-        $xml = svn log --xml "$Repo/$Branch" --verbose --limit 50 -r ${rev}:HEAD
-
-        Log-Message "Parsing response from SVN"
-
-        #
-        # Create xml document object from SVN log response
-        #
-        $xdoc = $null;
-        try {
-            $xdoc = [Xml]$xml
-        }
-        catch {
-            Log-Message "No commits found or no version tag exists" "red"
-            return $comments
-        }
-
-        #
-        # Parse the commit messages
-        #
-        foreach ($msg in $xdoc.log.logentry.msg) {
-            if ($null -ne $msg -and $msg -ne "") {
-                $comments += $msg
+        if ($RepoType -eq "svn")
+        {
+            Log-Message "Retrieving most recent tag"
+            #
+            # Issue SVN log command
+            #
+            $xml = svn log --xml "$Repo/tags" --verbose --limit 50
+            if ($LASTEXITCODE -ne 0) {
+                Log-Message "No commits found or no version tag exists" "red"
+                return $comments
+            }
+            #
+            # Parse log response
+            #
+            $path = $null
+            Log-Message("Parsing response from SVN");
+            try {
+                $path = (([Xml] ($xml)).Log.LogEntry.Paths.Path |
+                Where-Object { $_.action -eq 'A' -and $_.kind -eq 'dir' -and $_.InnerText -like '*tags/v[1-9]*'} |
+                Select-Object -Property @(
+                    @{N='date'; E={$_.ParentNode.ParentNode.Date}},
+                    @{N='path'; E={$_.InnerText}} )|
+                Sort-Object Date -Descending | Select-Object -First 1).path
+            }
+            catch {
+                Log-Message "Response could not be parsed, invalid module, no commits found, or no version tag exists" "red"
+                return $comments
+            }
+            #
+            $rev = (([Xml]($xml)).Log.LogEntry | Where-Object { $_.revision -ne ''} | Select-Object -First 1).revision
+            #
+            Log-Message "   Found version tag:"
+            Log-Message "      Rev     : $rev"
+            Log-Message "      Path    : $path"
+            #
+            # Retrieve commits since last version tag
+            #
+            Log-Message "Retrieving commits since last version"
+            $xml = svn log --xml "$Repo/$Branch" --verbose --limit 50 -r ${rev}:HEAD
+            Log-Message "Parsing response from SVN"
+            #
+            # Create xml document object from SVN log response
+            #
+            $xdoc = $null;
+            try {
+                $xdoc = [Xml]$xml
+            }
+            catch {
+                Log-Message "No commits found or no version tag exists" "red"
+                return $comments
+            }
+            #
+            # Parse the commit messages
+            #
+            foreach ($msg in $xdoc.log.logentry.msg) {
+                if ($null -ne $msg -and $msg -ne "") {
+                    $comments += $msg
+                }
             }
         }
+        elseif ($RepoType -eq "git")
+        {
+            # Issue GIT log command
+            #
+            $GitOut = & git log $CurrentVersion..HEAD --pretty=format:"%s"
+            if ($LASTEXITCODE -eq 0) {
+                $comments = $GitOut.Split("`n")
+            }
+            else {
+                Log-Message "No commits found or no version tag exists" "red"
+                return $comments
+            }
+        }
+        else 
+        {
+            Log-Message "Invalid repository type specified: $RepoType" "red"
+            return $comments
+        }
 
         #
-        # Sort comments array if not formatted text for history file
+        # Sort comments array
         #
         $comments = $comments | Sort -Unique
-        
         return $comments
     }
 }
@@ -766,7 +785,7 @@ class HistoryFile
 #
 $ClsCommitAnalyzer = New-Object -TypeName CommitAnalyzer
 $ClsHistoryFile = New-Object -TypeName HistoryFile
-$ClsSvn = New-Object -TypeName Svn
+$ClsVc = New-Object -TypeName Vc
 
 
 #************************************************************************#
@@ -1961,7 +1980,7 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
     #
     if ($REPOTYPE -eq "svn") {
         Log-Message "Getting SVN commits made since prior release"
-        $COMMITS = $ClsSvn.getCommits($REPO, $REPOBRANCH)
+        $COMMITS = $ClsVc.getCommits($REPOTYPE, $REPO, $REPOBRANCH, $CURRENTVERSION)
     }
     elseif ($REPOTYPE -eq "git") {
         Log-Message "Git commit retrieval not supported as of yet" "darkyellow"
