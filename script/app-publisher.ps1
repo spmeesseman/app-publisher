@@ -2385,14 +2385,17 @@ if ($INSTALLERRELEASE -eq "Y")
     #
     # Copy history file to dist directory
     #
-    $DistHistoryFileExists = $true
-    if (!(Test-Path("$PATHTODIST\$HISTORYFILE"))) 
+    if (![string]::IsNullOrEmpty($HISTORYFILE))
     {
-        $HistoryFileName = [Path]::GetFileName($HISTORYFILE);
-        Vc-Changelist-AddRemove "$PATHTODIST\$HistoryFileName"
+        $DistHistoryFileExists = $true
+        if (!(Test-Path("$PATHTODIST\$HISTORYFILE"))) 
+        {
+            $HistoryFileName = [Path]::GetFileName($HISTORYFILE);
+            Vc-Changelist-AddRemove "$PATHTODIST\$HistoryFileName"
+        }
+        Copy-Item -Path "$HISTORYFILE" -PassThru -Force -Destination "$PATHTODIST" | Out-Null
+        #Vc-Changelist-Add "$PATHTODIST\$HISTORYFILE"
     }
-    Copy-Item -Path "$HISTORYFILE" -PassThru -Force -Destination "$PATHTODIST" | Out-Null
-    #Vc-Changelist-Add "$PATHTODIST\$HISTORYFILE"
     #
     # If dist dir is under version control, add it to the changelist
     #
