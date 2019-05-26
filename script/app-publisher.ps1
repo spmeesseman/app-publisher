@@ -217,7 +217,7 @@ $SVNTAG = "Y",
 # package files).  These changes should be reverted to original state via SCM
 #
 $TESTMODE = "Y",
-$TESTMODESVNREVERT = "Y",
+$TESTMODEVCREVERT = "Y",
 $TESTEMAILRECIP = "smeesseman@pjats.com",
 #
 # The text tag to use in the history file for preceding the version number.  It should 
@@ -904,22 +904,23 @@ function Svn-Changelist-Add($SvnFile)
     if ($PATHPREROOT -ne "" -and $PATHPREROOT -ne $null) {
         $SvnFile = Join-Path -Path "$PATHPREROOT" -ChildPath "$SvnFile"
     }
-    if (!$script:SVNCHANGELIST.Contains($SvnFile)) {
-        $script:SVNCHANGELIST = "$script:SVNCHANGELIST `"$SvnFile`""
-        #$script:SVNCHANGELIST += "`"$SvnFile`""
+    if (!$script:VCCHANGELIST.Contains($SvnFile)) {
+        $script:VCCHANGELIST = "$script:VCCHANGELIST `"$SvnFile`""
+        #$script:VCCHANGELIST += "`"$SvnFile`""
     }
 }
 
 function Vc-Revert()
 {
-    if (![string]::IsNullOrEmpty($SVNCHANGELIST)) 
+    if (![string]::IsNullOrEmpty($VCCHANGELIST)) 
     {
         Log-Message "Reverting touched files under version control"
-        Log-Message "Stored List:  $SVNCHANGELIST"
+        Log-Message "Stored List:  $VCCHANGELIST"
+
         if ($REPOTYPE -eq "svn")
         {
             $SvnRevertList = ""
-            $SvnRevertListParts = $SVNCHANGELIST.Trim().Split(' ')
+            $SvnRevertListParts = $VCCHANGELIST.Trim().Split(' ')
             for ($i = 0; $i -lt $SvnRevertListParts.Length; $i++)
             {
                 if ($SvnRevertListParts[$i] -eq "") {
@@ -952,7 +953,7 @@ function Vc-Revert()
             {
                 $SvnRevertList = $SvnRevertList.Trim()
                 Log-Message "Versioned List:  $SvnRevertList"
-                Invoke-Expression -Command "git stash save --keep-index --include-untracked $SvnRevertList"
+                Invoke-Expression -Command "git stash push --keep-index --include-untracked -- $SvnRevertList"
                 Check-ExitCode
                 Invoke-Expression -Command " git stash drop"
                 Check-ExitCode
@@ -975,7 +976,7 @@ function Check-ExitCode($ExitOnError = $false)
     else {
         Log-Message "Failure" "red"
         if ($ExitOnError -eq $true) {
-            Svn-Revert
+            Vc-Revert
             exit
         }
     }
@@ -992,7 +993,7 @@ function Check-ExitCodeNative($ExitOnError = $false)
     else {
         Log-Message "Failure" "red"
         if ($ExitOnError -eq $true) {
-            Svn-Revert
+            Vc-Revert
             exit
         }
     }
@@ -1374,7 +1375,7 @@ $TDATE = ""
 # Define a variable to track changed files for check-in to SVN
 # This will be a space delimited list of quoted strings/paths
 #
-$SVNCHANGELIST = ""
+$VCCHANGELIST = ""
 #
 # A flag to set if the build commands are run, which technically could happen up
 # to 3 times if installerRelease, npmRelease, and nugetRelease command line
@@ -1513,9 +1514,9 @@ if (![string]::IsNullOrEmpty($SKIPDEPLOYPUSH)) {
         exit 1
     }
 }
-if (![string]::IsNullOrEmpty($TESTMODESVNREVERT)) {
-    $TESTMODESVNREVERT = $TESTMODESVNREVERT.ToUpper()
-    if ($TESTMODESVNREVERT -ne "Y" -and $TESTMODESVNREVERT -ne "N") {
+if (![string]::IsNullOrEmpty($TESTMODEVCREVERT)) {
+    $TESTMODEVCREVERT = $TESTMODEVCREVERT.ToUpper()
+    if ($TESTMODEVCREVERT -ne "Y" -and $TESTMODEVCREVERT -ne "N") {
         Log-Message "Invalid value specified for testModeSvnRevert, accepted values are y/n/Y/N" "red"
         exit 1
     }
@@ -2376,8 +2377,8 @@ if ($INSTALLERRELEASE -eq "Y")
         Log-Message "Installer was not built" "darkyellow"
         Log-Message "Check to ensure createinstall.xml or installer build script path is correct" "darkyellow"
         Log-Message "Installer was not built or deployed" "red"
-        Svn-Revert
-        exit
+        Vc-Revert
+        exit 115
     }
 }
 
@@ -2430,8 +2431,8 @@ if ($NPMRELEASE -eq "Y")
             }
         }
         else {
-            Svn-Revert
-            exit
+            Vc-Revert
+            exit 116
         }
     }
     else {
@@ -2488,30 +2489,30 @@ if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) {
     set-location $PATHTOMAINROOT
 }
 
-if (![string]::IsNullOrEmpty($SVNREPO))
+if ($REPOTYPE -eq "svn")
 {
     if (Test-Path(".svn"))
     {
-        #$SVNCHANGELIST = $SVNCHANGELIST.Trim()
+        #$VCCHANGELIST = $VCCHANGELIST.Trim()
         #
         # Check version changes in to SVN if there's any touched files
         #
-        if ($SVNCHANGELIST -ne "") 
+        if ($VCCHANGELIST -ne "") 
         {
             if ($TESTMODE -ne "Y") 
             {
                 Log-Message "Committing touched files to version control"
-                Log-Message "   $SVNCHANGELIST"
+                Log-Message "   $VCCHANGELIST"
                 #
                 # Call svn commit
                 #
-                Invoke-Expression -Command "svn commit $SVNCHANGELIST -m `"chore(release): $VERSION [skip ci]`""
+                Invoke-Expression -Command "svn commit $VCCHANGELIST -m `"chore(release): $VERSION [skip ci]`""
                 Check-ExitCode
             }
             else 
             {
-                if ($TESTMODESVNREVERT -eq "Y") {
-                    Svn-Revert
+                if ($TESTMODEVCREVERT -eq "Y") {
+                    Vc-Revert
                 }
                 if ($TESTMODE -eq "Y") {
                     Log-Message "   Test mode, skipping touched file commit" "magenta"
@@ -2552,31 +2553,32 @@ if (![string]::IsNullOrEmpty($SVNREPO))
 #
 # GIT
 #
-if (![string]::IsNullOrEmpty($GITREPO))
+elseif ($REPOTYPE -eq "git")
 {
-    if (Test-Path(".svn"))
+    if (Test-Path(".git"))
     {
-        #$SVNCHANGELIST = $SVNCHANGELIST.Trim()
+        #$VCCHANGELIST = $VCCHANGELIST.Trim()
         #
         # Check version changes in to SVN if there's any touched files
         #
-        if ($SVNCHANGELIST -ne "") 
+        if ($VCCHANGELIST -ne "") 
         {
             if ($TESTMODE -ne "Y") 
             {
                 Log-Message "Committing touched files to version control"
-                Log-Message "   $SVNCHANGELIST"
+                Log-Message "   $VCCHANGELIST"
                 #
-                # Call svn commit
+                # Call git commit and then push
                 #
-                Invoke-Expression -Command "svn commit $SVNCHANGELIST -m `"chore(release): $VERSION [skip ci]`""
-                git commit --quiet -m 'chore: progress checkin on latest features' --
+                Invoke-Expression -Command "git commit --quiet -m `"chore(release): $VERSION [skip ci]`" -- $VCCHANGELIST"
+                Check-ExitCode
+                Invoke-Expression -Command "git push origin ${REPOBRANCH}:${REPOBRANCH}"
                 Check-ExitCode
             }
             else 
             {
-                if ($TESTMODESVNREVERT -eq "Y") {
-                    Git-Revert
+                if ($TESTMODEVCREVERT -eq "Y") {
+                    Vc-Revert
                 }
                 if ($TESTMODE -eq "Y") {
                     Log-Message "   Test mode, skipping touched file commit" "magenta"
@@ -2616,7 +2618,7 @@ if (![string]::IsNullOrEmpty($GITREPO))
 
 if ($TESTMODE -eq "Y") {
     Log-Message "Tests completed"
-    if ($TESTMODESVNREVERT -ne "Y") {
+    if ($TESTMODEVCREVERT -ne "Y") {
         Log-Message "   You should manually revert any auto-touched files via SCM" "magenta"
     }
 }
