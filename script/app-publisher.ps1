@@ -1426,17 +1426,22 @@ function Edit-File($File, $SeekToEnd = $false)
             # Code window and call SendKeys, the keys are not received by the Code window, but without
             # this the notepad window opens in the background as described above.
             #
-            #if ($CodeProcess -ne $null) {
-            #    $Tmp = $WSShell.AppActivate($CodeProcess.Id) # Set to variable to avoid cmdlet stdout
-            #}
             if ($FirstEditFileDone -eq $false) # -and $INTERACTIVE -eq "Y")
             {
                 $CodeProcess = Get-Process "Code" | Where-Object {$_.mainWindowTitle}
+                #[System.Threading.Thread]::Sleep(500);
                 if ($CodeProcess -ne $null) {
                     $Tmp = $WSShell.AppActivate($CodeProcess.Id)
-                    $Tmp = $WSShell.AppActivate($TextEditorProcess.Id)
-                    $WSShell.sendkeys("{END}");
-                }
+                } 
+                #[System.Threading.Thread]::Sleep(500);
+                $WSShell.sendkeys("");
+                $Tmp = $WSShell.AppActivate($TextEditorProcess.Id)
+                $WSShell.sendkeys("");
+                if ($CodeProcess -ne $null) {
+                    $Tmp = $WSShell.AppActivate($CodeProcess.Id)
+                } 
+                $Tmp = $WSShell.AppActivate($TextEditorProcess.Id)
+                $WSShell.sendkeys("");
                 $script:FirstEditFileDone = $true
             }
             $Tmp = $WSShell.AppActivate($TextEditorProcess.Id) # Set to variable to avoid cmdlet stdout
