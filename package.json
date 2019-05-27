@@ -61,7 +61,8 @@
 	"files": [
 		"build/*.js",
 		"build/lib",
-		"script"
+		"script",
+		"res"
 	],
 	"keywords": [
 		"release",
