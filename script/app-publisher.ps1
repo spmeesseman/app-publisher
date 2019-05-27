@@ -247,6 +247,7 @@ class Vc
     [array]getCommits($RepoType, $Repo, $CurrentVersion)
     {
         $comments = @()
+        Log-Message "Getting commits made since prior release/version"
 
         if ($RepoType -eq "svn")
         {
@@ -313,7 +314,7 @@ class Vc
         {
             # Issue GIT log command
             #
-            $GitOut = & git log $CurrentVersion..HEAD --pretty=format:"%s"
+            $GitOut = & git log v$CurrentVersion..HEAD --pretty=format:"%s"
             if ($LASTEXITCODE -eq 0) {
                 $comments = $GitOut.Split("`n")
             }
@@ -328,10 +329,16 @@ class Vc
             return $comments
         }
 
+        $NumCommits = $comments.Length;
+        Log-Message "Found $NumCommits commits"
+        
         #
         # Sort comments array
         #
-        $comments = $comments | Sort -Unique
+        if ($comments.Length > 0) {
+            $comments = $comments | Sort -Unique
+        }
+
         return $comments
     }
 }
@@ -1981,7 +1988,6 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
     # order to successfully obtain the latest commit messages.  If it does not exist, the
     # most current tag will be used
     #
-    Log-Message "Getting commits made since prior release/version"
     $COMMITS = $ClsVc.getCommits($_RepoType, $_Repo, $CURRENTVERSION)
 
     #
