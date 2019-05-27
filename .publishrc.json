@@ -18,7 +18,7 @@
     "historyFile":       "doc\\history.txt",
     "historyHdrFile":    "install\\history-hdr.txt",
     "historyLineLen":    80,
-    "homepage":          "",
+    "homePage":          "",
     "interactive":       "N",
     "npmRelease":        "Y",
     "nugetRelease":      "N",
@@ -47,9 +47,14 @@
         "distRelease":   "N",
         "emailNotification": "N"
     }],
+    "skipCommit":        "N",
     "skipDeployPush":    "N",
     "testEmailRecip":    "smeesseman@pjats.com",
+    "testMode":          "N",
+    "testModeVcRevert":  "Y",
     "textEditor":        "notepad++",
+    "vcTag":             "Y",
+    "vcTagPrefix":       "",
     "versionFiles": [
         "install\\installer-x86.nsi"
     ],

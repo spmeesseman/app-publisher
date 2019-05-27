@@ -778,10 +778,32 @@ $ClsVc = New-Object -TypeName Vc
 
 #************************************************************************#
 
-function Log-Message($msg, $color)
+function Log-Message($msg, $color, $noTag = $false)
 {
-    if ($color) {
-        write-host -ForegroundColor $color $msg
+    $msgTag = ""
+
+    if (![string]::IsNullOrEmpty($msg.Trim()) -and !$noTag) {
+        write-host -NoNewline "ap "
+    }
+
+    if ($color) 
+    {
+        $msgTag = ""
+        switch ($color) 
+        {
+            "red" { $msgTag = "[ERROR] "; break; }
+            "darkyellow" { $msgTag = "[WARNING] "; break; }
+            "darkgreen" { $msgTag = "[SUCCESS] "; break; }
+            "magenta" { $msgTag = "[NOTICE] "; break; }
+            default: { break; }
+        }
+        if ($msgTag -ne "") {
+            write-host -NoNewline -ForegroundColor $color $msgTag
+            write-host $msg
+        }
+        else {
+            write-host -ForegroundColor $color $msg
+        }
     }
     else {
         write-host $msg
@@ -792,7 +814,7 @@ function Log-Message($msg, $color)
          # Get current date time
         $CurrentDateTime = Get-Date -format "yyyy\/MM\/dd HH:mm:ss";
         # Construct complete message
-        $FormattedMessage = "$CurrentDateTime $msg";
+        $FormattedMessage = "$CurrentDateTime $msgTag $msg";
         # Write the message to the file
         try {
             out-file -filepath $LogFileName -Append -inputobject $FormattedMessage  
@@ -840,7 +862,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
         # Use marked module for conversion
         #
         $EMAILBODY = & app-publisher-marked -f $CHANGELOGFILE
-        Check-ExitCodeNative
+        Check-ExitCode
     }
     else {
         Log-Message "   Notification could not be sent, history file not specified" "red"
@@ -1019,7 +1041,11 @@ function Vc-Revert()
 
         for ($i = 0; $i -lt $VcRevertListParts.Length; $i++)
         {
-            if (Test-Path($VcRevertListParts[$i].Replace("`"", ""))) 
+            $VcRevertFile = $VcRevertListParts[$i].Replace("`"", "")
+            if ($VcRevertFile -eq "") {
+                continue;
+            }
+            if (Test-Path($VcRevertFile)) 
             {
                 Log-Message "Deleting unversioned $($VcRevertListParts[$i]) from fs"
                 Remove-Item -path $VcRevertListParts[$i].Replace("`"", "") -Recurse | Out-Null
@@ -1032,7 +1058,10 @@ function Vc-Revert()
         for ($i = 0; $i -lt $VcRevertListParts.Length; $i++)
         {
             $VcRevertFile = $VcRevertListParts[$i].Replace("`"", "")
-            if (![string]::IsNullOrEmpty($VcRevertListParts[$i]) -and (Test-Path($VcRevertFile)))
+            if ($VcRevertFile -eq "") {
+                continue;
+            }
+            if ((Test-Path($VcRevertFile)))
             {
                 Log-Message "Deleting unversioned $($VcRevertListParts[$i]) from fs"
                 Remove-Item -path $VcRevertFile -Recurse | Out-Null
@@ -1046,10 +1075,10 @@ function Vc-Revert()
         {
             for ($i = 0; $i -lt $VcRevertListParts.Length; $i++)
             {
-                if ($VcRevertListParts[$i] -eq "") {
+                $VcRevertFile = $VcRevertListParts[$i].Replace("`"", "")
+                if ($VcRevertFile -eq "") {
                     continue;
                 }
-                $VcRevertFile = $VcRevertListParts[$i].Replace("`"", "")
                 if (Test-Path($VcRevertFile))
                 {
                     & svn info --no-newline --show-item kind $VcRevertListParts[$i]
@@ -1080,10 +1109,10 @@ function Vc-Revert()
         {
             for ($i = 0; $i -lt $VcRevertListParts.Length; $i++)
             {
-                if ($VcRevertListParts[$i] -eq "") {
+                $VcRevertFile = $VcRevertListParts[$i].Replace("`"", "");
+                if ($VcRevertFile -eq "") {
                     continue;
                 }
-                $VcRevertFile = $VcRevertListParts[$i].Replace("`"", "");
                 if (Test-Path($VcRevertFile))
                 {
                     & git ls-files --error-unmatch $VcRevertListParts[$i]
@@ -1130,28 +1159,11 @@ function Check-ExitCode($ExitOnError = $false)
     #
     # Check script error code, 0 is success
     #
-    if ($?) {
-        Log-Message "Success" "darkgreen"
-    }
-    else {
-        Log-Message "Failure" "red"
-        if ($ExitOnError -eq $true) {
-            Vc-Revert
-            exit
-        }
-    }
-}
-
-function Check-ExitCodeNative($ExitOnError = $false)
-{
-    #
-    # Check script error code, 0 is success
-    #
     if ($LASTEXITCODE -eq 0) {
-        Log-Message "Success" "darkgreen"
+        Log-Message "Exit Code 0" "darkgreen"
     }
     else {
-        Log-Message "Failure" "red"
+        Log-Message "Exit Code $LASTEXITCODE" "red"
         if ($ExitOnError -eq $true) {
             Vc-Revert
             exit
@@ -1295,7 +1307,7 @@ function Prepare-PackageJson()
     #
     Log-Message "Setting new version $VERSION in package.json"
     & npm version --no-git-tag-version --allow-same-version $VERSION
-    Check-ExitCodeNative
+    Check-ExitCode
     Replace-Version "package.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
 
     if (![string]::IsNullOrEmpty($REPO))
@@ -1303,12 +1315,12 @@ function Prepare-PackageJson()
         #Save
         Log-Message "Saving repository in package.json"
         $script:DefaultRepo = & app-publisher-json -f package.json repository.url
-        Check-ExitCodeNative
+        Check-ExitCode
         Log-Message "Repository: $DefaultRepo"
         # Set repo
         Log-Message "Setting repository in package.json: $REPO"
         & app-publisher-json -I -4 -f package.json -e "this.repository.url='$REPO'"
-        Check-ExitCodeNative
+        Check-ExitCode
     }
 
     if (![string]::IsNullOrEmpty($REPOTYPE))
@@ -1316,12 +1328,12 @@ function Prepare-PackageJson()
         #Save
         Log-Message "Saving repository type in package.json"
         $script:DefaultRepoType = & app-publisher-json -f package.json repository.type
-        Check-ExitCodeNative
+        Check-ExitCode
         Log-Message "Repository Type: $DefaultRepoType"
         # Set repo type
         Log-Message "Setting repository type in package.json: $REPOTYPE"
         & app-publisher-json -I -4 -f package.json -e "this.repository.type='$REPOTYPE'"
-        Check-ExitCodeNative
+        Check-ExitCode
     }
 
     if (![string]::IsNullOrEmpty($HOMEPAGE))
@@ -1329,12 +1341,12 @@ function Prepare-PackageJson()
         #Save
         Log-Message "Saving homepage in package.json"
         $script:DefaultHomePage = & app-publisher-json -f package.json homepage
-        Check-ExitCodeNative
+        Check-ExitCode
         Log-Message "Homepage: $DefaultHomePage"
         # Set homepage 
         Log-Message "Setting homepage in package.json: $HOMEPAGE"
         & app-publisher-json -I -4 -f package.json -e "this.homepage='$HOMEPAGE'"
-        Check-ExitCodeNative
+        Check-ExitCode
     }
 
     if (![string]::IsNullOrEmpty($BUGS))
@@ -1342,12 +1354,12 @@ function Prepare-PackageJson()
         #Save
         Log-Message "Saving bugs page in package.json"
         $script:DefaultBugs = & app-publisher-json -f package.json bugs.url
-        Check-ExitCodeNative
+        Check-ExitCode
         Log-Message "Bugs page: $DefaultBugs"
         # Set
         Log-Message "Setting bugs page in package.json: $BUGS"
         & app-publisher-json -I -4 -f package.json -e "this.bugs.url='$BUGS'"
-        Check-ExitCodeNative
+        Check-ExitCode
     }
 
     #
@@ -1357,13 +1369,13 @@ function Prepare-PackageJson()
     {
         Log-Message "Saving package name in package.json"
         $script:DefaultName = & app-publisher-json -f package.json name
-        Check-ExitCodeNative
+        Check-ExitCode
         Log-Message "Package name: $DefaultName"
         if (!$DefaultName.Contains($NPMSCOPE))
         {
             Log-Message "Setting package name in package.json: $NPMSCOPE/$PROJECTNAME"
             & app-publisher-json -I -4 -f package.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
-            Check-ExitCodeNative
+            Check-ExitCode
             #
             # Scope - package-lock.json
             #
@@ -1371,7 +1383,7 @@ function Prepare-PackageJson()
             {
                 Log-Message "Setting package name in package-lock.json: $NPMSCOPE/$PROJECTNAME"
                 & app-publisher-json -I -4 -f package-lock.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
-                Check-ExitCodeNative
+                Check-ExitCode
             }
         }
     }
@@ -1406,7 +1418,7 @@ function Restore-PackageJson()
     {
         Log-Message "Re-setting default repository in package.json: $DefaultRepo"
         & app-publisher-json -I -4 -f package.json -e "this.repository.url='$DefaultRepo'"
-        Check-ExitCodeNative
+        Check-ExitCode
     }
     #
     # Set repo type
@@ -1415,7 +1427,7 @@ function Restore-PackageJson()
     {
         Log-Message "Re-setting default repository type in package.json: $DefaultRepoType"
         & app-publisher-json -I -4 -f package.json -e "this.repository.type='$DefaultRepoType'"
-        Check-ExitCodeNative
+        Check-ExitCode
     }
     #
     # Set bugs
@@ -1424,7 +1436,7 @@ function Restore-PackageJson()
     {
         Log-Message "Re-setting default bugs page in package.json: $DefaultBugs"
         & app-publisher-json -I -4 -f package.json -e "this.bugs.url='$DefaultBugs'"
-        Check-ExitCodeNative
+        Check-ExitCode
     }
     #
     # Set homepage 
@@ -1433,7 +1445,7 @@ function Restore-PackageJson()
     {
         Log-Message "Re-setting default homepage in package.json: $DefaultHomePage"
         & app-publisher-json -I -4 -f package.json -e "this.homepage='$DefaultHomePage'"
-        Check-ExitCodeNative
+        Check-ExitCode
     }
     #
     # Scope/name - package.json
@@ -1442,7 +1454,7 @@ function Restore-PackageJson()
     {
         Log-Message "Re-setting default package name in package.json: $DefaultName"
         & app-publisher-json -I -4 -f package.json -e "this.name='$DefaultName'"
-        Check-ExitCodeNative
+        Check-ExitCode
         #
         # Scope - package-lock.json
         #
@@ -1450,7 +1462,7 @@ function Restore-PackageJson()
         {
             Log-Message "Re-scoping default package name in package-lock.json: $DefaultName"
             & app-publisher-json -I -4 -f package-lock.json -e "this.name='$DefaultName'"
-            Check-ExitCodeNative
+            Check-ExitCode
             #
             # The json utility will output line feed only, replace with windows stle crlf
             #
@@ -1609,12 +1621,12 @@ $CWD = Get-Location
 #
 # Start logging
 #
-Log-Message "----------------------------------------------------------------" "darkblue"
-Log-Message " App Publisher" "darkblue"
-Log-Message "   Version   : $APPPUBLISHERVERSION" "cyan"
-Log-Message "   Author    : Scott Meesseman" "cyan"
-Log-Message "   Directory : $CWD" "cyan"
-Log-Message "----------------------------------------------------------------" "darkblue"
+Log-Message "----------------------------------------------------------------" "darkblue" $true
+Log-Message " App Publisher" "darkblue" $true
+Log-Message "   Version   : $APPPUBLISHERVERSION" "cyan" $true
+Log-Message "   Author    : Scott Meesseman" "cyan" $true
+Log-Message "   Directory : $CWD" "cyan" $true
+Log-Message "----------------------------------------------------------------" "darkblue" $true
 
 #
 # Set repository and repository type
@@ -1627,7 +1639,7 @@ if (Test-Path("package.json"))
     {
         Log-Message "Reading repository in package.json"
         $_Repo = & app-publisher-json -f package.json repository.url
-        Check-ExitCodeNative
+        Check-ExitCode
         Log-Message "Repository: $_Repo"
     }
 
@@ -1635,7 +1647,7 @@ if (Test-Path("package.json"))
     {
         Log-Message "Saving repository type in package.json"
         $_RepoType = & app-publisher-json -f package.json repository.type
-        Check-ExitCodeNative
+        Check-ExitCode
         Log-Message "Repository Type: $_RepoType"
     }
 }
@@ -2564,7 +2576,7 @@ if ($NPMRELEASE -eq "Y")
         if ($TESTMODE -ne "Y") 
         {
             & npm publish --access public --registry $NPMREGISTRY
-            Check-ExitCodeNative
+            Check-ExitCode
         }
         else 
         {
@@ -2744,7 +2756,7 @@ if ($_RepoType -eq "svn")
                     # Call svn copy to create 'tag'
                     #
                     & svn copy "$_Repo" "$TagLocation" -m "$TagMessage"
-                    Check-ExitCodeNative
+                    Check-ExitCode
                 }
                 else {
                     Log-Message "   Test mode, skipping create version tag" "magenta"
@@ -2847,7 +2859,7 @@ elseif ($_RepoType -eq "git")
                     # Call git copy to create 'tag'
                     #
                     & git tag -a $TagLocation -m "$TagMessage"
-                    Check-ExitCodeNative
+                    Check-ExitCode
                 }
                 else {
                     Log-Message "   Test mode, skipping create version tag" "magenta"
