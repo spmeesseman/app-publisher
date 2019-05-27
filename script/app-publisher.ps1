@@ -1678,20 +1678,6 @@ elseif ([string]::IsNullOrEmpty($_RepoType)) {
 #
 if (![string]::IsNullOrEmpty($TEXTEDITOR))
 {
-    #
-    # TODO - if specified editor doesnt exist, then switch to notepad
-    #
-    if (!Test-Path($TEXTEDITOR))
-    {
-        #
-        # Loop paths in PATH and see if we can find it
-        #
-        $ENVPATHS = $Env:Path.Split(";")
-    }
-}
-
-if (![string]::IsNullOrEmpty($TEXTEDITOR))
-{
     if (!(Test-Path($TEXTEDITOR))) 
     {
         $Found = $false;
@@ -1711,7 +1697,7 @@ if (![string]::IsNullOrEmpty($TEXTEDITOR))
         }
         if (!$Found) {
             if ($TEXTEDITOR.ToLower() -ne "notepad" -and $TEXTEDITOR.ToLower() -ne "notepad.exe") {
-                Log-Message "Text editor not found, falling back to notepad" "red"
+                Log-Message "Text editor not found, falling back to notepad" "magenta"
                 $TEXTEDITOR = "notepad"
             }
             else {
