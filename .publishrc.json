@@ -1,53 +1,58 @@
 {
-    "projectName":      "app-publisher",
-    "command": {
-        "buildCommand": [
-            "npm run build",
-            "${CODE_HOME}\\nsis\\makensis.exe install\\installer-x86.nsi"
-        ]
-    },
+    "projectName":       "app-publisher",
+    "bugs":              "",
+    "buildCommand": [
+        "npm run build",
+        "${CODE_HOME}\\nsis\\makensis.exe install\\installer-x86.nsi"
+    ],
+    "changelogFile":     "CHANGELOG.md",
+    "deployCommand":     "",
+    "emailNotification": "Y",
+    "emailServer":       "10.0.7.50",
+    "emailRecip":        "productrelease@pjats.com",
+    "emailSender":       "productbuild@pjats.com",
+    "distRelease":       "Y",
+    "distReleasePath":   "\\\\192.168.68.120\\d$\\softwareimages",
+    "distDocPath":       "\\\\pjainc.pjvista.com@SSL\\DavWWWRoot\\Shared Documents\\Tech Support\\Application Installation and Configuration",
+    "githubRelease":     "N",
+    "historyFile":       "doc\\history.txt",
+    "historyHdrFile":    "install\\history-hdr.txt",
+    "historyLineLen":    80,
+    "homepage":          "",
+    "interactive":       "N",
+    "npmRelease":        "Y",
+    "nugetRelease":      "N",
+    "pathtoRoot":        ".",
+    "pathtoMainRoot":    "",
+    "pathPreRoot":       "",
+    "pathToDist":        "install\\dist",
+    "postBuildCommand":  "",
+    "runs": [
+    {
+        "repoType":      "svn",
+        "repo":          "https://svn.development.pjats.com/repos/pja/app-publisher/trunk",
+        "homePage":      "https://projects.development.pjats.com/app-publisher",
+        "bugs":          "https://projects.development.pjats.com/app-publisher/ticket/1",
+        "npmRegistry":   "https://npm.development.pjats.com",
+        "npmScope":      "@perryjohnson"
+    },{
+        "repoType":      "git",
+        "repo":          "https://github.com/spmeesseman/app-publisher.git",
+        "homePage":      "https://github.com/spmeesseman/app-publisher/blob/master/README.md",
+        "bugs":          "https://github.com/spmeesseman/app-publisher/issues",
+        "npmRegistry":   "https://registry.npmjs.org",
+        "textEditor":    "",
+        "npmScope":      "@spmeesseman",
+        "githubRelease": "Y",
+        "distRelease":   "N",
+        "emailNotification": "N"
+    }],
+    "skipDeployPush":    "N",
+    "testEmailRecip":    "smeesseman@pjats.com",
+    "textEditor":        "notepad++",
     "versionFiles": [
         "install\\installer-x86.nsi"
     ],
-    "changelogFile":    "CHANGELOG.md",
-    "emailServer":      "10.0.7.50",
-    "emailRecip":       "productrelease@pjats.com",
-    "emailSender":      "productbuild@pjats.com",
-    "historyFile":      "doc\\history.txt",
-    "historyHdrFile":   "install\\history-hdr.txt",
-    "historyLineLen":   80,
-    "distRelease":      "Y",
-    "distReleasePath":  "\\\\192.168.68.120\\d$\\softwareimages",
-    "distDocPath":      "\\\\pjainc.pjvista.com@SSL\\DavWWWRoot\\Shared Documents\\Tech Support\\Application Installation and Configuration",
-    "interactive":      "N",
-    "npmRelease":       "Y",
-    "nugetRelease":     "N",
-    "pathtoRoot":       ".",
-    "pathtoMainRoot":   "",
-    "pathPreRoot":      "",
-    "pathToDist":       "install\\dist",
-    "skipDeployPush":   "Y",
-    "testEmailRecip":   "smeesseman@pjats.com",
-    "textEditor":       "notepad++",
-    "versionText":      "Version",
-    "runs": [
-    {
-        "repoType":     "svn",
-        "repo":         "https://svn.development.pjats.com/repos/pja/app-publisher/trunk",
-        "homePage":     "https://projects.development.pjats.com/app-publisher",
-        "bugs":         "https://projects.development.pjats.com/app-publisher/ticket/1",
-        "npmRegistry":  "https://npm.development.pjats.com",
-        "npmScope":     "@perryjohnson"
-    },{
-        "repoType":     "git",
-        "repo":         "https://github.com/spmeesseman/app-publisher.git",
-        "homePage":     "https://github.com/spmeesseman/app-publisher/blob/master/README.md",
-        "bugs":         "https://github.com/spmeesseman/app-publisher/issues",
-        "npmRegistry":  "https://registry.npmjs.org",
-        "textEditor":   "",
-        "npmScope":     "@spmeesseman",
-        "githubRelease":"Y",
-        "installerRelease": "N",
-        "emailNotification": "N"
-    }]
+    "versionText":       "Version",
+    "writeLog":          "N"
 }
