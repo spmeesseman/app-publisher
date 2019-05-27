@@ -4,6 +4,10 @@
     ],
     "exclude": [
         "node_modules",
+        "doc",
+        "install",
+        "res",
+        "script",
         "**/*.spec.ts"
     ],
     "compilerOptions": {

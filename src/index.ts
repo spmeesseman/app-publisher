@@ -166,18 +166,15 @@ let dryCfg = {
 //
 let config = { ...fileCfg, ...dryCfg };
 
-//
-//
-//
-if (!config.runs) {
-    config.runs = [{}];
-}
-
 let runCt = 0;
 let reposCommited:Array<string> = [];
+let runsCfg = [{}];
 
-let runsCfg = JSON.parse(JSON.stringify(config.runs));
-delete config.runs;
+if (config.xRuns)
+{
+    runsCfg = { ...runsCfg, ...JSON.parse(JSON.stringify(config.xRuns)) };
+    delete config.xRuns;
+}
 
 //
 // Run publish
