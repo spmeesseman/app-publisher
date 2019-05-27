@@ -1653,15 +1653,6 @@ if ($WRITELOG -eq "Y")
     New-Item -ItemType directory -Force -Path "${env:LOCALAPPDATA}\Perry Johnson & Associates\app-publisher\log" | Out-Null;
 }
 
-#
-# Must have code-package installed to run this script
-#
-if (!(Test-Path($Env:CODE_HOME))) {
-    Log-Message "Code Package must be installed to run this script" "red"
-    Log-Message "Install Code Package from softwareimages\code-package\x.x.x" "red"
-    exit 1
-}
-
 if (![string]::IsNullOrEmpty($TEXTEDITOR))
 {
     if (!(Test-Path($TEXTEDITOR))) 
@@ -1849,28 +1840,18 @@ if ($CURRENTVERSION -eq "")
     {
         if (Test-Path("node_modules\semver"))
         {
-            #
-            # Using semver to get next version #
-            #
-            if (Test-Path("${Env:CODE_HOME}\nodejs\node.exe"))
+            if (Test-Path("package.json"))
             {
-                if (Test-Path("package.json"))
-                {
-                    Log-Message "Using semver to obtain next version number"
-                    #
-                    # use package.json properties to retrieve current version
-                    #
-                    $CURRENTVERSION = & $Env:CODE_HOME\nodejs\node -e "console.log(require('./package.json').version);"
-                    $VersionSystem = "semver"
-                } 
-                else {
-                    Log-Message "package.json not found!" "red"
-                    exit 127
-                }
+                Log-Message "Using semver to obtain next version number"
+                #
+                # use package.json properties to retrieve current version
+                #
+                $CURRENTVERSION = & node -e "console.log(require('./package.json').version);"
+                $VersionSystem = "semver"
             } 
             else {
-                Log-Message "Node not found (have you installed Code Package?)" "red"
-                exit 128
+                Log-Message "Semver found, but package.json not found" "red"
+                exit 127
             }
         } 
         else {
@@ -1965,7 +1946,7 @@ if ($VersionSystem = "semver")
     # Get next version
     #
     if ($RUN -eq 1 -or $TESTMODE -eq "Y") {
-        $VERSION = & $Env:CODE_HOME\nodejs\node -e "console.log(require('semver').inc('$CURRENTVERSION', '$RELEASELEVEL'));"
+        $VERSION = & node -e "console.log(require('semver').inc('$CURRENTVERSION', '$RELEASELEVEL'));"
     }
     else {
         $VERSION = $CURRENTVERSION
