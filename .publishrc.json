@@ -2,14 +2,23 @@
     "projectName":      "app-publisher",
     "command": {
         "buildCommand": [
-            "npm run build"
+            "npm run build",
+            "${CODE_HOME}\\nsis\\makensis.exe install\\installer-x86.nsi"
         ]
     },
+    "versionFiles": [
+        "install\\installer-x86.nsi"
+    ],
+    "changelogFile":    "CHANGELOG.md",
+    "emailServer":      "10.0.7.50",
+    "emailRecip":       "productrelease@pjats.com",
+    "emailSender":      "productbuild@pjats.com",
     "historyFile":      "doc\\history.txt",
     "historyHdrFile":   "install\\history-hdr.txt",
     "historyLineLen":   80,
-    "installerRelease": "Y",
-    "installerScript":  "install\\installer-x86.nsi",
+    "distRelease":      "Y",
+    "distReleasePath":  "\\\\192.168.68.120\\d$\\softwareimages",
+    "distDocPath":      "\\\\pjainc.pjvista.com@SSL\\DavWWWRoot\\Shared Documents\\Tech Support\\Application Installation and Configuration",
     "interactive":      "N",
     "npmRelease":       "Y",
     "nugetRelease":     "N",
@@ -24,15 +33,13 @@
     "runs": [
     {
         "repoType":     "svn",
-        "repoBranch":   "trunk",
-        "repo":         "https://svn.development.pjats.com/repos/pja/app-publisher",
+        "repo":         "https://svn.development.pjats.com/repos/pja/app-publisher/trunk",
         "homePage":     "https://projects.development.pjats.com/app-publisher",
         "bugs":         "https://projects.development.pjats.com/app-publisher/ticket/1",
         "npmRegistry":  "https://npm.development.pjats.com",
         "npmScope":     "@perryjohnson"
     },{
         "repoType":     "git",
-        "repoBranch":   "master",
         "repo":         "https://github.com/spmeesseman/app-publisher.git",
         "homePage":     "https://github.com/spmeesseman/app-publisher/blob/master/README.md",
         "bugs":         "https://github.com/spmeesseman/app-publisher/issues",
