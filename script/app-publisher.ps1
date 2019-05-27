@@ -85,6 +85,7 @@ $TEXTEDITOR = "notepad++",
 $NPMREGISTRY = "https://registry.npmjs.org",
 $NPMRELEASE = "N",
 $NPMSCOPE = "",
+$NPMPACKDIST = "Y",
 #
 # To build the nuget release, set this flag to "Y"
 #
@@ -1081,7 +1082,7 @@ function Vc-Revert()
                 }
                 if (Test-Path($VcRevertFile))
                 {
-                    & svn info --no-newline --show-item kind $VcRevertListParts[$i]
+                    $tmp = & svn info --no-newline --show-item kind $VcRevertListParts[$i]
                     if ($LASTEXITCODE -eq 0) 
                     {
                         Log-Message " - Adding versioned $($VcRevertListParts[$i]) to revert list"
@@ -1115,7 +1116,7 @@ function Vc-Revert()
                 }
                 if (Test-Path($VcRevertFile))
                 {
-                    & git ls-files --error-unmatch $VcRevertListParts[$i]
+                    $tmp = & git ls-files --error-unmatch $VcRevertListParts[$i]
                     if ($LASTEXITCODE -eq 0) {
                         Log-Message " - Adding versioned $($VcRevertListParts[$i]) to revert list"
                         $VcRevertList = "$VcRevertList $($VcRevertListParts[$i])"
@@ -1138,18 +1139,6 @@ function Vc-Revert()
             else {
                 Log-Message "0 versioned files to revert"
             }
-            # if (![string]::IsNullOrEmpty($VCCHANGELIST)) 
-            # {
-            #     Log-Message "Versioned List:  $VCCHANGELIST"
-            #     #Invoke-Expression -Command "git stash push --keep-index --include-untracked -- $VCCHANGELIST"
-            #     Invoke-Expression -Command "git stash push --include-untracked"
-            #     Check-ExitCode
-            #     Invoke-Expression -Command " git stash drop"
-            #     Check-ExitCode
-            # }
-            # else {
-            #     Log-Message "0 versioned files to revert"
-            # }
         }
     }
 }
@@ -2401,6 +2390,109 @@ $NpmLocation = ""
 $NugetLocation = ""
 
 #
+# NPM Release
+#
+if ($NPMRELEASE -eq "Y") 
+{
+    Log-Message "Releasing npm package"
+    if (Test-Path("package.json"))
+    {
+        $PublishFailed = $false;
+        #
+        #
+        #
+        Prepare-PackageJson
+        #
+        # Build if specified
+        #
+        Run-Scripts "build" $BUILDCOMMAND $true $true
+        #
+        # Pack tarball and mvoe to dist dir if specified
+        #
+        if ($NPMPACKDIST -eq "Y") 
+        {
+            $PackedFile = [Path]::Combine($PATHTODIST, "$PROJECTNAME.tgz")
+            & npm pack
+            Check-ExitCode
+            & cmd /c move /Y *-$PROJECTNAME-* $PackedFile
+            Check-ExitCode
+        }
+        #
+        # Publish to npm server
+        #
+        Log-Message "Publishing npm package to $NPMREGISTRY"
+        if ($TESTMODE -ne "Y") 
+        {
+            & npm publish --access public --registry $NPMREGISTRY
+            Check-ExitCode
+        }
+        else 
+        {
+            Log-Message "   Test mode, performing publish dry run only" "magenta"
+            & npm publish --access public --registry $NPMREGISTRY --dry-run
+            Log-Message "   Test mode, dry run publish finished" "magenta"
+        }
+        #
+        #
+        #
+        Restore-PackageJson
+        #
+        #
+        #
+        if (!$PublishFailed) 
+        {
+            if (![string]::IsNullOrEmpty($NPMSCOPE)) { # VERDACCIO NPM server type URL
+                $NpmLocation = "$NPMREGISTRY/-/web/detail/$NPMSCOPE/$PROJECTNAME"
+            }
+            else {
+                $NpmLocation = "$NPMREGISTRY/-/web/detail/$PROJECTNAME"
+            }
+        }
+        else {
+            Vc-Revert
+            exit 116
+        }
+    }
+    else {
+        Log-Message "Could not find package.json" "darkyellow"
+    }
+}
+
+#
+# TODO - Nuget Release / .NET
+#
+if ($NUGETRELEASE -eq "Y") 
+{
+    Log-Message "Releasing nuget package"
+    Log-Message "Nuget release not yet supported" "darkyellow"
+    #
+    # Build if specified
+    #
+    #Run-Scripts "build" $BUILDCOMMAND $true
+    #
+    # TODO
+    #
+    #$NugetLocation = "$NUGETREGISTRY/$PROJECTNAME"
+}
+
+#
+# TODO - Github Release
+#
+if ($GITHUBRELEASE -eq "Y") 
+{
+    Log-Message "Releasing dist to GitHub"
+    Log-Message "Github release not yet supported" "darkyellow"
+    #
+    # Build if specified
+    #
+    #Run-Scripts "build" $BUILDCOMMAND $true
+    #
+    # TODO
+    #
+    #$GithubLocation = ??? "https://github.com/username/projectname/releases/-/releases/version" ???
+}
+
+#
 # Network Release
 #
 if ($DISTRELEASE -eq "Y") 
@@ -2444,10 +2536,10 @@ if ($DISTRELEASE -eq "Y")
             set-location $PATHTOMAINROOT
         }
         if ($_RepoType -eq "svn") {
-            & svn info "$TestPathVc"
+            $tmp = & svn info "$TestPathVc"
         }
         else {
-            & git ls-files --error-unmatch "$TestPathVc"
+            $tmp = & git ls-files --error-unmatch "$TestPathVc"
         }
         if ($LASTEXITCODE -eq 0) {
             Vc-Changelist-Add "$PATHTODIST"
@@ -2548,98 +2640,6 @@ if ($DISTRELEASE -eq "Y")
     else {
         Log-Message "Skipped network release push (user specified)" "magenta"
     }
-}
-
-#
-# NPM Release
-#
-if ($NPMRELEASE -eq "Y") 
-{
-    Log-Message "Releasing npm package"
-    if (Test-Path("package.json"))
-    {
-        $PublishFailed = $false;
-        #
-        #
-        #
-        Prepare-PackageJson
-        #
-        # Build if specified
-        #
-        Run-Scripts "build" $BUILDCOMMAND $true $true
-        #
-        # Publish to npm server
-        #
-        Log-Message "Publishing npm package to $NPMREGISTRY"
-        if ($TESTMODE -ne "Y") 
-        {
-            & npm publish --access public --registry $NPMREGISTRY
-            Check-ExitCode
-        }
-        else 
-        {
-            Log-Message "   Test mode, performing publish dry run only" "magenta"
-            & npm publish --access public --registry $NPMREGISTRY --dry-run
-            Log-Message "   Test mode, dry run publish finished" "magenta"
-        }
-        #
-        #
-        #
-        Restore-PackageJson
-        #
-        #
-        #
-        if (!$PublishFailed) 
-        {
-            if (![string]::IsNullOrEmpty($NPMSCOPE)) { # VERDACCIO NPM server type URL
-                $NpmLocation = "$NPMREGISTRY/-/web/detail/$NPMSCOPE/$PROJECTNAME"
-            }
-            else {
-                $NpmLocation = "$NPMREGISTRY/-/web/detail/$PROJECTNAME"
-            }
-        }
-        else {
-            Vc-Revert
-            exit 116
-        }
-    }
-    else {
-        Log-Message "Could not find package.json" "darkyellow"
-    }
-}
-
-#
-# TODO - Nuget Release / .NET
-#
-if ($NUGETRELEASE -eq "Y") 
-{
-    Log-Message "Releasing nuget package"
-    Log-Message "Nuget release not yet supported" "darkyellow"
-    #
-    # Build if specified
-    #
-    #Run-Scripts "build" $BUILDCOMMAND $true
-    #
-    # TODO
-    #
-    #$NugetLocation = "$NUGETREGISTRY/$PROJECTNAME"
-}
-
-#
-# TODO - Github Release
-#
-if ($GITHUBRELEASE -eq "Y") 
-{
-    Log-Message "Releasing dist to GitHub"
-    Log-Message "Github release not yet supported" "darkyellow"
-    #
-    # Build if specified
-    #
-    #Run-Scripts "build" $BUILDCOMMAND $true
-    #
-    # TODO
-    #
-    #$GithubLocation = ??? "https://github.com/username/projectname/releases/-/releases/version" ???
 }
 
 #
