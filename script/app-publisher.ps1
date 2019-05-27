@@ -335,7 +335,7 @@ class Vc
         #
         # Sort comments array
         #
-        if ($comments.Length > 0) {
+        if ($comments.Length -gt 0) {
             $comments = $comments | Sort -Unique
         }
 
