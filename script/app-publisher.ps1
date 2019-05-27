@@ -1269,12 +1269,7 @@ function Prepare-ExtJsBuild()
 
 function Prepare-DotNetBuild($AssemblyInfoLocation)
 {
-    $TMPVERSION = $VERSION.ToString()
-    $TMPCURRENTVERSION = $CURRENTVERSION.ToString()
-    #
-    # Manipulate version if necessary
-    #
-    if (!$TMPVERSION.Contains("."))
+    if (!$VERSION.Contains("."))
     {
         #
         # TODO - translate block version to a real maj.min.patch version
@@ -1284,7 +1279,8 @@ function Prepare-DotNetBuild($AssemblyInfoLocation)
     #
     # TODO - Replace version in assemblyinfo file
     #
-    #Replace-Version $AssemblyInfoLocation "version`"[ ]*:[ ]*[`"]$TMPCURRENTVERSION" "version`": `"$TMPVERSION"
+    Replace-Version $AssemblyInfoLocation "AssemblyVersion[ ]*[(][ ]*[`"]$CURRENTVERSION" "AssemblyVersion(`": `"$VERSION"
+    Replace-Version $AssemblyInfoLocation "AssemblyFileVersion[ ]*[(][ ]*[`"]$CURRENTVERSION" "AssemblyVersion(`": `"$VERSION"
     #
     # Allow manual modifications to assembly file
     #
@@ -2483,17 +2479,9 @@ if ($DISTRELEASE -eq "Y")
     #
     # If this is a .NET build, update assemblyinfo file
     #
-    if ((Test-Path("assemblyinfo.cs"))) {
-        Prepare-DotNetBuild "assemblyinfo.cs"
-    }
-    elseif ((Test-Path("properties\assemblyinfo.cs"))) {
-        Prepare-DotNetBuild "properties\assemblyinfo.cs"
-    }
-    elseif ((Test-Path("src\assemblyinfo.cs"))) {
-        Prepare-DotNetBuild "src\assemblyinfo.cs"
-    }
-    elseif ((Test-Path("src\properties\assemblyinfo.cs"))) {
-        Prepare-DotNetBuild "src\properties\assemblyinfo.cs"
+    $AssemblyInfoLoc = Get-ChildItem -Name -Recurse -Filter "assemblyinfo.cs" -File -Path . -ErrorAction SilentlyContinue
+    if (![string]::IsNullOrEmpty($AssemblyInfoLoc)) {
+        Prepare-DotNetBuild $AssemblyInfoLoc
     }
     #
     # Version bump specified files
@@ -2626,6 +2614,7 @@ if ($NPMRELEASE -eq "Y")
 if ($NUGETRELEASE -eq "Y") 
 {
     Log-Message "Releasing nuget package"
+    Log-Message "Nuget release not yet supported" "darkyellow"
     #
     # Build if specified
     #
@@ -2637,11 +2626,12 @@ if ($NUGETRELEASE -eq "Y")
 }
 
 #
-# TODO - Nuget Release / .NET
+# TODO - Github Release
 #
 if ($GITHUBRELEASE -eq "Y") 
 {
     Log-Message "Releasing dist to GitHub"
+    Log-Message "Github release not yet supported" "darkyellow"
     #
     # Build if specified
     #
@@ -2649,7 +2639,7 @@ if ($GITHUBRELEASE -eq "Y")
     #
     # TODO
     #
-    #$NugetLocation = "$NUGETREGISTRY/$PROJECTNAME"
+    #$GithubLocation = ??? "https://github.com/username/projectname/releases/-/releases/version" ???
 }
 
 #

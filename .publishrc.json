@@ -22,10 +22,10 @@
     "interactive":       "N",
     "npmRelease":        "Y",
     "nugetRelease":      "N",
+    "pathToDist":        "install\\dist",
     "pathtoRoot":        ".",
     "pathtoMainRoot":    "",
     "pathPreRoot":       "",
-    "pathToDist":        "install\\dist",
     "postBuildCommand":  "",
     "runs": [
     {
