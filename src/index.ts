@@ -116,7 +116,7 @@ else if (fs.existsSync('.publishrc')) {
 }
 else {
     util.logError("Config file not found!! Exiting");
-    process.exit(100);
+    process.exit(80);
 }
 
 //
@@ -169,21 +169,23 @@ let config = { ...fileCfg, ...dryCfg };
 //
 //
 //
-if (!config.runs)
-{
+if (!config.runs) {
     config.runs = [{}];
 }
 
 let runCt = 0;
 let reposCommited:Array<string> = [];
 
+let runsCfg = JSON.parse(JSON.stringify(config.runs));
+delete config.runs;
+
 //
 // Run publish
 //
-for (var run in config.runs)
+for (var run in runsCfg)
 {
     runCt++;
-    config = { ...fileCfg, ...config.runs[run] };
+    config = { ...config, ...runsCfg[run] };
 
     if (!args.profile || args.profile === "node") {
         //const commitAnalyzer = new CommitAnalyzer({});
@@ -194,7 +196,6 @@ for (var run in config.runs)
         let sArgs = "";
         let cProperty: string;
         let aProperty: string;
-        let inRuns: boolean;
         //
         // Format config for powershell script arguments
         //
@@ -208,12 +209,16 @@ for (var run in config.runs)
             },
             onArrayBegin(offset: number, length: number, startLine: number, startCharacter: number)
             {
+                let propStart = "-" + cProperty.toUpperCase() + " ";
                 aProperty = cProperty;
-                sArgs += ("-" + cProperty + " ");
+                if (sArgs.includes(propStart)) {
+                    util.logError("Configuration parameter '" + cProperty + "' defined twice, check casing");
+                    process.exit(81);
+                }
+                sArgs += (propStart);
             },
             onArrayEnd(offset: number, length: number, startLine: number, startCharacter: number)
             {
-                inRuns = false;
                 aProperty = undefined;
                 if (sArgs.endsWith(",")) {
                     sArgs = sArgs.substring(0, sArgs.length - 1) + " ";
@@ -221,41 +226,46 @@ for (var run in config.runs)
             },
             onLiteralValue(value: any, offset: number, _length: number) 
             {
-                if (!inRuns)
+                if (cProperty && typeof value === 'string') 
                 {
-                    if (cProperty && typeof value === 'string') 
+                    if (!aProperty) 
                     {
-                        if (!aProperty) {
-                            sArgs += ("-" + cProperty + " '" + value + "' ");
+                        let propStart = "-" + cProperty.toUpperCase() + " ";
+                        if (sArgs.includes(propStart)) 
+                        {
+                            util.logError("Configuration parameter '" + cProperty + "' defined twice, check casing");
+                            process.exit(82);
                         }
-                        else {
-                            sArgs += ("\"" + value + "\",");
-                        }
+                        sArgs += (propStart + "'" + value + "' ");
                     }
-                    else if (aProperty && typeof value === 'string')
-                    {
-                        sArgs += ("'" + value + "',");
+                    else {
+                        sArgs += ("\"" + value + "\",");
                     }
-                    else if (cProperty && value)
+                }
+                else if (aProperty && typeof value === 'string')
+                {
+                    sArgs += ("'" + value + "',");
+                }
+                else if (cProperty && value)
+                {
+                    if (!aProperty)
                     {
-                        if (!aProperty) {
-                            sArgs += ("-" + cProperty + " " + value + " ");
+                        let propStart = "-" + cProperty.toUpperCase() + " ";
+                        if (sArgs.includes(propStart)) {
+                            util.logError("Configuration parameter '" + cProperty + "' defined twice, check casing");
+                            process.exit(83);
                         }
-                        else {
-                            sArgs += (value + ",");
-                        }
+                        sArgs += (propStart + value + " ");
+                    }
+                    else {
+                        sArgs += (value + ",");
                     }
                 }
                 cProperty = undefined;
             },
             onObjectProperty(property: string, offset: number, _length: number) 
             {
-                if (property === "runs") {
-                    inRuns = true;
-                }
-                else { 
-                    cProperty = property;
-                }
+                cProperty = property;
             }
         };
         visit(JSON.stringify(config), visitor);
@@ -266,11 +276,11 @@ for (var run in config.runs)
         if (!config.repoType) {
             config.repoType = "svn";
         }
-        if (reposCommited.indexOf(config.repoType)) 
+        if (reposCommited.indexOf(config.repoType) >= 0) 
         {
             sArgs = sArgs + " -skipCommit Y";
             if (!sArgs.includes(" -vcTag N")) {
-                sArgs = sArgs.replace("-vcTag Y", "");
+                sArgs = sArgs.replace(/-vcTag Y/gi, "");
                 sArgs = sArgs + " -vcTag N";
             }
         }
