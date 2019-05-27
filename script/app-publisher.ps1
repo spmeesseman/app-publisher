@@ -866,18 +866,24 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     }
 
     Log-Message "Sending release notification email"
-    try {
+    try 
+    {
+        $ProjectNameFmt = $PROJECTNAME.Replace("-", " ")
+        $TextInfo = (Get-Culture).TextInfo
+        $ProjectNameFmt = $TextInfo.ToTitleCase($ProjectNameFmt)
+        $Subject = "$ProjectNameFmt $VERSIONTEXT $VERSION"
+
         if ($TESTMODE -ne "Y") 
         {
             if (![string]::IsNullOrEmpty($EMAILRECIP) -and $EMAILRECIP.Contains("@") -and $EMAILRECIP.Contains(".")) 
             {
-                send-mailmessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $EMAILRECIP -Subject "$PROJECTNAME $VERSIONTEXT $VERSION" -Body $EMAILBODY
+                send-mailmessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $EMAILRECIP -Subject $Subject -Body $EMAILBODY
             }
             else {
                 if (![string]::IsNullOrEmpty($TESTEMAILRECIP) -and $TESTEMAILRECIP.Contains("@") -and $TESTEMAILRECIP.Contains(".")) 
                 {
                     Log-Message "   Notification could not be sent to email recip, sending to test recip" "darkyellow"
-                    send-mailmessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject "$PROJECTNAME $VERSIONTEXT $VERSION" -Body $EMAILBODY
+                    send-mailmessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY
                     Check-ExitCode
                 }
                 else {
@@ -888,7 +894,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
         else {
             if (![string]::IsNullOrEmpty($TESTEMAILRECIP) -and $TESTEMAILRECIP.Contains("@") -and $TESTEMAILRECIP.Contains(".")) 
             {
-                send-mailmessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject "$PROJECTNAME $VERSION" -Body $EMAILBODY
+                send-mailmessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY
                 Check-ExitCode
             }
             else {
