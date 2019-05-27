@@ -244,10 +244,17 @@ $WRITELOG = "N"
 
 class Vc
 {
-    [array]getCommits($RepoType, $Repo, $CurrentVersion)
+    [array]getCommits($RepoType, $Repo, $CurrentVersion, $PathPreRoot)
     {
         $comments = @()
         Log-Message "Getting commits made since prior release/version"
+
+        $TagPre = "v"
+        if (![string]::IsNullOrEmpty($PathPreRoot))
+        {
+            $TagPre = [Path]::GetFileName($PathPreRoot).ToLower()
+            $TagPre = "$TagPre-v";
+        }
 
         if ($RepoType -eq "svn")
         {
@@ -268,7 +275,7 @@ class Vc
             Log-Message("Parsing response from SVN");
             try {
                 $path = (([Xml] ($xml)).Log.LogEntry.Paths.Path |
-                Where-Object { $_.action -eq 'A' -and $_.kind -eq 'dir' -and $_.InnerText -like '*tags/v[1-9]*'} |
+                Where-Object { $_.action -eq 'A' -and $_.kind -eq 'dir' -and $_.InnerText -like "*tags/$TagPre[1-9]*"} |
                 Select-Object -Property @(
                     @{N='date'; E={$_.ParentNode.ParentNode.Date}},
                     @{N='path'; E={$_.InnerText}} )|
@@ -314,7 +321,7 @@ class Vc
         {
             # Issue GIT log command
             #
-            $GitOut = & git log v$CurrentVersion..HEAD --pretty=format:"%s"
+            $GitOut = & git log $TagPre$CurrentVersion..HEAD --pretty=format:"%s"
             if ($LASTEXITCODE -eq 0) {
                 $comments = $GitOut.Split("`n")
             }
@@ -2717,7 +2724,13 @@ if ($_RepoType -eq "svn")
         if ($VCTAG -eq "Y")
         {
             $TagLocation = $_Repo.Replace("trunk", "tags")
-            $TagLocation = "$TagLocation/v$VERSION"
+            if ([string]::IsNullOrEmpty($PATHPREROOT)) {
+                $TagLocation = "$TagLocation/v$VERSION"
+            }
+            else {
+                $TagPre = [Path]::GetFileName($PATHPREROOT).ToLower()
+                $TagLocation = "$TagLocation/$TagPre-v$VERSION"
+            }
             Log-Message "Tagging SVN version at $TagLocation"
             if ($TESTMODE -ne "Y") 
             {
@@ -2810,13 +2823,19 @@ elseif ($_RepoType -eq "git")
         #
         if ($VCTAG -eq "Y")
         {
-            Log-Message "Tagging GIT version"
+            $TagLocation = "v$VERSION"
+            if (![string]::IsNullOrEmpty($PATHPREROOT))
+            {
+                $TagPre = [Path]::GetFileName($PATHPREROOT).ToLower()
+                $TagLocation = "$TagPre-v$VERSION"
+            }
+            Log-Message "Tagging GIT version $TagLocation"
             if ($TESTMODE -ne "Y") 
             {
                 #
                 # Call git copy to create 'tag'
                 #
-                & git tag -a "v$VERSION" -m "chore(release): tag version $VERSION [skip ci]"
+                & git tag -a $TagLocation -m "chore(release): tag version $VERSION [skip ci]"
                 Check-ExitCodeNative
             }
             else {
