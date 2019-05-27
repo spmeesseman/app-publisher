@@ -54,10 +54,8 @@ $DEPLOYCOMMAND = @(),
 # To build the dist release, set this flag to "Y"
 #
 $DISTRELEASE = "N",
-#
-# The location that the release dist files will be copied to
-#
-$DISTRELEASELOC = "N",
+$DISTDOCPATH = "",
+$DISTRELEASEPATH = "",
 #
 #
 #
@@ -74,38 +72,23 @@ $GITHUBRELEASE = "N",
 #
 $HISTORYFILE = "",
 $HISTORYLINELEN = 80,
-#
-# The location of this history header file, can be a relative or full path.
-#
 $HISTORYHDRFILE = "",
 #
 # Interactive (prompts for version after extracting what we think should be the next 
 # version)
 #
 $INTERACTIVE = "N",
-#
-#
-#
 $TEXTEDITOR = "notepad++",
 #
 #
 #
 $NPMREGISTRY = "https://registry.npmjs.org",
-#
-# To build the npm release, set this flag to "Y"
-#
 $NPMRELEASE = "N",
-#
-# The scope of the npm package, empty if none
-#
 $NPMSCOPE = "",
 #
 # To build the nuget release, set this flag to "Y"
 #
 $NUGETRELEASE = "N",
-#
-#
-#
 $NUGETREGISTRY = "https://nuget.registry.org",
 #
 # PATHTOROOT - Set this variable to:
@@ -178,14 +161,6 @@ $SKIPCOMMIT = "N",
 #
 $SKIPDEPLOYPUSH = "Y",
 #
-# Whether or not to tag the new version in SVN.  Default is Yes.
-#
-$VCTAG = "Y",
-#
-# Whether or not to tag the new version in SVN.  Default is Yes.
-#
-$VERSIONFILES = @(),
-#
 # Test mode - Y for 'yes', N for 'no'
 #
 # In test mode, the following holds:
@@ -203,6 +178,15 @@ $VERSIONFILES = @(),
 $TESTMODE = "Y",
 $TESTMODEVCREVERT = "Y",
 $TESTEMAILRECIP = "",
+#
+# Whether or not to tag the new version in SVN.  Default is Yes.
+#
+$VCTAG = "Y",
+$VCTAGPREFIX = "",
+#
+# Whether or not to tag the new version in SVN.  Default is Yes.
+#
+$VERSIONFILES = @(),
 #
 # The text tag to use in the history file for preceding the version number.  It should 
 # be one of the following:
@@ -244,16 +228,14 @@ $WRITELOG = "N"
 
 class Vc
 {
-    [array]getCommits($RepoType, $Repo, $CurrentVersion, $PathPreRoot)
+    [array]getCommits($RepoType, $Repo, $CurrentVersion, $TagPrefix)
     {
         $comments = @()
         Log-Message "Getting commits made since prior release/version"
 
         $TagPre = "v"
-        if (![string]::IsNullOrEmpty($PathPreRoot))
-        {
-            $TagPre = [Path]::GetFileName($PathPreRoot).ToLower()
-            $TagPre = "$TagPre-v";
+        if (![string]::IsNullOrEmpty($TagPrefix) -and $TagPrefix -ne ".") {
+            $TagPre = "$TagPrefix-v"
         }
 
         if ($RepoType -eq "svn")
@@ -834,12 +816,12 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
         Log-Message "   Notification could not be sent, invalid email server specified" "red"
         return
     }
-    if ([string]::IsNullOrEmpty($EMAILSERVER)) {
-        Log-Message "   Notification could not be sent, invalid email server specified" "red"
+    if ([string]::IsNullOrEmpty($EMAILRECIP)) {
+        Log-Message "   Notification could not be sent, invalid recipient address specified" "red"
         return
     }
-    if ([string]::IsNullOrEmpty($EMAILSERVER)) {
-        Log-Message "   Notification could not be sent, invalid email server specified" "red"
+    if ([string]::IsNullOrEmpty($EMAILSENDER)) {
+        Log-Message "   Notification could not be sent, invalid sender address specified" "red"
         return
     }
 
@@ -1611,10 +1593,22 @@ $BuildCmdsRun = @()
 $VersionFilesEdited = @()
 
 #
+# If root path is empty then set to "." , by default its "." but just in case
+# user sets to empty string in config
+#
+if ([string]::IsNullOrEmpty($PATHTOROOT)) {
+    $PATHTOROOT = "."
+}
+
+#
 # Set location to root
 #
 set-location -Path $PATHTOROOT
 $CWD = Get-Location
+
+#
+# Start logging
+#
 Log-Message "----------------------------------------------------------------" "darkblue"
 Log-Message " App Publisher" "darkblue"
 Log-Message "   Version   : $APPPUBLISHERVERSION" "cyan"
@@ -1623,35 +1617,70 @@ Log-Message "   Directory : $CWD" "cyan"
 Log-Message "----------------------------------------------------------------" "darkblue"
 
 #
+# Set repository and repository type
+#
+$_Repo = $REPO
+$_RepoType = $REPOTYPE
+if (Test-Path("package.json"))
+{
+    if ([string]::IsNullOrEmpty($_Repo))
+    {
+        Log-Message "Reading repository in package.json"
+        $_Repo = & app-publisher-json -f package.json repository.url
+        Check-ExitCodeNative
+        Log-Message "Repository: $_Repo"
+    }
+
+    if ([string]::IsNullOrEmpty($_RepoType))
+    {
+        Log-Message "Saving repository type in package.json"
+        $_RepoType = & app-publisher-json -f package.json repository.type
+        Check-ExitCodeNative
+        Log-Message "Repository Type: $_RepoType"
+    }
+}
+if ([string]::IsNullOrEmpty($_Repo)) {
+    Log-Message "Repository must be specified on cmd line or in package.json" "red"
+    exit 1
+}
+elseif ([string]::IsNullOrEmpty($_RepoType)) {
+    Log-Message "Repository type must be specified on cmd line or in package.json" "red"
+    exit 1
+}
+
+#
 # Write project specific properties
 #
 Log-Message "Project specific script configuration:"
 Log-Message "   Project          : $PROJECTNAME"
-Log-Message "   Path to root     : $PATHTOROOT"
-Log-Message "   Path to main root: $PATHTOMAINROOT"
-Log-Message "   Path pre root    : $PATHPREROOT"
-Log-Message "   Repo             : $REPO"
-Log-Message "   RepoType         : $REPO"
-Log-Message "   Tag version      : $VCTAG"
+Log-Message "   Build cmd        : $BUILDCOMMAND"
 Log-Message "   Bugs Page        : $BUGS"
-Log-Message "   Home Page        : $HOMEPAGE"
+Log-Message "   Changelog file   : $CHANGELOGFILE"
+Log-Message "   Deploy cmd       : $DEPLOYCOMMAND"
+Log-Message "   Dist release     : $DISTRELEASE"
+Log-Message "   Github release   : $GITHUBRELEASE"
 Log-Message "   History file     : $HISTORYFILE"
 Log-Message "   History file line: $HISTORYLINELEN"
 Log-Message "   History hdr file : $HISTORYHDRFILE"
-Log-Message "   Version text     : $VERSIONTEXT"
-Log-Message "   Is Dist releas   : $DISTRELEASE"
-Log-Message "   Is NPM release   : $NPMRELEASE"
+Log-Message "   Home Page        : $HOMEPAGE"
+Log-Message "   Interactive      : $INTERACTIVE"
+Log-Message "   NPM release      : $NPMRELEASE"
 Log-Message "   NPM registry     : $NPMREGISTRY"
 Log-Message "   NPM scope        : $NPMSCOPE"
-Log-Message "   Is Nuget release : $NUGETRELEASE"
-Log-Message "   Build cmd        : $BUILDCOMMAND"
+Log-Message "   Nuget release    : $NUGETRELEASE"
 Log-Message "   Post Build cmd   : $POSTBUILDCOMMAND"
-Log-Message "   Deploy cmd       : $DEPLOYCOMMAND"
+Log-Message "   Path to root     : $PATHTOROOT"
+Log-Message "   Path to main root: $PATHTOMAINROOT"
+Log-Message "   Path pre root    : $PATHPREROOT"
+Log-Message "   Repo             : $_Repo"
+Log-Message "   RepoType         : $_RepoType"
+Log-Message "   Tag version      : $VCTAG"
+Log-Message "   Tag prefix       : $VCTAGPREFIX"
 Log-Message "   Skip deploy/push : $SKIPDEPLOYPUSH"
-Log-Message "   Text editor      : $TEXTEDITOR"
-Log-Message "   Is interactive   : $INTERACTIVE"
-Log-Message "   Is test mode     : $TESTMODE"
+Log-Message "   Test mode        : $TESTMODE"
 Log-Message "   Test email       : $TESTEMAILRECIP"
+Log-Message "   Text editor      : $TEXTEDITOR"
+Log-Message "   Version text     : $VERSIONTEXT"
 
 #
 # Set up log file
@@ -1785,38 +1814,6 @@ if ($DISTRELEASE -eq "Y" -and [string]::IsNullOrEmpty($PATHTODIST)) {
 }
 
 #
-# Set repository, repository type, bugs page, and homepage
-#
-$_Repo = $REPO
-$_RepoType = $REPOTYPE
-if (Test-Path("package.json"))
-{
-    if ([string]::IsNullOrEmpty($_Repo))
-    {
-        Log-Message "Reading repository in package.json"
-        $_Repo = & app-publisher-json -f package.json repository.url
-        Check-ExitCodeNative
-        Log-Message "Repository: $_Repo"
-    }
-
-    if ([string]::IsNullOrEmpty($_RepoType))
-    {
-        Log-Message "Saving repository type in package.json"
-        $_RepoType = & app-publisher-json -f package.json repository.type
-        Check-ExitCodeNative
-        Log-Message "Repository Type: $_RepoType"
-    }
-}
-if ([string]::IsNullOrEmpty($_Repo)) {
-    Log-Message "Repository must be specified on cmd line or in package.json" "red"
-    exit 1
-}
-elseif ([string]::IsNullOrEmpty($_RepoType)) {
-    Log-Message "Repository type must be specified on cmd line or in package.json" "red"
-    exit 1
-}
-
-#
 # Convert commands to arrays, if string
 #
 if ($DEPLOYCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($DEPLOYCOMMAND))
@@ -1914,7 +1911,7 @@ Log-Message "The current version is $CURRENTVERSION"
 # order to successfully obtain the latest commit messages.  If it does not exist, the
 # most current tag will be used
 #
-$COMMITS = $ClsVc.getCommits($_RepoType, $_Repo, $CURRENTVERSION)
+$COMMITS = $ClsVc.getCommits($_RepoType, $_Repo, $CURRENTVERSION, $VCTAGPREFIX)
 #
 # Check to ensure we got commits since last version.  If not, prompt user whether or
 # not to proceed, since technically the first time this script is used, we don't know
@@ -2725,33 +2722,40 @@ if ($_RepoType -eq "svn")
         #
         # Create version tag
         #
-        # If this is a sub-project within a project, do not tag
-        #
-        if ($VCTAG -eq "Y")
+        if (![string]::IsNullOrEmpty($PATHPREROOT) -or ![string]::IsNullOrEmpty($VCTAGPREFIX))
         {
-            $TagLocation = $_Repo.Replace("trunk", "tags")
-            if ([string]::IsNullOrEmpty($PATHPREROOT)) {
-                $TagLocation = "$TagLocation/v$VERSION"
-            }
-            else {
-                $TagPre = [Path]::GetFileName($PATHPREROOT).ToLower()
-                $TagLocation = "$TagLocation/$TagPre-v$VERSION"
-            }
-            Log-Message "Tagging SVN version at $TagLocation"
-            if ($TESTMODE -ne "Y") 
+            if ($VCTAG -eq "Y")
             {
-                #
-                # Call svn copy to create 'tag'
-                #
-                & svn copy "$_Repo" "$TagLocation" -m "chore(release): tag version $VERSION [skip ci]"
-                Check-ExitCodeNative
+                $TagMessage = ""
+                $TagLocation = $_Repo.Replace("trunk", "tags")
+                if ([string]::IsNullOrEmpty($VCTAGPREFIX) -or $VCTAGPREFIX -eq ".") 
+                {
+                    $TagLocation = "$TagLocation/v$VERSION"
+                    $TagMessage = "chore(release): tag version $VERSION [skip ci]"
+                }
+                else {
+                    $TagLocation = "$TagLocation/$VCTAGPREFIX-v$VERSION"
+                    $TagMessage = "chore(release): tag $VCTAGPREFIX version $VERSION [skip ci]"
+                }
+                Log-Message "Tagging SVN version at $TagLocation"
+                if ($TESTMODE -ne "Y") 
+                {
+                    #
+                    # Call svn copy to create 'tag'
+                    #
+                    & svn copy "$_Repo" "$TagLocation" -m "$TagMessage"
+                    Check-ExitCodeNative
+                }
+                else {
+                    Log-Message "   Test mode, skipping create version tag" "magenta"
+                }
             }
             else {
-                Log-Message "   Test mode, skipping create version tag" "magenta"
+                Log-Message "   Skipping version tag, user specified" "darkyellow"
             }
         }
         else {
-            Log-Message "   Skipping version tag, user specified" "darkyellow"
+            Log-Message "   Skipping version tag, 'vcTagPrefix' or 'vcTagMain' must be set for subprojects" "darkyellow"
         }
     }
     else {
@@ -2825,31 +2829,36 @@ elseif ($_RepoType -eq "git")
         #
         # Create version tag
         #
-        # If this is a sub-project within a project, do not tag
-        #
-        if ($VCTAG -eq "Y")
+        if (![string]::IsNullOrEmpty($PATHPREROOT) -or ![string]::IsNullOrEmpty($VCTAGPREFIX))
         {
-            $TagLocation = "v$VERSION"
-            if (![string]::IsNullOrEmpty($PATHPREROOT))
+            if ($VCTAG -eq "Y")
             {
-                $TagPre = [Path]::GetFileName($PATHPREROOT).ToLower()
-                $TagLocation = "$TagPre-v$VERSION"
-            }
-            Log-Message "Tagging GIT version $TagLocation"
-            if ($TESTMODE -ne "Y") 
-            {
-                #
-                # Call git copy to create 'tag'
-                #
-                & git tag -a $TagLocation -m "chore(release): tag version $VERSION [skip ci]"
-                Check-ExitCodeNative
+                $TagLocation = "v$VERSION"
+                $TagMessage = "chore(release): tag version $VERSION [skip ci]"
+                if (![string]::IsNullOrEmpty($VCTAGPREFIX) -and $VCTAGPREFIX -ne ".") 
+                {
+                    $TagLocation = "${VCTAGPREFIX}v$VERSION"
+                    $TagMessage = "chore(release): tag $VCTAGPREFIX version $VERSION [skip ci]"
+                }
+                Log-Message "Tagging GIT version $TagLocation"
+                if ($TESTMODE -ne "Y") 
+                {
+                    #
+                    # Call git copy to create 'tag'
+                    #
+                    & git tag -a $TagLocation -m "$TagMessage"
+                    Check-ExitCodeNative
+                }
+                else {
+                    Log-Message "   Test mode, skipping create version tag" "magenta"
+                }
             }
             else {
-                Log-Message "   Test mode, skipping create version tag" "magenta"
+                Log-Message "   Skipping version tag, user specified" "darkyellow"
             }
         }
         else {
-            Log-Message "   Skipping version tag, user specified" "darkyellow"
+            Log-Message "   Skipping version tag, 'vcTagPrefix' must be set for subprojects" "darkyellow"
         }
     }
     else {
