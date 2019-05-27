@@ -129,7 +129,7 @@ else {
 for (var key in process.env) 
 {
     var envVar = "[$][{]\\b" + key + "\\b[}]";
-    fileCfg = fileCfg.replace(new RegExp(envVar, 'gmi'), process.env[key]);
+    fileCfg = fileCfg.replace(new RegExp(envVar), process.env[key].replace(/\\/, "\\\\"));
 }
 
 //
