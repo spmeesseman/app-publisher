@@ -1619,6 +1619,19 @@ set-location -Path $PATHTOROOT
 $CWD = Get-Location
 
 #
+# Set up log file
+#
+if ($WRITELOG -eq "Y") 
+{
+    # Determine current date  
+    $CurrentDate = Get-Date -format "yyyyMMddHHmmss";
+    # Define log file name
+    $LogFileName = "${env:LOCALAPPDATA}\Perry Johnson & Associates\app-publisher\log\app-publisher-$CurrentDate.log";
+    # Create the log directory
+    New-Item -ItemType directory -Force -Path "${env:LOCALAPPDATA}\Perry Johnson & Associates\app-publisher\log" | Out-Null;
+}
+
+#
 # Start logging
 #
 Log-Message "----------------------------------------------------------------" "darkblue" $true
@@ -1661,50 +1674,20 @@ elseif ([string]::IsNullOrEmpty($_RepoType)) {
 }
 
 #
-# Write project specific properties
+# If specified editor doesnt exist, then switch to notepad or pico
 #
-Log-Message "Project specific script configuration:"
-Log-Message "   Project          : $PROJECTNAME"
-Log-Message "   Build cmd        : $BUILDCOMMAND"
-Log-Message "   Bugs Page        : $BUGS"
-Log-Message "   Changelog file   : $CHANGELOGFILE"
-Log-Message "   Deploy cmd       : $DEPLOYCOMMAND"
-Log-Message "   Dist release     : $DISTRELEASE"
-Log-Message "   Github release   : $GITHUBRELEASE"
-Log-Message "   History file     : $HISTORYFILE"
-Log-Message "   History file line: $HISTORYLINELEN"
-Log-Message "   History hdr file : $HISTORYHDRFILE"
-Log-Message "   Home Page        : $HOMEPAGE"
-Log-Message "   Interactive      : $INTERACTIVE"
-Log-Message "   NPM release      : $NPMRELEASE"
-Log-Message "   NPM registry     : $NPMREGISTRY"
-Log-Message "   NPM scope        : $NPMSCOPE"
-Log-Message "   Nuget release    : $NUGETRELEASE"
-Log-Message "   Post Build cmd   : $POSTBUILDCOMMAND"
-Log-Message "   Path to root     : $PATHTOROOT"
-Log-Message "   Path to main root: $PATHTOMAINROOT"
-Log-Message "   Path pre root    : $PATHPREROOT"
-Log-Message "   Repo             : $_Repo"
-Log-Message "   RepoType         : $_RepoType"
-Log-Message "   Tag version      : $VCTAG"
-Log-Message "   Tag prefix       : $VCTAGPREFIX"
-Log-Message "   Skip deploy/push : $SKIPDEPLOYPUSH"
-Log-Message "   Test mode        : $TESTMODE"
-Log-Message "   Test email       : $TESTEMAILRECIP"
-Log-Message "   Text editor      : $TEXTEDITOR"
-Log-Message "   Version text     : $VERSIONTEXT"
-
-#
-# Set up log file
-#
-if ($WRITELOG -eq "Y") 
+if (![string]::IsNullOrEmpty($TEXTEDITOR))
 {
-    # Determine current date  
-    $CurrentDate = Get-Date -format "yyyyMMddHHmmss";
-    # Define log file name
-    $LogFileName = "${env:LOCALAPPDATA}\Perry Johnson & Associates\app-publisher\log\app-publisher-$CurrentDate.log";
-    # Create the log directory
-    New-Item -ItemType directory -Force -Path "${env:LOCALAPPDATA}\Perry Johnson & Associates\app-publisher\log" | Out-Null;
+    #
+    # TODO - if specified editor doesnt exist, then switch to notepad
+    #
+    if (!Test-Path($TEXTEDITOR))
+    {
+        #
+        # Loop paths in PATH and see if we can find it
+        #
+        $ENVPATHS = $Env:Path.Split(";")
+    }
 }
 
 if (![string]::IsNullOrEmpty($TEXTEDITOR))
@@ -1727,8 +1710,14 @@ if (![string]::IsNullOrEmpty($TEXTEDITOR))
             }
         }
         if (!$Found) {
-            Log-Message "Text editor not found" "red"
-            exit 1
+            if ($TEXTEDITOR.ToLower() -ne "notepad" -and $TEXTEDITOR.ToLower() -ne "notepad.exe") {
+                Log-Message "Text editor not found, falling back to notepad" "red"
+                $TEXTEDITOR = "notepad"
+            }
+            else {
+                Log-Message "Text editor not found" "red"
+                exit 1
+            }
         }
     }
 }
@@ -1806,6 +1795,41 @@ if (![string]::IsNullOrEmpty($VCTAG)) {
         exit 1
     }
 }
+
+#
+# Write project specific properties
+#
+Log-Message "Project specific script configuration:"
+Log-Message "   Project          : $PROJECTNAME"
+Log-Message "   Build cmd        : $BUILDCOMMAND"
+Log-Message "   Bugs Page        : $BUGS"
+Log-Message "   Changelog file   : $CHANGELOGFILE"
+Log-Message "   Deploy cmd       : $DEPLOYCOMMAND"
+Log-Message "   Dist release     : $DISTRELEASE"
+Log-Message "   Github release   : $GITHUBRELEASE"
+Log-Message "   History file     : $HISTORYFILE"
+Log-Message "   History file line: $HISTORYLINELEN"
+Log-Message "   History hdr file : $HISTORYHDRFILE"
+Log-Message "   Home Page        : $HOMEPAGE"
+Log-Message "   Interactive      : $INTERACTIVE"
+Log-Message "   NPM release      : $NPMRELEASE"
+Log-Message "   NPM registry     : $NPMREGISTRY"
+Log-Message "   NPM scope        : $NPMSCOPE"
+Log-Message "   Nuget release    : $NUGETRELEASE"
+Log-Message "   Post Build cmd   : $POSTBUILDCOMMAND"
+Log-Message "   Path to root     : $PATHTOROOT"
+Log-Message "   Path to main root: $PATHTOMAINROOT"
+Log-Message "   Path pre root    : $PATHPREROOT"
+Log-Message "   Repo             : $_Repo"
+Log-Message "   RepoType         : $_RepoType"
+Log-Message "   Skip deploy/push : $SKIPDEPLOYPUSH"
+Log-Message "   Tag version      : $VCTAG"
+Log-Message "   Tag prefix       : $VCTAGPREFIX"
+Log-Message "   Text editor      : $VCTAGPREFIX"
+Log-Message "   Test mode        : $TESTMODE"
+Log-Message "   Test email       : $TESTEMAILRECIP"
+Log-Message "   Text editor      : $TEXTEDITOR"
+Log-Message "   Version text     : $VERSIONTEXT"
 
 #
 # Check valid params
