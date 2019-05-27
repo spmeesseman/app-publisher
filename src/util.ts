@@ -147,25 +147,25 @@ export async function log(msg: string, level?: number)
     if (level && level) {
         return;
     }
-    console.log(msg);
+    console.log('ap ' + msg);
 }
 
 
 export async function logError(msg: string) 
 {
-    console.log(chalk.red(msg));
+    console.log('ap ' + chalk.red("ERR! ") + msg);
 }
 
 
 export async function logWarning(msg: string) 
 {
-    console.log(chalk.yellow(msg));
+    console.log('ap ' + chalk.yellow("WRN! ") + msg);
 }
 
 
 export async function logSuccess(msg: string) 
 {
-    console.log(chalk.green(msg));
+    console.log('ap ' + chalk.green("SUCCESS! ") + msg);
 }
 
 
@@ -187,4 +187,6 @@ export async function logValue(msg: string, value: any, level?: number)
     else if (value === null) {
         logMsg += ': null';
     }
+
+    console.log('ap ' + logMsg);
 }
