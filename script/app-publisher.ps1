@@ -889,7 +889,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
                 {
                     Log-Message "   Notification could not be sent to email recip, sending to test recip" "darkyellow"
                     Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY
-                    Check-ExitCode
+                    Check-PsCmdSuccess
                 }
                 else {
                     Log-Message "   Notification could not be sent, invalid email address specified" "red"
@@ -900,7 +900,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
             if (![string]::IsNullOrEmpty($TESTEMAILRECIP) -and $TESTEMAILRECIP.Contains("@") -and $TESTEMAILRECIP.Contains(".")) 
             {
                 Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY
-                Check-ExitCode
+                Check-PsCmdSuccess
             }
             else {
                 Log-Message "   Notification could not be sent, invalid email address specified" "red"
@@ -1181,7 +1181,7 @@ function Replace-Version($File, $Old, $New)
 {
     Log-Message "Write new version $VERSION to $File"
     ((Get-Content -path $File -Raw) -replace "$Old", "$New") | Set-Content -NoNewline -Path $File
-    Check-ExitCode
+    Check-PsCmdSuccess
 }
 
 function Run-Scripts($ScriptType, $Scripts, $ExitOnError, $RunInTestMode = $false)
@@ -1422,7 +1422,7 @@ function Prepare-PackageJson()
         #
         #Log-Message "Set windows line feeds in package-lock.json"
         #((Get-Content -path "package-lock.json" -Raw) -replace "`n", "`r`n") | Set-Content -NoNewline -Path "package-lock.json"
-        #Check-ExitCode
+        #Check-PsCmdSuccess
         Edit-File "package-lock.json"
     }
 }
@@ -1494,7 +1494,7 @@ function Restore-PackageJson()
     #
     #Log-Message "Set windows line feeds in package.json"
     #((Get-Content -path "package.json" -Raw) -replace "`n", "`r`n") | Set-Content -NoNewline -Path "package.json"
-    #Check-ExitCode
+    #Check-PsCmdSuccess
 }
 
 $FirstEditFileDone = $false
@@ -2467,7 +2467,7 @@ if ($NPMRELEASE -eq "Y")
             Check-ExitCode
             [System.Threading.Thread]::Sleep(100);
             Move-Item  -Force *-$PROJECTNAME-* $PackedFile
-            Check-ExitCode
+            Check-PsCmdSuccess
         }
         #
         # Publish to npm server
@@ -2669,14 +2669,14 @@ if ($DISTRELEASE -eq "Y")
             if (!(Test-Path($TargetNetLocation))) {
                 Log-Message "Create directory $TargetNetLocation"
                 New-Item -Path "$TargetNetLocation" -ItemType "directory" | Out-Null
-                Check-ExitCode
+                Check-PsCmdSuccess
             }
             #
             # Copy all files in 'dist' directory that start with $PROJECTNAME, and the history file
             #
             Log-Message "Deploying files to $TargetNetLocation"
             Copy-Item "$PATHTODIST\*" -Destination "$TargetNetLocation" | Out-Null
-            Check-ExitCode
+            Check-PsCmdSuccess
             #
             # Create directory on doc share
             #
@@ -2686,7 +2686,7 @@ if ($DISTRELEASE -eq "Y")
             #
             Log-Message "Deploying pdf documentation to $TargetDocLocation"
             Copy-Item "$PATHTODIST\*.pdf","doc\*.pdf","documentation\*.pdf" -Destination "$TargetDocLocation" | Out-Null
-            Check-ExitCode
+            Check-PsCmdSuccess
         }
         else {
             Log-Message "Test mode, skipping basic push to network drive" "magenta"
