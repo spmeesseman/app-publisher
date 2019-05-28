@@ -264,3 +264,135 @@ May 25th, 2019
     The "npmUser" configuration parameter has been removed, use "author" and
     "contributors" fields in package.json.
 
+
+Version 1.4.0
+May 28th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+
+    A new config parameter has been added:
+	
+	    textEditor
+		
+	If set, the specified editor will be used for inline editing of all version 
+	files.
+
+2.  Feature
+
+    Added the following config paramaters to allow overriding or setting the 
+	repository, home page, and bugs page values in package.json when publishing
+	to an NPM registry:
+	
+	    bugs
+		homePage
+	    repo
+		repoType
+
+3.  Feature
+
+    Added the following config paramaters to create and save an NPM package for
+	uploading as part of a network distribution release:
+	
+        npmPackDist 
+
+    If set to "Y", the npm package will be locally created, and copied to the
+	directory specified by the "pathToDist" parameter, which in turn is used in
+	the network distribution release.
+
+4.  Feature
+
+    Added support to auto-locate and bump version in assemblyinfo.cs files for
+    .NET builds/releases.
+
+5.  Feature
+
+    Added support for multiple runs using any backend repository and/or release 
+	types.
+
+6.  Feature
+
+    Added support for version tagging in sub-projects.
+	
+	For example, consider the following directory structure:
+	
+	    proj/build
+		proj/src
+		proj/src/client
+		proj/src/server
+		proj/tests
+		
+	The "client" and "server" folders contain separate projects, and need to
+	have separate releases, this can now be accomplished.
+
+7.  Feature
+
+    If the specified text editor in .publishrc.json is not found, then Notepad
+	is used as a fallback.
+
+8.  Feature
+
+    Added support for Git repositories.
+
+9.  Bug Fix
+
+    If no history file is specified in .publishrc, a recoverable error is thrown 
+	during a distribution type release.
+
+10. Bug Fix
+
+    A non-critical error is thrown 'cannot test path is null' when reverting
+    files in version control after a test run.
+
+11. Bug Fix
+
+    Occassionally package.json does not get populated and produces the error
+    "file in use".
+
+12. Bug Fix
+
+    Environment variables referenced in .publishrc are throwing an error when
+	the publish run starts if the value contains a backslash.
+
+13. Bug Fix
+
+    When prompted to continue after making no commits since the last release,
+    hitting enter to select default choice "no" does not exit as it should.
+
+14. Bug Fix
+
+    When using notepad++ as the inline editor, the window is opened behing Code
+    on the first edit, all subsequent edits work as expected
+
+15. Code Refactoring
+
+    Add additional logging when retrieving commits from the repository.
+
+16. Code Refactoring
+
+    Improved logging, added colorized log tags.
+
+17. Code Refactoring
+
+    Removed all checks for "Code Package", this is no longer needed.
+
+18. Code Refactoring
+
+    Title case app name in notification email subject line.
+
