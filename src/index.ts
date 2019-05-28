@@ -403,7 +403,13 @@ for (var run in runsCfg)
         //
         // Launch Powershell script
         //
-        child_process.spawnSync("powershell.exe", [`${ps1Script} ${sArgs}`], { stdio: 'inherit'});
+        let ec = child_process.spawnSync("powershell.exe", [`${ps1Script} ${sArgs}`], { stdio: 'inherit'});
+        if (ec.status !== 0)
+        {
+            util.logError("Powershell exited with error code " + ec.status.toString());
+            process.exit(ec.status);
+        }
+
         // let child = child_process.spawn("powershell.exe", [`${ps1Script} ${sArgs}`], { stdio: ['pipe', 'inherit', 'inherit'] });
         // process.stdin.on('data', function(data) {
         //     if (!child.killed) {
