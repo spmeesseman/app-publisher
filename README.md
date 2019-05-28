@@ -47,6 +47,12 @@ To install locally per project, run the following command from the directory con
 
     $ npm install app-publisher
 
+Currently, the publish is ran from a powershell script.  You will need to set the powershell execution policy with the following command if you have not already done so on your computer at some point in the past:
+
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine
+
+After the port to JS, this no longer be required.
+
 ## Usage
 
 ### Usage - Configuration File

@@ -19,6 +19,10 @@ Todos:
     Known Bugs:
 
         ☐ If changelog or history file is created, SVN check in fails since files have not been added to vc yet @1h
+        ☐ moving the packed npm package to dist is failing with 'cannot find the path specified ~ ln2430 @1h
+        ☐ Scoped packages are not including scope in release email url @2h
+        ☐ If an error occurs, check on history file revert with user before reverting and losing changes @2h
+        ☐ version replacement in assemblyinfo.cs isnt working for non-semantic incremental version type @1h
         ✔ Built history section is missing two characters at the end @1h @done(19-05-25 13:27)
     
     Performance Enhancements:
