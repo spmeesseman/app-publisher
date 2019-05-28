@@ -1620,7 +1620,7 @@ if ($WRITELOG -eq "Y")
 # Start logging
 #
 Log-Message "----------------------------------------------------------------" "darkblue" $true
-Log-Message " App Publisher" "darkblue" $true
+Log-Message " App Publisher PowerShell Release" "darkblue" $true
 Log-Message "   Version   : $APPPUBLISHERVERSION" "cyan" $true
 Log-Message "   Author    : Scott Meesseman" "cyan" $true
 Log-Message "   Directory : $CWD" "cyan" $true
@@ -1796,7 +1796,7 @@ Log-Message "   RepoType         : $_RepoType"
 Log-Message "   Skip deploy/push : $SKIPDEPLOYPUSH"
 Log-Message "   Tag version      : $VCTAG"
 Log-Message "   Tag prefix       : $VCTAGPREFIX"
-Log-Message "   Text editor      : $VCTAGPREFIX"
+Log-Message "   Text editor      : $TEXTEDITOR"
 Log-Message "   Test mode        : $TESTMODE"
 Log-Message "   Test email       : $TESTEMAILRECIP"
 Log-Message "   Text editor      : $TEXTEDITOR"
@@ -2734,12 +2734,19 @@ if ($_RepoType -eq "svn")
         #
         # Create version tag
         #
-        if (![string]::IsNullOrEmpty($PATHPREROOT) -or ![string]::IsNullOrEmpty($VCTAGPREFIX))
+        if ($VCTAG -eq "Y")
         {
-            if ($VCTAG -eq "Y")
+            $TagLocation = $_Repo.Replace("trunk", "tags")
+            if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($VCTAGPREFIX))
+            {
+
+                Log-Message "Skipping version tag, 'vcTagPrefix' must be set for subprojects" "darkyellow"
+                Log-Message "The project must be tagged manually using the following command:" "magenta"
+                Log-Message "   svn copy `"$_Repo`" `"$TagLocation/prefix-v$VERSION`" -m `"chore(release): tag v$VERSION [skip ci]`"" "magenta"
+            }
+            else 
             {
                 $TagMessage = ""
-                $TagLocation = $_Repo.Replace("trunk", "tags")
                 if ([string]::IsNullOrEmpty($VCTAGPREFIX) -or $VCTAGPREFIX -eq ".") 
                 {
                     $TagLocation = "$TagLocation/v$VERSION"
@@ -2759,15 +2766,12 @@ if ($_RepoType -eq "svn")
                     Check-ExitCode
                 }
                 else {
-                    Log-Message "   Test mode, skipping create version tag" "magenta"
+                    Log-Message "Test mode, skipping create version tag" "magenta"
                 }
-            }
-            else {
-                Log-Message "   Skipping version tag, user specified" "darkyellow"
             }
         }
         else {
-            Log-Message "   Skipping version tag, 'vcTagPrefix' or 'vcTagMain' must be set for subprojects" "darkyellow"
+            Log-Message "Skipping version tag, user specified" "darkyellow"
         }
     }
     else {
@@ -2833,7 +2837,7 @@ elseif ($_RepoType -eq "git")
                     Vc-Revert
                 }
                 if ($TESTMODE -eq "Y") {
-                    Log-Message "   Test mode, skipping touched file GIT commit" "magenta"
+                    Log-Message "Test mode, skipping touched file GIT commit" "magenta"
                 }
             }
         }
@@ -2841,9 +2845,15 @@ elseif ($_RepoType -eq "git")
         #
         # Create version tag
         #
-        if (![string]::IsNullOrEmpty($PATHPREROOT) -or ![string]::IsNullOrEmpty($VCTAGPREFIX))
+        if ($VCTAG -eq "Y")
         {
-            if ($VCTAG -eq "Y")
+            if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($VCTAGPREFIX))
+            {
+                Log-Message "Skipping version tag, 'vcTagPrefix' must be set for subprojects" "darkyellow"
+                Log-Message "The project must be tagged manually using the following command:" "magenta"
+                Log-Message "   git tag -a prefix-v$VERSION -m `"chore(release): tag v$VERSION [skip ci]`"" "magenta"
+            }
+            else 
             {
                 $TagLocation = "v$VERSION"
                 $TagMessage = "chore(release): tag version $VERSION [skip ci]"
@@ -2862,15 +2872,12 @@ elseif ($_RepoType -eq "git")
                     Check-ExitCode
                 }
                 else {
-                    Log-Message "   Test mode, skipping create version tag" "magenta"
+                    Log-Message "Test mode, skipping create version tag" "magenta"
                 }
-            }
-            else {
-                Log-Message "   Skipping version tag, user specified" "darkyellow"
             }
         }
         else {
-            Log-Message "   Skipping version tag, 'vcTagPrefix' must be set for subprojects" "darkyellow"
+            Log-Message "Skipping version tag, user specified" "darkyellow"
         }
     }
     else {
