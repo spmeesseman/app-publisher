@@ -2363,7 +2363,7 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
                 $ChangeLogFinal = "$ChangeLogFinal$TmpCommits`r`n`r`n"
             }
             if (![string]::IsNullOrEmpty($ChangeLogContents)) {
-                $ChangeLogContents = "$ChangeLogFinal$ChangeLogContents`r`n"
+                $ChangeLogFinal = "$ChangeLogFinal$ChangeLogContents`r`n"
             }
             Set-Content $CHANGELOGFILE $ChangeLogFinal
             #
