@@ -1258,18 +1258,22 @@ function Prepare-ExtJsBuild()
 
 function Prepare-DotNetBuild($AssemblyInfoLocation)
 {
+    $SEMVERSION = ""
     if (!$VERSION.Contains("."))
     {
-        #
-        # TODO - translate block version to a real maj.min.patch version
-        #
-        Log-Message "Could not replace version in assemblyinfo.cs, change manually" "red"
+        for ($i = 0; $i -lt $VERSION.Length; $i++) {
+            $SEMVERSION = "$SEMVERSION$(VERSION[$i])."
+        }
+        $SEMVERSION = $SEMVERSION.Substring(0, $SEMVERSION.Length - 1);
+    }
+    else {
+        $SEMVERSION = $VERSION
     }
     #
-    # TODO - Replace version in assemblyinfo file
+    # Replace version in assemblyinfo file
     #
-    Replace-Version $AssemblyInfoLocation "AssemblyVersion[ ]*[(][ ]*[`"]$CURRENTVERSION" "AssemblyVersion(`": `"$VERSION"
-    Replace-Version $AssemblyInfoLocation "AssemblyFileVersion[ ]*[(][ ]*[`"]$CURRENTVERSION" "AssemblyVersion(`": `"$VERSION"
+    Replace-Version $AssemblyInfoLocation "AssemblyVersion[ ]*[(][ ]*[`"]$CURRENTVERSION" "AssemblyVersion(`": `"$SEMVERSION"
+    Replace-Version $AssemblyInfoLocation "AssemblyFileVersion[ ]*[(][ ]*[`"]$CURRENTVERSION" "AssemblyVersion(`": `"$SEMVERSION"
     #
     # Allow manual modifications to assembly file
     #
@@ -1964,6 +1968,8 @@ if ($COMMITS -eq $null -or $COMMITS.Length -eq 0)
 # If this is a legacy PJ versioned project, the verison obtained in the history will be
 # incremented by +1.
 #
+$VersionInteractive = "N"
+#
 if ($VersionSystem -eq "semver")
 {
     #
@@ -1992,8 +1998,7 @@ elseif ($VersionSystem -eq "incremental")
             $VERSION = ([System.Int32]::Parse($CURRENTVERSION) + 1).ToString()
         }
         catch {
-            Log-Message "Could not increment version, current version = $CURRENTVERSION" "red"
-            exit 132
+            $VERSION = ""
         }
     }
     else {
@@ -2003,7 +2008,6 @@ elseif ($VersionSystem -eq "incremental")
 #
 # If version could not be found, then prompt for version 
 #
-$VersionInteractive = "N"
 if (![string]::IsNullOrEmpty($VERSION)) 
 {
     Log-Message "The suggested new version is $VERSION"
