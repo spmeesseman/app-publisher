@@ -153,19 +153,19 @@ export async function log(msg: string, level?: number)
 
 export async function logError(msg: string) 
 {
-    console.log('ap ' + chalk.red("ERR! ") + msg);
+    console.log('ap ' + chalk.red("[ERROR] ") + msg);
 }
 
 
 export async function logWarning(msg: string) 
 {
-    console.log('ap ' + chalk.yellow("WRN! ") + msg);
+    console.log('ap ' + chalk.yellow("[WARNING] ") + msg);
 }
 
 
 export async function logSuccess(msg: string) 
 {
-    console.log('ap ' + chalk.green("SUCCESS! ") + msg);
+    console.log('ap ' + chalk.green("[SUCCESS] ") + msg);
 }
 
 

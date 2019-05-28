@@ -4,6 +4,7 @@ import { visit, JSONVisitor } from 'jsonc-parser';
 import { CommitAnalyzer } from './lib/commit-analyzer';
 import * as util from './util';
 import * as fs from 'fs';
+import * as path from 'path';
 import * as gradient from 'gradient-string';
 import chalk from 'chalk';
 import * as child_process from 'child_process';
@@ -172,7 +173,11 @@ let runsCfg = [{}];
 
 if (config.xRuns)
 {
-    runsCfg = { ...runsCfg, ...JSON.parse(JSON.stringify(config.xRuns)) };
+    //
+    // Push the run config, use JSON.parse(JSON.stringify) to  clone the object so
+    // we can then delete it
+    //
+    runsCfg.push(...JSON.parse(JSON.stringify(config.xRuns)));
     delete config.xRuns;
 }
 
@@ -210,6 +215,7 @@ for (var run in runsCfg)
                 aProperty = cProperty;
                 if (sArgs.includes(propStart)) {
                     util.logError("Configuration parameter '" + cProperty + "' defined twice, check casing");
+                    util.logError("   sArgs = " + sArgs);
                     process.exit(81);
                 }
                 sArgs += (propStart);
@@ -230,12 +236,15 @@ for (var run in runsCfg)
                         let propStart = "-" + cProperty.toUpperCase() + " ";
                         if (sArgs.includes(propStart)) 
                         {
-                            util.logError("Configuration parameter '" + cProperty + "' defined twice, check casing");
+                            util.logError("   Configuration parameter '" + cProperty + "' defined twice, check casing");
+                            util.logError("   sArgs = " + sArgs);
                             process.exit(82);
                         }
+                        util.log("   Value: '" + value + "'");
                         sArgs += (propStart + "'" + value + "' ");
                     }
                     else {
+                        util.log("   Adding array value: '" + value + "'");
                         sArgs += ("\"" + value + "\",");
                     }
                 }
@@ -249,9 +258,11 @@ for (var run in runsCfg)
                     {
                         let propStart = "-" + cProperty.toUpperCase() + " ";
                         if (sArgs.includes(propStart)) {
-                            util.logError("Configuration parameter '" + cProperty + "' defined twice, check casing");
+                            util.logError("   Configuration parameter '" + cProperty + "' defined twice, check casing");
+                            util.logError("   sArgs = " + sArgs);
                             process.exit(83);
                         }
+                        util.log("   Value: " + value.toString());
                         sArgs += (propStart + value + " ");
                     }
                     else {
@@ -262,17 +273,69 @@ for (var run in runsCfg)
             },
             onObjectProperty(property: string, offset: number, _length: number) 
             {
+                util.log("Found configuration parameter '" + property + "'");
                 cProperty = property;
             }
         };
         visit(JSON.stringify(config), visitor);
 
         //
-        // Manipulate some config if required
+        // Get the repository url if not specified
         //
-        if (!config.repoType) {
-            config.repoType = "svn";
+        if (!config.repo) 
+        {
+            let cwd = process.cwd();
+            let appPackageJson = path.join(cwd, 'package.json');
+            if (fs.existsSync(appPackageJson)) {
+                let repository = require(appPackageJson).repository;
+                if (repository) 
+                {
+                    if (typeof repository === 'string') {
+                        config.repo = repository;
+                    }
+                    else {
+                        config.repo = repository.url;
+                    }
+                }
+            }
+            if (!config.repo)
+            {
+                util.logError("Repository url must be sepcified in .publishrc or package.json");
+                process.exit(85);
+            }
         }
+
+        //
+        // Get the repository type if not specified
+        //
+        if (!config.repoType) 
+        {
+            let cwd = process.cwd();
+            let appPackageJson = path.join(cwd, 'package.json');
+            if (fs.existsSync(appPackageJson)) {
+                let repository = require(appPackageJson).repository;
+                if (repository) {
+                    if (typeof repository === 'object') {
+                        config.repoType = repository.type;
+                    }
+                }
+            }
+            if (!config.repoType)
+            {
+                util.logError("Repository type must be sepcified in .publishrc or package.json");
+                util.logError("   Possible values:  svn, git");
+                process.exit(85);
+            }
+            else if (config.repoType !== 'svn' && config.repoType !== 'git') 
+            {
+                util.logError("Invalid repository type sepcified, must be 'svn' or 'git'");
+                process.exit(86);
+            }
+        }
+
+        //
+        // If this is a 2nd run (or more), and the repository is the same, then skip the comit
+        //
         if (reposCommited.indexOf(config.repoType) >= 0) 
         {
             sArgs = sArgs + " -skipCommit Y";
@@ -284,6 +347,7 @@ for (var run in runsCfg)
         else {
             reposCommited.push(config.repoType);
         }
+
         sArgs = sArgs + ` -apppublisherversion ${version}`;
         sArgs = sArgs + ` -run ${runCt}`;
 
