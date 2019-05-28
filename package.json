@@ -1,76 +1,76 @@
 {
-	"name": "@spmeesseman/app-publisher",
-	"version": "1.4.1",
-	"displayName": "App Publisher",
-	"description": "App Publisher",
-	"license": "MIT",
-	"author": {
-		"name": "Scott Meesseman"
-	},
-	"bugs": {
-		"url": "https://github.com/spmeesseman/app-publisher/issues"
-	},
-	"homepage": "https://github.com/spmeesseman/app-publisher/blob/master/README.md",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/spmeesseman/app-publisher.git"
-	},
-	"dependencies": {
-		"@types/gradient-string": "^1.1.0",
-		"@types/shelljs": "^0.8.5",
-		"argparse": "^1.0.10",
-		"chalk": "^2.4.2",
-		"conventional-changelog-spm": "^1.2.3",
-		"gradient-string": "^1.2.0",
-		"json": "^9.0.6",
-		"jsonc-parser": "^2.1.0",
-		"minimatch": "^3.0.4"
-	},
-	"devDependencies": {
-		"@semantic-release/changelog": "^3.0.2",
-		"@semantic-release/exec": "^3.3.0",
-		"@semantic-release/git": "^7.0.8",
-		"@types/istanbul": "^0.4.30",
-		"@types/mocha": "^5.2.6",
-		"@types/node": "^12.0.0",
-		"codecov": "^3.2.0",
-		"eslint": "^5.16.0",
-		"eslint-plugin-prettier": "^3.0.1",
-		"istanbul": "^0.4.5",
-		"mocha": "^6.1.4",
-		"mocha-junit-reporter": "^1.18.0",
-		"mocha-multi-reporters": "^1.1.7",
-		"prettier": "^1.17.0",
-		"remap-istanbul": "^0.13.0",
-		"semantic-release": "^15.13.14",
-		"tslint": "^5.16.0",
-		"typescript": "^3.4.5"
-	},
-	"scripts": {
-		"build": "npx tsc -p ./",
-		"app-publish": "app-publisher -p ps",
-		"app-publish-dry": "app-publisher -p ps --dry-run",
-		"semantic-release": "semantic-release --allow-same-version --no-ci",
-		"semantic-release-dry": "semantic-release --dry-run --allow-same-version"
-	},
-	"main": "./build/index.js",
-	"bin": {
-		"app-publisher": "./build/index.js",
-		"app-publisher-json": "./node_modules/json/lib/json.js"
-	},
-	"files": [
-		"build/*.js",
-		"build/lib",
-		"script",
-		"res"
-	],
-	"keywords": [
-		"release",
-		"publish",
-		"svn",
-		"git"
-	],
-	"publishConfig": {
-		"access": "restricted"
-	}
+    "name": "@spmeesseman/app-publisher",
+    "version": "1.4.1",
+    "displayName": "App Publisher",
+    "description": "App Publisher",
+    "license": "MIT",
+    "author": {
+        "name": "Scott Meesseman"
+    },
+    "bugs": {
+        "url": "https://github.com/spmeesseman/app-publisher/issues"
+    },
+    "homepage": "https://github.com/spmeesseman/app-publisher/blob/master/README.md",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/spmeesseman/app-publisher.git"
+    },
+    "dependencies": {
+        "@types/gradient-string": "^1.1.0",
+        "@types/shelljs": "^0.8.5",
+        "argparse": "^1.0.10",
+        "chalk": "^2.4.2",
+        "conventional-changelog-spm": "^1.2.3",
+        "gradient-string": "^1.2.0",
+        "json": "^9.0.6",
+        "jsonc-parser": "^2.1.0",
+        "minimatch": "^3.0.4"
+    },
+    "devDependencies": {
+        "@semantic-release/changelog": "^3.0.2",
+        "@semantic-release/exec": "^3.3.0",
+        "@semantic-release/git": "^7.0.8",
+        "@types/istanbul": "^0.4.30",
+        "@types/mocha": "^5.2.6",
+        "@types/node": "^12.0.0",
+        "codecov": "^3.2.0",
+        "eslint": "^5.16.0",
+        "eslint-plugin-prettier": "^3.0.1",
+        "istanbul": "^0.4.5",
+        "mocha": "^6.1.4",
+        "mocha-junit-reporter": "^1.18.0",
+        "mocha-multi-reporters": "^1.1.7",
+        "prettier": "^1.17.0",
+        "remap-istanbul": "^0.13.0",
+        "semantic-release": "^15.13.14",
+        "tslint": "^5.16.0",
+        "typescript": "^3.4.5"
+    },
+    "scripts": {
+        "build": "npx tsc -p ./",
+        "app-publish": "app-publisher -p ps",
+        "app-publish-dry": "app-publisher -p ps --dry-run",
+        "semantic-release": "semantic-release --allow-same-version --no-ci",
+        "semantic-release-dry": "semantic-release --dry-run --allow-same-version"
+    },
+    "main": "./build/index.js",
+    "bin": {
+        "app-publisher": "./build/index.js",
+        "app-publisher-json": "./node_modules/json/lib/json.js"
+    },
+    "files": [
+        "build/*.js",
+        "build/lib",
+        "script",
+        "res"
+    ],
+    "keywords": [
+        "release",
+        "publish",
+        "svn",
+        "git"
+    ],
+    "publishConfig": {
+        "access": "restricted"
+    }
 }
