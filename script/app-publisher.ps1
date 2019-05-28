@@ -499,7 +499,7 @@ class HistoryFile
         #
         if (!(Test-Path $szInputFile) -or [string]::IsNullOrEmpty($szInputFile)) {
             Log-Message "Error: No history file specified" "red"
-            exit 101;
+            exit 160;
         }
 
         if ([string]::IsNullOrEmpty($stringver)) {
@@ -521,7 +521,7 @@ class HistoryFile
             Log-Message "   Error type  : $_.Exception.GetType().FullName" "red"
             Log-Message "   Error code  : $($_.Exception.ErrorCode)" "red"
             Log-Message "   Error text  : $($_.Exception.Message)" "red"
-            exit 101;
+            exit 161;
         }
 
         Log-Message "Extract from history.txt file"
@@ -569,7 +569,7 @@ class HistoryFile
             if ($iIndex1 -eq -1)
             {
                 Log-Message "   Last section could not be found (0), exit" "red"
-                exit 101
+                exit 162
             }
             
             if ($szContents[$iIndex1 - 1] -ne "`n")
@@ -586,7 +586,7 @@ class HistoryFile
             if ($iIndex2 -eq -1)
             {
                 Log-Message "   Last section could not be found (1), exit" "red"
-                exit 101
+                exit 163
             }
 
             $iIndex2 = $szContents.IndexOf("`n", $iIndex2 + 1)
@@ -596,7 +596,7 @@ class HistoryFile
             if ($iIndex2 -eq -1)
             {
                 Log-Message "   Last section could not be found (2), exit" "red"
-                exit 101
+                exit 164
             }
             
             #
@@ -633,7 +633,7 @@ class HistoryFile
         if ($bFoundStart -eq 0)
         {
             Log-Message "   Last section could not be found, exit" "red"
-            exit 101
+            exit 165
         }
 
         Log-Message "   Found version section"
@@ -1028,6 +1028,37 @@ function Vc-Changelist-AddNew($VcFile)
     }
 }
 
+function Vc-IsVersioned($ObjectPath)
+{
+    $IsVersioned = $false
+
+    if ($PATHPREROOT -ne "" -and $PATHPREROOT -ne $null) {
+        $VcFile = Join-Path -Path "$PATHPREROOT" -ChildPath "$ObjectPath"
+    }
+
+    if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) {
+        set-location $PATHTOMAINROOT
+    }
+    if ($_RepoType -eq "svn") {
+        $tmp = & svn info "$ObjectPath"
+    }
+    else {
+        $tmp = & git ls-files --error-unmatch "$ObjectPath"
+    }
+    if ($LASTEXITCODE -eq 0) {
+        $IsVersioned = $true
+    }
+    #
+    # Change directory back to project root
+    # PATHTOPREROOT will be defined if PATHTOMAINROOT is
+    #
+    if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) { 
+        set-location $PATHPREROOT
+    }
+
+    return $IsVersioned
+}
+
 function Vc-Revert()
 {
     if (![string]::IsNullOrEmpty($VCCHANGELIST)) 
@@ -1035,7 +1066,7 @@ function Vc-Revert()
         Log-Message "Removing new files / reverting touched files under version control"
         Log-Message "Stored Commit List: $VCCHANGELIST"
         Log-Message "Stored Add List   : $VCCHANGELISTADD"
-        Log-Message "Stored Remove List: $VCCHANGELISTADD"
+        Log-Message "Stored Remove List: $VCCHANGELISTRMV"
 
         $VcRevertList = ""
         $VcRevertListParts = $VCCHANGELISTRMV.Trim().Split(' ')
@@ -1050,6 +1081,7 @@ function Vc-Revert()
             {
                 Log-Message "Deleting unversioned $($VcRevertListParts[$i]) from fs"
                 Remove-Item -path $VcRevertListParts[$i].Replace("`"", "") -Recurse | Out-Null
+                Check-PsCmdSuccess
             }
         }
 
@@ -1066,6 +1098,7 @@ function Vc-Revert()
             {
                 Log-Message "Deleting unversioned $($VcRevertListParts[$i]) from fs"
                 Remove-Item -path $VcRevertFile -Recurse | Out-Null
+                Check-PsCmdSuccess
             }
         }
 
@@ -1082,16 +1115,16 @@ function Vc-Revert()
                 }
                 if (Test-Path($VcRevertFile))
                 {
-                    $tmp = & svn info --no-newline --show-item kind $VcRevertListParts[$i]
-                    if ($LASTEXITCODE -eq 0) 
+                    if (Vc-IsVersioned($VcRevertFile)) 
                     {
-                        Log-Message " - Adding versioned $($VcRevertListParts[$i]) to revert list"
+                        Log-Message " - Adding versioned $VcRevertFile to revert list"
                         $VcRevertList = "$VcRevertList $($VcRevertListParts[$i])"
                     }
-                    elseif (Test-Path($VcRevertFile)) # delete unversioned file 
+                    else # delete unversioned file
                     {
-                        Log-Message " - Deleting unversioned $($VcRevertListParts[$i]) from fs"
-                        Remove-Item -path $VcRevertFile -Recurse | Out-Null
+                        Log-Message " - Deleting unversioned $VcRevertFile from fs"
+                        Remove-Item -path "$VcRevertFile" -Recurse | Out-Null
+                        Check-PsCmdSuccess
                     }
                 }
             }
@@ -1116,14 +1149,15 @@ function Vc-Revert()
                 }
                 if (Test-Path($VcRevertFile))
                 {
-                    $tmp = & git ls-files --error-unmatch $VcRevertListParts[$i]
-                    if ($LASTEXITCODE -eq 0) {
-                        Log-Message " - Adding versioned $($VcRevertListParts[$i]) to revert list"
+                    if (Vc-IsVersioned($VcRevertFile)) {
+                        Log-Message " - Adding versioned $VcRevertFile to revert list"
                         $VcRevertList = "$VcRevertList $($VcRevertListParts[$i])"
                     }
-                    else { # delete unversioned file
-                        Log-Message "Deleting unversioned $($VcRevertListParts[$i]) from fs"
-                        Remove-Item -path $VcRevertFile -Recurse | Out-Null
+                    else 
+                    {   # delete unversioned file
+                        Log-Message "Deleting unversioned $VcRevertFile from fs"
+                        Remove-Item -path "$VcRevertFile" -Recurse | Out-Null
+                        Check-PsCmdSuccess
                     }
                 }
             }
@@ -1269,7 +1303,7 @@ function Prepare-ExtJsBuild()
         #
         # Add to package.json vc changelist for check-in
         #
-        Vc-Changelist-Add "package-lock.json"
+        Edit-File "package-lock.json"
     }
 }
 
@@ -1279,7 +1313,7 @@ function Prepare-DotNetBuild($AssemblyInfoLocation)
     if (!$VERSION.Contains("."))
     {
         for ($i = 0; $i -lt $VERSION.Length; $i++) {
-            $SEMVERSION = "$SEMVERSION$(VERSION[$i])."
+            $SEMVERSION = "$SEMVERSION$($VERSION[$i])."
         }
         $SEMVERSION = $SEMVERSION.Substring(0, $SEMVERSION.Length - 1);
     }
@@ -1504,7 +1538,10 @@ function Edit-File($File, $SeekToEnd = $false)
     if (![string]::IsNullOrEmpty($File) -and (Test-Path($File)) -and !$VersionFilesEdited.Contains($File))
     {
         $script:VersionFilesEdited += $File
-        Vc-Changelist-Add $File
+        
+        #if (Vc-IsVersioned($File)) {
+            Vc-Changelist-Add $File
+        #}
 
         if (![string]::IsNullOrEmpty($TEXTEDITOR))
         {
@@ -2109,42 +2146,35 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
     #
     if (![string]::IsNullOrEmpty($HISTORYFILE))
     {
+        #
+        # If history file doesnt exist, create one with the project name as a title
+        #
+        $HistoryPath = Split-Path "$HISTORYFILE"
+        if ($HistoryPath -ne "" -and !(Test-Path($HistoryPath))) 
+        {
+            Log-Message "Creating history file directory and adding to version control" "magenta"
+            New-Item -ItemType "directory" -Path "$HistoryPath" | Out-Null
+            Vc-Changelist-AddNew "$HistoryPath"
+            Vc-Changelist-AddRemove "$HistoryPath"
+            Vc-Changelist-Add "$HistoryPath"
+        }
+        if (!(Test-Path($HISTORYFILE))) 
+        {
+            Log-Message "Creating new history file and adding to version control" "magenta"
+            New-Item -ItemType "file" -Path "$HISTORYFILE" -Value "$PROJECTNAME`r`n`r`n" | Out-Null
+            Vc-Changelist-AddRemove "$HISTORYFILE"
+            Vc-Changelist-AddNew $HISTORYFILE
+        }
+        if (!(Test-Path($HISTORYFILE))) 
+        {
+            Log-Message "Could not create history file, exiting" "red"
+            exit 140;
+        }
         if ($CURRENTVERSION -ne $VERSION )
         {
             $TmpCommits = $ClsHistoryFile.createSectionFromCommits($COMMITS, $HISTORYLINELEN)
 
             Log-Message "Preparing history file"
-            #
-            # If history file doesnt exist, create one with the project name as a title
-            #
-            $HistoryPath = Split-Path "$HISTORYFILE"
-            if ($HistoryPath -ne "" -and !(Test-Path($HistoryPath))) 
-            {
-                New-Item -ItemType "directory" -Path "$HistoryPath" | Out-Null
-                #
-                # Add to changelist for svn check in.  This would be the first file modified so just
-                # set changelist equal to history file
-                #
-                Vc-Changelist-AddNew "$HistoryPath"
-                Vc-Changelist-AddRemove "$HistoryPath"
-                Vc-Changelist-Add "$HistoryPath"
-            }
-            if (!(Test-Path($HISTORYFILE))) 
-            {
-                New-Item -ItemType "file" -Path "$HISTORYFILE" -Value "$PROJECTNAME`r`n`r`n" | Out-Null
-                #
-                # Add to changelist for svn check in.  This would be the first file modified so just
-                # set changelist equal to history file
-                #
-                Vc-Changelist-AddRemove "$HistoryPath"
-                Vc-Changelist-AddNew $HISTORYFILE
-                Vc-Changelist-Add $HISTORYFILE
-            }
-            if (!(Test-Path($HISTORYFILE))) 
-            {
-                Log-Message "Could not create history file, exiting" "red"
-                exit 107;
-            }
             #
             # Touch history file with the latest version info, either update existing, or create 
             # a new one if it doesnt exist
@@ -2252,15 +2282,15 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
             #
             [System.Threading.Thread]::Sleep(500);
             Add-Content $HISTORYFILE $TmpCommits
-            #
-            # Add to changelist for svn check in.  This would be the first file modified so just
-            # set changelist equal to history file
-            #
-            Vc-Changelist-Add $HISTORYFILE
         }
         else {
             Log-Message "Version match, not touching history file" "darkyellow"
         }
+        #
+        # Add to changelist for scm check in.  This would be the first file modified so just
+        # set changelist equal to history file
+        #
+        Vc-Changelist-Add $HISTORYFILE
         #
         # Allow manual modifications to history file
         #
@@ -2272,40 +2302,42 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
     #
     if (![string]::IsNullOrEmpty($CHANGELOGFILE))
     {
+        #
+        # If changelog markdown file doesnt exist, create one with the project name as a title
+        #
+        $NewChangelog = $false
+        $ChangeLogPath = Split-Path "$CHANGELOGFILE"
+        if ($ChangeLogPath -ne "" -and !(Test-Path($ChangeLogPath))) 
+        {
+            Log-Message "Creating changelog file directory and adding to version control" "magenta"
+            New-Item -ItemType "directory" -Path "$ChangeLogPath" | Out-Null
+            Vc-Changelist-AddNew "$ChangeLogPath"
+            Vc-Changelist-AddRemove "$ChangeLogPath"
+            Vc-Changelist-Add "$ChangeLogPath"
+        }
+        if (!(Test-Path($CHANGELOGFILE))) 
+        {
+            Log-Message "Creating new changelog file and adding to version control" "magenta"
+            New-Item -ItemType "file" -Path "$CHANGELOGFILE" -Value "$ChangeLogTitle`r`n`r`n" | Out-Null
+            Vc-Changelist-AddRemove $CHANGELOGFILE
+            Vc-Changelist-AddNew $CHANGELOGFILE
+            $NewChangelog = $true
+        }
+        if (!(Test-Path($CHANGELOGFILE))) 
+        {
+            Vc-Revert
+            Log-Message "Could not create changelog file, exiting" "red"
+            exit 141
+        }
+
         if ($CURRENTVERSION -ne $VERSION)
         {
-            $NewChangelog = $false
             $TmpCommits = ""
             $LastSection = ""
             $Sectionless = @()
             $ChangeLogTitle = "# $PROJECTNAME Change Log".ToUpper()
 
             Log-Message "Preparing changelog file"
-            #
-            # If changelog markdown file doesnt exist, create one with the project name as a title
-            #
-            $ChangeLogPath = Split-Path "$CHANGELOGFILE"
-            if ($ChangeLogPath -ne "" -and !(Test-Path($ChangeLogPath))) 
-            {
-                New-Item -ItemType "directory" -Path "$ChangeLogPath" | Out-Null
-                Vc-Changelist-AddNew "$ChangeLogPath"
-                Vc-Changelist-AddRemove "$ChangeLogPath"
-                Vc-Changelist-Add "$ChangeLogPath"
-            }
-            if (!(Test-Path($CHANGELOGFILE))) 
-            {
-                New-Item -ItemType "file" -Path "$CHANGELOGFILE" -Value "$ChangeLogTitle`r`n`r`n" | Out-Null
-                Vc-Changelist-AddRemove $CHANGELOGFILE
-                Vc-Changelist-AddNew $CHANGELOGFILE
-                Vc-Changelist-Add $CHANGELOGFILE
-                $NewChangelog = $true
-            }
-            if (!(Test-Path($CHANGELOGFILE))) 
-            {
-                Vc-Revert
-                Log-Message "Could not create changelog file, exiting" "red"
-                exit 108
-            }
             #
             # Touch changelog file with the latest commits
             #
@@ -2417,11 +2449,6 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
                 $ChangeLogFinal = "$ChangeLogFinal$ChangeLogContents`r`n"
             }
             Set-Content $CHANGELOGFILE $ChangeLogFinal
-            #
-            # Add to changelist for svn check in.  This would be the first file modified so just
-            # set changelist equal to history file
-            #
-            Vc-Changelist-Add $CHANGELOGFILE
         }
         else {
             Log-Message "Version match, not touching changelog file" "darkyellow"
@@ -2430,6 +2457,11 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
         # Allow manual modifications to changelog file
         #
         Edit-File $CHANGELOGFILE
+        #
+        # Add to changelist for svn check in.  This would be the first file modified so just
+        # set changelist equal to history file
+        #
+        Vc-Changelist-Add $CHANGELOGFILE
     }
 }
 
@@ -2505,7 +2537,7 @@ if ($NPMRELEASE -eq "Y")
         }
         else {
             Vc-Revert
-            exit 116
+            exit 150
         }
     }
     else {
@@ -2557,56 +2589,35 @@ if ($DISTRELEASE -eq "Y")
     # Create dist directory if it doesnt exist
     #
     if (!(Test-Path($PATHTODIST))) {
-        Log-Message "Create dist directory"
+        Log-Message "Creating dist directory" "magenta"
         New-Item -Path "$PATHTODIST" -ItemType "directory" | Out-Null
         Vc-Changelist-AddRemove "$PATHTODIST"
+        $DistDirCreated = $true
+    }
+    #
+    # Get whether or not dist dir is under vesion control, in some cases it may not be
+    #
+    $DistIsVersioned = Vc-IsVersioned($PATHTODIST)
+    #
+    #
+    #
+    if (!$DistDirCreated -and $DistIsVersioned) 
+    {
+        Vc-Changelist-Add "$PATHTODIST"
+        Vc-Changelist-AddMulti "$PATHTODIST"
     }
     #
     # Copy history file to dist directory
     #
     if (![string]::IsNullOrEmpty($HISTORYFILE))
     {
-        $DistHistoryFileExists = $true
         if (!(Test-Path("$PATHTODIST\$HISTORYFILE"))) 
         {
             $HistoryFileName = [Path]::GetFileName($HISTORYFILE);
             Vc-Changelist-AddRemove "$PATHTODIST\$HistoryFileName"
+            Vc-Changelist-AddNew "$PATHTODIST\$HistoryFileName"
         }
         Copy-Item -Path "$HISTORYFILE" -PassThru -Force -Destination "$PATHTODIST" | Out-Null
-        #Vc-Changelist-Add "$PATHTODIST\$HISTORYFILE"
-    }
-    #
-    # If dist dir is under version control, add it to the changelist
-    #
-    $TestPathVc = $PATHTODIST;
-    if ($PATHPREROOT -ne "" -and $PATHPREROOT -ne $null) {
-        $TestPathVc = Join-Path -Path "$PATHPREROOT" -ChildPath "$TestPathVc"
-    }
-    #
-    # Change dircetory to svn root that contains the .svn folder to isse SVN commands
-    #
-    if (!$DistDirCreated)
-    {
-        if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) {
-            set-location $PATHTOMAINROOT
-        }
-        if ($_RepoType -eq "svn") {
-            $tmp = & svn info "$TestPathVc"
-        }
-        else {
-            $tmp = & git ls-files --error-unmatch "$TestPathVc"
-        }
-        if ($LASTEXITCODE -eq 0) {
-            Vc-Changelist-Add "$PATHTODIST"
-            Vc-Changelist-AddMulti "$PATHTODIST"
-        }
-        #
-        # Change directory back to project root
-        # PATHTOPREROOT will be defined if PATHTOMAINROOT is
-        #
-        if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) { 
-            set-location $PATHPREROOT
-        }
     }
     #
     # Check if this is an ExtJs build.  ExtJs build will be an dist release, but it will
