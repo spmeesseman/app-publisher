@@ -888,7 +888,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
                 if (![string]::IsNullOrEmpty($TESTEMAILRECIP) -and $TESTEMAILRECIP.Contains("@") -and $TESTEMAILRECIP.Contains(".")) 
                 {
                     Log-Message "   Notification could not be sent to email recip, sending to test recip" "darkyellow"
-                    send-mailmessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY
+                    Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY
                     Check-ExitCode
                 }
                 else {
@@ -899,7 +899,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
         else {
             if (![string]::IsNullOrEmpty($TESTEMAILRECIP) -and $TESTEMAILRECIP.Contains("@") -and $TESTEMAILRECIP.Contains(".")) 
             {
-                send-mailmessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY
+                Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY
                 Check-ExitCode
             }
             else {
@@ -1361,6 +1361,12 @@ function Prepare-PackageJson()
             Log-Message "Setting package name in package.json: $NPMSCOPE/$PROJECTNAME"
             & app-publisher-json -I -4 -f package.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
             Check-ExitCode
+            if ($LASTEXITCODE -ne 0) {
+                Log-Message "Setting package name in package.json failed, retrying"
+                [System.Threading.Thread]::Sleep(500)
+                & app-publisher-json -I -4 -f package.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
+                Check-ExitCode
+            }
             #
             # Scope - package-lock.json
             #
@@ -1369,6 +1375,12 @@ function Prepare-PackageJson()
                 Log-Message "Setting package name in package-lock.json: $NPMSCOPE/$PROJECTNAME"
                 & app-publisher-json -I -4 -f package-lock.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
                 Check-ExitCode
+                if ($LASTEXITCODE -ne 0) {
+                    Log-Message "Setting package name in package-lock.json failed, retrying"
+                    [System.Threading.Thread]::Sleep(500)
+                    & app-publisher-json -I -4 -f package-lock.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
+                    Check-ExitCode
+                }
             }
         }
     }
@@ -1976,7 +1988,13 @@ elseif ($VersionSystem -eq "incremental")
     #
     Log-Message "Using legacy PJ versioning"
     if ($RUN -eq 1 -or $TESTMODE -eq "Y") {
-        $VERSION = [System.Int32]::Parse($CURRENTVERSION) + 1
+        try {
+            $VERSION = ([System.Int32]::Parse($CURRENTVERSION) + 1).ToString()
+        }
+        catch {
+            Log-Message "Could not increment version, current version = $CURRENTVERSION" "red"
+            exit 132
+        }
     }
     else {
         $VERSION = $CURRENTVERSION
@@ -2010,7 +2028,7 @@ if ($INTERACTIVE -eq "Y" -or $VersionInteractive -eq "Y")
 
 if ([string]::IsNullOrEmpty($VERSION)) {
     Log-Message "Invalid version for release, exiting" "red"
-    exit 132
+    exit 133
 }
 
 #
@@ -2414,6 +2432,7 @@ if ($NPMRELEASE -eq "Y")
             $PackedFile = [Path]::Combine($PATHTODIST, "$PROJECTNAME.tgz")
             & npm pack
             Check-ExitCode
+            [System.Threading.Thread]::Sleep(500);
             & cmd /c move /Y *-$PROJECTNAME-* $PackedFile
             Check-ExitCode
         }
@@ -2445,6 +2464,9 @@ if ($NPMRELEASE -eq "Y")
                 $NpmLocation = "$NPMREGISTRY/-/web/detail/$NPMSCOPE/$PROJECTNAME"
             }
             else {
+                #
+                # TODO - check package name to see if there is a scope
+                #
                 $NpmLocation = "$NPMREGISTRY/-/web/detail/$PROJECTNAME"
             }
         }
