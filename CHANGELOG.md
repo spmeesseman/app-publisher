@@ -1,5 +1,16 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.4.1 (May 28th, 2019)
+
+### Chores
+
+- v1.4.0 changelog correction from ap error
+
+### Bug Fixes
+
+- changelog is overwritten with new commits instead of being appended to
+- regression - version tag is broken in previous release
+
 ## Version 1.4.0 (May 28th, 2019)
 
 ### Build System
@@ -317,6 +328,4 @@
 ### Minor Features
 
 * output success/failure after writing version to file ([030d4a8](https://github.com/spmeesseman/app-publisher/commit/030d4a8))
-
-
 
