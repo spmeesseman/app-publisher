@@ -1952,7 +1952,7 @@ if ($COMMITS -eq $null -or $COMMITS.Length -eq 0)
 # If this is a legacy PJ versioned project, the verison obtained in the history will be
 # incremented by +1.
 #
-if ($VersionSystem = "semver")
+if ($VersionSystem -eq "semver")
 {
     #
     # use semver to retrieve next version
@@ -1969,7 +1969,7 @@ if ($VersionSystem = "semver")
         $VERSION = $CURRENTVERSION
     }
 }
-elseif ($VersionSystem = "incremental")
+elseif ($VersionSystem -eq "incremental")
 {
     #
     # Whole # incremental versioning, i.e. 100, 101, 102...
