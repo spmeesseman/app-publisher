@@ -1155,7 +1155,24 @@ function Check-ExitCode($ExitOnError = $false)
         Log-Message "Exit Code $LASTEXITCODE" "red"
         if ($ExitOnError -eq $true) {
             Vc-Revert
-            exit
+            exit $LASTEXITCODE
+        }
+    }
+}
+
+function Check-PsCmdSuccess($ExitOnError = $false)
+{
+    #
+    # Check script error code, 0 is success
+    #
+    if ($? -eq $true) {
+        Log-Message "Status True" "darkgreen"
+    }
+    else {
+        Log-Message "Status False" "red"
+        if ($ExitOnError -eq $true) {
+            Vc-Revert
+            exit 110
         }
     }
 }
@@ -1819,6 +1836,18 @@ Log-Message "   Text editor      : $TEXTEDITOR"
 Log-Message "   Version text     : $VERSIONTEXT"
 
 #
+# Get execution policy, this needs to be equlat  to 'RemoteSigned'
+#
+$ExecPolicy = Get-ExecutionPolicy
+if ($ExecPolicy -ne "RemoteSigned")
+{
+    Log-Message "The powershell execution policy must be set to 'RemoteSigned'" "red"
+    Log-Message "Run the following command in a powershell with elevated priveleges:" "red"
+    Log-Message "   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine" "red"
+    exit 90
+}
+
+#
 # Check valid params
 #
 if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and [string]::IsNullOrEmpty($PATHPREROOT)) {
@@ -2436,8 +2465,8 @@ if ($NPMRELEASE -eq "Y")
             $PackedFile = [Path]::Combine($PATHTODIST, "$PROJECTNAME.tgz")
             & npm pack
             Check-ExitCode
-            [System.Threading.Thread]::Sleep(500);
-            & cmd /c move /Y *-$PROJECTNAME-* $PackedFile
+            [System.Threading.Thread]::Sleep(100);
+            Move-Item  -Force *-$PROJECTNAME-* $PackedFile
             Check-ExitCode
         }
         #
