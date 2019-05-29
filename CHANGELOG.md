@@ -1,5 +1,39 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.4.2 (May 29th, 2019)
+
+### Build System
+
+- **ap:** set history file to empty for git test
+- **npm:** remove old json package, add new
+- **npm:** update npmrc
+
+### Chores
+
+- convert to lf linebreaks for node.json compatibility
+- pre 1.4.2 check in
+
+### Documentation
+
+- **readme:** edd info about setting powershell execution policy
+
+### Bug Fixes
+
+- an error is being thrown when publishing an application that uses non-semantic incremental versioning "version does not contain a method called Contains()"
+- any publish run after the 1st is using the new version created in the first run as the current version
+- apply cope name to package link in release email if not specified in publishrc but part of package name
+- erros on ps cmdlet calls are not checked properly, a faild copy or move results in a false success
+- for npm release, npm is being packed and attempt to copy to dist, when npmpackdist is Y but distrelease is N
+- if an external command fails and the publish is cleaned up and stopped, the main process is still return exit code 0
+- if npm registry is not specified in .publishrc, a dry-run publishes the npm package to registry.npm.org
+- package.json files are being converted to line feeds only without carriage returns with release on windows
+- version is not bumped in assemblyinfo.cs .net app releases when the app uses non-semantic incremental versioning
+
+### Code Refactoring
+
+- clean up the way the changelist is tracked, with new and existing files under vc
+- if ps script returns a non-zero return code, force node process to exit with same error code
+
 ## Version 1.4.1 (May 28th, 2019)
 
 ### Chores

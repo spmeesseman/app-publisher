@@ -427,3 +427,76 @@ May 28th, 2019
     Regression - The automatic version tag was broken in previous release.
 
 
+Version 1.4.2
+May 29th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Documentation:  README.md
+
+    Add info about setting powershell execution policy.  The following command
+    must be run with elevated privileges before running app-publisher for the 
+    first time:
+
+        Set-ExecutionPolicy -RemoteSigned
+
+2.  Bug Fix
+
+    An error is thrown when publishing an application that uses non-semantic 
+    incremental versioning:
+	
+        "Failed because [System.Int32] doesnt contain method named 'Contains'"
+
+3.  Bug Fix
+
+    Any publish run after the 1st is using the new version created in the first
+    run as the current version
+
+4.  Bug Fix
+
+    Regression - The package link in the release email is invalid (missing scope 
+    in url).
+
+5.  Bug Fix
+
+    Errors on ps cmdlet calls are not checked properly, i.e. a failed 'copy' or 
+    'move' results in a false success
+
+6.  Bug Fix
+
+    If an external command fails and the publish is cleaned up and stopped, the
+    main node process is still returning exit code 0.  
+
+    The node process will now exit with the same error code as is received from
+    the external command.
+
+7.  Bug Fix
+
+    For an NPM release, if the NPM registry is not specified in .publishrc, a 
+    dry-run publishes the npm package to https://registry.npm.org.
+
+8.  Bug Fix
+
+    Package.json files are being converted to line feeds only without carriage
+    returns during a publish run.
+
+9.  Bug Fix
+
+    The version is not bumped in assemblyinfo.cs .net app releases when the app
+    uses non-semantic incremental versioning.
+
