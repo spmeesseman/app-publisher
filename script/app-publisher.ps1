@@ -1336,6 +1336,7 @@ $DefaultRepoType = ""
 $DefaultHomePage = ""
 $DefaultBugs = ""
 $DefaultName = ""
+$DefaultScope = ""
 
 function Prepare-PackageJson()
 {
@@ -1405,12 +1406,17 @@ function Prepare-PackageJson()
     #
     # Scope/name - package.json
     #
+    Log-Message "Saving package name in package.json"
+    $script:DefaultName = & app-publisher-json -f package.json name
+    Check-ExitCode
+    Log-Message "Package name : $DefaultName"
+    if ($DefaultName.Contains("@") -and $DefaultName.Contains("/")) {
+        $script:DefaultScope = $DefaultName.Substring(0, $DefaultName.IndexOf("/"));
+        Log-Message "Package scope: $DefaultScope"
+    }
+
     if (![string]::IsNullOrEmpty($NPMSCOPE))
     {
-        Log-Message "Saving package name in package.json"
-        $script:DefaultName = & app-publisher-json -f package.json name
-        Check-ExitCode
-        Log-Message "Package name: $DefaultName"
         if (!$DefaultName.Contains($NPMSCOPE))
         {
             Log-Message "Setting package name in package.json: $NPMSCOPE/$PROJECTNAME"
@@ -1622,7 +1628,8 @@ function Edit-File($File, $SeekToEnd = $false)
             #
             # Wait for the notepad process to be closed by the user
             #
-            Wait-Process -Id $TextEditorProcess.Id
+            Wait-Process -Id $TextEditorProcess.Id | Out-Null
+            Check-PsCmdSuccess
         }
     }
 }
@@ -2479,6 +2486,32 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
     }
 }
 
+if ($DISTRELEASE -eq "Y" -or $NPMPACKDIST -eq "Y")
+{
+    $DistDirCreated = $false
+    #
+    # Create dist directory if it doesnt exist
+    #
+    if (!(Test-Path($PATHTODIST))) {
+        Log-Message "Creating dist directory" "magenta"
+        New-Item -Path "$PATHTODIST" -ItemType "directory" | Out-Null
+        Vc-Changelist-AddRemove "$PATHTODIST"
+        $DistDirCreated = $true
+    }
+    #
+    # Get whether or not dist dir is under vesion control, in some cases it may not be
+    #
+    $DistIsVersioned = Vc-IsVersioned($PATHTODIST)
+    #
+    #
+    #
+    if (!$DistDirCreated -and $DistIsVersioned) 
+    {
+        Vc-Changelist-Add "$PATHTODIST"
+        Vc-Changelist-AddMulti "$PATHTODIST"
+    }
+}
+
 #
 # Store location paths depending on publish typess
 #
@@ -2508,12 +2541,28 @@ if ($NPMRELEASE -eq "Y")
         #
         if ($NPMPACKDIST -eq "Y") 
         {
-            $PackedFile = [Path]::Combine($PATHTODIST, "$PROJECTNAME.tgz")
             & npm pack
             Check-ExitCode
+            $DestPackedFile = [Path]::Combine($PATHTODIST, "$PROJECTNAME.tgz")
             [System.Threading.Thread]::Sleep(100);
-            Move-Item  -Force *-$PROJECTNAME-* $PackedFile
-            Check-PsCmdSuccess
+             if (![string]::IsNullOrEmpty($NPMPSCOPE)) {
+                $TmpPkgFile = "$NPMPSCOPE-$PROJECTNAME-$VERSION.tgz".Substring(1)
+            }
+            elseif (![string]::IsNullOrEmpty($DefaultScope)) {
+                $TmpPkgFile = "$DefaultScope-$PROJECTNAME-$VERSION.tgz".Substring(1)
+            }
+            else {
+                $TmpPkgFile = "$PROJECTNAME-$VERSION.tgz"
+            }
+            #Move-Item  -Force "*$VERSION.*" $PackedFile
+            #Check-PsCmdSuccess
+            [System.Threading.Thread]::Sleep(500)
+            Log-Message "Moving package:"
+            Log-Message "   $TmpPkgFile"
+            Log-Message "To:"
+            Log-Message "   $DestPackedFile"
+            & cmd /c move /Y "$TmpPkgFile" "$DestPackedFile"
+            Check-ExitCode
         }
         #
         # Publish to npm server
@@ -2539,13 +2588,13 @@ if ($NPMRELEASE -eq "Y")
         #
         if (!$PublishFailed) 
         {
-            if (![string]::IsNullOrEmpty($NPMSCOPE)) { # VERDACCIO NPM server type URL
+            if (![string]::IsNullOrEmpty($NPMSCOPE)) {
                 $NpmLocation = "$NPMREGISTRY/-/web/detail/$NPMSCOPE/$PROJECTNAME"
             }
+            elseif (![string]::IsNullOrEmpty($DefaultScope)) {
+                $NpmLocation = "$NPMREGISTRY/-/web/detail/$DefaultScope/$PROJECTNAME"
+            }
             else {
-                #
-                # TODO - check package name to see if there is a scope
-                #
                 $NpmLocation = "$NPMREGISTRY/-/web/detail/$PROJECTNAME"
             }
         }
@@ -2598,28 +2647,6 @@ if ($GITHUBRELEASE -eq "Y")
 #
 if ($DISTRELEASE -eq "Y") 
 {
-    $DistDirCreated = $false
-    #
-    # Create dist directory if it doesnt exist
-    #
-    if (!(Test-Path($PATHTODIST))) {
-        Log-Message "Creating dist directory" "magenta"
-        New-Item -Path "$PATHTODIST" -ItemType "directory" | Out-Null
-        Vc-Changelist-AddRemove "$PATHTODIST"
-        $DistDirCreated = $true
-    }
-    #
-    # Get whether or not dist dir is under vesion control, in some cases it may not be
-    #
-    $DistIsVersioned = Vc-IsVersioned($PATHTODIST)
-    #
-    #
-    #
-    if (!$DistDirCreated -and $DistIsVersioned) 
-    {
-        Vc-Changelist-Add "$PATHTODIST"
-        Vc-Changelist-AddMulti "$PATHTODIST"
-    }
     #
     # Copy history file to dist directory
     #
