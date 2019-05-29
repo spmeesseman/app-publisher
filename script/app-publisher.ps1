@@ -2486,7 +2486,7 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
     }
 }
 
-if ($DISTRELEASE -eq "Y" -or $NPMPACKDIST -eq "Y")
+if ($DISTRELEASE -eq "Y")
 {
     $DistDirCreated = $false
     #
@@ -2539,7 +2539,7 @@ if ($NPMRELEASE -eq "Y")
         #
         # Pack tarball and mvoe to dist dir if specified
         #
-        if ($NPMPACKDIST -eq "Y") 
+        if ($NPMPACKDIST -eq "Y" -and $DISTRELEASE -eq "Y") 
         {
             & npm pack
             Check-ExitCode
