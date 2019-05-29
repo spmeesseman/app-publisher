@@ -1,5 +1,15 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.4.3 (May 29th, 2019)
+
+### Bug Fixes
+
+- **npm:** scope name is being replaced with npm username
+
+### Code Refactoring
+
+- remove crlf force on package.json, npm is complaining
+
 ## Version 1.4.2 (May 29th, 2019)
 
 ### Build System
