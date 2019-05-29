@@ -1359,7 +1359,7 @@ function Prepare-PackageJson()
         Log-Message "Repository: $DefaultRepo"
         # Set repo
         Log-Message "Setting repository in package.json: $REPO"
-        & app-publisher-json -I -4 -f package.json -e "this.repository.url='$REPO'"
+        & app-publisher-json -I -4 -f package.json --crlf -e "this.repository.url='$REPO'"
         Check-ExitCode
     }
 
@@ -1372,7 +1372,7 @@ function Prepare-PackageJson()
         Log-Message "Repository Type: $DefaultRepoType"
         # Set repo type
         Log-Message "Setting repository type in package.json: $REPOTYPE"
-        & app-publisher-json -I -4 -f package.json -e "this.repository.type='$REPOTYPE'"
+        & app-publisher-json -I -4 -f package.json --crlf -e "this.repository.type='$REPOTYPE'"
         Check-ExitCode
     }
 
@@ -1385,7 +1385,7 @@ function Prepare-PackageJson()
         Log-Message "Homepage: $DefaultHomePage"
         # Set homepage 
         Log-Message "Setting homepage in package.json: $HOMEPAGE"
-        & app-publisher-json -I -4 -f package.json -e "this.homepage='$HOMEPAGE'"
+        & app-publisher-json -I -4 -f package.json --crlf -e "this.homepage='$HOMEPAGE'"
         Check-ExitCode
     }
 
@@ -1398,7 +1398,7 @@ function Prepare-PackageJson()
         Log-Message "Bugs page: $DefaultBugs"
         # Set
         Log-Message "Setting bugs page in package.json: $BUGS"
-        & app-publisher-json -I -4 -f package.json -e "this.bugs.url='$BUGS'"
+        & app-publisher-json -I -4 -f package.json --crlf -e "this.bugs.url='$BUGS'"
         Check-ExitCode
     }
 
@@ -1414,12 +1414,12 @@ function Prepare-PackageJson()
         if (!$DefaultName.Contains($NPMSCOPE))
         {
             Log-Message "Setting package name in package.json: $NPMSCOPE/$PROJECTNAME"
-            & app-publisher-json -I -4 -f package.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
+            & app-publisher-json -I -4 -f package.json --crlf -e "this.name='$NPMSCOPE/$PROJECTNAME'"
             Check-ExitCode
             if ($LASTEXITCODE -ne 0) {
                 Log-Message "Setting package name in package.json failed, retrying"
                 [System.Threading.Thread]::Sleep(500)
-                & app-publisher-json -I -4 -f package.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
+                & app-publisher-json -I -4 -f package.json --crlf -e "this.name='$NPMSCOPE/$PROJECTNAME'"
                 Check-ExitCode
             }
             #
@@ -1469,7 +1469,7 @@ function Restore-PackageJson()
     if (![string]::IsNullOrEmpty($DefaultRepo))
     {
         Log-Message "Re-setting default repository in package.json: $DefaultRepo"
-        & app-publisher-json -I -4 -f package.json -e "this.repository.url='$DefaultRepo'"
+        & app-publisher-json -I -4 -f package.json --crlf -e "this.repository.url='$DefaultRepo'"
         Check-ExitCode
     }
     #
@@ -1478,7 +1478,7 @@ function Restore-PackageJson()
     if (![string]::IsNullOrEmpty($DefaultRepoType))
     {
         Log-Message "Re-setting default repository type in package.json: $DefaultRepoType"
-        & app-publisher-json -I -4 -f package.json -e "this.repository.type='$DefaultRepoType'"
+        & app-publisher-json -I -4 -f package.json --crlf -e "this.repository.type='$DefaultRepoType'"
         Check-ExitCode
     }
     #
@@ -1487,7 +1487,7 @@ function Restore-PackageJson()
     if (![string]::IsNullOrEmpty($DefaultBugs))
     {
         Log-Message "Re-setting default bugs page in package.json: $DefaultBugs"
-        & app-publisher-json -I -4 -f package.json -e "this.bugs.url='$DefaultBugs'"
+        & app-publisher-json -I -4 -f package.json --crlf -e "this.bugs.url='$DefaultBugs'"
         Check-ExitCode
     }
     #
@@ -1496,7 +1496,7 @@ function Restore-PackageJson()
     if (![string]::IsNullOrEmpty($DefaultHomePage))
     {
         Log-Message "Re-setting default homepage in package.json: $DefaultHomePage"
-        & app-publisher-json -I -4 -f package.json -e "this.homepage='$DefaultHomePage'"
+        & app-publisher-json -I -4 -f package.json --crlf -e "this.homepage='$DefaultHomePage'"
         Check-ExitCode
     }
     #
@@ -1505,7 +1505,7 @@ function Restore-PackageJson()
     if (![string]::IsNullOrEmpty($NPMSCOPE) -and !$DefaultName.Contains($NPMSCOPE))
     {
         Log-Message "Re-setting default package name in package.json: $DefaultName"
-        & app-publisher-json -I -4 -f package.json -e "this.name='$DefaultName'"
+        & app-publisher-json -I -4 -f package.json --crlf -e "this.name='$DefaultName'"
         Check-ExitCode
         #
         # Scope - package-lock.json
