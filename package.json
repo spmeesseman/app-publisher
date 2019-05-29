@@ -16,13 +16,13 @@
         "url": "https://github.com/spmeesseman/app-publisher.git"
     },
     "dependencies": {
+        "@spmeesseman/json": "^9.1.1",
         "@types/gradient-string": "^1.1.0",
         "@types/shelljs": "^0.8.5",
         "argparse": "^1.0.10",
         "chalk": "^2.4.2",
         "conventional-changelog-spm": "^1.2.3",
         "gradient-string": "^1.2.0",
-        "json": "^9.0.6",
         "jsonc-parser": "^2.1.0",
         "minimatch": "^3.0.4"
     },
@@ -56,7 +56,7 @@
     "main": "./build/index.js",
     "bin": {
         "app-publisher": "./build/index.js",
-        "app-publisher-json": "./node_modules/json/lib/json.js"
+        "app-publisher-json": "./node_modules/@spmeesseman/json/lib/json.js"
     },
     "files": [
         "build/*.js",
