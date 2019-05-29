@@ -56,7 +56,8 @@
     "main": "./build/index.js",
     "bin": {
         "app-publisher": "./build/index.js",
-        "app-publisher-json": "./node_modules/@spmeesseman/json/lib/json.js"
+        "app-publisher-json": "./node_modules/@spmeesseman/json/lib/json.js",
+        "app-publisher-marked": "./node_modules/marked/lib/marked.js"
     },
     "files": [
         "build/*.js",
