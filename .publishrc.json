@@ -55,6 +55,7 @@
         "npmRegistry":   "https://npm.development.pjats.com",
         "textEditor":    "",
         "npmScope":      "@perryjohnson",
+        "historyFile":   "",
         "githubRelease": "N",
         "distRelease":   "Y",
         "emailNotification": "Y"
