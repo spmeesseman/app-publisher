@@ -239,6 +239,11 @@ class Vc
             $TagPre = "$TagPrefix-v"
         }
 
+        Log-Message "   Repo type      :  $RepoType"
+        Log-Message "   Repo           :  $Repo"
+        Log-Message "   CurrentVersion :  $CurrentVersion"
+        Log-Message "   TagPrefix      :  $TagPrefix"
+
         if ($RepoType -eq "svn")
         {
             Log-Message "Retrieving most recent tag"
@@ -302,6 +307,7 @@ class Vc
         }
         elseif ($RepoType -eq "git")
         {
+            Log-Message "Loggind commits since last version tag"
             # Issue GIT log command
             #
             $GitOut = & git log $TagPre$CurrentVersion..HEAD --pretty=format:"%s"
@@ -310,6 +316,7 @@ class Vc
             }
             else {
                 Log-Message "No commits found or no version tag exists" "red"
+                Log-Message "Git Output: $GitOut" "red"
                 return $comments
             }
         }
@@ -782,6 +789,10 @@ $ClsVc = New-Object -TypeName Vc
 function Log-Message($msg, $color, $noTag = $false)
 {
     $msgTag = ""
+
+    if ([string]::IsNullOrEmpty($msg)) {
+        return
+    }
 
     if (![string]::IsNullOrEmpty($msg.Trim()) -and !$noTag) {
         write-host -NoNewline "ap "
@@ -2012,480 +2023,486 @@ if ($CURRENTVERSION -eq "") {
     exit 131
 }
 
-Log-Message "The current version is $CURRENTVERSION"
-
-#
-# Get commit messages since last version
-#
-# The previous version tag in the form 'vX.X.X' must exist in svn/projectroot/tags in
-# order to successfully obtain the latest commit messages.  If it does not exist, the
-# most current tag will be used
-#
-$COMMITS = $ClsVc.getCommits($_RepoType, $_Repo, $CURRENTVERSION, $VCTAGPREFIX)
-#
-# Check to ensure we got commits since last version.  If not, prompt user whether or
-# not to proceed, since technically the first time this script is used, we don't know
-# how to retrieve the latest commits
-#
-if ($COMMITS -eq $null -or $COMMITS.Length -eq 0) 
-{
-    Log-Message "Commits since the last version or the version tag could not be found"
-    $Proceed = read-host -prompt "Proceed anyway? Y[N]"
-    if ($Proceed.ToUpper() -ne "Y") {
-        Log-Message "User cancelled process, exiting" "red"
-        exit 0
-    }
-}
-
-#
-# Calculate next version number
-#
-# If this is an NPM project, we use node to determine the current version in package.json
-# For all other project types, we parse the history file for the current version.
-#
-# Currently projects are versioned in one of two ways:
-#
-#     1. Legacy PJ version (100, 101, 102)
-#     2. Semantically versioned (major.minor.patch)
-#
-# If this is a semantically versioned project (whether the version was obtained via node or 
-# history file parsing), we will use semver to calculate the next version if possible.  If 
-# semver is not available, prompt user for next version number.
-#
-# If this is a legacy PJ versioned project, the verison obtained in the history will be
-# incremented by +1.
-#
-$VersionInteractive = "N"
-#
-if ($VersionSystem -eq "semver")
-{
-    #
-    # use semver to retrieve next version
-    # Analyze the commits to determine major, minor, patch release
-    #
-    $RELEASELEVEL = $ClsCommitAnalyzer.get($COMMITS)
-    #
-    # Get next version
-    #
-    if ($RUN -eq 1 -or $TESTMODE -eq "Y") {
-        $VERSION = & node -e "console.log(require('semver').inc('$CURRENTVERSION', '$RELEASELEVEL'));"
-    }
-    else {
-        $VERSION = $CURRENTVERSION
-    }
-}
-elseif ($VersionSystem -eq "incremental")
-{
-    #
-    # Whole # incremental versioning, i.e. 100, 101, 102...
-    #
-    Log-Message "Using legacy PJ versioning"
-    if ($RUN -eq 1 -or $TESTMODE -eq "Y") {
-        try {
-            $VERSION = ([System.Int32]::Parse($CURRENTVERSION) + 1).ToString()
-        }
-        catch {
-            $VERSION = ""
-        }
-    }
-    else {
-        $VERSION = $CURRENTVERSION
-    }
-}
-#
-# If version could not be found, then prompt for version 
-#
-if (![string]::IsNullOrEmpty($VERSION)) 
-{
-    Log-Message "The suggested new version is $VERSION"
-}
-else 
-{
-    Log-Message "New version could not be determined, you must manually input the new version"
-    $VersionInteractive = "Y"
-}
-if ($INTERACTIVE -eq "Y" -or $VersionInteractive -eq "Y") 
-{
-    Log-Message "Enter the new version"
-    $NewVersion = read-host -prompt "Enter the version #, or C to cancel [$VERSION]"
-    if ($NewVersion.ToUpper() -eq "C") {
-        Log-Message "User cancelled process, exiting" "red"
-        exit 0
-    }
-    if (![string]::IsNullOrEmpty($NewVersion)) {
-        $VERSION = $NewVersion
-    }
-}
-
-if ([string]::IsNullOrEmpty($VERSION)) {
-    Log-Message "Invalid version for release, exiting" "red"
-    exit 133
-}
 
 #
 # Certain tasks only need to be done once if there are multiple publish runs configured to run.
-# If running in test mode, changes in each run are reverted, so treat every run like the 1st
 #
 # These tasks include:
 #
 #     1. Get commit comments since last version tag
-#     2. Populate and edit history text file
-#     3. Populate and edit changelog markdown file
+#     2. Calculate the new version (it has already been set in all version files in 1st run)
+#     3. Populate and edit history text file
+#     4. Populate and edit changelog markdown file
 #
-if ($RUN -eq 1 -or $TESTMODE -eq "Y")
+if ($RUN -eq 1 -or $TESTMODE -eq "Y") 
 {
+    Log-Message "The current version is $CURRENTVERSION"
     #
-    # Get formatted date in the form:
+    # Get commit messages since last version
     #
-    #     May 6th, 1974
-    #     October 3rd, 2003
+    # The previous version tag in the form 'vX.X.X' must exist in svn/projectroot/tags in
+    # order to successfully obtain the latest commit messages.  If it does not exist, the
+    # most current tag will be used
     #
-    if ($TDATE -eq "") {
-        $date = Get-Date
-        $Day = $date.Day.ToString()
-        $Month = get-date -format "MMMM"
-        $Year = get-date -format "yyyy"
-        switch ($Day[$Day.Length - 1]) 
-        {
-            "1" { $Day = "${Day}st"; break }
-            "2" { $Day = "${Day}nd"; break }
-            "3" { $Day = "${Day}rd"; break }
-            default { $Day = "${Day}th"; break }
+    $COMMITS = $ClsVc.getCommits($_RepoType, $_Repo, $CURRENTVERSION, $VCTAGPREFIX)
+    #
+    # Check to ensure we got commits since last version.  If not, prompt user whether or
+    # not to proceed, since technically the first time this script is used, we don't know
+    # how to retrieve the latest commits
+    #
+    if ($COMMITS -eq $null -or $COMMITS.Length -eq 0) 
+    {
+        Log-Message "Commits since the last version or the version tag could not be found"
+        $Proceed = read-host -prompt "Proceed anyway? Y[N]"
+        if ($Proceed.ToUpper() -ne "Y") {
+            Log-Message "User cancelled process, exiting" "red"
+            exit 0
         }
-        $TDATE = "$Month $Day, $Year"
     }
 
     #
-    # Output some calculated info to console
+    # Calculate next version number
     #
-    Log-Message "Current Version     : $CURRENTVERSION"
-    Log-Message "Next Version        : $VERSION"
-    Log-Message "Date                : $TDATE"
-
+    # If this is an NPM project, we use node to determine the current version in package.json
+    # For all other project types, we parse the history file for the current version.
     #
-    # Process $HISTORYFILE
+    # Currently projects are versioned in one of two ways:
     #
-    if (![string]::IsNullOrEmpty($HISTORYFILE))
+    #     1. Legacy PJ version (100, 101, 102)
+    #     2. Semantically versioned (major.minor.patch)
+    #
+    # If this is a semantically versioned project (whether the version was obtained via node or 
+    # history file parsing), we will use semver to calculate the next version if possible.  If 
+    # semver is not available, prompt user for next version number.
+    #
+    # If this is a legacy PJ versioned project, the verison obtained in the history will be
+    # incremented by +1.
+    #
+    $VersionInteractive = "N"
+    #
+    if ($VersionSystem -eq "semver")
     {
         #
-        # If history file doesnt exist, create one with the project name as a title
+        # use semver to retrieve next version
+        # Analyze the commits to determine major, minor, patch release
         #
-        $HistoryPath = Split-Path "$HISTORYFILE"
-        if ($HistoryPath -ne "" -and !(Test-Path($HistoryPath))) 
-        {
-            Log-Message "Creating history file directory and adding to version control" "magenta"
-            New-Item -ItemType "directory" -Path "$HistoryPath" | Out-Null
-            Vc-Changelist-AddNew "$HistoryPath"
-            Vc-Changelist-AddRemove "$HistoryPath"
-            Vc-Changelist-Add "$HistoryPath"
-        }
-        if (!(Test-Path($HISTORYFILE))) 
-        {
-            Log-Message "Creating new history file and adding to version control" "magenta"
-            New-Item -ItemType "file" -Path "$HISTORYFILE" -Value "$PROJECTNAME`r`n`r`n" | Out-Null
-            Vc-Changelist-AddRemove "$HISTORYFILE"
-            Vc-Changelist-AddNew $HISTORYFILE
-        }
-        if (!(Test-Path($HISTORYFILE))) 
-        {
-            Log-Message "Could not create history file, exiting" "red"
-            exit 140;
-        }
-        if ($CURRENTVERSION -ne $VERSION )
-        {
-            $TmpCommits = $ClsHistoryFile.createSectionFromCommits($COMMITS, $HISTORYLINELEN)
-
-            Log-Message "Preparing history file"
-            #
-            # Touch history file with the latest version info, either update existing, or create 
-            # a new one if it doesnt exist
-            #
-            # Add lines 'version', 'date', then the header content
-            #                         
-            Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n"                        #
-            Add-Content -NoNewline -Path $HISTORYFILE -Value "$VERSIONTEXT $VERSION`r`n"   # Version x.y.z
-            Add-Content -NoNewline -Path $HISTORYFILE -Value "$TDATE`r`n"                  # May 9, 2019
-            if (Test-Path($HISTORYHDRFILE)) 
-            {
-                $HISTORYHDRFILE = Get-Content $HISTORYHDRFILE -Raw 
-                Add-Content -NoNewline -Path $HISTORYFILE -Value $HISTORYHDRFILE
-            }
-            else {   
-                Log-Message "History header template not found" "darkyellow"
-                Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n"  
-            }                                                      
-            Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n"
-            #
-            # Format the commit messages before adding to the hostory file
-            #
-            $TmpCommits = $TmpCommits.Replace("`n`n", "`r`n`r`n")
-            #
-            # Replace commit tags with full text (non-scoped)
-            #
-            # Commit tags should be at the start of the commit message.
-            #
-            # Examples of commit tags:
-            #
-            #     feat: add internet explorer support
-            #
-            $TmpCommits = $TmpCommits.Replace("build: ", "Build System`r`n`r`n    ")
-            $TmpCommits = $TmpCommits.Replace("chore: ", "Chore`r`n`r`n    ")
-            $TmpCommits = $TmpCommits.Replace("docs: ", "Documentation`r`n`r`n    ")
-            $TmpCommits = $TmpCommits.Replace("feat: ", "Feature`r`n`r`n    ")
-            $TmpCommits = $TmpCommits.Replace("featmin: ", "Minor Feature`r`n`r`n    ")
-            $TmpCommits = $TmpCommits.Replace("minfeat: ", "Minor Feature`r`n`r`n    ")
-            $TmpCommits = $TmpCommits.Replace("fix: ", "Bug Fix`r`n`r`n    ")
-            $TmpCommits = $TmpCommits.Replace("perf: ", "Performance Enhancement`r`n`r`n    ")
-            $TmpCommits = $TmpCommits.Replace("refactor: ", "Code Refactoring`r`n`r`n    ")
-            $TmpCommits = $TmpCommits.Replace("style: ", "Code Styling`r`n`r`n    ")
-            $TmpCommits = $TmpCommits.Replace("test: ", "Tests`r`n`r`n    ")
-            $TmpCommits = $TmpCommits.Replace("project: ", "Project Structure`r`n`r`n    ")
-            $TmpCommits = $TmpCommits.Replace("layout: ", "Layout`r`n`r`n    ")
-            #
-            # Replace commit tags with full text (scoped)
-            #
-            # A tag can be scoped, for example:
-            #
-            #     fix(footpedal): pressing multiple buttons at same time breaks audio player
-            #
-            $TmpCommits = $TmpCommits.Replace("build(", "Build System(")
-            $TmpCommits = $TmpCommits.Replace("chore(", "Chore(")
-            $TmpCommits = $TmpCommits.Replace("docs(", "Documentation(")
-            $TmpCommits = $TmpCommits.Replace("feat(", "Feature(")
-            $TmpCommits = $TmpCommits.Replace("featmin(", "Minor Feature(")
-            $TmpCommits = $TmpCommits.Replace("minfeat(", "Minor Feature(")
-            $TmpCommits = $TmpCommits.Replace("fix(", "Bug Fix(")
-            $TmpCommits = $TmpCommits.Replace("perf(", "Performance Enhancement(")
-            $TmpCommits = $TmpCommits.Replace("refactor(", "Code Refactoring(")
-            $TmpCommits = $TmpCommits.Replace("project(", "Project Structure(")
-            $TmpCommits = $TmpCommits.Replace("test(", "Tests(")
-            $TmpCommits = $TmpCommits.Replace("style(", "Code Styling(")
-            $TmpCommits = $TmpCommits.Replace("layout(", "Layout(")
-            #
-            # Take any parenthesized scopes, remove the prenthesis and line break the message
-            # that follows
-            #
-            [Match] $match = [Regex]::Match($TmpCommits, "[(][a-z\- A-Z]*[)]\s*[:][ ]");
-            while ($match.Success) {
-                $NewText = $match.Value.Replace("(", "")
-                $NewText = $NewText.Replace(")", "")
-                $NewText = $NewText.Replace(": ", "")
-                $TmpCommits = $TmpCommits.Replace($match.Value, ":  $NewText`r`n`r`n    ")
-                $match = $match.NextMatch()
-            }
-            #
-            # Typically when writing the commit messages lowercase is used.  Capitalize the first 
-            # letter following the commit message tag
-            #
-            [Match] $match = [Regex]::Match($TmpCommits, "[\r\n]{2}\s*[a-z]");
-            while ($match.Success) {
-                if ($match.Value.Contains("`r`n`r`n")) { # ps regex is buggy on [\r\n]{2}
-                    $TmpCommits = $TmpCommits.Replace($match.Value, $match.Value.ToUpper())
-                }
-                $match = $match.NextMatch()
-            }
-            #
-            # Use two new lines after new section
-            #
-            if (!$TmpCommits.EndsWith("`r`n`r`n")) {
-                $TmpCommits = $TmpCommits + "`r`n";
-            }
-            #
-            # Perform spell checking (currently the projectoxford has been taken down after the
-            # Microsoft deal with the facial rec api)
-            #
-            #$TmpCommits = CheckSpelling $TmpCommits $false
-            #
-            # Write the formatted commits text to $HISTORYFILE
-            # Formatted commits are also contained in the temp text file $Env:TEMP\history.txt
-            # Replace all newline pairs with cr/nl pairs as SVN will have sent commit comments back
-            # with newlines only
-            #
-            [System.Threading.Thread]::Sleep(500);
-            Add-Content $HISTORYFILE $TmpCommits
+        $RELEASELEVEL = $ClsCommitAnalyzer.get($COMMITS)
+        #
+        # Get next version
+        #
+        if ($RUN -eq 1 -or $TESTMODE -eq "Y") {
+            $VERSION = & node -e "console.log(require('semver').inc('$CURRENTVERSION', '$RELEASELEVEL'));"
         }
         else {
-            Log-Message "Version match, not touching history file" "darkyellow"
+            $VERSION = $CURRENTVERSION
         }
+    }
+    elseif ($VersionSystem -eq "incremental")
+    {
         #
-        # Add to changelist for scm check in.  This would be the first file modified so just
-        # set changelist equal to history file
+        # Whole # incremental versioning, i.e. 100, 101, 102...
         #
-        Vc-Changelist-Add $HISTORYFILE
-        #
-        # Allow manual modifications to history file
-        #
-        Edit-File $HISTORYFILE $true
+        Log-Message "Using legacy PJ versioning"
+        if ($RUN -eq 1 -or $TESTMODE -eq "Y") {
+            try {
+                $VERSION = ([System.Int32]::Parse($CURRENTVERSION) + 1).ToString()
+            }
+            catch {
+                $VERSION = ""
+            }
+        }
+        else {
+            $VERSION = $CURRENTVERSION
+        }
+    }
+    #
+    # If version could not be found, then prompt for version 
+    #
+    if (![string]::IsNullOrEmpty($VERSION)) 
+    {
+        Log-Message "The suggested new version is $VERSION"
+    }
+    else 
+    {
+        Log-Message "New version could not be determined, you must manually input the new version"
+        $VersionInteractive = "Y"
+    }
+    if ($INTERACTIVE -eq "Y" -or $VersionInteractive -eq "Y") 
+    {
+        Log-Message "Enter the new version"
+        $NewVersion = read-host -prompt "Enter the version #, or C to cancel [$VERSION]"
+        if ($NewVersion.ToUpper() -eq "C") {
+            Log-Message "User cancelled process, exiting" "red"
+            exit 0
+        }
+        if (![string]::IsNullOrEmpty($NewVersion)) {
+            $VERSION = $NewVersion
+        }
     }
 
-    #
-    # Process $CHANGELOGFILE
-    #
-    if (![string]::IsNullOrEmpty($CHANGELOGFILE))
-    {
-        #
-        # If changelog markdown file doesnt exist, create one with the project name as a title
-        #
-        $NewChangelog = $false
-        $ChangeLogPath = Split-Path "$CHANGELOGFILE"
-        if ($ChangeLogPath -ne "" -and !(Test-Path($ChangeLogPath))) 
-        {
-            Log-Message "Creating changelog file directory and adding to version control" "magenta"
-            New-Item -ItemType "directory" -Path "$ChangeLogPath" | Out-Null
-            Vc-Changelist-AddNew "$ChangeLogPath"
-            Vc-Changelist-AddRemove "$ChangeLogPath"
-            Vc-Changelist-Add "$ChangeLogPath"
-        }
-        if (!(Test-Path($CHANGELOGFILE))) 
-        {
-            Log-Message "Creating new changelog file and adding to version control" "magenta"
-            New-Item -ItemType "file" -Path "$CHANGELOGFILE" -Value "$ChangeLogTitle`r`n`r`n" | Out-Null
-            Vc-Changelist-AddRemove $CHANGELOGFILE
-            Vc-Changelist-AddNew $CHANGELOGFILE
-            $NewChangelog = $true
-        }
-        if (!(Test-Path($CHANGELOGFILE))) 
-        {
-            Vc-Revert
-            Log-Message "Could not create changelog file, exiting" "red"
-            exit 141
-        }
-
-        if ($CURRENTVERSION -ne $VERSION)
-        {
-            $TmpCommits = ""
-            $LastSection = ""
-            $Sectionless = @()
-            $ChangeLogTitle = "# $PROJECTNAME Change Log".ToUpper()
-
-            Log-Message "Preparing changelog file"
-            #
-            # Touch changelog file with the latest commits
-            #
-            # Add lines 'version', 'date', then the header content
-            #  
-            if (!$NewChangelog) {                       
-                $TmpCommits = "`r`n"
-            }
-            $TmpCommits += "## $VERSIONTEXT $VERSION ($TDATE)`r`n"
-            #
-            # Loop through the commits and build the markdown for appending to the changelog
-            #
-            foreach ($Commit in $COMMITS)
-            {
-                $Scope = ""
-                $TmpCommit = $Commit.Trim();
-                $TmpCommit = $TmpCommit.Replace("`n", "`r`n")
-                $idx1 = $TmpCommit.IndexOf("(")
-                $idx2 = $TmpCommit.IndexOf(':')
-                #
-                # If there is no subject, then store the message in an array to process after
-                # all of the commits with subject headers are processed.
-                #
-                # If the subject contains a scope, for example:
-                #
-                #     docs(readme)
-                #
-                # Then extract "readme" as the scope, and "docs" as the subject
-                #
-                if ($idx2 -eq -1) {
-                    $Sectionless += $Commit
-                    continue
-                }
-                elseif ($idx1 -ne -1 -and $idx1 -lt $idx2) {
-                    $Section = $TmpCommit.SubString(0, $idx1).TrimEnd()
-                    $Scope = $TmpCommit.SubString($idx1 + 1, $TmpCommit.IndexOf(")") - $idx1 - 1).Trim()
-                }
-                else {
-                    $Section = $TmpCommit.SubString(0, $idx2).TrimEnd();
-                }
-                $TmpCommit = $TmpCommit.SubString($idx2 + 1).Trim()
-                #
-                # Print out the subject as a title if it is different than the previous sections
-                # title.  Comments are alphabetized.
-                #
-                if ($Section -ne $LastSection) {
-                    $TmpSection = $ClsCommitAnalyzer.getFormatted($Section)
-                    $TmpCommits += "`r`n### $TmpSection`r`n`r`n"
-                }
-                #
-                # Start the comment list item, add scope in bold if necessary
-                #
-                $TmpCommits += "- ";
-                if ($Scope -ne "") {
-                    $TmpCommits += "**$Scope`:** "
-                }
-                #
-                # FOr multi-line comments, do some special processing
-                #
-                if ($TmpCommit.Contains("`r`n"))
-                {
-                    $TmpCommitParts = $TmpCommit.Split("`r`n");
-                    $TmpCommits += $TmpCommitParts[0]
-                    for ($i = 1; $i -lt $TmpCommitParts.Length; $i++)
-                    {
-                        if ($TmpCommitParts[$i] -eq "") {
-                            continue
-                        }
-                        $TmpCommits += "`r`n`r`n`t$($TmpCommitParts[$i])`r`n"
-                    }
-                    $TmpCommits += "`r`n"
-                }
-                else {
-                    $TmpCommits += "$TmpCommit`r`n"
-                }
-                #
-                # Record last subject, we only print the subject when it differes from previous
-                #
-                $LastSection = $Section
-            }
-            #
-            # Add any commits that did not contain a conventional commit subject
-            #
-            if ($Sectionless.Length -gt 0)
-            {
-                $TmpCommits += "`r`n### Other Notes`r`n`r`n"
-                foreach ($Commit in $Sectionless)
-                {
-                    $TmpCommits += "- $TmpCommit`r`n";
-                }
-            }
-            #
-            # Perform spell checking (currently the projectoxford has been taken down after the
-            # Microsoft deal with the facial rec api)
-            #
-            #$TmpCommits = CheckSpelling $TmpCommits $false
-            #
-            # Write the formatted commits text to the top of $CHANGELOGFILE, but underneath the
-            # changelog title
-            #
-            $TmpCommits = $TmpCommits.Trim();
-            $ChangeLogContents = Get-Content $CHANGELOGFILE | Out-String
-            $ChangeLogContents = $ChangeLogContents.Replace("$ChangeLogTitle", "").Trim();
-            $ChangeLogFinal = "$ChangeLogTitle`r`n`r`n"
-            if (![string]::IsNullOrEmpty($TmpCommits)) {
-                $ChangeLogFinal = "$ChangeLogFinal$TmpCommits`r`n`r`n"
-            }
-            if (![string]::IsNullOrEmpty($ChangeLogContents)) {
-                $ChangeLogFinal = "$ChangeLogFinal$ChangeLogContents`r`n"
-            }
-            Set-Content $CHANGELOGFILE $ChangeLogFinal
-        }
-        else {
-            Log-Message "Version match, not touching changelog file" "darkyellow"
-        }
-        #
-        # Allow manual modifications to changelog file
-        #
-        Edit-File $CHANGELOGFILE
-        #
-        # Add to changelist for svn check in.  This would be the first file modified so just
-        # set changelist equal to history file
-        #
-        Vc-Changelist-Add $CHANGELOGFILE
+    if ([string]::IsNullOrEmpty($VERSION)) {
+        Log-Message "Invalid version for release, exiting" "red"
+        exit 133
     }
 }
+else 
+{
+    $VERSION = $CURRENTVERSION
+    Log-Message "This is pulish run #$RUN, the current version $CURRENTVERSION is also the new version" "magenta"
+}
 
+#
+# Get formatted date in the form:
+#
+#     May 6th, 1974
+#     October 3rd, 2003
+#
+if ($TDATE -eq "") {
+    $date = Get-Date
+    $Day = $date.Day.ToString()
+    $Month = get-date -format "MMMM"
+    $Year = get-date -format "yyyy"
+    switch ($Day[$Day.Length - 1]) 
+    {
+        "1" { $Day = "${Day}st"; break }
+        "2" { $Day = "${Day}nd"; break }
+        "3" { $Day = "${Day}rd"; break }
+        default { $Day = "${Day}th"; break }
+    }
+    $TDATE = "$Month $Day, $Year"
+}
+
+#
+# Output some calculated info to console
+#
+Log-Message "Current Version     : $CURRENTVERSION"
+Log-Message "Next Version        : $VERSION"
+Log-Message "Date                : $TDATE"
+
+#
+# Process $HISTORYFILE
+#
+if (![string]::IsNullOrEmpty($HISTORYFILE))
+{
+    #
+    # If history file doesnt exist, create one with the project name as a title
+    #
+    $HistoryPath = Split-Path "$HISTORYFILE"
+    if ($HistoryPath -ne "" -and !(Test-Path($HistoryPath))) 
+    {
+        Log-Message "Creating history file directory and adding to version control" "magenta"
+        New-Item -ItemType "directory" -Path "$HistoryPath" | Out-Null
+        Vc-Changelist-AddNew "$HistoryPath"
+        Vc-Changelist-AddRemove "$HistoryPath"
+        Vc-Changelist-Add "$HistoryPath"
+    }
+    if (!(Test-Path($HISTORYFILE))) 
+    {
+        Log-Message "Creating new history file and adding to version control" "magenta"
+        New-Item -ItemType "file" -Path "$HISTORYFILE" -Value "$PROJECTNAME`r`n`r`n" | Out-Null
+        Vc-Changelist-AddRemove "$HISTORYFILE"
+        Vc-Changelist-AddNew $HISTORYFILE
+    }
+    if (!(Test-Path($HISTORYFILE))) 
+    {
+        Log-Message "Could not create history file, exiting" "red"
+        exit 140;
+    }
+    if ($CURRENTVERSION -ne $VERSION -and ($RUN -eq 1 -or $TESTMODE -eq "Y"))
+    {
+        $TmpCommits = $ClsHistoryFile.createSectionFromCommits($COMMITS, $HISTORYLINELEN)
+
+        Log-Message "Preparing history file"
+        #
+        # Touch history file with the latest version info, either update existing, or create 
+        # a new one if it doesnt exist
+        #
+        # Add lines 'version', 'date', then the header content
+        #                         
+        Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n"                        #
+        Add-Content -NoNewline -Path $HISTORYFILE -Value "$VERSIONTEXT $VERSION`r`n"   # Version x.y.z
+        Add-Content -NoNewline -Path $HISTORYFILE -Value "$TDATE`r`n"                  # May 9, 2019
+        if (Test-Path($HISTORYHDRFILE)) 
+        {
+            $HISTORYHDRFILE = Get-Content $HISTORYHDRFILE -Raw 
+            Add-Content -NoNewline -Path $HISTORYFILE -Value $HISTORYHDRFILE
+        }
+        else {   
+            Log-Message "History header template not found" "darkyellow"
+            Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n"  
+        }                                                      
+        Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n"
+        #
+        # Format the commit messages before adding to the hostory file
+        #
+        $TmpCommits = $TmpCommits.Replace("`n`n", "`r`n`r`n")
+        #
+        # Replace commit tags with full text (non-scoped)
+        #
+        # Commit tags should be at the start of the commit message.
+        #
+        # Examples of commit tags:
+        #
+        #     feat: add internet explorer support
+        #
+        $TmpCommits = $TmpCommits.Replace("build: ", "Build System`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("chore: ", "Chore`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("docs: ", "Documentation`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("feat: ", "Feature`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("featmin: ", "Minor Feature`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("minfeat: ", "Minor Feature`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("fix: ", "Bug Fix`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("perf: ", "Performance Enhancement`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("refactor: ", "Code Refactoring`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("style: ", "Code Styling`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("test: ", "Tests`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("project: ", "Project Structure`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("layout: ", "Layout`r`n`r`n    ")
+        #
+        # Replace commit tags with full text (scoped)
+        #
+        # A tag can be scoped, for example:
+        #
+        #     fix(footpedal): pressing multiple buttons at same time breaks audio player
+        #
+        $TmpCommits = $TmpCommits.Replace("build(", "Build System(")
+        $TmpCommits = $TmpCommits.Replace("chore(", "Chore(")
+        $TmpCommits = $TmpCommits.Replace("docs(", "Documentation(")
+        $TmpCommits = $TmpCommits.Replace("feat(", "Feature(")
+        $TmpCommits = $TmpCommits.Replace("featmin(", "Minor Feature(")
+        $TmpCommits = $TmpCommits.Replace("minfeat(", "Minor Feature(")
+        $TmpCommits = $TmpCommits.Replace("fix(", "Bug Fix(")
+        $TmpCommits = $TmpCommits.Replace("perf(", "Performance Enhancement(")
+        $TmpCommits = $TmpCommits.Replace("refactor(", "Code Refactoring(")
+        $TmpCommits = $TmpCommits.Replace("project(", "Project Structure(")
+        $TmpCommits = $TmpCommits.Replace("test(", "Tests(")
+        $TmpCommits = $TmpCommits.Replace("style(", "Code Styling(")
+        $TmpCommits = $TmpCommits.Replace("layout(", "Layout(")
+        #
+        # Take any parenthesized scopes, remove the prenthesis and line break the message
+        # that follows
+        #
+        [Match] $match = [Regex]::Match($TmpCommits, "[(][a-z\- A-Z]*[)]\s*[:][ ]");
+        while ($match.Success) {
+            $NewText = $match.Value.Replace("(", "")
+            $NewText = $NewText.Replace(")", "")
+            $NewText = $NewText.Replace(": ", "")
+            $TmpCommits = $TmpCommits.Replace($match.Value, ":  $NewText`r`n`r`n    ")
+            $match = $match.NextMatch()
+        }
+        #
+        # Typically when writing the commit messages lowercase is used.  Capitalize the first 
+        # letter following the commit message tag
+        #
+        [Match] $match = [Regex]::Match($TmpCommits, "[\r\n]{2}\s*[a-z]");
+        while ($match.Success) {
+            if ($match.Value.Contains("`r`n`r`n")) { # ps regex is buggy on [\r\n]{2}
+                $TmpCommits = $TmpCommits.Replace($match.Value, $match.Value.ToUpper())
+            }
+            $match = $match.NextMatch()
+        }
+        #
+        # Use two new lines after new section
+        #
+        if (!$TmpCommits.EndsWith("`r`n`r`n")) {
+            $TmpCommits = $TmpCommits + "`r`n";
+        }
+        #
+        # Perform spell checking (currently the projectoxford has been taken down after the
+        # Microsoft deal with the facial rec api)
+        #
+        #$TmpCommits = CheckSpelling $TmpCommits $false
+        #
+        # Write the formatted commits text to $HISTORYFILE
+        # Formatted commits are also contained in the temp text file $Env:TEMP\history.txt
+        # Replace all newline pairs with cr/nl pairs as SVN will have sent commit comments back
+        # with newlines only
+        #
+        [System.Threading.Thread]::Sleep(500);
+        Add-Content $HISTORYFILE $TmpCommits
+    }
+    else {
+        Log-Message "Version match, not touching history file" "darkyellow"
+    }
+    #
+    # Add to changelist for scm check in.  This would be the first file modified so just
+    # set changelist equal to history file
+    #
+    Vc-Changelist-Add $HISTORYFILE
+    #
+    # Allow manual modifications to history file
+    #
+    Edit-File $HISTORYFILE $true
+}
+
+#
+# Process $CHANGELOGFILE
+#
+if (![string]::IsNullOrEmpty($CHANGELOGFILE))
+{
+    #
+    # If changelog markdown file doesnt exist, create one with the project name as a title
+    #
+    $NewChangelog = $false
+    $ChangeLogPath = Split-Path "$CHANGELOGFILE"
+    if ($ChangeLogPath -ne "" -and !(Test-Path($ChangeLogPath))) 
+    {
+        Log-Message "Creating changelog file directory and adding to version control" "magenta"
+        New-Item -ItemType "directory" -Path "$ChangeLogPath" | Out-Null
+        Vc-Changelist-AddNew "$ChangeLogPath"
+        Vc-Changelist-AddRemove "$ChangeLogPath"
+        Vc-Changelist-Add "$ChangeLogPath"
+    }
+    if (!(Test-Path($CHANGELOGFILE))) 
+    {
+        Log-Message "Creating new changelog file and adding to version control" "magenta"
+        New-Item -ItemType "file" -Path "$CHANGELOGFILE" -Value "$ChangeLogTitle`r`n`r`n" | Out-Null
+        Vc-Changelist-AddRemove $CHANGELOGFILE
+        Vc-Changelist-AddNew $CHANGELOGFILE
+        $NewChangelog = $true
+    }
+    if (!(Test-Path($CHANGELOGFILE))) 
+    {
+        Vc-Revert
+        Log-Message "Could not create changelog file, exiting" "red"
+        exit 141
+    }
+
+    if ($CURRENTVERSION -ne $VERSION -and ($RUN -eq 1 -or $TESTMODE -eq "Y"))
+    {
+        $TmpCommits = ""
+        $LastSection = ""
+        $Sectionless = @()
+        $ChangeLogTitle = "# $PROJECTNAME Change Log".ToUpper()
+
+        Log-Message "Preparing changelog file"
+        #
+        # Touch changelog file with the latest commits
+        #
+        # Add lines 'version', 'date', then the header content
+        #  
+        if (!$NewChangelog) {                       
+            $TmpCommits = "`r`n"
+        }
+        $TmpCommits += "## $VERSIONTEXT $VERSION ($TDATE)`r`n"
+        #
+        # Loop through the commits and build the markdown for appending to the changelog
+        #
+        foreach ($Commit in $COMMITS)
+        {
+            $Scope = ""
+            $TmpCommit = $Commit.Trim();
+            $TmpCommit = $TmpCommit.Replace("`n", "`r`n")
+            $idx1 = $TmpCommit.IndexOf("(")
+            $idx2 = $TmpCommit.IndexOf(':')
+            #
+            # If there is no subject, then store the message in an array to process after
+            # all of the commits with subject headers are processed.
+            #
+            # If the subject contains a scope, for example:
+            #
+            #     docs(readme)
+            #
+            # Then extract "readme" as the scope, and "docs" as the subject
+            #
+            if ($idx2 -eq -1) {
+                $Sectionless += $Commit
+                continue
+            }
+            elseif ($idx1 -ne -1 -and $idx1 -lt $idx2) {
+                $Section = $TmpCommit.SubString(0, $idx1).TrimEnd()
+                $Scope = $TmpCommit.SubString($idx1 + 1, $TmpCommit.IndexOf(")") - $idx1 - 1).Trim()
+            }
+            else {
+                $Section = $TmpCommit.SubString(0, $idx2).TrimEnd();
+            }
+            $TmpCommit = $TmpCommit.SubString($idx2 + 1).Trim()
+            #
+            # Print out the subject as a title if it is different than the previous sections
+            # title.  Comments are alphabetized.
+            #
+            if ($Section -ne $LastSection) {
+                $TmpSection = $ClsCommitAnalyzer.getFormatted($Section)
+                $TmpCommits += "`r`n### $TmpSection`r`n`r`n"
+            }
+            #
+            # Start the comment list item, add scope in bold if necessary
+            #
+            $TmpCommits += "- ";
+            if ($Scope -ne "") {
+                $TmpCommits += "**$Scope`:** "
+            }
+            #
+            # FOr multi-line comments, do some special processing
+            #
+            if ($TmpCommit.Contains("`r`n"))
+            {
+                $TmpCommitParts = $TmpCommit.Split("`r`n");
+                $TmpCommits += $TmpCommitParts[0]
+                for ($i = 1; $i -lt $TmpCommitParts.Length; $i++)
+                {
+                    if ($TmpCommitParts[$i] -eq "") {
+                        continue
+                    }
+                    $TmpCommits += "`r`n`r`n`t$($TmpCommitParts[$i])`r`n"
+                }
+                $TmpCommits += "`r`n"
+            }
+            else {
+                $TmpCommits += "$TmpCommit`r`n"
+            }
+            #
+            # Record last subject, we only print the subject when it differes from previous
+            #
+            $LastSection = $Section
+        }
+        #
+        # Add any commits that did not contain a conventional commit subject
+        #
+        if ($Sectionless.Length -gt 0)
+        {
+            $TmpCommits += "`r`n### Other Notes`r`n`r`n"
+            foreach ($Commit in $Sectionless)
+            {
+                $TmpCommits += "- $TmpCommit`r`n";
+            }
+        }
+        #
+        # Perform spell checking (currently the projectoxford has been taken down after the
+        # Microsoft deal with the facial rec api)
+        #
+        #$TmpCommits = CheckSpelling $TmpCommits $false
+        #
+        # Write the formatted commits text to the top of $CHANGELOGFILE, but underneath the
+        # changelog title
+        #
+        $TmpCommits = $TmpCommits.Trim();
+        $ChangeLogContents = Get-Content $CHANGELOGFILE | Out-String
+        $ChangeLogContents = $ChangeLogContents.Replace("$ChangeLogTitle", "").Trim();
+        $ChangeLogFinal = "$ChangeLogTitle`r`n`r`n"
+        if (![string]::IsNullOrEmpty($TmpCommits)) {
+            $ChangeLogFinal = "$ChangeLogFinal$TmpCommits`r`n`r`n"
+        }
+        if (![string]::IsNullOrEmpty($ChangeLogContents)) {
+            $ChangeLogFinal = "$ChangeLogFinal$ChangeLogContents`r`n"
+        }
+        Set-Content $CHANGELOGFILE $ChangeLogFinal
+    }
+    else {
+        Log-Message "Version match, not touching changelog file" "darkyellow"
+    }
+    #
+    # Allow manual modifications to changelog file
+    #
+    Edit-File $CHANGELOGFILE
+    #
+    # Add to changelist for svn check in.  This would be the first file modified so just
+    # set changelist equal to history file
+    #
+    Vc-Changelist-Add $CHANGELOGFILE
+}
+
+$DistIsVersioned = $false
 if ($DISTRELEASE -eq "Y")
 {
     $DistDirCreated = $false
@@ -2652,7 +2669,7 @@ if ($DISTRELEASE -eq "Y")
     #
     if (![string]::IsNullOrEmpty($HISTORYFILE))
     {
-        if (!(Test-Path("$PATHTODIST\$HISTORYFILE"))) 
+        if (!(Test-Path("$PATHTODIST\$HISTORYFILE")) -and $DistIsVersioned) 
         {
             $HistoryFileName = [Path]::GetFileName($HISTORYFILE);
             Vc-Changelist-AddRemove "$PATHTODIST\$HistoryFileName"
@@ -2712,6 +2729,8 @@ if ($DISTRELEASE -eq "Y")
         #
         if ($TESTMODE -ne "Y") 
         {
+            Log-Message "Processing distribution to specified location:"
+            Log-Message "   $TargetNetLocation"
             #
             # SoftwareImages Upload
             #
