@@ -2562,8 +2562,8 @@ if ($NPMRELEASE -eq "Y")
             Check-ExitCode
             $DestPackedFile = [Path]::Combine($PATHTODIST, "$PROJECTNAME.tgz")
             [System.Threading.Thread]::Sleep(100);
-            if (![string]::IsNullOrEmpty($NPMPSCOPE)) {
-                $TmpPkgFile = "$NPMPSCOPE-$PROJECTNAME-$VERSION.tgz".Substring(1)
+            if (![string]::IsNullOrEmpty($NPMSCOPE)) {
+                $TmpPkgFile = "$NPMSCOPE-$PROJECTNAME-$VERSION.tgz".Substring(1)
             }
             elseif (![string]::IsNullOrEmpty($DefaultScope)) {
                 $TmpPkgFile = "$DefaultScope-$PROJECTNAME-$VERSION.tgz".Substring(1)
