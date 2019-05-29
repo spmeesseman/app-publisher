@@ -90,7 +90,7 @@ $NPMPACKDIST = "Y",
 # To build the nuget release, set this flag to "Y"
 #
 $NUGETRELEASE = "N",
-$NUGETREGISTRY = "https://nuget.registry.org",
+$NUGETREGISTRY = "https://registry.nuget.org",
 #
 # PATHTOROOT - Set this variable to:
 #
@@ -1665,6 +1665,20 @@ $VersionFilesEdited = @()
 #
 if ([string]::IsNullOrEmpty($PATHTOROOT)) {
     $PATHTOROOT = "."
+}
+
+#
+# Set a default NPM registry if necessary
+#
+if ([string]::IsNullOrEmpty($NPMREGISTRY)) {
+    $NPMREGISTRY = "https://registry.npmjs.org"
+}
+
+#
+# Set a default Nuget registry if necessary
+#
+if ([string]::IsNullOrEmpty($NPMREGISTRY)) {
+    $NPMREGISTRY = "https://registry.nuget.org"
 }
 
 #
