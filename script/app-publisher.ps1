@@ -242,7 +242,7 @@ class Vc
         Log-Message "   Repo type      :  $RepoType"
         Log-Message "   Repo           :  $Repo"
         Log-Message "   CurrentVersion :  $CurrentVersion"
-        Log-Message "   TagPrefix      :  $TagPrefix"
+        Log-Message "   TagPrefix      :  $TagPre"
 
         if ($RepoType -eq "svn")
         {
@@ -307,11 +307,10 @@ class Vc
         }
         elseif ($RepoType -eq "git")
         {
-            Log-Message "Loggind commits since last version tag"
             # Issue GIT log command
             #
             $GitOut = & git log $TagPre$CurrentVersion..HEAD --pretty=format:"%s"
-            if ($LASTEXITCODE -eq 0) {
+            if ($LASTEXITCODE -eq 0 -and ![string]::IsNullOrEmpty($GitOut)) {
                 $comments = $GitOut.Split("`n")
             }
             else {
@@ -2985,16 +2984,18 @@ elseif ($_RepoType -eq "git")
                 $TagMessage = "chore(release): tag version $VERSION [skip ci]"
                 if (![string]::IsNullOrEmpty($VCTAGPREFIX) -and $VCTAGPREFIX -ne ".") 
                 {
-                    $TagLocation = "${VCTAGPREFIX}v$VERSION"
+                    $TagLocation = "${VCTAGPREFIX}-v$VERSION"
                     $TagMessage = "chore(release): tag $VCTAGPREFIX version $VERSION [skip ci]"
                 }
                 Log-Message "Tagging GIT version $TagLocation"
                 if ($TESTMODE -ne "Y") 
                 {
                     #
-                    # Call git copy to create 'tag'
+                    # Call git tag to create 'tag', then push to remote with push --tags
                     #
                     & git tag -a $TagLocation -m "$TagMessage"
+                    Check-ExitCode
+                    & git push --tags
                     Check-ExitCode
                 }
                 else {
