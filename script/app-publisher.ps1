@@ -2200,7 +2200,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
         Log-Message "Creating new history file and adding to version control" "magenta"
         New-Item -ItemType "file" -Path "$HISTORYFILE" -Value "$PROJECTNAME`r`n`r`n" | Out-Null
         Vc-Changelist-AddRemove "$HISTORYFILE"
-        Vc-Changelist-AddNew $HISTORYFILE
+        Vc-Changelist-AddNew "$HISTORYFILE"
     }
     if (!(Test-Path($HISTORYFILE))) 
     {
