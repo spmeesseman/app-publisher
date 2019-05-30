@@ -18,7 +18,6 @@
     "dependencies": {
         "@spmeesseman/json": "^9.1.1",
         "@types/gradient-string": "^1.1.0",
-        "@types/shelljs": "^0.8.5",
         "argparse": "^1.0.10",
         "chalk": "^2.4.2",
         "conventional-changelog-spm": "^1.2.3",
@@ -46,7 +45,8 @@
     },
     "bundleDependencies": [
         "@spmeesseman/json",
-        "marked"
+        "marked",
+        "semver"
     ],
     "scripts": {
         "build": "npx tsc -p ./",
@@ -57,7 +57,8 @@
     "bin": {
         "app-publisher": "./build/index.js",
         "app-publisher-json": "./node_modules/@spmeesseman/json/lib/json.js",
-        "app-publisher-marked": "./node_modules/marked/lib/marked.js"
+        "app-publisher-marked": "./node_modules/marked/lib/marked.js",
+        "app-publish-semver": "./node_modules/semver/lib/marked.js"
     },
     "files": [
         "build/*.js",
