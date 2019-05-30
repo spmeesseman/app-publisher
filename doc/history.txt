@@ -559,3 +559,36 @@ May 29th, 2019
     reference
 
 
+Version 1.4.5
+May 29th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+
+    Git tag is created in the local repository but not being pushed to the
+	configured remote origin.
+
+2.  Code Refactoring
+
+    The following packages are now bundled in an attempt to fix the error
+    received when trying to install this package locally to a project:
+	
+	    @spmeesseman/json
+		marked
+

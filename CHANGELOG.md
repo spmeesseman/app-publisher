@@ -1,5 +1,15 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.4.5 (May 29th, 2019)
+
+### Bug Fixes
+
+- git tag is not pushed to remote
+
+### Code Refactoring
+
+- bundle json and marked packages for attempt to fix local package install
+
 ## Version 1.4.4 (May 29th, 2019)
 
 ### Code Refactoring

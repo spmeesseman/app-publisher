@@ -1,6 +1,6 @@
 {
     "name": "@spmeesseman/app-publisher",
-    "version": "1.4.4",
+    "version": "1.4.5",
     "displayName": "App Publisher",
     "description": "App Publisher",
     "license": "MIT",
@@ -45,7 +45,8 @@
         "typescript": "^3.4.5"
     },
     "bundleDependencies": [
-        "@spmeesseman/json", "marked"
+        "@spmeesseman/json",
+        "marked"
     ],
     "scripts": {
         "build": "npx tsc -p ./",
