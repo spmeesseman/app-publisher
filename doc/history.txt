@@ -532,3 +532,30 @@ May 29th, 2019
     info specified in publishrc, CRLF linebreaks were used.  LF linebreaks will
     now be used as NPM specifies this.
 
+
+Version 1.4.4
+May 29th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Code Refactoring
+
+    Removed all test references to semantic-release, fixed json package
+    reference
+
+

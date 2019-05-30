@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.4.4 (May 29th, 2019)
+
+### Code Refactoring
+
+- removed all test references to semantic-release, fixed json package reference
+
 ## Version 1.4.3 (May 29th, 2019)
 
 ### Bug Fixes
