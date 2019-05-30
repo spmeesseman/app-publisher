@@ -11,12 +11,14 @@
         "**/*.spec.ts"
     ],
     "compilerOptions": {
+        "baseUrl": ".",
+        "paths": { "*": ["types/*"] },
         "module": "commonjs",
         "target": "es6",
         "outDir": "build",
-        "lib": [
-            "dom",
-            "es6"
-        ],
+        "allowJs": true,
+        "resolveJsonModule": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true
     }
 }
