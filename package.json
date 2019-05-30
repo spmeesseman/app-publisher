@@ -24,12 +24,11 @@
         "conventional-changelog-spm": "^1.2.3",
         "gradient-string": "^1.2.0",
         "jsonc-parser": "^2.1.0",
-        "minimatch": "^3.0.4"
+        "marked": "^0.6.2",
+        "minimatch": "^3.0.4",
+        "semver": "^6.1.1"
     },
     "devDependencies": {
-        "@semantic-release/changelog": "^3.0.2",
-        "@semantic-release/exec": "^3.3.0",
-        "@semantic-release/git": "^7.0.8",
         "@types/istanbul": "^0.4.30",
         "@types/mocha": "^5.2.6",
         "@types/node": "^12.0.0",
@@ -42,16 +41,13 @@
         "mocha-multi-reporters": "^1.1.7",
         "prettier": "^1.17.0",
         "remap-istanbul": "^0.13.0",
-        "semantic-release": "^15.13.14",
         "tslint": "^5.16.0",
         "typescript": "^3.4.5"
     },
     "scripts": {
         "build": "npx tsc -p ./",
         "app-publish": "app-publisher -p ps",
-        "app-publish-dry": "app-publisher -p ps --dry-run",
-        "semantic-release": "semantic-release --allow-same-version --no-ci",
-        "semantic-release-dry": "semantic-release --dry-run --allow-same-version"
+        "app-publish-dry": "app-publisher -p ps --dry-run"
     },
     "main": "./build/index.js",
     "bin": {
