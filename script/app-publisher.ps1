@@ -2755,7 +2755,15 @@ if ($DISTRELEASE -eq "Y")
             # Copy all pdf files in 'dist' and 'doc' and 'documentation' directories
             #
             Log-Message "Deploying pdf documentation to $TargetDocLocation"
-            Copy-Item "$PATHTODIST\*.pdf","doc\*.pdf","documentation\*.pdf" -Destination "$TargetDocLocation" | Out-Null
+            if (Test-Path("documentation")) {
+                Copy-Item "documentation\*.pdf" -Destination "$TargetDocLocation" | Out-Null
+            }
+            if (Test-Path("doc")) {
+                Copy-Item "doc\*.pdf" -Destination "$TargetDocLocation" | Out-Null
+            }
+            if (Test-Path("$PATHTODIST")) {
+                Copy-Item "$PATHTODIST\*.pdf" -Destination "$TargetDocLocation" | Out-Null
+            }
             Check-PsCmdSuccess
         }
         else {
