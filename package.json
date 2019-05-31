@@ -51,7 +51,8 @@
     "scripts": {
         "build": "npx tsc -p ./",
         "app-publish": "app-publisher -p ps",
-        "app-publish-dry": "app-publisher -p ps --dry-run"
+        "app-publish-dry": "app-publisher -p ps --dry-run",
+        "app-publisher": "./bin/app-publisher.js"
     },
     "main": "./build/index.js",
     "bin": {
