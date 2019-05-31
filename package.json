@@ -58,8 +58,7 @@
     "bin": {
         "app-publisher": "./build/index.js",
         "app-publisher-json": "./node_modules/@spmeesseman/json/lib/json.js",
-        "app-publisher-marked": "./node_modules/marked/lib/marked.js",
-        "app-publish-semver": "./node_modules/semver/lib/marked.js"
+        "app-publisher-marked": "./node_modules/marked/lib/marked.js"
     },
     "files": [
         "build/*.js",
