@@ -1189,17 +1189,18 @@ function Vc-Revert()
 
 function Check-ExitCode($ExitOnError = $false)
 {
+    $ECode = $LASTEXITCODE
     #
     # Check script error code, 0 is success
     #
-    if ($LASTEXITCODE -eq 0) {
+    if ($ECode -eq 0) {
         Log-Message "Exit Code 0" "darkgreen"
     }
     else {
-        Log-Message "Exit Code $LASTEXITCODE" "red"
+        Log-Message "Exit Code $ECode" "red"
         if ($ExitOnError -eq $true) {
             Vc-Revert
-            exit $LASTEXITCODE
+            exit $ECode
         }
     }
 }
@@ -1295,26 +1296,6 @@ function Prepare-ExtJsBuild()
     # Allow manual modifications to app.json
     #
     Edit-File "app.json"
-    #
-    # Replace version in package.json - technically sencha cmd desnt need this updated, but
-    # we still keep in sync with app.json
-    #
-    Replace-Version "package.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
-    #
-    # Allow manual modifications to package.json
-    #
-    Edit-File "package.json"
-    #
-    # Replace version in package-lock.json
-    #
-    if (Test-Path("package-lock.json")) 
-    {
-        Replace-Version "package-lock.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
-        #
-        # Add to package.json vc changelist for check-in
-        #
-        Edit-File "package-lock.json"
-    }
 }
 
 function Prepare-DotNetBuild($AssemblyInfoLocation)
@@ -1333,8 +1314,8 @@ function Prepare-DotNetBuild($AssemblyInfoLocation)
     #
     # Replace version in assemblyinfo file
     #
-    Replace-Version $AssemblyInfoLocation "AssemblyVersion[ ]*[(][ ]*[`"]$CURRENTVERSION" "AssemblyVersion(`": `"$SEMVERSION"
-    Replace-Version $AssemblyInfoLocation "AssemblyFileVersion[ ]*[(][ ]*[`"]$CURRENTVERSION" "AssemblyVersion(`": `"$SEMVERSION"
+    Replace-Version $AssemblyInfoLocation "AssemblyVersion[ ]*[(][ ]*[`"]$CURRENTVERSION" "AssemblyVersion(`"$SEMVERSION"
+    Replace-Version $AssemblyInfoLocation "AssemblyFileVersion[ ]*[(][ ]*[`"]$CURRENTVERSION" "AssemblyFileVersion(`"$SEMVERSION"
     #
     # Allow manual modifications to assembly file
     #
@@ -1354,7 +1335,7 @@ function Prepare-PackageJson()
     # Replace current version with new version in package.json and package-lock.json
     # 5/25/19 - Use regext text replacement after npm version command, sencha packages will contain 
     # two version tags, on for the main package.json field, and one in the sencha object definition, we 
-    # want to replace them both
+    # want to replace them both if they match
     #
     Log-Message "Setting new version $VERSION in package.json"
     & npm version --no-git-tag-version --allow-same-version $VERSION
@@ -1531,20 +1512,8 @@ function Restore-PackageJson()
             Log-Message "Re-scoping default package name in package-lock.json: $DefaultName"
             & app-publisher-json -I -4 -f package-lock.json -e "this.name='$DefaultName'"
             Check-ExitCode
-            #
-            # The json utility will output line feed only, replace with windows stle crlf
-            #
-            #Log-Message "Set windows line feeds in package-lock.json"
-            #((Get-Content -path "package-lock.json" -Raw) -replace "`n", "`r`n") | Set-Content -NoNewline -Path "package-lock.json"
-            #Check-ExitCode
         }
     }
-    #
-    # The json utility will output line feed only, replace with windows stle crlf
-    #
-    #Log-Message "Set windows line feeds in package.json"
-    #((Get-Content -path "package.json" -Raw) -replace "`n", "`r`n") | Set-Content -NoNewline -Path "package.json"
-    #Check-PsCmdSuccess
 }
 
 $FirstEditFileDone = $false
@@ -2054,8 +2023,8 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
         Log-Message "Commits since the last version or the version tag could not be found"
         $Proceed = read-host -prompt "Proceed anyway? Y[N]"
         if ($Proceed.ToUpper() -ne "Y") {
-            Log-Message "User cancelled process, exiting" "red"
-            exit 0
+            Log-Message "User cancelled, exiting" "red"
+            exit 155
         }
     }
 
@@ -2132,7 +2101,7 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
         $NewVersion = read-host -prompt "Enter the version #, or C to cancel [$VERSION]"
         if ($NewVersion.ToUpper() -eq "C") {
             Log-Message "User cancelled process, exiting" "red"
-            exit 0
+            exit 155
         }
         if (![string]::IsNullOrEmpty($NewVersion)) {
             $VERSION = $NewVersion
@@ -2529,7 +2498,47 @@ if ($DISTRELEASE -eq "Y")
 }
 
 #
-# Store location paths depending on publish typess
+# Check if this is an ExtJs build.  ExtJs build will be an dist release, but it will
+# contain both package.json and app.json that will need version updated.  A node_modules
+# directory will exist, so the current version was extracted by node and and next version  
+# was calculated by semver.
+#
+if ((Test-Path("app.json")) -and (Test-Path("package.json"))) {
+    Prepare-ExtJsBuild
+}
+#
+# Check to see if its a npm managed project, update package.json if required
+#
+if ((Test-Path("package.json"))) {
+    Prepare-PackageJson
+}
+#
+# If this is a .NET build, update assemblyinfo file
+# Search root dir and one level deep.  If the assembly file is located deeper than 1 dir
+# from the root dir, it should be specified using the versionFiles arry of .publishrc
+#
+$AssemblyInfoLoc = Get-ChildItem -Name -Recurse -Depth 1 -Filter "assemblyinfo.cs" -File -Path . -ErrorAction SilentlyContinue
+if ($AssemblyInfoLoc -is [system.string] -and ![string]::IsNullOrEmpty($AssemblyInfoLoc))
+{
+    Prepare-DotNetBuild $AssemblyInfoLoc
+}
+elseif ($AssemblyInfoLoc -is [System.Array] -and $AssemblyInfoLoc.Length -gt 0) {
+    foreach ($AssemblyInfoLocFile in $AssemblyInfoLoc) {
+        Prepare-DotNetBuild $AssemblyInfoLocFile
+    }
+}
+#
+# Version bump specified files in publishrc config 'versionFiles'
+#
+Prepare-VersionFiles
+#
+# Run custom build scipts if specified
+#
+Run-Scripts "build" $BUILDCOMMAND $true $true
+
+#
+# Store location paths depending on publish types, these will be used to set links to
+# locations in the release email
 #
 $TargetNetLocation = ""
 $NpmLocation = ""
@@ -2544,14 +2553,6 @@ if ($NPMRELEASE -eq "Y")
     if (Test-Path("package.json"))
     {
         $PublishFailed = $false;
-        #
-        #
-        #
-        Prepare-PackageJson
-        #
-        # Build if specified
-        #
-        Run-Scripts "build" $BUILDCOMMAND $true $true
         #
         # Pack tarball and mvoe to dist dir if specified
         #
@@ -2595,10 +2596,6 @@ if ($NPMRELEASE -eq "Y")
             & npm publish --access public --registry $NPMREGISTRY --dry-run
             Log-Message "   Test mode, dry run publish finished" "magenta"
         }
-        #
-        #
-        #
-        Restore-PackageJson
         #
         #
         #
@@ -2677,43 +2674,6 @@ if ($DISTRELEASE -eq "Y")
         Copy-Item -Path "$HISTORYFILE" -PassThru -Force -Destination "$PATHTODIST" | Out-Null
     }
     #
-    # Check if this is an ExtJs build.  ExtJs build will be an dist release, but it will
-    # contain both package.json and app.json that will need version updated.  A node_modules
-    # directory will exist, so the current version was extracted by node and and next version  
-    # was calculated by semver.
-    #
-    if ((Test-Path("app.json")) -and (Test-Path("package.json"))) {
-        Prepare-ExtJsBuild
-    }
-    #
-    # Check to see if its a npm managed project, update package.json if required
-    #
-    elseif ((Test-Path("package.json"))) {
-        Prepare-PackageJson
-    }
-    #
-    # If this is a .NET build, update assemblyinfo file
-    #
-    $AssemblyInfoLoc = Get-ChildItem -Name -Recurse -Filter "assemblyinfo.cs" -File -Path . -ErrorAction SilentlyContinue
-    if (![string]::IsNullOrEmpty($AssemblyInfoLoc)) {
-        Prepare-DotNetBuild $AssemblyInfoLoc
-    }
-    #
-    # Version bump specified files
-    #
-    Prepare-VersionFiles
-    #
-    # Run custom build scipts if specified
-    #
-    Run-Scripts "build" $BUILDCOMMAND $true $true
-    #
-    # If this is an npm managed project, but not ExtJs, then restore package.json to original
-    # state, minus the version number
-    #
-    if ((Test-Path("package.json")) -and !(Test-Path("app.json"))) {
-        Restore-PackageJson
-    }
-    #
     # Create remote paths
     #
     $TargetNetLocation = [Path]::Combine($DISTRELEASEPATH, $PROJECTNAME, $VERSION)
@@ -2781,6 +2741,13 @@ if ($DISTRELEASE -eq "Y")
 Run-Scripts "postBuild" $POSTBUILDCOMMAND $true $true
 
 #
+# Restore any configured package.json values to the original values
+#
+if ((Test-Path("package.json"))) {
+    Restore-PackageJson
+}
+
+#
 # Run custom deploy script if specified
 #
 if ($SKIPDEPLOYPUSH -ne "Y")
@@ -2788,7 +2755,7 @@ if ($SKIPDEPLOYPUSH -ne "Y")
     Run-Scripts "deploy" $DEPLOYCOMMAND $false $false
 }
 else {
-    Log-Message "   Skipped running custom deploy script (user specified)" "magenta"
+    Log-Message "Skipped running custom deploy script (user specified)" "magenta"
 }
 
 #
