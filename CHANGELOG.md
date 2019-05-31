@@ -1,5 +1,24 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.4.6 (May 31st, 2019)
+
+### Build System
+
+- **npm:** correct registry for spmeesseman package scope
+- **npm:** fix app-publish script argument
+- **npm:** remove unused @types/shelljs devdependency
+
+### Bug Fixes
+
+- assemblyinfo.cs version replacement error perf: in certain cases the package.json file is maniuplated 2x the # of times it needed to be. fix: if more than one assemblyinfo file existed within the project directory structure, each file gets appened to the next.
+- for a a dist release, the pdf documentation does not get copied if it does not reside in the specific directory "documentation". The ps script now separately looks for pdf documentation in doc, documentation, and pathToDist folders.
+- history file path with spaces in the path causes an error
+
+### Code Styling
+
+- add full set of tslint definitions to tslint config
+- cleanup
+
 ## Version 1.4.5 (May 29th, 2019)
 
 ### Bug Fixes

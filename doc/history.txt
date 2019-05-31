@@ -592,3 +592,57 @@ May 29th, 2019
 	    @spmeesseman/json
 		marked
 
+
+Version 1.4.6
+May 31st, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Build System:  NPM
+
+    Remove unused @types/shelljs and @semantic-release dev dependencies.
+
+2.  Performance Enhancement
+
+    In certain cases, for example when a release is both a network distribution
+    type release and an npm type release, the package.json file is maniuplated 
+    2x the number of times it needed to be.
+	
+3.  Bug Fix
+
+    For .NET builds, if more than one assemblyinfo.cs file exists within the 
+    project directory structure, each file gets appened to the next.
+
+4.  Bug Fix
+
+    For a a network distribution type release, the pdf documentation does not 
+    get copied if it does not reside in the specific directory "documentation".
+    
+    The script will now separately look for pdf documentation in the doc and 
+    documentation folder, as well as the folder specified by the "pathToDist"
+    config value (if any).
+
+5.  Bug Fix
+
+    If the specified history file path contains spaces, an error is thrown and
+	the publish fails.
+
+6.  Code Styling
+
+    Add full set of tslint definitions to tslint.json for typescript styling.
+
