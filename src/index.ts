@@ -135,6 +135,8 @@ async function run(context, plugins)
             reposCommited.push(config.repoType);
         }
 
+        //const { plugins } = await getConfig(context, options);
+
         if (!options.profile || options.profile === "node")
         {
             return runNodeScript(context, plugins, runCt);
@@ -153,6 +155,11 @@ async function runNodeScript(context: any, plugins: any, runCt: number)
     const { cwd, env, options, logger } = context;
 
     await verify(context);
+
+    if (options.runCt > 1)
+    {
+        options.allowSameVersion = true;
+    }
 
     if (options.repoType === "git")
     {

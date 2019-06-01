@@ -45,6 +45,7 @@
         "marked": "^0.6.2",
         "marked-terminal": "^3.2.0",
         "minimatch": "^3.0.4",
+        "node-svn-ultimate": "^1.2.0",
         "p-locate": "^4.1.0",
         "p-reduce": "^2.1.0",
         "read-pkg-up": "^6.0.0",
@@ -53,6 +54,8 @@
         "signale": "^1.4.0"
     },
     "devDependencies": {
+        "@semantic-release/github": "^5.2.10",
+        "@semantic-release/npm": "^5.1.7",
         "@types/istanbul": "^0.4.30",
         "@types/mocha": "^5.2.6",
         "@types/node": "^12.0.0",
@@ -75,9 +78,10 @@
     ],
     "scripts": {
         "build": "npx tsc -p ./",
-        "app-publish": "app-publisher -p ps",
-        "app-publish-dry": "app-publisher -p ps --dry-run",
-        "app-publisher": "npx ./build/bin/app-publisher.js --dry-run"
+        "app-publish-ps": "npx ./build/bin/app-publisher.js -p ps",
+        "app-publish-ps-dry": "npx ./build/bin/app-publisher.js -p ps --dry-run",
+        "app-publish-node": "npx ./build/bin/app-publisher.js",
+        "app-publish-node-dry": "npx ./build/bin/app-publisher.js --dry-run"
     },
     "main": "./build/index.js",
     "bin": {

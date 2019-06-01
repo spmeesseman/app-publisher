@@ -7,6 +7,10 @@ async function getReleaseLevel({ options, commits })
 {
     let level = "patch";
 
+    //
+    // TODO - read in user defined release levels from options
+    //
+
     for (const c in commits)
     {
         if (commits[c] === "") { continue; }
