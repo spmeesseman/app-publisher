@@ -11,7 +11,7 @@ Todos:
 
     Features:
 
-        ☐ Node version of app-publisher @180h
+        ☐ Node version of app-publisher @180h @started(19-05-30 11:37)
         ☐ Redo repository configurations, accept git and svn, and both
         ☐ Git commits @4h
         ☐ Git commit comment retrieval @6h

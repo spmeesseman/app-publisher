@@ -60,7 +60,7 @@
         "no-var-keyword": true,
         "object-literal-shorthand": true,
         "object-literal-surrounding-space": true,
-        "one-line": [true,
+        "one-line": [false,
             "check-open-brace",
             "check-whitespace"
         ],

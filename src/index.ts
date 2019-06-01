@@ -1,565 +1,541 @@
-#!/usr/bin/env node
 
-import { visit, JSONVisitor } from 'jsonc-parser';
-import { CommitAnalyzer } from './lib/commit-analyzer';
-import * as util from './util';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as gradient from 'gradient-string';
-import chalk from 'chalk';
-import * as child_process from 'child_process';
+import { visit, JSONVisitor } from "jsonc-parser";
+import { CommitAnalyzer } from "./lib/commit-analyzer";
+import * as util from "./util";
+import * as fs from "fs";
+import * as path from "path";
+import gradient from "gradient-string";
+import chalk from "chalk";
+import * as child_process from "child_process";
+import { template, pick } from "lodash";
+import marked from "marked";
+import TerminalRenderer from "marked-terminal";
+const envCi = require("env-ci");
+// import envCi from "env-ci";
+import hookStd from "hook-std";
+import hideSensitive = require("./lib/hide-sensitive");
+import getConfig = require("./lib/get-config");
+import verify = require("./lib/verify");
+import getCommits = require("./lib/get-commits");
+import getNextVersion = require("./lib/get-next-version");
+import getLastRelease = require("./lib/get-last-release");
+import { extractErrors } from "./lib/utils";
+import getGitAuthUrl = require("./lib/get-git-auth-url");
+import getLogger = require("./lib/get-logger");
+import { fetch, verifyAuth, isBranchUpToDate, getGitHead, tag, push } from "./lib/repo";
+import getError = require("./lib/get-error");
+import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
 
-//
-// Display color banner
-//
-displayIntro();
+const pkg = require("../package.json");
 
-let version = require('../package.json').version;
+marked.setOptions({ renderer: new TerminalRenderer() });
 
-//
-// Build command line argument parser
-//
-var ArgumentParser = require('argparse').ArgumentParser;
-var parser = new ArgumentParser({
-    addHelp: false,
-    description: '',
-    prog: 'app-publisher'
-});
-parser.addArgument(
-    '--dry-run',
-    {
-        dest: 'dryRun',
-        action: 'storeTrue',
-        help: 'Run the publisher chain in dry/test mode and exit.'
-    }
-);
-parser.addArgument(
-    [ '-h', '--help' ],
-    {
-        help: 'Display help and exit.',
-        action: 'storeTrue'
-    }
-);
-parser.addArgument(
-    [ '-p', '--profile' ],
-    {
-        help: 'The publish profile to use.',
-        choices: [ 'node', 'ps' ],
-        defaultValue: 'node'
-    }
-);
-parser.addArgument(
-    '--read-config',
-    {
-        dest: 'readConfig',
-        action: 'storeTrue',
-        help: 'Display the contents of the configuration file end exit.'
-    }
-);
-parser.addArgument(
-    '--verbose',
-    {
-        action: 'storeTrue',
-        help: 'Increase logging verbosity.'
-    }
-);
-parser.addArgument(
-    '--version',
-    {
-        help: 'Display version and exit.',
-        action: 'storeTrue'
-    }
-);
-
-//
-// Parse command line arguments
-//
-let args = parser.parseArgs();
-
-//
-// If user specified '-h' or --help', then just display help and exit
-//
-if (args.help)
+async function run(context, plugins)
 {
-    util.log(gradient('cyan', 'pink').multiline(`----------------------------------------------------------------------------
- App-Publisher Help
-----------------------------------------------------------------------------
-`, {interpolation: 'hsv'}));
-    parser.printHelp();
-    process.exit(0);
-}
+    const { cwd, env, options, logger } = context;
 
-//
-// If user specified '--version', then just display version and exit
-//
-if (args.version)
-{
-    util.log(chalk.bold(gradient('cyan', 'pink').multiline(`----------------------------------------------------------------------------
- App-Publisher Version
-----------------------------------------------------------------------------
-`, {interpolation: 'hsv'})));
-    util.log(version);
-    process.exit(0);
-}
-
-//
-// Read config file:
-//
-//     .publishrc.json
-//     .publishrc
-//
-let fileCfg;
-if (fs.existsSync('.publishrc.json')) {
-    fileCfg = fs.readFileSync('.publishrc.json').toString();
-}
-else if (fs.existsSync('.publishrc')) {
-    fileCfg = fs.readFileSync('.publishrc').toString();
-}
-else {
-    util.logError("Config file not found!! Exiting");
-    process.exit(80);
-}
-
-//
-// Replace environment variables
-//
-// Environment variables in .publishconfig should be in the form:
-//
-//     ${VARIABLE_NAME}
-//
-for (var key in process.env) 
-{
-    var envVar = "[$][{]\\b" + key + "\\b[}]";
-    fileCfg = fileCfg.replace(new RegExp(envVar), process.env[key].replace(/\\/, "\\\\"));
-}
-
-//
-// If user specified '--read-config', then just display config and exit
-//
-if (args.readConfig)
-{
-    let title = `----------------------------------------------------------------------------
- Cofiguration file contents
-----------------------------------------------------------------------------
-    `;
-    util.log(chalk.bold(gradient('cyan', 'pink').multiline(title, {interpolation: 'hsv'})));
-    util.log(fileCfg);
-    process.exit(0);
-}
-
-
-//
-// Convert file config to JSON object
-//
-fileCfg = JSON.parse(fileCfg);
-
-//
-// Set dry run flags
-//
-let dryCfg = {
-    testMode: args.dryRun ? "Y" : "N",
-    testModeSvnRevert: args.dryRun ? "Y" : (fileCfg.testModeSvnRevert ? fileCfg.testModeSvnRevert : "N"),
-    skipDeployPush: args.dryRun ? "Y" : (fileCfg.skipDeployPush ? fileCfg.skipDeployPush : "N")
-};
-
-//
-// Merge configs
-//
-let config = { ...fileCfg, ...dryCfg };
-
-let runCt = 0;
-let reposCommited:Array<string> = [];
-let runsCfg = [{}];
-
-if (config.xRuns)
-{
     //
-    // Push the run config, use JSON.parse(JSON.stringify) to  clone the object so
-    // we can then delete it
+    // If user specified '--read-config', then just display config and exit
     //
-    runsCfg.push(...JSON.parse(JSON.stringify(config.xRuns)));
-    delete config.xRuns;
-}
-
-//
-// Run publish
-//
-for (var run in runsCfg)
-{
-    runCt++;
-    config = { ...config, ...runsCfg[run] };
-
-    if (!args.profile || args.profile === "node") {
-        //const commitAnalyzer = new CommitAnalyzer({});
-        util.log('Generic publisher not yet implemented, use --profile=ps');
-    }
-    else if (args.profile === "ps") 
+    if (options.readConfig)
     {
-        let sArgs = "";
-        let cProperty: string;
-        let aProperty: string;
-        //
-        // Format config for powershell script arguments
-        //
-        let visitor: JSONVisitor = 
-        {
-            onError() { cProperty = undefined; },
-            onObjectEnd() 
-            { 
-                cProperty = undefined;
-                aProperty = undefined;
-            },
-            onArrayBegin(offset: number, length: number, startLine: number, startCharacter: number)
-            {
-                let propStart = "-" + cProperty.toUpperCase() + " ";
-                aProperty = cProperty;
-                if (sArgs.includes(propStart)) {
-                    util.logError("Configuration parameter '" + cProperty + "' defined twice, check casing");
-                    util.logError("   sArgs = " + sArgs);
-                    process.exit(81);
-                }
-                sArgs += (propStart);
-            },
-            onArrayEnd(offset: number, length: number, startLine: number, startCharacter: number)
-            {
-                aProperty = undefined;
-                if (sArgs.endsWith(",")) {
-                    sArgs = sArgs.substring(0, sArgs.length - 1) + " ";
-                } 
-            },
-            onLiteralValue(value: any, offset: number, _length: number) 
-            {
-                if (cProperty && typeof value === 'string') 
-                {
-                    if (!aProperty) 
-                    {
-                        let propStart = "-" + cProperty.toUpperCase() + " ";
-                        if (sArgs.includes(propStart)) 
-                        {
-                            util.logError("   Configuration parameter '" + cProperty + "' defined twice, check casing");
-                            util.logError("   sArgs = " + sArgs);
-                            process.exit(82);
-                        }
-                        util.log("   Value: '" + value + "'");
-                        sArgs += (propStart + "'" + value + "' ");
-                    }
-                    else {
-                        util.log("   Adding array value: '" + value + "'");
-                        sArgs += ("\"" + value + "\",");
-                    }
-                }
-                else if (aProperty && typeof value === 'string')
-                {
-                    sArgs += ("'" + value + "',");
-                }
-                else if (cProperty && value)
-                {
-                    if (!aProperty)
-                    {
-                        let propStart = "-" + cProperty.toUpperCase() + " ";
-                        if (sArgs.includes(propStart)) {
-                            util.logError("   Configuration parameter '" + cProperty + "' defined twice, check casing");
-                            util.logError("   sArgs = " + sArgs);
-                            process.exit(83);
-                        }
-                        util.log("   Value: " + value.toString());
-                        sArgs += (propStart + value + " ");
-                    }
-                    else {
-                        sArgs += (value + ",");
-                    }
-                }
-                cProperty = undefined;
-            },
-            onObjectProperty(property: string, offset: number, _length: number) 
-            {
-                util.log("Found configuration parameter '" + property + "'");
-                cProperty = property;
-            }
-        };
-        visit(JSON.stringify(config), visitor);
+        const title = `
+----------------------------------------------------------------------------
+ Configuration file contents
+----------------------------------------------------------------------------
+        `;
+        logger.log(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
+        logger.log(options);
+        return true;
+    }
 
-        //
-        // Get the repository url if not specified
-        //
-        if (!config.repo) 
-        {
-            let cwd = process.cwd();
-            let appPackageJson = path.join(cwd, 'package.json');
-            if (fs.existsSync(appPackageJson)) {
-                let repository = require(appPackageJson).repository;
-                if (repository) 
-                {
-                    if (typeof repository === 'string') {
-                        config.repo = repository;
-                    }
-                    else {
-                        config.repo = repository.url;
-                    }
-                }
-            }
-            if (!config.repo)
-            {
-                util.logError("Repository url must be sepcified in .publishrc or package.json");
-                process.exit(85);
-            }
-        }
+    const { isCi, branch: ciBranch, isPr } = envCi({ env, cwd });
 
+    if (!isCi && !options.dryRun && !options.noCi)
+    {
+        logger.warn("This run was not triggered in a known CI environment, running in dry-run mode.");
+        options.dryRun = true;
+    }
+    else
+    {
+        // When running on CI, set the commits author and commiter info and prevent the `git` CLI to prompt for username/password. See #703.
+        Object.assign(env, {
+            GIT_AUTHOR_NAME: COMMIT_NAME,
+            GIT_AUTHOR_EMAIL: COMMIT_EMAIL,
+            GIT_COMMITTER_NAME: COMMIT_NAME,
+            GIT_COMMITTER_EMAIL: COMMIT_EMAIL,
+            ...env,
+            GIT_ASKPASS: "echo",
+            GIT_TERMINAL_PROMPT: 0
+        });
+    }
+
+    if (isCi && isPr && !options.noCi)
+    {
+        logger.log("This run was triggered by a pull request and therefore a new version won't be published.");
+        return false;
+    }
+
+    if (ciBranch !== options.branch)
+    {
+        logger.log(
+            `This test run was triggered on the branch ${ciBranch}, while app-publisher is configured to only publish from ${
+            options.branch
+            }, therefore a new version won’t be published.`
+        );
+        return false;
+    }
+
+    logger[options.dryRun ? "warn" : "success"](
+        `Run automated release from branch ${ciBranch}${options.dryRun ? " in dry-run mode" : ""}`
+    );
+
+    //
+    // Set dry run flags
+    //
+    if (options.dryRun) {
+        options.testMode = "Y";
+        options.testModeSvnRevert = "Y";
+        options.skipDeployPush = "Y";
+    }
+
+    let runCt = 0;
+    const reposCommited: Array<string> = [];
+    const runsCfg = [{}];
+
+    if (options.xRuns)
+    {
         //
-        // Get the repository type if not specified
+        // Push the run config, use JSON.parse(JSON.stringify) to  clone the object so
+        // we can then delete it
         //
-        if (!config.repoType) 
-        {
-            let cwd = process.cwd();
-            let appPackageJson = path.join(cwd, 'package.json');
-            if (fs.existsSync(appPackageJson)) {
-                let repository = require(appPackageJson).repository;
-                if (repository) {
-                    if (typeof repository === 'object') {
-                        config.repoType = repository.type;
-                    }
-                }
-            }
-            if (!config.repoType)
-            {
-                util.logError("Repository type must be sepcified in .publishrc or package.json");
-                util.logError("   Possible values:  svn, git");
-                process.exit(85);
-            }
-            else if (config.repoType !== 'svn' && config.repoType !== 'git') 
-            {
-                util.logError("Invalid repository type sepcified, must be 'svn' or 'git'");
-                process.exit(86);
-            }
-        }
+        runsCfg.push(...JSON.parse(JSON.stringify(options.xRuns)));
+        delete options.xRuns;
+    }
+
+    //
+    // Run publish
+    //
+    for (const run in runsCfg)
+    {
+        runCt++;
+        const config = { ...options, ...runsCfg[run] };
+
+        logger.log("Publish run #" + runCt.toString());
 
         //
         // If this is a 2nd run (or more), and the repository is the same, then skip the comit
         //
-        if (reposCommited.indexOf(config.repoType) >= 0) 
+        if (reposCommited.indexOf(config.repoType) >= 0)
         {
-            sArgs = sArgs + " -skipCommit Y";
-            if (!sArgs.includes(" -vcTag N")) {
-                sArgs = sArgs.replace(/-vcTag Y/gi, "");
-                sArgs = sArgs + " -vcTag N";
-            }
+            logger.log(`Cannot use '${config.repoType}' repo more than once in a publish, so no new version will be released for this run`);
+            continue;
         }
         else {
             reposCommited.push(config.repoType);
         }
 
-        sArgs = sArgs + ` -apppublisherversion ${version}`;
-        sArgs = sArgs + ` -run ${runCt}`;
-
-        //
-        // Find Powershell script
-        //
-        // Perform search in the following order:
-        //
-        //     1. Local node_modules
-        //     2. Local script dir
-        //     3. Global node_modules
-        //     4. Windows install
-        //
-        var ps1Script;
-        if (util.pathExists(".\\node_modules\\@spmeesseman\\app-publisher")) {
-            ps1Script = ".\\node_modules\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1";
-        }
-        else if (util.pathExists(".\\node_modules\\@perryjohnson\\app-publisher")) {
-            ps1Script = ".\\node_modules\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1";
-        }
-        else if (util.pathExists(".\\script\\app-publisher.ps1")) {
-            ps1Script = ".\\script\\app-publisher.ps1";
-        }
-        else 
+        if (!options.profile || options.profile === "node")
         {
-            if (process.env.CODE_HOME)
+            return runNodeScript(context, plugins, runCt);
+        }
+        else if (options.profile === "ps")
+        {
+            return runPowershellScript(config, logger, runCt);
+        }
+    }
+
+    return 0;
+}
+
+async function runNodeScript(context: any, plugins: any, runCt: number)
+{
+    const { cwd, env, options, logger } = context;
+
+    await verify(context);
+
+    if (options.repoType === "git")
+    {
+        options.repositoryUrl = await getGitAuthUrl(context);
+
+        try
+        {
+            try
             {
-                // Check global node_modules
-                //
-                let gModuleDir = process.env.CODE_HOME + "\\nodejs\\node_modules";
-                if (util.pathExists(gModuleDir + "\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1")) {
-                    ps1Script = gModuleDir + "\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1";
+                await verifyAuth(options.repositoryUrl, options.branch, { cwd, env });
+            }
+            catch (error)
+            {
+                if (!(await isBranchUpToDate(options.branch, { cwd, env })))
+                {
+                    logger.log(
+                        `The local branch ${
+                        options.branch
+                        } is behind the remote one, therefore a new version won't be published.`
+                    );
+                    return false;
                 }
-                else if (util.pathExists(gModuleDir + "\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1")) {
-                    ps1Script = gModuleDir + "\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1";
+
+                throw error;
+            }
+        }
+        catch (error)
+        {
+            logger.error(`The command "${error.cmd}" failed with the error message ${error.stderr}.`);
+            throw getError("EGITNOPERMISSION", { options });
+        }
+
+        logger.success(`Allowed to push to the Git repository`);
+    }
+    else
+    {
+        //
+        // TODO - Check permissions on svn repo
+        //
+        logger.success(`Allowed to push to the Subversion repository`);
+    }
+
+    await plugins.verifyConditions(context);
+
+    await fetch(options.repositoryUrl, { cwd, env });
+
+    context.lastRelease = await getLastRelease(context);
+    context.commits = await getCommits(context);
+
+    const nextRelease = { 
+        type: await plugins.analyzeCommits(context),
+        gitHead: await getGitHead({ cwd, env }),
+        version: undefined,
+        gitTag: undefined,
+        notes: undefined
+    };
+
+    if (!nextRelease.type)
+    {
+        logger.log("There are no relevant changes, so no new version is released.");
+        return false;
+    }
+
+    context.nextRelease = nextRelease;
+    nextRelease.version = getNextVersion(context);
+    nextRelease.gitTag = template(options.tagFormat)({ version: nextRelease.version });
+
+    await plugins.verifyRelease(context);
+
+    nextRelease.notes = await plugins.generateNotes(context);
+
+    await plugins.prepare(context);
+
+    if (options.dryRun)
+    {
+        logger.warn(`Skip ${nextRelease.gitTag} tag creation in dry-run mode`);
+    } else
+    {
+        // Create the tag before calling the publish plugins as some require the tag to exists
+        await tag(nextRelease.gitTag, { cwd, env });
+        await push(options.repositoryUrl, { cwd, env });
+        logger.success(`Created tag ${nextRelease.gitTag}`);
+    }
+
+    context.releases = await plugins.publish(context);
+
+    await plugins.success(context);
+
+    logger.success(`Published release ${nextRelease.version}`);
+
+    if (options.dryRun)
+    {
+        logger.log(`Release note for version ${nextRelease.version}:`);
+        if (nextRelease.notes)
+        {
+            context.stdout.write(marked(nextRelease.notes));
+        }
+    }
+
+    return pick(context, ["lastRelease", "commits", "nextRelease", "releases"]);
+}
+
+
+function runPowershellScript(config: any, logger: any, runCt: number)
+{
+    let soptions = "";
+    let cProperty: string;
+    let aProperty: string;
+    //
+    // Format config for powershell script arguments
+    //
+    const visitor: JSONVisitor =
+    {
+        onError() { cProperty = undefined; },
+        onObjectEnd()
+        {
+            cProperty = undefined;
+            aProperty = undefined;
+        },
+        onArrayBegin(offset: number, length: number, startLine: number, startCharacter: number)
+        {
+            const propStart = "-" + cProperty.toUpperCase() + " ";
+            aProperty = cProperty;
+            if (soptions.includes(propStart)) {
+                logger.error("Configuration parameter '" + cProperty + "' defined twice, check casing");
+                logger.error("   soptions = " + soptions);
+                return false;
+            }
+            soptions += (propStart);
+        },
+        onArrayEnd(offset: number, length: number, startLine: number, startCharacter: number)
+        {
+            aProperty = undefined;
+            if (soptions.endsWith(",")) {
+                soptions = soptions.substring(0, soptions.length - 1) + " ";
+            }
+        },
+        onLiteralValue(value: any, offset: number, _length: number)
+        {
+            if (cProperty && typeof value === "string")
+            {
+                if (!aProperty)
+                {
+                    const propStart = "-" + cProperty.toUpperCase() + " ";
+                    if (soptions.includes(propStart))
+                    {
+                        logger.error("   Configuration parameter '" + cProperty + "' defined twice, check casing");
+                        logger.error("   soptions = " + soptions);
+                        return false;
+                    }
+                    logger.log("   Value: '" + value + "'");
+                    soptions += (propStart + "'" + value + "' ");
+                }
+                else {
+                    logger.log("   Adding array value: '" + value + "'");
+                    soptions += ("\"" + value + "\",");
                 }
             }
-            // Check windows install
+            else if (aProperty && typeof value === "string")
+            {
+                soptions += ("'" + value + "',");
+            }
+            else if (cProperty && value)
+            {
+                if (!aProperty)
+                {
+                    const propStart = "-" + cProperty.toUpperCase() + " ";
+                    if (soptions.includes(propStart)) {
+                        logger.error("   Configuration parameter '" + cProperty + "' defined twice, check casing");
+                        logger.error("   soptions = " + soptions);
+                        return false;
+                    }
+                    logger.log("   Value: " + value.toString());
+                    soptions += (propStart + value + " ");
+                }
+                else {
+                    soptions += (value + ",");
+                }
+            }
+            cProperty = undefined;
+        },
+        onObjectProperty(property: string, offset: number, _length: number)
+        {
+            logger.log("Found configuration parameter '" + property + "'");
+            cProperty = property;
+        }
+    };
+    visit(JSON.stringify(config), visitor);
+
+    //
+    // Get the repository url if not specified
+    //
+    if (!config.repo)
+    {
+        const cwd = process.cwd();
+        const appPackageJson = path.join(cwd, "package.json");
+        if (fs.existsSync(appPackageJson)) {
+            const repository = require(appPackageJson).repository;
+            if (repository)
+            {
+                if (typeof repository === "string") {
+                    config.repo = repository;
+                }
+                else {
+                    config.repo = repository.url;
+                }
+            }
+        }
+        if (!config.repo)
+        {
+            logger.error("Repository url must be sepcified in .publishrc or package.json");
+            return false;
+        }
+    }
+
+    //
+    // Get the repository type if not specified
+    //
+    if (!config.repoType)
+    {
+        const cwd = process.cwd();
+        const appPackageJson = path.join(cwd, "package.json");
+        if (fs.existsSync(appPackageJson)) {
+            const repository = require(appPackageJson).repository;
+            if (repository) {
+                if (typeof repository === "object") {
+                    config.repoType = repository.type;
+                }
+            }
+        }
+        if (!config.repoType)
+        {
+            logger.error("Repository type must be sepcified in .publishrc or package.json");
+            logger.error("   Possible values:  svn, git");
+            return false;
+        }
+        else if (config.repoType !== "svn" && config.repoType !== "git")
+        {
+            logger.error("Invalid repository type sepcified, must be 'svn' or 'git'");
+            return false;
+        }
+    }
+
+    soptions = soptions + ` -apppublisherversion ${pkg.version}`;
+    soptions = soptions + ` -run ${runCt}`;
+
+    //
+    // Find Powershell script
+    //
+    // Perform search in the following order:
+    //
+    //     1. Local node_modules
+    //     2. Local script dir
+    //     3. Global node_modules
+    //     4. Windows install
+    //
+    let ps1Script;
+    if (util.pathExists(".\\node_modules\\@spmeesseman\\app-publisher")) {
+        ps1Script = ".\\node_modules\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1";
+    }
+    else if (util.pathExists(".\\node_modules\\@perryjohnson\\app-publisher")) {
+        ps1Script = ".\\node_modules\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1";
+    }
+    else if (util.pathExists(".\\script\\app-publisher.ps1")) {
+        ps1Script = ".\\script\\app-publisher.ps1";
+    }
+    else
+    {
+        if (process.env.CODE_HOME)
+        {
+            // Check global node_modules
             //
-            else if (process.env.APP_PUBLISHER_HOME)
-            {
-                if (util.pathExists(process.env.APP_PUBLISHER_HOME + "\\app-publisher.ps1")) {
-                    ps1Script = ".\\app-publisher.ps1";
-                }
+            const gModuleDir = process.env.CODE_HOME + "\\nodejs\\node_modules";
+            if (util.pathExists(gModuleDir + "\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1")) {
+                ps1Script = gModuleDir + "\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1";
+            }
+            else if (util.pathExists(gModuleDir + "\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1")) {
+                ps1Script = gModuleDir + "\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1";
             }
         }
-
-        if (!ps1Script) {
-            util.logError("Could not find powershell script app-publisher.ps1");
-            process.exit(102);
-        }
-
+        // Check windows install
         //
-        // Launch Powershell script
-        //
-        let ec = child_process.spawnSync("powershell.exe", [`${ps1Script} ${sArgs}`], { stdio: 'inherit'});
-        if (ec.status !== 0)
+        else if (process.env.APP_PUBLISHER_HOME)
         {
-            util.logError("Powershell exited with error code " + ec.status.toString());
-            process.exit(ec.status);
+            if (util.pathExists(process.env.APP_PUBLISHER_HOME + "\\app-publisher.ps1")) {
+                ps1Script = ".\\app-publisher.ps1";
+            }
         }
+    }
 
-        // let child = child_process.spawn("powershell.exe", [`${ps1Script} ${sArgs}`], { stdio: ['pipe', 'inherit', 'inherit'] });
-        // process.stdin.on('data', function(data) {
-        //     if (!child.killed) {
-        //         child.stdin.write(data);
-        //     }
-        // });
-        // child.on('exit', function(code) {
-        //     process.exit(code);
-        // });
+    if (!ps1Script) {
+        logger.error("Could not find powershell script app-publisher.ps1");
+        return false;
+    }
+
+    //
+    // Launch Powershell script
+    //
+    const ec = child_process.spawnSync("powershell.exe", [`${ps1Script} ${soptions}`], { stdio: "inherit"});
+    if (ec.status !== 0)
+    {
+        logger.error("Powershell script exited with error code " + ec.status.toString());
+        return ec.status;
+    }
+
+    logger.success("Published release successfully");
+    // logger.success(`Published release ${nextRelease.version}`);
+
+    // let child = child_process.spawn("powershell.exe", [`${ps1Script} ${soptions}`], { stdio: ['pipe', 'inherit', 'inherit'] });
+    // process.stdin.on('data', function(data) {
+    //     if (!child.killed) {
+    //         child.stdin.write(data);
+    //     }
+    // });
+    // child.on('exit', function(code) {
+    //     process.exit(code);
+    // });
+}
+
+
+function logErrors({ logger, stderr }, err)
+{
+    const errors = extractErrors(err).sort(error => (error.semanticRelease ? -1 : 0));
+    for (const error of errors)
+    {
+        if (error.semanticRelease)
+        {
+            logger.error(`${error.code} ${error.message}`);
+            if (error.details)
+            {
+                stderr.write(marked(error.details));
+            }
+        } else
+        {
+            logger.error("An error occurred while running app-publisher: %O", error);
+        }
     }
 }
 
-function displayIntro() 
+
+async function callFail(context, plugins, err)
 {
-    const title = `
-                                       _      _       _
-  _ _ __ _ __   _ __      _ __  _   __| |_ | (_)_____| |  ____  ____
- / _\\' || '_ \\\\| '_ \\\\___| '_ \\\\| \\ \\ |  _\\| | || ___| \\_/ _ \\\\/  _|
- | (_| || |_) || |_) |___| |_) || |_| | |_)| | | \\\\__| __ | __/| |
- \\__\\\\__| | .//| | .//   | | .//|____/|___/|_|_|/___/|_| \\___|.|_| v${require('../package.json').version} 
-        |_|    |_|       |_|                                                    
-    `;
-    util.log(chalk.bold(gradient('cyan', 'pink').multiline(title, {interpolation: 'hsv'})));
+    const errors = extractErrors(err).filter(err => err.semanticRelease);
+    if (errors.length > 0)
+    {
+        try
+        {
+            await plugins.fail({ ...context, errors });
+        } catch (error)
+        {
+            logErrors(context, error);
+        }
+    }
 }
 
 
-function displayArgHelp(arg: string)
+export = async (opts = {}, { cwd = process.cwd(), env = process.env, stdout = undefined, stderr = undefined } = {}) =>
 {
-    util.log("projectname       Name of the project.  This must macth throughout the build");
-    util.log("                  files and the SVN project name");
-    util.log("");
-
-    util.log("deployscript      ");
-    util.log("");
-
-    util.log("historyfile      The location of this history file, can be a relative or full path.");
-    util.log("");
-
-    util.log("historylinelen   Defaults to 80");
-    util.log("");
-
-    util.log("historyhdrfile   The location of this history header file, can be a relative or full path.");
-    util.log("");
-
-    util.log("historyfile      To build the installer release, set this flag to \"Y\"");
-    util.log("");
-
-    util.log("installerrelease  To build the installer release, set this flag to \"Y\"");
-    util.log("");
-
-    util.log("installerscript   The location of the installer build script, this can be a");
-    util.log("                  relative to PATHTOROOT or a full path.");
-    util.log("                  Note this parameter applies only to INSTALLRELEASE=\"Y\"");
-    util.log("");
-
-    util.log("notepadedits     ");
-    util.log("");
-
-    util.log("npmrelease       To build the npm release, set this flag to \"Y\"");
-    util.log("");
-
-    util.log("npmuser          NPM user (for NPMRELEASE=\"Y\" only)");
-    util.log("                 NPM username, password, and token should be store as environment variables");
-    util.log("                 for security.  The variable names should be:");
-    util.log("                      PJ_NPM_USERNAME");
-    util.log("                      PJ_NPM_PASSWORD");
-    util.log("                      PJ_NPM_TOKEN");
-    util.log("                 To create an npm user if you dont have one, run the following command and follow");
-    util.log("                 the prompts:");
-    util.log("                      $ npm adduser --registry=npm.development.pjats.com --scope=@perryjohnson");
-    util.log("                      Locate the file [USERDIR]\.npmrc, copy the created token from within");
-    util.log("                      the NPM environment variables as well.");
-    util.log("");
-
-    util.log("nugetrelease     To build the nuget release, set this flag to \"Y\"");
-    util.log("");
-
-    util.log("pathtoroot       A relative (not full) path that will equate to the project root as seen from the");
-    util.log("                 script's location.  For example, if this script is in PROJECTDIR\\script, then");
-    util.log("                 the rel path to root would be \"..\".  If the script is in PROJECTDIR\\install\\script,");
-    util.log("                 then the rel path to root would be \"..\\..\"");
-    util.log("                 The value should be relative to the script dir, dont use a full path as this will not");
-    util.log("                 share across users well keeping project files in different directories");
-
-    util.log("pathtomainroot  ");
-    util.log("                 This in most cases sould be an empty string if the project is the 'main' project.  If");
-    util.log("                 a sub-project exists within a main project in SVN, then this needs to be set to the ");
-    util.log("                 relative directory to the main project root, as seen from the sub-project root.");
-    util.log("");
-
-    util.log("pathtodist       Path to DIST should be relative to PATHTOROOT");
-    util.log("");
-
-    util.log("pathpreroot      This in most cases sould be an empty string if the project is the 'main' project.  If");
-    util.log("                 a sub-project exists within a main project in SVN, then this needs to be set to the");
-    util.log("                 relative directory to the project path, as seen from the main project root.");
-    util.log("                 ");
-    util.log("                 For example, the following project contains a layout with 3 separate projects 'fp', 'ui', ");
-    util.log("                 and 'svr':");
-    util.log("                     GEMS2");
-    util.log("                         app");
-    util.log("                             fpc");
-    util.log("                             svr");
-    util.log("                             ui");
-    util.log("                 The main project root is GEMS2.  In the case of each of these projects, SVNPREPATH should");
-    util.log("                 be set to app\\fpc, app\\ui, or app\\svr, for each specific sub-project.");
-    util.log("                 This mainly is be used for SVN commands which need to be ran in the directory containing");
-    util.log("                 the .svn folder.");
-    util.log("");
-
-    util.log("skipdeploypush   Skip uploading installer to network release folder (primarily used for releasing");
-    util.log("                 from hom office where two datacenters cannot be reached at the same time, in this");
-    util.log("                 case the installer files are manually copied)");
-    util.log("");
-
-    util.log("svnrepo          The SVN repository.  It should be one of the following:");
-    util.log("                     1. pja");
-    util.log("                     2. pjr");
-    util.log("");
-
-    util.log("svnprotocol      The SVN protocol to use for SVN commands.  It should be one of the following:");
-    util.log("                     1. svn");
-    util.log("                     2. https");
-    util.log("");
-
-    util.log("svnserver        The svn server address, can be domain name or IP");
-    util.log("");
-
-    util.log("testmode         Test mode - Y for 'yes', N for 'no'");
-    util.log("                 In test mode, the following holds:");
-    util.log("                     1) Installer is not released/published");
-    util.log("                     2) Email notification will be sent only to $TESTEMAILRECIPIENT");
-    util.log("                     3) Commit package/build file changes (svn) are not made");
-    util.log("                     4) Version tag (svn) is not made");
-    util.log("                 Some local files may be changed in test mode (i.e. updated version numbers in build and");
-    util.log("                 package files).  These changes should be reverted to original state via SCM");
-    util.log("");
-
-    util.log("testmodesvnrevert    ");
-    util.log("");
-
-    util.log("testemailrecipient    ");
-    util.log("");
-
-    util.log("versiontext      The text tag to use in the history file for preceding the version number.  It should ");
-    util.log("                 be one of the following:");
-    util.log("                 ");
-    util.log("                     1. Version");
-    util.log("                     2. Build");
-    util.log("                     3. Release");
-    util.log("");
-}
-
+    const { unhook } = hookStd(
+        { silent: false, streams: [process.stdout, process.stderr, stdout, stderr].filter(Boolean) },
+        hideSensitive(env)
+    );
+    const context = { cwd, env, stdout: stdout || process.stdout, stderr: stderr || process.stderr, logger: undefined, options: undefined };
+    context.logger = getLogger(context);
+    context.logger.log(`Running ${pkg.name} version ${pkg.version}`);
+    try
+    {
+        const { plugins, options } = await getConfig(context, opts);
+        context.options = options;
+        try
+        {
+            const result = await run(context, plugins);
+            unhook();
+            return result;
+        } catch (error)
+        {
+            await callFail(context, plugins, error);
+            throw error;
+        }
+    } catch (error)
+    {
+        logErrors(context, error);
+        unhook();
+        throw error;
+    }
+};

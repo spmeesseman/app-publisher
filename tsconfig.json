@@ -1,7 +1,4 @@
 {
-    "include": [
-        "src/**/*"
-    ],
     "exclude": [
         "node_modules",
         "doc",
@@ -14,6 +11,10 @@
         "module": "commonjs",
         "target": "es6",
         "outDir": "build",
+        "sourceMap": true,
+        "rootDir": "src",
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
         "lib": [
             "dom",
             "es6"

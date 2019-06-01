@@ -4,9 +4,9 @@
 
 "use strict";
 import * as fs from "fs";
-import * as glob from "glob";
-import * as istanbul from "istanbul";
-import * as Mocha from "mocha";
+import glob from "glob";
+import istanbul from "istanbul";
+import Mocha from "mocha";
 import * as paths from "path";
 
 // tslint:disable-next-line:no-var-requires

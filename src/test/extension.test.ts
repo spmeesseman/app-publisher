@@ -29,10 +29,10 @@ suite("Extension Tests", () =>
 
     if (true) 
     {
-      assert(true);
+      assert.ok(true);
       done();
     } else {
-      assert(false);
+      assert.fail("Failed");
       done();
     }
   });
