@@ -29,6 +29,11 @@
     "pathtoRoot":        ".",
     "pathtoMainRoot":    "",
     "pathPreRoot":       "",
+    "plugins": [
+        "@semantic-release/npm",
+        "@semantic-release/github",
+        "@semantic-release/git"
+    ],
     "postBuildCommand":  "",
     "repoType":          "",
     "repo":              "",
@@ -53,6 +58,9 @@
         "bugs":          "https://projects.development.pjats.com/app-publisher/ticket/1",
         "npmPackDist":   "Y",
         "npmRegistry":   "https://npm.development.pjats.com",
+        "plugins": [
+            "@semantic-release/npm"
+        ],
         "textEditor":    "",
         "npmScope":      "@perryjohnson",
         "githubRelease": "N",

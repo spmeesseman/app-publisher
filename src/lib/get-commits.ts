@@ -11,11 +11,11 @@ export = getCommits;
  *
  * @return {Promise<Array<Object>>} The list of commits on the branch `branch` since the last release.
  */
-async function getCommits({ cwd, env, lastRelease: { gitHead }, logger })
+async function getCommits({ cwd, env, lastRelease: { head }, logger })
 {
-  if (gitHead)
+  if (head)
   {
-    debug("Use gitHead: %s", gitHead);
+    debug("Use head: %s", head);
   } else
   {
     logger.log("No previous release found, retrieving all commits");
@@ -30,7 +30,7 @@ async function getCommits({ cwd, env, lastRelease: { gitHead }, logger })
 
   Object.assign(gitLogParser.fields, { hash: "H", message: "B", gitTags: "d", committerDate: { key: "ci", type: Date } });
   const commits = (await getStream.array(
-    gitLogParser.parse({ _: `${gitHead ? gitHead + ".." : ""}HEAD` }, { cwd, env: { ...process.env, ...env } })
+    gitLogParser.parse({ _: `${head ? head + ".." : ""}HEAD` }, { cwd, env: { ...process.env, ...env } })
   )).map(processCommits);
 
   logger.log(`Found ${commits.length} commits since last release`);

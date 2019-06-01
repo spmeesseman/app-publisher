@@ -1,23 +1,33 @@
-export class CommitAnalyzer 
+
+
+export = getReleaseLevel;
+
+
+async function getReleaseLevel({ options, commits })
 {
-    private options: any;
+    let level = "patch";
 
-
-    constructor(opts: any) 
+    for (const c in commits)
     {
-        this.options = opts;
+        if (commits[c] === "") { continue; }
+
+        commits[c] = commits[c].ToLower();
+        if (commits[c].Contains("breaking change")) // bump major on breaking change
+        {
+            level = "major";
+            break;
+        }
+        if (commits[c].Contains("majfeat: ")) // bump major on major feature
+        {
+            level = "major";
+            break;
+        }
+        if (commits[c].Contains("feat: ")) // bump minor on feature
+        {
+            level = "minor";
+            break;
+        }
     }
 
-
-    getReleaseLevel(): string 
-    {
-        return this.getLevel("svn");
-    }
-
-
-    private getLevel(repoType: string) : string 
-    {
-        return "patch";
-    }
-    
+    return level;
 }

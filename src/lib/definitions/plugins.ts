@@ -1,5 +1,5 @@
 const { isString, isPlainObject } = require("lodash");
-const { getGitHead } = require("../repo");
+const { getHead } = require("../repo");
 const hideSensitive = require("../hide-sensitive");
 const { hideSensitiveValues } = require("../utils");
 const { RELEASE_TYPE, RELEASE_NOTES_SEPARATOR } = require("./constants");
@@ -11,26 +11,6 @@ export = {
         required: false,
         dryRun: true,
         pipelineConfig: () => ({ settleAll: true }),
-    },
-
-    analyzeCommits:
-    {
-        //default: ["@app-publisher/commit-analyzer"],
-        required: false,
-        dryRun: true,
-        outputValidator: output => !output || RELEASE_TYPE.includes(output),
-        preprocess: ({ commits, ...inputs }) => ({
-            ...inputs,
-            commits: commits.filter(commit => !/\[skip\s+release\]|\[release\s+skip\]/i.test(commit.message)),
-        }),
-        postprocess: results =>
-            RELEASE_TYPE[
-            results.reduce((highest, result) =>
-            {
-                const typeIndex = RELEASE_TYPE.indexOf(result);
-                return typeIndex > highest ? typeIndex : highest;
-            }, -1)
-            ],
     },
 
     verifyRelease:
@@ -64,11 +44,11 @@ export = {
         pipelineConfig: ({ generateNotes }) => ({
             getNextInput: async context =>
             {
-                const newGitHead = await getGitHead({ cwd: context.cwd });
-                // If previous prepare plugin has created a commit (gitHead changed)
-                if (context.nextRelease.gitHead !== newGitHead)
+                const newGitHead = await getHead({ cwd: context.cwd });
+                // If previous prepare plugin has created a commit (head changed)
+                if (context.nextRelease.head !== newGitHead)
                 {
-                    context.nextRelease.gitHead = newGitHead;
+                    context.nextRelease.head = newGitHead;
                     // Regenerate the release notes
                     context.nextRelease.notes = await generateNotes(context);
                 }

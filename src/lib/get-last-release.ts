@@ -11,7 +11,7 @@ export = getLastRelease;
  *
  * @typedef {Object} LastRelease
  * @property {string} version The version number of the last release.
- * @property {string} [gitHead] The Git reference used to make the last release.
+ * @property {string} [head] The Git reference used to make the last release.
  */
 
 /**
@@ -37,7 +37,7 @@ async function getLastRelease({ cwd, env, options: { tagFormat, repoType }, logg
     const tagRegexp = `^${escapeRegExp(template(tagFormat)({ version: " " })).replace(" ", "(.+)")}`;
 
     const tags = (await getTags({ cwd, env }))
-        .map(tag => ({ gitTag: tag, version: (tag.match(tagRegexp) || new Array(2))[1] }))
+        .map(tag => ({ tag: tag, version: (tag.match(tagRegexp) || new Array(2))[1] }))
         .filter(
             tag => tag.version && semver.valid(semver.clean(tag.version)) && !semver.prerelease(semver.clean(tag.version))
         )
@@ -45,12 +45,12 @@ async function getLastRelease({ cwd, env, options: { tagFormat, repoType }, logg
 
     debug("found tags: %o", tags);
 
-    const tag: any = await pLocate(tags, tag => isRefInHistory(tag["gitTag"], { cwd, env }), { preserveOrder: true });
+    const tag: any = await pLocate(tags, tag => isRefInHistory(tag["tag"], { cwd, env }), { preserveOrder: true });
 
     if (tag)
     {
-        logger.log(`Found git tag ${tag.gitTag} associated with version ${tag.version}`);
-        return { gitHead: await getTagHead(tag.gitTag, { cwd, env }), ...tag };
+        logger.log(`Found git tag ${tag.tag} associated with version ${tag.version}`);
+        return { head: await getTagHead(tag.tag, { cwd, env }), ...tag };
     }
 
     logger.log(`No ${repoType} tag version found`);

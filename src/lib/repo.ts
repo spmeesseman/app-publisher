@@ -87,7 +87,7 @@ export async function fetch(repositoryUrl: any, execaOpts: any, repoType = "git"
  *
  * @return {String} the sha of the HEAD commit.
  */
-export function getGitHead(execaOpts: any, repoType = "git")
+export function getHead(execaOpts: any, repoType = "git")
 {
     return execa.stdout("git", ["rev-parse", "HEAD"], execaOpts);
 }

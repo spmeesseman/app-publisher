@@ -1,6 +1,5 @@
 
 import { visit, JSONVisitor } from "jsonc-parser";
-import { CommitAnalyzer } from "./lib/commit-analyzer";
 import * as util from "./util";
 import * as fs from "fs";
 import * as path from "path";
@@ -15,6 +14,7 @@ const envCi = require("env-ci");
 import hookStd from "hook-std";
 import hideSensitive = require("./lib/hide-sensitive");
 import getConfig = require("./lib/get-config");
+import getReleaseLevel = require("./lib/commit-analyzer");
 import verify = require("./lib/verify");
 import getCommits = require("./lib/get-commits");
 import getNextVersion = require("./lib/get-next-version");
@@ -22,7 +22,7 @@ import getLastRelease = require("./lib/get-last-release");
 import { extractErrors } from "./lib/utils";
 import getGitAuthUrl = require("./lib/get-git-auth-url");
 import getLogger = require("./lib/get-logger");
-import { fetch, verifyAuth, isBranchUpToDate, getGitHead, tag, push } from "./lib/repo";
+import { fetch, verifyAuth, isBranchUpToDate, getHead, tag, push } from "./lib/repo";
 import getError = require("./lib/get-error");
 import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
 
@@ -202,11 +202,11 @@ async function runNodeScript(context: any, plugins: any, runCt: number)
     context.lastRelease = await getLastRelease(context);
     context.commits = await getCommits(context);
 
-    const nextRelease = { 
-        type: await plugins.analyzeCommits(context),
-        gitHead: await getGitHead({ cwd, env }),
+    const nextRelease = {
+        type: await getReleaseLevel(context),
+        head: await getHead({ cwd, env }),
         version: undefined,
-        gitTag: undefined,
+        tag: undefined,
         notes: undefined
     };
 
@@ -218,7 +218,7 @@ async function runNodeScript(context: any, plugins: any, runCt: number)
 
     context.nextRelease = nextRelease;
     nextRelease.version = getNextVersion(context);
-    nextRelease.gitTag = template(options.tagFormat)({ version: nextRelease.version });
+    nextRelease.tag = template(options.tagFormat)({ version: nextRelease.version });
 
     await plugins.verifyRelease(context);
 
@@ -228,13 +228,13 @@ async function runNodeScript(context: any, plugins: any, runCt: number)
 
     if (options.dryRun)
     {
-        logger.warn(`Skip ${nextRelease.gitTag} tag creation in dry-run mode`);
+        logger.warn(`Skip ${nextRelease.tag} tag creation in dry-run mode`);
     } else
     {
         // Create the tag before calling the publish plugins as some require the tag to exists
-        await tag(nextRelease.gitTag, { cwd, env });
+        await tag(nextRelease.tag, { cwd, env });
         await push(options.repositoryUrl, { cwd, env });
-        logger.success(`Created tag ${nextRelease.gitTag}`);
+        logger.success(`Created tag ${nextRelease.tag}`);
     }
 
     context.releases = await plugins.publish(context);
