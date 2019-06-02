@@ -90,15 +90,6 @@ async function run(context, plugins)
         `Run automated release from branch ${ciBranch}${options.dryRun ? " in dry-run mode" : ""}`
     );
 
-    //
-    // Set dry run flags
-    //
-    if (options.dryRun) {
-        options.testMode = "Y";
-        options.testModeSvnRevert = "Y";
-        options.skipDeployPush = "Y";
-    }
-
     if (!options.profile || options.profile === "node")
     {
         await runNodeScript(context, plugins).then((code) =>
@@ -313,7 +304,7 @@ async function runPowershellScript(options: any, logger: any)
         if (child.killed) {
             return;
         }
-        data = data.trim();
+        data = data.trimRight();
         if (!data) {
             return;
         }
