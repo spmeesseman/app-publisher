@@ -3062,8 +3062,6 @@ Log-Message "Current Version     : $CURRENTVERSION"
 Log-Message "Next Version        : $VERSION"
 Log-Message "Date                : $TDATE"
 
-continue
-
 #
 # Process $HISTORYFILE
 #
