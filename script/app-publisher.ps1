@@ -711,7 +711,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
         $ProjectNameFmt = $TextInfo.ToTitleCase($ProjectNameFmt)
         $Subject = "$ProjectNameFmt $VERSIONTEXT $VERSION"
 
-        if ($TESTMODE -ne "Y") 
+        if ($DRYRUN -eq $false) 
         {
             if (![string]::IsNullOrEmpty($EMAILRECIP) -and $EMAILRECIP.Contains("@") -and $EMAILRECIP.Contains(".")) 
             {
@@ -978,7 +978,7 @@ function Vc-Revert()
             {
                 $VcRevertFile = $VcRevertListParts[$i].Replace("`"", "");
                 if ($VcRevertFile -eq "") {
-                    continue;
+                    continue
                 }
                 if (Test-Path($VcRevertFile))
                 {
@@ -1060,7 +1060,7 @@ function Run-Scripts($ScriptType, $Scripts, $ExitOnError, $RunInTestMode = $fals
         #
         Log-Message "Running custom $ScriptType script(s)"
 
-        if ($TESTMODE -ne "Y" -or $RunInTestMode) 
+        if ($DRYRUN -eq $false -or $RunInTestMode) 
         {
             foreach ($Script in $Scripts) 
             {
@@ -1069,7 +1069,7 @@ function Run-Scripts($ScriptType, $Scripts, $ExitOnError, $RunInTestMode = $fals
             }
         }
         else {
-            Log-Message "   Test mode, skipping script run" "magenta"
+            Log-Message "   Dry run, skipping script run" "magenta"
         }
 
         $script:BuildCmdsRun += $ScriptType
@@ -1134,16 +1134,40 @@ function Prepare-DotNetBuild($AssemblyInfoLocation)
     else {
         $SEMVERSION = $VERSION
     }
+    $SEMVERSIONCUR = ""
+    if (!$CURRENTVERSION.Contains("."))
+    {
+        for ($i = 0; $i -lt $CURRENTVERSION.Length; $i++) {
+            $SEMVERSIONCUR = "$SEMVERSIONCUR$($CURRENTVERSION[$i])."
+        }
+        $SEMVERSIONCUR = $SEMVERSIONCUR.Substring(0, $SEMVERSIONCUR.Length - 1);
+    }
+    else {
+        $SEMVERSIONCUR = $CURRENTVERSION
+    }
     #
     # Replace version in assemblyinfo file
     #
-    Replace-Version $AssemblyInfoLocation "AssemblyVersion[ ]*[(][ ]*[`"]$CURRENTVERSION" "AssemblyVersion(`"$SEMVERSION"
-    Replace-Version $AssemblyInfoLocation "AssemblyFileVersion[ ]*[(][ ]*[`"]$CURRENTVERSION" "AssemblyFileVersion(`"$SEMVERSION"
+    Replace-Version $AssemblyInfoLocation "AssemblyVersion[ ]*[(][ ]*[`"]$SEMVERSIONCUR" "AssemblyVersion(`"$SEMVERSION"
+    Replace-Version $AssemblyInfoLocation "AssemblyFileVersion[ ]*[(][ ]*[`"]$SEMVERSIONCUR" "AssemblyFileVersion(`"$SEMVERSION"
     #
     # Allow manual modifications to assembly file
     #
     Edit-File $AssemblyInfoLocation
 }
+
+function Get-AssemblyInfoVersion($AssemblyInfoLocation)
+{
+    [Match] $match = [Regex]::Match($TmpCommits, "[(][a-z\- A-Z]*[)]\s*[:][ ]");
+    while ($match.Success) {
+        $NewText = $match.Value.Replace("(", "")
+        $NewText = $NewText.Replace(")", "")
+        $NewText = $NewText.Replace(": ", "")
+        $TmpCommits = $TmpCommits.Replace($match.Value, ":  $NewText`r`n`r`n    ")
+        $match = $match.NextMatch()
+    }
+}
+
 
 $DefaultRepo = ""
 $DefaultRepoType = ""
@@ -2150,6 +2174,30 @@ if ($options.distReleasePath) {
     $DISTRELEASEPATH = $options.distReleasePath
 }
 #
+# Dry run
+#
+# In Dry run, the following holds:
+#
+#     1) Build scripts are not run, if specified (by default, they are ran)
+#     2) Dist release upload/deploy is not performed
+#     2) Deploy scripts are not run
+#     3) Email notification will be sent only to $TESTEMAILRECIP
+#     4) Commit package/build file changes (svn) are not made
+#     5) Version tag (svn) is not made
+#
+# Some local files may be changed in dryrun mode (i.e. updated version numbers in build and
+# package files).  These changes should be reverted to original state via SCM
+#
+$DRYRUN = $false
+if ($options.dryRun) {
+    $DRYRUN = $options.dryRun
+}
+#
+$DRYRUNVCREVERT = "Y"
+if ($options.dryRunVcRevert) {
+    $DRYRUNVCREVERT = $options.dryRunVcRevert
+}
+#
 #
 #
 $EMAILNOTIFICATION = "Y"
@@ -2337,30 +2385,6 @@ if ($options.skipDeployPush) {
     $SKIPDEPLOYPUSH = $options.skipDeployPush
 }
 #
-# Test mode - Y for 'yes', N for 'no'
-#
-# In test mode, the following holds:
-#
-#     1) Build scripts are not run, if specified (by default, they are ran)
-#     2) Dist release upload/deploy is not performed
-#     2) Deploy scripts are not run
-#     3) Email notification will be sent only to $TESTEMAILRECIP
-#     4) Commit package/build file changes (svn) are not made
-#     5) Version tag (svn) is not made
-#
-# Some local files may be changed in test mode (i.e. updated version numbers in build and
-# package files).  These changes should be reverted to original state via SCM
-#
-$TESTMODE = "Y"
-if ($options.testMode) {
-    $TESTMODE = $options.testMode
-}
-#
-$TESTMODEVCREVERT = "Y"
-if ($options.testModeVcRevert) {
-    $TESTMODEVCREVERT = $options.testModeVcRevert
-}
-#
 $TESTEMAILRECIP = ""
 if ($options.testEmailRecip) {
     $TESTEMAILRECIP = $options.testEmailRecip
@@ -2373,9 +2397,20 @@ if ($options.vcTag) {
     $VCTAG = $options.vcTag
 }
 #
+# Tag prefix - to be used for "sub-projects" within a main project
+#
 $VCTAGPREFIX = ""
 if ($options.vcTagPrefix) {
     $VCTAGPREFIX = $options.vcTagPrefix
+}
+#
+# The format to use for tag name, input should be in the following form:
+#
+#     tagFormat: v${version}
+#
+$VCTAGFORMAT = ""
+if ($options.tagFormat) {
+    $VCTAGFORMAT = $options.tagFormat
 }
 #
 # Whether or not to tag the new version in SVN.  Default is Yes.
@@ -2486,12 +2521,34 @@ if (Test-Path("package.json"))
     }
 }
 if ([string]::IsNullOrEmpty($_Repo)) {
-    Log-Message "Repository must be specified on cmd line or in package.json" "red"
+    Log-Message "Repository must be specified on cmd line, package.json or publishrc" "red"
     exit 1
 }
 elseif ([string]::IsNullOrEmpty($_RepoType)) {
-    Log-Message "Repository type must be specified on cmd line or in package.json" "red"
+    Log-Message "Repository type must be specified on cmd line, package.json or publishrc" "red"
     exit 1
+}
+if ($_RepoType -ne "git" -and $_RepoType -ne "svn")
+{
+    Log-Message "Invalid repository type, must be 'git' or 'svn'" "red"
+    exit 1
+}
+
+#
+# Branch
+#
+if ([string]::IsNullOrEmpty($BRANCH)) 
+{
+    if ($_Repo -eq "git") 
+    {
+        Log-Message "Setting branch name to default 'master'" "darkyellow"
+        $BRANCH = "master"
+    }
+    elseif ($_Repo -eq "svn") 
+    {
+        Log-Message "Setting branch name to default 'trunk'" "darkyellow"
+        $BRANCH = "trunk"
+    }
 }
 
 #
@@ -2532,13 +2589,6 @@ if (![string]::IsNullOrEmpty($TEXTEDITOR))
 #
 # Convert any Y/N vars to upper case and check validity
 #
-if (![string]::IsNullOrEmpty($TESTMODE)) {
-    $TESTMODE = $TESTMODE.ToUpper()
-    if ($TESTMODE -ne "Y" -and $TESTMODE -ne "N") {
-        Log-Message "Invalid value specified for testMode, accepted values are y/n/Y/N" "red"
-        exit 1
-    }
-}
 if (![string]::IsNullOrEmpty($DISTRELEASE)) {
     $DISTRELEASE = $DISTRELEASE.ToUpper()
     if ($DISTRELEASE -ne "Y" -and $DISTRELEASE -ne "N") {
@@ -2586,9 +2636,9 @@ if (![string]::IsNullOrEmpty($SKIPDEPLOYPUSH)) {
         exit 1
     }
 }
-if (![string]::IsNullOrEmpty($TESTMODEVCREVERT)) {
-    $TESTMODEVCREVERT = $TESTMODEVCREVERT.ToUpper()
-    if ($TESTMODEVCREVERT -ne "Y" -and $TESTMODEVCREVERT -ne "N") {
+if (![string]::IsNullOrEmpty($DRYRUNVCREVERT)) {
+    $DRYRUNVCREVERT = $DRYRUNVCREVERT.ToUpper()
+    if ($DRYRUNVCREVERT -ne "Y" -and $DRYRUNVCREVERT -ne "N") {
         Log-Message "Invalid value specified for testModeSvnRevert, accepted values are y/n/Y/N" "red"
         exit 1
     }
@@ -2625,8 +2675,11 @@ Log-Message "   Bugs Page        : $BUGS"
 Log-Message "   Changelog file   : $CHANGELOGFILE"
 Log-Message "   Deploy cmd       : $DEPLOYCOMMAND"
 Log-Message "   Dist release     : $DISTRELEASE"
+Log-Message "   Dry run          : $DRYRUN"
+Log-Message "   Dry run vc revert: $DRYRUNVCREVERT"
 Log-Message "   Github release   : $GITHUBRELEASE"
 Log-Message "   Github user      : $GITHUBUSER"
+Log-Message "   Github assets    : $GITHUBASSETS"
 Log-Message "   History file     : $HISTORYFILE"
 Log-Message "   History file line: $HISTORYLINELEN"
 Log-Message "   History hdr file : $HISTORYHDRFILE"
@@ -2645,15 +2698,13 @@ Log-Message "   RepoType         : $_RepoType"
 Log-Message "   Branch           : $BRANCH"
 Log-Message "   Skip deploy/push : $SKIPDEPLOYPUSH"
 Log-Message "   Tag version      : $VCTAG"
+Log-Message "   Tag format       : $VCTAGFORMAT"
 Log-Message "   Tag prefix       : $VCTAGPREFIX"
 Log-Message "   Text editor      : $TEXTEDITOR"
-Log-Message "   Test mode        : $TESTMODE"
 Log-Message "   Test email       : $TESTEMAILRECIP"
 Log-Message "   Text editor      : $TEXTEDITOR"
 Log-Message "   Version files    : $VERSIONFILES"
 Log-Message "   Version text     : $VERSIONTEXT"
-
-continue
 
 #
 # Get execution policy, this needs to be equlat  to 'RemoteSigned'
@@ -2668,7 +2719,7 @@ if ($ExecPolicy -ne "RemoteSigned")
 }
 
 #
-# Check valid params
+# Check valid path params
 #
 if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and [string]::IsNullOrEmpty($PATHPREROOT)) {
     Log-Message "pathPreRoot must be specified with pathToMainRoot" "red"
@@ -2686,7 +2737,7 @@ if ($DISTRELEASE -eq "Y" -and [string]::IsNullOrEmpty($PATHTODIST)) {
 }
 
 #
-# Convert commands to arrays, if string
+# Convert array params to arrays, if specified as string on cmdline or publishrc
 #
 if ($DEPLOYCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($DEPLOYCOMMAND))
 {
@@ -2747,9 +2798,7 @@ if ($CURRENTVERSION -eq "")
     } 
     elseif ((Test-Path("AssemblyInfo.cs")) -or (Test-Path("Properties\AssemblyInfo.cs")))
     {
-        #
-        # TODO - Parse AssemblyInfo.cs for current version 
-        #
+        $CURRENTVERSION = Get-AssemblyInfoVersion
     }
     elseif (![string]::IsNullOrEmpty($HISTORYFILE))
     {
@@ -2788,7 +2837,7 @@ if ($CURRENTVERSION -eq "") {
 #     3. Populate and edit history text file
 #     4. Populate and edit changelog markdown file
 #
-if ($RUN -eq 1 -or $TESTMODE -eq "Y") 
+if ($RUN -eq 1 -or $DRYRUN -eq $true) 
 {
     Log-Message "The current version is $CURRENTVERSION"
     #
@@ -2845,7 +2894,7 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
         #
         # Get next version
         #
-        if ($RUN -eq 1 -or $TESTMODE -eq "Y") {
+        if ($RUN -eq 1 -or $DRYRUN -eq $true) {
             $VERSION = & node -e "console.log(require('semver').inc('$CURRENTVERSION', '$RELEASELEVEL'));"
         }
         else {
@@ -2858,7 +2907,7 @@ if ($RUN -eq 1 -or $TESTMODE -eq "Y")
         # Whole # incremental versioning, i.e. 100, 101, 102...
         #
         Log-Message "Using legacy PJ versioning"
-        if ($RUN -eq 1 -or $TESTMODE -eq "Y") {
+        if ($RUN -eq 1 -or $DRYRUN -eq $true) {
             try {
                 $VERSION = ([System.Int32]::Parse($CURRENTVERSION) + 1).ToString()
             }
@@ -2963,7 +3012,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
         Log-Message "Could not create history file, exiting" "red"
         exit 140;
     }
-    if ($CURRENTVERSION -ne $VERSION -and ($RUN -eq 1 -or $TESTMODE -eq "Y"))
+    if ($CURRENTVERSION -ne $VERSION -and ($RUN -eq 1 -or $DRYRUN -eq $true))
     {
         $TmpCommits = $ClsHistoryFile.createSectionFromCommits($COMMITS, $HISTORYLINELEN)
 
@@ -3123,7 +3172,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE))
         exit 141
     }
 
-    if ($CURRENTVERSION -ne $VERSION -and ($RUN -eq 1 -or $TESTMODE -eq "Y"))
+    if ($CURRENTVERSION -ne $VERSION -and ($RUN -eq 1 -or $DRYRUN -eq $true))
     {
         $TmpCommits = ""
         $LastSection = ""
@@ -3372,16 +3421,16 @@ if ($NPMRELEASE -eq "Y")
         # Publish to npm server
         #
         Log-Message "Publishing npm package to $NPMREGISTRY"
-        if ($TESTMODE -ne "Y") 
+        if ($DRYRUN -eq $false) 
         {
             & npm publish --access public --registry $NPMREGISTRY
             Check-ExitCode
         }
         else 
         {
-            Log-Message "   Test mode, performing publish dry run only" "magenta"
+            Log-Message "   Dry run, performing publish dry run only" "magenta"
             & npm publish --access public --registry $NPMREGISTRY --dry-run
-            Log-Message "   Test mode, dry run publish finished" "magenta"
+            Log-Message "   Dry run, dry run publish finished" "magenta"
         }
         #
         #
@@ -3424,7 +3473,7 @@ if ($GITHUBRELEASE -eq "Y")
 {
     Log-Message "Starting GitHub release"
  
-    if ($TESTMODE -ne "Y") 
+    if ($DRYRUN -eq $false) 
     {
         Log-Message "Creating GitHub v$VERSION release"
         #
@@ -3524,7 +3573,7 @@ if ($GITHUBRELEASE -eq "Y")
         }
     }
     else {
-        Log-Message "Test mode, skipping GitHub release" "magenta"
+        Log-Message "Dry run, skipping GitHub release" "magenta"
     }
 }
 
@@ -3560,7 +3609,7 @@ if ($DISTRELEASE -eq "Y")
     {
         # Copy contents of dist dir to target location, and pdf docs to docs location
         #
-        if ($TESTMODE -ne "Y") 
+        if ($DRYRUN -eq $true) 
         {
             Log-Message "Deploying distribution files to specified location:"
             Log-Message "   $TargetNetLocation"
@@ -3601,7 +3650,7 @@ if ($DISTRELEASE -eq "Y")
             Check-PsCmdSuccess
         }
         else {
-            Log-Message "Test mode, skipping basic push to network drive" "magenta"
+            Log-Message "Dry run, skipping basic push to network drive" "magenta"
         }
     }
     else {
@@ -3624,12 +3673,12 @@ if ((Test-Path("package.json"))) {
 #
 # Run custom deploy script if specified
 #
-if ($SKIPDEPLOYPUSH -ne "Y")
+if ($SKIPDEPLOYPUSH -ne "Y" -and $DRYRUN -eq $false)
 {
     Run-Scripts "deploy" $DEPLOYCOMMAND $false $false
 }
 else {
-    Log-Message "Skipped running custom deploy script (user specified)" "magenta"
+    Log-Message "Skipped running custom deploy script" "magenta"
 }
 
 #
@@ -3659,7 +3708,7 @@ if ($_RepoType -eq "svn")
         #
         if ($VCCHANGELIST -ne "") 
         {
-            if ($TESTMODE -ne "Y") 
+            if ($DRYRUN -eq $false) 
             {
                 if ($SKIPCOMMIT -ne "Y")
                 {
@@ -3696,11 +3745,12 @@ if ($_RepoType -eq "svn")
             }
             else 
             {
-                if ($TESTMODEVCREVERT -eq "Y") {
+                if ($DRYRUNVCREVERT -eq "Y") {
+                    Log-Message "Dry run, reverting changes" "magenta"
                     Vc-Revert
                 }
-                if ($TESTMODE -eq "Y") {
-                    Log-Message "   Test mode, skipping touched file SVN commit" "magenta"
+                if ($DRYRUN -eq $true) {
+                    Log-Message "   Dry run, skipping touched file SVN commit" "magenta"
                 }
             }
         }
@@ -3731,7 +3781,7 @@ if ($_RepoType -eq "svn")
                     $TagMessage = "chore(release): tag $VCTAGPREFIX version $VERSION [skip ci]"
                 }
                 Log-Message "Tagging SVN version at $TagLocation"
-                if ($TESTMODE -ne "Y") 
+                if ($DRYRUN -eq $false) 
                 {
                     #
                     # Call svn copy to create 'tag'
@@ -3740,7 +3790,7 @@ if ($_RepoType -eq "svn")
                     Check-ExitCode
                 }
                 else {
-                    Log-Message "Test mode, skipping create version tag" "magenta"
+                    Log-Message "Dry run, skipping create version tag" "magenta"
                 }
             }
         }
@@ -3766,7 +3816,7 @@ elseif ($_RepoType -eq "git")
         #
         if ($VCCHANGELIST -ne "") 
         {
-            if ($TESTMODE -ne "Y") 
+            if ($DRYRUN -eq $false) 
             {
                 if ($SKIPCOMMIT -ne "Y")
                 {
@@ -3807,11 +3857,12 @@ elseif ($_RepoType -eq "git")
             }
             else 
             {
-                if ($TESTMODEVCREVERT -eq "Y") {
+                if ($DRYRUNVCREVERT -eq "Y") {
+                    Log-Message "Dry run, reverting changes" "magenta"
                     Vc-Revert
                 }
-                if ($TESTMODE -eq "Y") {
-                    Log-Message "Test mode, skipping touched file GIT commit" "magenta"
+                if ($DRYRUN -eq $true) {
+                    Log-Message "Dry run, skipping touched file GIT commit" "magenta"
                 }
             }
         }
@@ -3837,7 +3888,7 @@ elseif ($_RepoType -eq "git")
                     $TagMessage = "chore(release): tag $VCTAGPREFIX version $VERSION [skip ci]"
                 }
                 Log-Message "Tagging GIT version $TagLocation"
-                if ($TESTMODE -ne "Y") 
+                if ($DRYRUN -eq $false) 
                 {
                     #
                     # Call git tag to create 'tag', then push to remote with push --tags
@@ -3848,7 +3899,7 @@ elseif ($_RepoType -eq "git")
                     Check-ExitCode
                 }
                 else {
-                    Log-Message "Test mode, skipping create version tag" "magenta"
+                    Log-Message "Dry run, skipping create version tag" "magenta"
                 }
             }
         }
@@ -3861,9 +3912,9 @@ elseif ($_RepoType -eq "git")
     }
 }
 
-if ($TESTMODE -eq "Y") {
-    Log-Message "Tests completed"
-    if ($TESTMODEVCREVERT -ne "Y") {
+if ($DRYRUN -eq $true) {
+    Log-Message "Dry run completed"
+    if ($DRYRUNVCREVERT -ne "Y") {
         Log-Message "   You should manually revert any auto-touched files via SCM" "magenta"
     }
 }
