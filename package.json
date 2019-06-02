@@ -78,10 +78,10 @@
     ],
     "scripts": {
         "build": "npx tsc -p ./",
-        "app-publish-ps": "npx ./build/bin/app-publisher.js -p ps",
-        "app-publish-ps-dry": "npx ./build/bin/app-publisher.js -p ps --dry-run",
-        "app-publish-node": "npx ./build/bin/app-publisher.js",
-        "app-publish-node-dry": "npx ./build/bin/app-publisher.js --dry-run"
+        "app-publish-ps": "npx ./build/bin/app-publisher.js -p ps --no-ci",
+        "app-publish-ps-dry": "npx ./build/bin/app-publisher.js -p ps --no-ci --dry-run",
+        "app-publish-node": "npx ./build/bin/app-publisher.js --no-ci",
+        "app-publish-node-dry": "npx ./build/bin/app-publisher.js --no-ci --dry-run"
     },
     "main": "./build/index.js",
     "bin": {
