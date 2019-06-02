@@ -1,5 +1,6 @@
 {
     "projectName":       "app-publisher",
+    "branch":            "master",
     "bugs":              "",
     "buildCommand": [
         "npm run build",
@@ -15,6 +16,8 @@
     "distReleasePath":   "\\\\192.168.68.120\\d$\\softwareimages",
     "distDocPath":       "\\\\pjainc.pjvista.com@SSL\\DavWWWRoot\\Shared Documents\\Tech Support\\Application Installation and Configuration",
     "githubRelease":     "Y",
+    "githubAssets":      "install\\dist\\app-publisher.tgz",
+    "githubUser":        "spmeesseman",
     "historyFile":       "doc\\history.txt",
     "historyHdrFile":    "install\\history-hdr.txt",
     "historyLineLen":    80,
@@ -52,6 +55,7 @@
     "xRuns": [
     {
         "repoType":      "svn",
+        "branch":        "trunk",
         "repo":          "https://svn.development.pjats.com/repos/pja/app-publisher/trunk",
         "homePage":      "https://projects.development.pjats.com/app-publisher",
         "bugs":          "https://projects.development.pjats.com/app-publisher/ticket/1",
