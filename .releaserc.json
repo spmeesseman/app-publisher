@@ -1,0 +1,72 @@
+{
+    "plugins": [
+        [
+            "@semantic-release/commit-analyzer",
+            {
+                "preset": "spm",
+                "releaseRules": [{
+                        "type": "refactor",
+                        "release": "patch"
+                    },
+                    {
+                        "type": "featmin",
+                        "release": "patch"
+                    }
+                ],
+                "parserOpts": {
+                    "noteKeywords": [
+                        "BREAKING CHANGE",
+                        "BREAKING CHANGES"
+                    ]
+                }
+            }
+        ],
+        [
+            "@semantic-release/release-notes-generator",
+            {
+                "preset": "spm",
+                "parserOpts": {
+                    "noteKeywords": ["BREAKING CHANGE", "BREAKING CHANGES", "MAJOR FEATURE"]
+                },
+                "writerOpts": {
+                    "commitsSort": ["subject", "scope"]
+                }
+            }
+        ],
+        [
+            "@semantic-release/changelog",
+            {
+                "changelogTitle": "Change Log"
+            }
+        ],
+        [
+            "@semantic-release/exec",
+            {
+                "verifyConditionsCmd": "powershell script/semantic-release.ps1 -stage verifyConditions version ${nextRelease.version} -options ${options} --commits ${commits} ${Date.now()}",
+                "analyzeCommitsCmd": "powershell script/semantic-release.ps1 -stage analyzeCommits -version ${nextRelease.version} -options ${options}  -commits ${commits} ${Date.now()}",
+                "verifyReleaseCmd": "powershell script/semantic-release.ps1 -stage verifyRelease -version ${nextRelease.version} -options ${options}  -commits ${commits} ${Date.now()}",
+                "generateNotesCmd": "powershell script/semantic-release.ps1 -stage generateNotes -version ${nextRelease.version} -options ${options}  -commits ${commits} ${Date.now()}",  
+                "prepareCmd": "powershell script/semantic-release.ps1 -stage prepare -version ${nextRelease.version} -options ${options}  -commits ${commits} ${Date.now()}",
+                "publishCmd": "powershell script/semantic-release.ps1 -stage publish -version ${nextRelease.version} -options ${options}  -commits ${commits} ${Date.now()}",
+                "successCmd": "powershell script/semantic-release.ps1 -stage success -version ${nextRelease.version} -options ${options}  -commits ${commits} ${Date.now()}",
+                "failureCmd": "powershell script/semantic-release.ps1 -stage failure -version ${nextRelease.version} -options ${options}  -commits ${commits} ${Date.now()}",
+                "execCwd": "."
+            }
+        ],
+        [
+            "@semantic-release/npm",
+            {
+                "npmPublish": true
+            }
+        ],
+        [
+            "@semantic-release/github",
+            {
+                "assets": [
+                    "install/dist/**"
+                ]
+            }
+        ],
+        "@semantic-release/git"
+    ]
+}

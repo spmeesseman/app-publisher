@@ -23,22 +23,12 @@ using namespace System.Text.RegularExpressions
 # versioning maj.min.patch) to determine the next version number.
 #
 param ( 
-    $options
+$COMMITS = @(),
+$VERSION = "",
+$STAGE = "",
+$DATE = "",
+$OPTIONS
 )
-$options = ConvertFrom-Json -InputObject $options
-
-$XRUNS = @()
-if ($options.xRuns) {
-    $XRUNS = $options.xRuns
-}
-$NUMRUNS = $XRUNS.Length + 1
-#
-# Version will be set by spawning nodejs process, do not set
-#
-$APPPUBLISHERVERSION = ""
-if ($options.appPublisherVersion) {
-    $APPPUBLISHERVERSION = $options.appPublisherVersion
-}
 
 #**************************************************************#
 
@@ -49,203 +39,6 @@ if ($options.appPublisherVersion) {
 #####  ####  #   #  #####  #####  #####  ##### 
 
 #**************************************************************#
-
-#
-# Define some script classes:
-#
-#     Vc
-#     HistoryFile
-#     AnalyzeCommits
-#
-
-class Vc
-{
-    [array]getCommits($RepoType, $Repo, $CurrentVersion, $TagPrefix)
-    {
-        $comments = @()
-        Log-Message "Getting commits made since prior release/version"
-
-        $TagPre = "v"
-        if (![string]::IsNullOrEmpty($TagPrefix) -and $TagPrefix -ne ".") {
-            $TagPre = "$TagPrefix-v"
-        }
-
-        Log-Message "   Repo type      :  $RepoType"
-        Log-Message "   Repo           :  $Repo"
-        Log-Message "   CurrentVersion :  $CurrentVersion"
-        Log-Message "   TagPrefix      :  $TagPre"
-
-        if ($RepoType -eq "svn")
-        {
-            Log-Message "Retrieving most recent tag"
-            #
-            # Issue SVN log command
-            #
-            $TagLocation = $Repo.Replace("trunk", "tags");
-            $xml = svn log --xml "$TagLocation" --verbose --limit 50
-            if ($LASTEXITCODE -ne 0) {
-                Log-Message "No commits found or no version tag exists" "red"
-                return $comments
-            }
-            #
-            # Parse log response
-            #
-            $path = $null
-            Log-Message "Parsing response from SVN"
-            try {
-                $path = (([Xml] ($xml)).Log.LogEntry.Paths.Path |
-                Where-Object { $_.action -eq 'A' -and $_.kind -eq 'dir' -and $_.InnerText -like "*tags/$TagPre[1-9]*"} |
-                Select-Object -Property @(
-                    @{N='date'; E={$_.ParentNode.ParentNode.Date}},
-                    @{N='path'; E={$_.InnerText}} )|
-                Sort-Object Date -Descending | Select-Object -First 1).path
-            }
-            catch {
-                Log-Message "Response could not be parsed, invalid module, no commits found, or no version tag exists" "red"
-                return $comments
-            }
-            #
-            $rev = (([Xml]($xml)).Log.LogEntry | Where-Object { $_.revision -ne ''} | Select-Object -First 1).revision
-            #
-            Log-Message "   Found version tag:"
-            Log-Message "      Rev     : $rev"
-            Log-Message "      Path    : $path"
-            #
-            # Retrieve commits since last version tag
-            #
-            Log-Message "Retrieving commits since last version"
-            $xml = svn log --xml --verbose --limit 50 -r ${rev}:HEAD
-            Log-Message "Parsing response from SVN"
-            #
-            # Create xml document object from SVN log response
-            #
-            $xdoc = $null;
-            try {
-                $xdoc = [Xml]$xml
-            }
-            catch {
-                Log-Message "No commits found or no version tag exists" "red"
-                return $comments
-            }
-            #
-            # Parse the commit messages
-            #
-            foreach ($msg in $xdoc.log.logentry.msg) {
-                if ($null -ne $msg -and $msg -ne "") {
-                    $comments += $msg
-                }
-            }
-        }
-        elseif ($RepoType -eq "git")
-        {
-            # Issue GIT log command
-            #
-            $GitOut = & git log $TagPre$CurrentVersion..HEAD --pretty=format:"%s"
-            if ($LASTEXITCODE -eq 0 -and ![string]::IsNullOrEmpty($GitOut)) {
-                $comments = $GitOut.Split("`n")
-            }
-            else {
-                Log-Message "No commits found or no version tag exists" "red"
-                Log-Message "Git Output: $GitOut" "red"
-                return $comments
-            }
-        }
-        else 
-        {
-            Log-Message "Invalid repository type specified: $RepoType" "red"
-            return $comments
-        }
-
-        $NumCommits = $comments.Length;
-        Log-Message "Found $NumCommits commits"
-
-        #
-        # Sort comments array
-        #
-        if ($comments.Length -gt 0) {
-            $comments = $comments | Sort -Unique
-        }
-
-        return $comments
-    }
-}
-
-
-class CommitAnalyzer
-{
-    [string]get($Commits) 
-    {
-        $ReleaseLevel = "patch";
-        #
-        # Loop through each line and look at the comment tag.  The comment tag needs to be
-        # at the start of the comment, and be appended by a ':' character.  For example:
-        #
-        #     feat: add internet explorer support
-        #
-        # A tag can be scoped, for example:
-        #
-        #     chore(release): version 1.1.0 post release check in files
-        #
-        foreach($line in $Commits)
-        {
-            if ($line -eq "") { continue; }
-
-            $linefmt = $line.ToLower();
-            if ($linefmt.Contains("breaking change")) # bump major on breaking change
-            {
-                Log-Message "Breaking change found"
-                $ReleaseLevel = "major";
-                break;
-            }
-            if ($linefmt.Contains("majfeat: ")) # bump major on major feature
-            {
-                Log-Message "Major feature found"
-                $ReleaseLevel = "major";
-                break;
-            }
-            if ($linefmt.Contains("feat: ")) # bump minor on feature
-            {
-                Log-Message "Feature found";
-                $ReleaseLevel = "minor";
-                break;
-            }
-            #if ($linefmt.Contains("perf"))
-            #{
-            #    Log-Message "Performance enhancement found";
-            #    $ReleaseLevel = "minor";
-            #    break;
-            #}
-        }
-
-        return $ReleaseLevel;
-    }
-
-    [string] getFormatted($Subject)
-    {
-        $FormattedSubject = $Subject
-
-        switch ($Subject)
-        {
-            "build"   { $FormattedSubject = "Build System"; break }
-            "chore"   { $FormattedSubject = "Chores"; break }
-            "docs"    { $FormattedSubject = "Documentation"; break }
-            "feat"    { $FormattedSubject = "Features"; break }
-            "featmin" { $FormattedSubject = "Minor Features"; break }
-            "minfeat" { $FormattedSubject = "Minor Features"; break }
-            "fix"     { $FormattedSubject = "Bug Fixes"; break }
-            "perf"    { $FormattedSubject = "Performance Enhancement"; break }
-            "refactor"{ $FormattedSubject = "Code Refactoring"; break }
-            "style"   { $FormattedSubject = "Code Styling"; break }
-            "test"    { $FormattedSubject = "Tests"; break }
-            "project" { $FormattedSubject = "Project Structure"; break }
-            "layout"  { $FormattedSubject = "Layout"; break }
-            default   { $FormattedSubject = $Subject; break }
-        }
-
-        return $FormattedSubject
-    }
-}
-
 
 class HistoryFile
 {
@@ -556,6 +349,9 @@ class HistoryFile
                     {
                         $iIndex2  = $szContents.IndexOf("</font>")
                     }
+                    #Log-Message($iIndex1);
+                    #Log-Message($iIndex2);
+                    #Log-Message($szContents.Substring($iIndex1, $iIndex2 - $iIndex1));
                     $sections += $szContents.Substring($iIndex1, $iIndex2 - $iIndex1);
                 }  
                 $szContents = "";  
@@ -580,7 +376,7 @@ class HistoryFile
             $iIndex1 = $szContents.IndexOf(">$stringver&nbsp;", 0) + $stringver.Length + 7
             $iIndex2 = $szContents.IndexOf("<br>", $iIndex1)
             $curversion = $szContents.Substring($iIndex1, $iIndex2 - $iIndex1)
-            Log-Message "   Found version $curversion"
+            Log-Message("   Found version $curversion")
             return $curversion
         }
 
@@ -621,19 +417,24 @@ function Log-Message($msg, $color, $noTag = $false)
         return
     }
 
+    if (![string]::IsNullOrEmpty($msg.Trim()) -and !$noTag) {
+        write-host -NoNewline "ap "
+    }
+
     if ($color) 
     {
         $msgTag = ""
         switch ($color) 
         {
-            "red" { $msgTag = "[ERROR]"; break; }
-            "darkyellow" { $msgTag = "[WARNING]"; break; }
-            "darkgreen" { $msgTag = "[SUCCESS]"; break; }
-            "magenta" { $msgTag = "[NOTICE]"; break; }
+            "red" { $msgTag = "[ERROR] "; break; }
+            "darkyellow" { $msgTag = "[WARNING] "; break; }
+            "darkgreen" { $msgTag = "[SUCCESS] "; break; }
+            "magenta" { $msgTag = "[NOTICE] "; break; }
             default: { break; }
         }
         if ($msgTag -ne "") {
-            write-host -ForegroundColor $color "$msgTag $msg"
+            write-host -NoNewline -ForegroundColor $color $msgTag
+            write-host $msg
         }
         else {
             write-host -ForegroundColor $color $msg
@@ -641,19 +442,6 @@ function Log-Message($msg, $color, $noTag = $false)
     }
     else {
         write-host $msg
-    }
-
-    if ($WRITELOG -eq "Y") 
-    {
-         # Get current date time
-        $CurrentDateTime = Get-Date -format "yyyy\/MM\/dd HH:mm:ss";
-        # Construct complete message
-        $FormattedMessage = "$CurrentDateTime $msgTag $msg";
-        # Write the message to the file
-        try {
-            out-file -filepath $LogFileName -Append -inputobject $FormattedMessage  
-        }
-        catch {} 
     }
 }
 
@@ -668,34 +456,34 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     #
     # Check to make sure all necessary parameters are set
     #
-    if ([string]::IsNullOrEmpty($EMAILSERVER)) {
+    if ([string]::IsNullOrEmpty($options.emailServer)) {
         Log-Message "   Notification could not be sent, invalid email server specified" "red"
         return
     }
-    if ([string]::IsNullOrEmpty($EMAILRECIP)) {
+    if ([string]::IsNullOrEmpty($options.emailRecip) -and [string]::IsNullOrEmpty($options.testEmailRecip)) {
         Log-Message "   Notification could not be sent, invalid recipient address specified" "red"
         return
     }
-    if ([string]::IsNullOrEmpty($EMAILSENDER)) {
+    if ([string]::IsNullOrEmpty($options.$emailSender)) {
         Log-Message "   Notification could not be sent, invalid sender address specified" "red"
         return
     }
 
     # encoding="plain" (from ant)   ps cmd: -Encoding ASCII
-    $EMAILBODY = ""
-    if (![string]::IsNullOrEmpty($HISTORYFILE)) 
+    $EmailBody = ""
+    if (![string]::IsNullOrEmpty($options.historyFile)) 
     {
         Log-Message "   Converting history text to html"
-        $EMAILBODY = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $HISTORYFILE, $null, $targetloc, $npmloc, $nugetloc);
+        $EmailBody = $ClsHistoryFile.getHistory($projectName, $version, 1, $options.versionText, $false, $options.historyFile, $null, $targetloc, $npmloc, $nugetloc);
     }
-    elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
+    elseif (![string]::IsNullOrEmpty($options.changelogFile)) 
     {
         # TODO -  extract only latest version release notes
         Log-Message "   Converting changelog markdown to html"
         #
         # Use marked module for conversion
         #
-        $EMAILBODY = & app-publisher-marked -f $CHANGELOGFILE
+        $EmailBody = & app-publisher-marked -f $options.changelogFile
         Check-ExitCode
     }
     else {
@@ -713,15 +501,15 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
 
         if ($TESTMODE -ne "Y") 
         {
-            if (![string]::IsNullOrEmpty($EMAILRECIP) -and $EMAILRECIP.Contains("@") -and $EMAILRECIP.Contains(".")) 
+            if (![string]::IsNullOrEmpty($options.emailRecip) -and $options.emailRecip.Contains("@") -and $options.emailRecip.Contains(".")) 
             {
-                send-mailmessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $EMAILRECIP -Subject $Subject -Body $EMAILBODY
+                Send-MailMessage -SmtpServer $options.emailServer -BodyAsHtml -From $options.emailSender -To $options.emailRecip -Subject $Subject -Body $EmailBody
             }
             else {
-                if (![string]::IsNullOrEmpty($TESTEMAILRECIP) -and $TESTEMAILRECIP.Contains("@") -and $TESTEMAILRECIP.Contains(".")) 
+                if (![string]::IsNullOrEmpty($options.testEmailRecip) -and $options.testEmailRecip.Contains("@") -and $options.testEmailRecip.Contains(".")) 
                 {
                     Log-Message "   Notification could not be sent to email recip, sending to test recip" "darkyellow"
-                    Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY
+                    Send-MailMessage -SmtpServer $options.emailServer -BodyAsHtml -From $options.emailSender -To $options.testEmailRecip -Subject $Subject -Body $EmailBody
                     Check-PsCmdSuccess
                 }
                 else {
@@ -730,9 +518,9 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
             }
         }
         else {
-            if (![string]::IsNullOrEmpty($TESTEMAILRECIP) -and $TESTEMAILRECIP.Contains("@") -and $TESTEMAILRECIP.Contains(".")) 
+            if (![string]::IsNullOrEmpty($options.testEmailRecip) -and $options.testEmailRecip.Contains("@") -and $options.testEmailRecip.Contains(".")) 
             {
-                Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY
+                Send-MailMessage -SmtpServer $options.emailServer -BodyAsHtml -From $options.emailSender -To $options.testEmailRecip -Subject $Subject -Body $EmailBody
                 Check-PsCmdSuccess
             }
             else {
@@ -1446,351 +1234,10 @@ function Edit-File($File, $SeekToEnd = $false)
 
 #***************************************************************************#
 
-# Set location to root
-#
-set-location -Path $PATHTOROOT
-$CWD = Get-Location
-
-#
-# Start logging
-#
-Log-Message "----------------------------------------------------------------" "darkblue" $true
-Log-Message " App Publisher PowerShell Release" "darkblue" $true
-Log-Message "   Version   : $APPPUBLISHERVERSION" "cyan" $true
-Log-Message "   Author    : Scott Meesseman" "cyan" $true
-Log-Message "   Directory : $CWD" "cyan" $true
-Log-Message "   Run #     : $RUN of $NUMRUNS"
-
-#
-# Publish runs!
-#
-for ($RUN = 1; $RUN -le $NUMRUNS; $RUN++) {
-
-#
-# Merge xRuns object properties into options for additional runs
-#
-if ($RUN -gt 1) 
-{
-    $XRUNS[$RUN-2].psobject.Properties | ForEach-Object {
-        $options | Add-Member -MemberType $_.MemberType -Name $_.Name -Value $_.Value -Force
-    }
-    Log-Message "----------------------------------------------------------------" "darkblue" $true
-}
-
-Log-Message "   Run #     : $RUN of $NUMRUNS"
-Log-Message "----------------------------------------------------------------" "darkblue" $true
-
-#
-# The build command(s) to run once versions have been updated in version files (i.e. package.json,
-# history.txt, assemblyinfo.cs, etc)
-#
-$BUILDCOMMAND = @()
-if ($options.buildCommand) {
-    $BUILDCOMMAND = $options.buildCommand
-}
-#
-# Name of the project.  This must macth throughout the build files and the SVN project name
-#
-$PROJECTNAME = ""
-if ($options.projectName) {
-    $PROJECTNAME = $options.projectName
-}
-#
-# The location of this changelog file, can be a relative or full path.
-#
-$CHANGELOGFILE = ""
-if ($options.changelogFile) {
-    $CHANGELOGFILE = $options.changelogFile
-}
-#
-# The deploy command(s) to run once internal deployment has been completed
-#
-$DEPLOYCOMMAND = @()
-if ($options.deployCommand) {
-    $DEPLOYCOMMAND = $options.deployCommand
-}
-#
-# To build the dist release, set this flag to "Y"
-#
-$DISTRELEASE = "N"
-if ($options.distRelease) {
-    $DISTRELEASE = $options.distRelease
-}
-#
-$DISTDOCPATH = ""
-if ($options.distDocPath) {
-    $DISTDOCPATH = $options.distDocPath
-}
-#
-$DISTRELEASEPATH = ""
-if ($options.distReleasePath) {
-    $DISTRELEASEPATH = $options.distReleasePath
-}
-#
-#
-#
-$EMAILNOTIFICATION = "Y"
-if ($options.emailNotification) {
-    $EMAILNOTIFICATION = $options.emailNotification
-}
-#
-$EMAILSERVER = ""
-if ($options.emailServer) {
-    $EMAILSERVER = $options.emailServer
-}
-#
-$EMAILRECIP = ""
-if ($options.emailRecip) {
-    $EMAILRECIP = $options.emailRecip
-}
-#
-$EMAILSENDER = ""
-if ($options.emailSender) {
-    $EMAILSENDER = $options.emailSender
-}
-#
-#
-#
-$GITHUBRELEASE = "N"
-if ($options.githubRelease) {
-    $GITHUBRELEASE = $options.githubRelease
-}
-#
-# The location of this history file, can be a relative or full path.
-#
-$HISTORYFILE = ""
-if ($options.historyFile) {
-    $HISTORYFILE = $options.historyFile
-}
-#
-$HISTORYHDRFILE = ""
-if ($options.historyHdrFile) {
-    $HISTORYHDRFILE = $options.historyHdrFile
-}
-#
-$HISTORYLINELEN = 80
-if ($options.historyLineLen) {
-    $HISTORYLINELEN = $options.historyLineLen
-}
-#
-# Interactive (prompts for version after extracting what we think should be the next 
-# version)
-#
-$INTERACTIVE = "N"
-if ($options.interactive) {
-    $INTERACTIVE = $options.interactive
-}
-#
-$TEXTEDITOR = "notepad++"
-if ($options.textEditor) {
-    $TEXTEDITOR = $options.textEditor
-}
-#
-#
-#
-$NPMREGISTRY = "https://registry.npmjs.org"
-if ($options.npmRegistry) {
-    $NPMREGISTRY = $options.npmRegistry
-}
-#
-$NPMRELEASE = "N"
-if ($options.npmRelease) {
-    $NPMRELEASE = $options.npmRelease
-}
-#
-$NPMSCOPE = ""
-if ($options.npmScope) {
-    $NPMSCOPE = $options.npmScope
-}
-#
-$NPMPACKDIST = "Y"
-if ($options.npmPackDist) {
-    $NPMPACKDIST = $options.npmPackDist
-}
-#
-# To build the nuget release, set this flag to "Y"
-#
-$NUGETRELEASE = "N"
-if ($options.nugetRelease) {
-    $NUGETRELEASE = $options.nugetRelease
-}
-#
-$NUGETREGISTRY = "https://registry.nuget.org"
-if ($options.nugetRegistry) {
-    $NUGETREGISTRY = $options.nugetRegistry
-}
-#
-# PATHTOROOT - Set this variable to:
-#
-#     A relative or full path that will equate to the project root as seen from the 
-#     script's location.  For example, if this script is in PROJECTDIR\script, then 
-#     the rel path to root would be "..".  If the script is in PROJECTDIR\install\script,
-#     then the rel path to root would be "..\.."
-#
-# $DEPLOYFILE = "install\deploy.xml"
-# $CREATEINSTALLFILE = "install\createinstall.xml"
-#
-# The value should be relative to the script dir, dont use a full path as this will not
-# share across users well keeping project files in different directories
-#
-$PATHTOROOT = "."
-if ($options.pathToRoot) {
-    $PATHTOROOT = $options.pathToRoot
-}
-#
-# This in most cases sould be an empty string if the project is the 'main' project.  If
-# a sub-project exists within a main project in SVN, then this needs to be set to the 
-# relative directory to the main project root, as seen from the sub-project root.
-#
-# Note this should be where the '.svn' folder resides.
-#
-$PATHTOMAINROOT = ""
-if ($options.pathToMainRoot) {
-    $PATHTOMAINROOT = $options.pathToMainRoot
-}
-#
-# Path to DIST should be relative to PATHTOROOT
-#
-$PATHTODIST = "install\dist"
-if ($options.pathToDist) {
-    $PATHTODIST = $options.pathToDist
-}
-#
-# This in most cases sould be an empty string if the project is the 'main' project.  If
-# a sub-project exists within a main project in SVN, then this needs to be set to the 
-# relative directory to the project path, as seen from the main project root.
-#
-# For example, the following project contains a layout with 3 separate projects 'fp', 'ui', 
-# and 'svr':
-#
-#     GEMS2
-#         app
-#             fpc
-#             svr
-#             ui
-#
-# The main project root is GEMS2.  In the case of each of these projects, SVNPREPATH should
-# be set to app\fpc, app\ui, or app\svr, for each specific sub-project.
-#
-# This mainly is be used for SVN commands which need to be ran in the directory containing
-# the .svn folder.
-#
-$PATHPREROOT = ""
-if ($options.pathPreRoot) {
-    $PATHPREROOT = $options.pathPreRoot
-}
-#
-# The build command(s) to after the internal builds have been completed
-#
-$POSTBUILDCOMMAND = @()
-if ($options.postBuildCommand) {
-    $POSTBUILDCOMMAND = $options.postBuildCommand
-}
-#
-#
-#
-$REPO = ""
-if ($options.repo) {
-    $REPO = $options.repo
-}
-#
-$REPOTYPE = ""
-if ($options.repoType) {
-    $REPOTYPE = $options.repoType
-}
-#
-$BUGS = ""
-if ($options.bugs) {
-    $BUGS = $options.bugs
-}
-#
-$HOMEPAGE = ""
-if ($options.homePage) {
-    $HOMEPAGE = $options.homePage
-}
-#
-# Skip uploading dist files to dist release folder (primarily used for releasing
-# from home office where two datacenters cannot be reached at the same time, in this
-# case the installer files are manually copied)
-#
-$SKIPDEPLOYPUSH = "Y"
-if ($options.skipDeployPush) {
-    $SKIPDEPLOYPUSH = $options.skipDeployPush
-}
-#
-# Test mode - Y for 'yes', N for 'no'
-#
-# In test mode, the following holds:
-#
-#     1) Build scripts are not run, if specified (by default, they are ran)
-#     2) Dist release upload/deploy is not performed
-#     2) Deploy scripts are not run
-#     3) Email notification will be sent only to $TESTEMAILRECIP
-#     4) Commit package/build file changes (svn) are not made
-#     5) Version tag (svn) is not made
-#
-# Some local files may be changed in test mode (i.e. updated version numbers in build and
-# package files).  These changes should be reverted to original state via SCM
-#
-$TESTMODE = "Y"
-if ($options.testMode) {
-    $TESTMODE = $options.testMode
-}
-#
-$TESTMODEVCREVERT = "Y"
-if ($options.testModeVcRevert) {
-    $TESTMODEVCREVERT = $options.testModeVcRevert
-}
-#
-$TESTEMAILRECIP = ""
-if ($options.testEmailRecip) {
-    $TESTEMAILRECIP = $options.testEmailRecip
-}
-#
-# Whether or not to tag the new version in SVN.  Default is Yes.
-#
-$VCTAG = "Y"
-if ($options.vcTag) {
-    $VCTAG = $options.vcTag
-}
-#
-$VCTAGPREFIX = ""
-if ($options.vcTagPrefix) {
-    $VCTAGPREFIX = $options.vcTagPrefix
-}
-#
-# Whether or not to tag the new version in SVN.  Default is Yes.
-#
-$VERSIONFILES = @()
-if ($options.versionFiles) {
-    $VERSIONFILES = $options.versionFiles
-}
-#
-# The text tag to use in the history file for preceding the version number.  It should 
-# be one of the following:
-#
-#     1. Version
-#     2. Build
-#     3. Release
-#
-$VERSIONTEXT = "Version"
-if ($options.versionText) {
-    $VERSIONTEXT = $options.versionText
-}
-#
-# Whether or not to write stdout to log file.  Default is No
-#
-$WRITELOG = "N"
-if ($options.writeLog) {
-    $WRITELOG = $options.writeLog
-}
-
-$SKIPCOMMIT = "N"
 $CURRENTVERSION = ""
-$VERSION = "" 
-$COMMITS = @()
 $TDATE = ""
 $REPOSCOMMITED = @()
+$VERSION = $options.version
 
 #
 # Define a variable to track changed files for check-in to SVN
@@ -1831,6 +1278,12 @@ if ([string]::IsNullOrEmpty($NPMREGISTRY)) {
 }
 
 #
+# Set location to root
+#
+set-location -Path $PATHTOROOT
+$CWD = Get-Location
+
+#
 # Set up log file
 #
 if ($WRITELOG -eq "Y") 
@@ -1842,6 +1295,16 @@ if ($WRITELOG -eq "Y")
     # Create the log directory
     New-Item -ItemType directory -Force -Path "${env:LOCALAPPDATA}\Perry Johnson & Associates\app-publisher\log" | Out-Null;
 }
+
+#
+# Start logging
+#
+Log-Message "----------------------------------------------------------------" "darkblue" $true
+Log-Message " App Publisher PowerShell Release" "darkblue" $true
+Log-Message "   Version   : $APPPUBLISHERVERSION" "cyan" $true
+Log-Message "   Author    : Scott Meesseman" "cyan" $true
+Log-Message "   Directory : $CWD" "cyan" $true
+Log-Message "----------------------------------------------------------------" "darkblue" $true
 
 #
 # Set repository and repository type
@@ -2015,9 +1478,8 @@ Log-Message "   Tag version      : $VCTAG"
 Log-Message "   Tag prefix       : $VCTAGPREFIX"
 Log-Message "   Text editor      : $TEXTEDITOR"
 Log-Message "   Test mode        : $TESTMODE"
-Log-Message "   Test email       : $TESTEMAILRECIP"
+Log-Message "   Test email       : $options.testEmailRecip"
 Log-Message "   Text editor      : $TEXTEDITOR"
-Log-Message "   Version files    : $VERSIONFILES"
 Log-Message "   Version text     : $VERSIONTEXT"
 
 #
@@ -2139,132 +1601,17 @@ if ($CURRENTVERSION -eq "") {
     exit 131
 }
 
-#
-# Certain tasks only need to be done once if there are multiple publish runs configured to run.
-#
-# These tasks include:
-#
-#     1. Get commit comments since last version tag
-#     2. Calculate the new version (it has already been set in all version files in 1st run)
-#     3. Populate and edit history text file
-#     4. Populate and edit changelog markdown file
-#
-if ($RUN -eq 1 -or $TESTMODE -eq "Y") 
+if ($INTERACTIVE -eq "Y") 
 {
-    Log-Message "The current version is $CURRENTVERSION"
-    #
-    # Get commit messages since last version
-    #
-    # The previous version tag in the form 'vX.X.X' must exist in svn/projectroot/tags in
-    # order to successfully obtain the latest commit messages.  If it does not exist, the
-    # most current tag will be used
-    #
-    $COMMITS = $ClsVc.getCommits($_RepoType, $_Repo, $CURRENTVERSION, $VCTAGPREFIX)
-    #
-    # Check to ensure we got commits since last version.  If not, prompt user whether or
-    # not to proceed, since technically the first time this script is used, we don't know
-    # how to retrieve the latest commits
-    #
-    if ($COMMITS -eq $null -or $COMMITS.Length -eq 0) 
-    {
-        Log-Message "Commits since the last version or the version tag could not be found"
-        Log-Message "[PROMPT] User input required"
-        $Proceed = read-host -prompt "Proceed anyway? Y[N]"
-        if ($Proceed.ToUpper() -ne "Y") {
-            Log-Message "User cancelled, exiting" "red"
-            exit 155
-        }
+    Log-Message "Enter the new version"
+    $NewVersion = read-host -prompt "Enter the version #, or C to cancel [$VERSION]"
+    if ($NewVersion.ToUpper() -eq "C") {
+        Log-Message "User cancelled process, exiting" "red"
+        exit 155
     }
-
-    #
-    # Calculate next version number
-    #
-    # If this is an NPM project, we use node to determine the current version in package.json
-    # For all other project types, we parse the history file for the current version.
-    #
-    # Currently projects are versioned in one of two ways:
-    #
-    #     1. Legacy PJ version (100, 101, 102)
-    #     2. Semantically versioned (major.minor.patch)
-    #
-    # If this is a semantically versioned project (whether the version was obtained via node or 
-    # history file parsing), we will use semver to calculate the next version if possible.  If 
-    # semver is not available, prompt user for next version number.
-    #
-    # If this is a legacy PJ versioned project, the verison obtained in the history will be
-    # incremented by +1.
-    #
-    $VersionInteractive = "N"
-    #
-    if ($VersionSystem -eq "semver")
-    {
-        #
-        # use semver to retrieve next version
-        # Analyze the commits to determine major, minor, patch release
-        #
-        $RELEASELEVEL = $ClsCommitAnalyzer.get($COMMITS)
-        #
-        # Get next version
-        #
-        if ($RUN -eq 1 -or $TESTMODE -eq "Y") {
-            $VERSION = & node -e "console.log(require('semver').inc('$CURRENTVERSION', '$RELEASELEVEL'));"
-        }
-        else {
-            $VERSION = $CURRENTVERSION
-        }
+    if (![string]::IsNullOrEmpty($NewVersion)) {
+        $VERSION = $NewVersion
     }
-    elseif ($VersionSystem -eq "incremental")
-    {
-        #
-        # Whole # incremental versioning, i.e. 100, 101, 102...
-        #
-        Log-Message "Using legacy PJ versioning"
-        if ($RUN -eq 1 -or $TESTMODE -eq "Y") {
-            try {
-                $VERSION = ([System.Int32]::Parse($CURRENTVERSION) + 1).ToString()
-            }
-            catch {
-                $VERSION = ""
-            }
-        }
-        else {
-            $VERSION = $CURRENTVERSION
-        }
-    }
-    #
-    # If version could not be found, then prompt for version 
-    #
-    if (![string]::IsNullOrEmpty($VERSION)) 
-    {
-        Log-Message "The suggested new version is $VERSION"
-    }
-    else 
-    {
-        Log-Message "New version could not be determined, you must manually input the new version"
-        $VersionInteractive = "Y"
-    }
-    if ($INTERACTIVE -eq "Y" -or $VersionInteractive -eq "Y") 
-    {
-        Log-Message "[PROMPT] User input required"
-        $NewVersion = read-host -prompt "Enter the version #, or C to cancel [$VERSION]"
-        if ($NewVersion.ToUpper() -eq "C") {
-            Log-Message "User cancelled process, exiting" "red"
-            exit 155
-        }
-        if (![string]::IsNullOrEmpty($NewVersion)) {
-            $VERSION = $NewVersion
-        }
-    }
-
-    if ([string]::IsNullOrEmpty($VERSION)) {
-        Log-Message "Invalid version for release, exiting" "red"
-        exit 133
-    }
-}
-else 
-{
-    $VERSION = $CURRENTVERSION
-    Log-Message "This is pulish run #$RUN, the current version $CURRENTVERSION is also the new version" "magenta"
 }
 
 #
@@ -3144,7 +2491,5 @@ if ($TESTMODE -eq "Y") {
 
 Log-Message "Completed"
 Log-Message "Finished successfully" "darkgreen"
-
-}
 
 exit

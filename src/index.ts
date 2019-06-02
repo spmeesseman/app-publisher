@@ -99,58 +99,23 @@ async function run(context, plugins)
         options.skipDeployPush = "Y";
     }
 
-    let runCt = 0;
-    const reposCommited: Array<string> = [];
-    const runsCfg = [{}];
-
-    if (options.xRuns)
+    if (!options.profile || options.profile === "node")
     {
-        //
-        // Push the run config, use JSON.parse(JSON.stringify) to  clone the object so
-        // we can then delete it
-        //
-        runsCfg.push(...JSON.parse(JSON.stringify(options.xRuns)));
-        delete options.xRuns;
+        await runNodeScript(context, plugins).then((code) =>
+        {
+            // console.log(code);
+        });
     }
-
-    //
-    // Run publish
-    //
-    for (const run in runsCfg)
+    else if (options.profile === "ps")
     {
-        runCt++;
-        const config = { ...options, ...runsCfg[run] };
-
-        logger.log("Publish run #" + runCt.toString());
-
-        //
-        // If this is a 2nd run (or more), and the repository is the same, then skip the comit
-        //
-        if (reposCommited.indexOf(config.repoType) >= 0)
+        await runPowershellScript(options, logger).then((code) =>
         {
-            logger.log(`Cannot use '${config.repoType}' repo more than once in a publish, so no new version will be released for this run`);
-            continue;
-        }
-        else {
-            reposCommited.push(config.repoType);
-        }
-
-        //const { plugins } = await getConfig(context, options);
-
-        if (!options.profile || options.profile === "node")
-        {
-            return runNodeScript(context, plugins, runCt);
-        }
-        else if (options.profile === "ps")
-        {
-            return runPowershellScript(config, logger, runCt);
-        }
+            // console.log(code);
+        });
     }
-
-    return 0;
 }
 
-async function runNodeScript(context: any, plugins: any, runCt: number)
+async function runNodeScript(context: any, plugins: any)
 {
     const { cwd, env, options, logger } = context;
 
@@ -263,149 +228,8 @@ async function runNodeScript(context: any, plugins: any, runCt: number)
 }
 
 
-function runPowershellScript(config: any, logger: any, runCt: number)
+async function runPowershellScript(options: any, logger: any)
 {
-    let soptions = "";
-    let cProperty: string;
-    let aProperty: string;
-    //
-    // Format config for powershell script arguments
-    //
-    const visitor: JSONVisitor =
-    {
-        onError() { cProperty = undefined; },
-        onObjectEnd()
-        {
-            cProperty = undefined;
-            aProperty = undefined;
-        },
-        onArrayBegin(offset: number, length: number, startLine: number, startCharacter: number)
-        {
-            const propStart = "-" + cProperty.toUpperCase() + " ";
-            aProperty = cProperty;
-            if (soptions.includes(propStart)) {
-                logger.error("Configuration parameter '" + cProperty + "' defined twice, check casing");
-                logger.error("   soptions = " + soptions);
-                return false;
-            }
-            soptions += (propStart);
-        },
-        onArrayEnd(offset: number, length: number, startLine: number, startCharacter: number)
-        {
-            aProperty = undefined;
-            if (soptions.endsWith(",")) {
-                soptions = soptions.substring(0, soptions.length - 1) + " ";
-            }
-        },
-        onLiteralValue(value: any, offset: number, _length: number)
-        {
-            if (cProperty && typeof value === "string")
-            {
-                if (!aProperty)
-                {
-                    const propStart = "-" + cProperty.toUpperCase() + " ";
-                    if (soptions.includes(propStart))
-                    {
-                        logger.error("   Configuration parameter '" + cProperty + "' defined twice, check casing");
-                        logger.error("   soptions = " + soptions);
-                        return false;
-                    }
-                    logger.log("   Value: '" + value + "'");
-                    soptions += (propStart + "'" + value + "' ");
-                }
-                else {
-                    logger.log("   Adding array value: '" + value + "'");
-                    soptions += ("\"" + value + "\",");
-                }
-            }
-            else if (aProperty && typeof value === "string")
-            {
-                soptions += ("'" + value + "',");
-            }
-            else if (cProperty && value)
-            {
-                if (!aProperty)
-                {
-                    const propStart = "-" + cProperty.toUpperCase() + " ";
-                    if (soptions.includes(propStart)) {
-                        logger.error("   Configuration parameter '" + cProperty + "' defined twice, check casing");
-                        logger.error("   soptions = " + soptions);
-                        return false;
-                    }
-                    logger.log("   Value: " + value.toString());
-                    soptions += (propStart + value + " ");
-                }
-                else {
-                    soptions += (value + ",");
-                }
-            }
-            cProperty = undefined;
-        },
-        onObjectProperty(property: string, offset: number, _length: number)
-        {
-            logger.log("Found configuration parameter '" + property + "'");
-            cProperty = property;
-        }
-    };
-    visit(JSON.stringify(config), visitor);
-
-    //
-    // Get the repository url if not specified
-    //
-    if (!config.repo)
-    {
-        const cwd = process.cwd();
-        const appPackageJson = path.join(cwd, "package.json");
-        if (fs.existsSync(appPackageJson)) {
-            const repository = require(appPackageJson).repository;
-            if (repository)
-            {
-                if (typeof repository === "string") {
-                    config.repo = repository;
-                }
-                else {
-                    config.repo = repository.url;
-                }
-            }
-        }
-        if (!config.repo)
-        {
-            logger.error("Repository url must be sepcified in .publishrc or package.json");
-            return false;
-        }
-    }
-
-    //
-    // Get the repository type if not specified
-    //
-    if (!config.repoType)
-    {
-        const cwd = process.cwd();
-        const appPackageJson = path.join(cwd, "package.json");
-        if (fs.existsSync(appPackageJson)) {
-            const repository = require(appPackageJson).repository;
-            if (repository) {
-                if (typeof repository === "object") {
-                    config.repoType = repository.type;
-                }
-            }
-        }
-        if (!config.repoType)
-        {
-            logger.error("Repository type must be sepcified in .publishrc or package.json");
-            logger.error("   Possible values:  svn, git");
-            return false;
-        }
-        else if (config.repoType !== "svn" && config.repoType !== "git")
-        {
-            logger.error("Invalid repository type sepcified, must be 'svn' or 'git'");
-            return false;
-        }
-    }
-
-    soptions = soptions + ` -apppublisherversion ${pkg.version}`;
-    soptions = soptions + ` -run ${runCt}`;
-
     //
     // Find Powershell script
     //
@@ -456,27 +280,89 @@ function runPowershellScript(config: any, logger: any, runCt: number)
     }
 
     //
+    // Set some additional options specific to powershell script
+    //
+    options.appPublisherVersion = pkg.version;
+
+    //
     // Launch Powershell script
     //
-    const ec = child_process.spawnSync("powershell.exe", [`${ps1Script} ${soptions}`], { stdio: "inherit"});
-    if (ec.status !== 0)
-    {
-        logger.error("Powershell script exited with error code " + ec.status.toString());
-        return ec.status;
-    }
-
-    logger.success("Published release successfully");
+    // const ec = child_process.spawnSync("powershell.exe", [`${ps1Script} ${options}`], { stdio: "inherit"});
+    // if (ec.status !== 0)
+    // {
+    //    logger.error("Powershell script exited with error code " + ec.status.toString());
+    //    return ec.status;
+    // }
+    // logger.success("Published release successfully");
     // logger.success(`Published release ${nextRelease.version}`);
 
-    // let child = child_process.spawn("powershell.exe", [`${ps1Script} ${soptions}`], { stdio: ['pipe', 'inherit', 'inherit'] });
-    // process.stdin.on('data', function(data) {
-    //     if (!child.killed) {
-    //         child.stdin.write(data);
-    //     }
-    // });
-    // child.on('exit', function(code) {
-    //     process.exit(code);
-    // });
+    const child = child_process.spawn("powershell.exe", [`${ps1Script} '${JSON.stringify(options)}'`], { stdio: ["pipe", "pipe", "pipe"], env: process.env});
+    // const child = child_process.spawn("powershell.exe", [`${ps1Script} ${options}`], { stdio: ["pipe", "inherit", "inherit"] });
+
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+
+    process.stdin.on("data", data => {
+        if (!child.killed) {
+            child.stdin.write(data);
+        }
+    });
+
+    child.stdout.on("data", data =>
+    {
+        if (child.killed) {
+            return;
+        }
+        data = data.trim();
+        if (!data) {
+            return;
+        }
+        if (data.includes("[INFO] ")) {
+            logger.log(data.substring(7));
+        }
+        else if (data.includes("[NOTICE] ")) {
+            logger.log(data.substring(9));
+        }
+        else if (data.includes("[WARNING] ")) {
+            logger.warn(data.substring(10));
+        }
+        else if (data.includes("[SUCCESS] ")) {
+            logger.success(data.substring(10));
+        }
+        else if (data.includes("[ERROR] ")) {
+            logger.error(data.substring(8));
+        }
+        else if (data.includes("[PROMPT] ")) {
+            logger.star(data.substring(9));
+        }
+        else if (data.includes("[INPUT] ")) {
+            logger.star(data.substring(8));
+        }
+        else {
+            logger.log(data);
+        }
+    });
+
+    child.stderr.on("data", data => {
+        if (!child.killed) {
+            if (!data.trim()) {
+                return;
+            }
+            logger.error(data);
+        }
+    });
+
+    let iCode: number;
+    child.on("exit", code => {
+        iCode = code;
+        if (iCode === 0) {
+            logger.success("Successfully published release");
+        }
+        else {
+            logger.error("Failed to publish release");
+        }
+        process.exit(iCode);
+    });
 }
 
 
@@ -492,8 +378,8 @@ function logErrors({ logger, stderr }, err)
             {
                 stderr.write(marked(error.details));
             }
-        } else
-        {
+        }
+        else {
             logger.error("An error occurred while running app-publisher: %O", error);
         }
     }

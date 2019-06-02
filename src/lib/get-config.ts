@@ -23,7 +23,7 @@ export = getConfig;
 async function getConfig(context: any, opts: any)
 {
     const { cwd, env } = context;
-    const { config, filepath } = (await cosmiconfig(CONFIG_NAME, { searchPlaces: CONFIG_FILES }).search(cwd)) || { config: undefined, filepath: undefined };
+    const { config, filepath } = (await cosmiconfig(CONFIG_NAME, { searchPlaces: CONFIG_FILES }).search(cwd)) || { config: {}, filepath: "" };
 
     debug("load config from: %s", filepath);
 
@@ -88,6 +88,21 @@ async function getConfig(context: any, opts: any)
         // Remove `null` and `undefined` options so they can be replaced with default ones
         ...pickBy(options, option => !isNil(option)),
     };
+
+    //
+    // Replace environment variables
+    //
+    // Environment variables in .publishconfig should be in the form:
+    //
+    //     ${VARIABLE_NAME}
+    //
+    let optStr = JSON.stringify(options);
+    for (const key in process.env)
+    {
+        const envVar = "[$][{]\\b" + key + "\\b[}]";
+        optStr = optStr.replace(new RegExp(envVar), process.env[key].replace(/\\/, "\\\\"));
+    }
+    options = JSON.parse(optStr);
 
     debug("options values: %O", options);
 
