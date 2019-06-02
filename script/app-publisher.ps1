@@ -1156,16 +1156,28 @@ function Prepare-DotNetBuild($AssemblyInfoLocation)
     Edit-File $AssemblyInfoLocation
 }
 
+
 function Get-AssemblyInfoVersion($AssemblyInfoLocation)
 {
-    [Match] $match = [Regex]::Match($TmpCommits, "[(][a-z\- A-Z]*[)]\s*[:][ ]");
-    while ($match.Success) {
-        $NewText = $match.Value.Replace("(", "")
-        $NewText = $NewText.Replace(")", "")
-        $NewText = $NewText.Replace(": ", "")
-        $TmpCommits = $TmpCommits.Replace($match.Value, ":  $NewText`r`n`r`n    ")
-        $match = $match.NextMatch()
+    $AssemblyInfoVersion = ""
+    Log-Message "Retrieving assemblyinfo version from $AssemblyInfoLocation"
+    if (Test-Path($AssemblyInfoLocation))
+    {
+        $AssemblyInfoContent = Get-Content -Path $AssemblyInfoLocation -Raw
+        [Match] $match = [Regex]::Match($AssemblyInfoContent, "AssemblyVersion[ ]*[(][ ]*[`"][1-9.]*");
+        if ($match.Success) 
+        {
+            $AssemblyInfoVersion = $match.Value.Replace("AssemblyVersion", "")
+            $AssemblyInfoVersion = $match.Value.Replace(" ", "")
+            $AssemblyInfoVersion = $match.Value.Replace("(", "")
+            # Rid build number
+            $AssemblyInfoVersion = $AssemblyInfoVersion.Substring(0, $AssemblyInfoVersion.LastIndexOf("."))
+        }
     }
+    else {
+        Log-Message "Could not retrieve version, $AssemblyInfoLocation does not exist" "red"
+    }
+    return $AssemblyInfoVersion
 }
 
 
@@ -2795,10 +2807,6 @@ if ($CURRENTVERSION -eq "")
             Log-Message "Semver not found.  Run 'npm install --save-dev semver'" "red"
             exit 129
         }
-    } 
-    elseif ((Test-Path("AssemblyInfo.cs")) -or (Test-Path("Properties\AssemblyInfo.cs")))
-    {
-        $CURRENTVERSION = Get-AssemblyInfoVersion
     }
     elseif (![string]::IsNullOrEmpty($HISTORYFILE))
     {
@@ -2814,11 +2822,32 @@ if ($CURRENTVERSION -eq "")
             Log-Message "Using non-npm project semantic versioning"
             Log-Message "Semver not found, run 'npm install -g semver' to automate semantic versioning of non-NPM projects" "darkyellow"
         }
-    }
-    else {
-        Log-Message "The current version cannot be determined" "red"
-        Log-Message "Provided the current version in publishrc or on the command line" "red"
-        exit 130
+    } 
+    else 
+    {
+        $AssemblyInfoLoc = Get-ChildItem -Name -Recurse -Depth 1 -Filter "assemblyinfo.cs" -File -Path . -ErrorAction SilentlyContinue
+        if ($AssemblyInfoLoc -is [system.string] -and ![string]::IsNullOrEmpty($AssemblyInfoLoc))
+        {
+            $CURRENTVERSION = Get-AssemblyInfoVersion $AssemblyInfoLoc
+            if (![string]::IsNullOrEmpty($CURRENTVERSION )) {
+                $VersionSystem = "semver"
+            }
+            else {
+                Log-Message "The current version cannot be determined" "red"
+                Log-Message "Provided the current version in publishrc or on the command line" "red"
+                exit 130
+            }
+        }
+        elseif ($AssemblyInfoLoc -is [System.Array] -and $AssemblyInfoLoc.Length -gt 0) {
+            Log-Message "The current version cannot be determined, multiple assemblyinfo files found" "red"
+            Log-Message "Provided the assembly info file in publishrc or on the command line" "red"
+            exit 130
+        }
+        else {
+            Log-Message "The current version cannot be determined" "red"
+            Log-Message "Provided the current version in publishrc or on the command line" "red"
+            exit 130
+        }
     }
 }
 
@@ -2828,7 +2857,32 @@ if ($CURRENTVERSION -eq "") {
 }
 
 #
+# Validate current version if necessary
+#
+Log-Message "Validating current version found: $CURRENTVERSION"
+if ($VersionSystem -eq "semver")
+{
+    $ValidationVersion = & node -e "console.log(require('semver').valid('$CURRENTVERSION'));"
+    if ([string]::IsNullOrEmpty($ValidationVersion)) {
+        Log-Message "The current semantic version found ($CURRENTVERSION) is invalid" "red"
+        exit 132
+    }
+}
+else # incremental versioning
+{
+    # TODO - Version should contain all digits
+    #
+    if ($false) {
+        Log-Message "The current incremental version ($CURRENTVERSION) is invalid" "red"
+        exit 134
+    }
+}
+Log-Message "Current version has been validated" "darkgreen"
+
+#
 # Certain tasks only need to be done once if there are multiple publish runs configured to run.
+#
+# In dry run mode, we retrieve anyway just for the sake of testing the commit retrieval
 #
 # These tasks include:
 #
@@ -2948,12 +3002,37 @@ if ($RUN -eq 1 -or $DRYRUN -eq $true)
         Log-Message "Invalid version for release, exiting" "red"
         exit 133
     }
+
+    #
+    # Validate new version
+    #
+    Log-Message "Validating new version: $VERSION"
+    if ($VersionSystem -eq "semver" -or $VERSION.Contains("."))
+    {
+        $ValidationVersion = & node -e "console.log(require('semver').valid('$VERSION'));"
+        if ([string]::IsNullOrEmpty($ValidationVersion)) {
+            Log-Message "The new semantic version ($VERSION) is invalid" "red"
+            exit 133
+        }
+    }
+    else # incremental versioning
+    {
+        #
+        # TODO - Version should contain all digits
+        #
+        if ($false) {
+            Log-Message "The new incremental version ($VERSION) is invalid" "red"
+            exit 134
+        }
+    }
+    Log-Message "New version has been validated" "darkgreen"
 }
 else 
 {
     $VERSION = $CURRENTVERSION
     Log-Message "This is pulish run #$RUN, the current version $CURRENTVERSION is also the new version" "magenta"
 }
+
 
 #
 # Get formatted date in the form:
@@ -2982,6 +3061,8 @@ if ($TDATE -eq "") {
 Log-Message "Current Version     : $CURRENTVERSION"
 Log-Message "Next Version        : $VERSION"
 Log-Message "Date                : $TDATE"
+
+continue
 
 #
 # Process $HISTORYFILE
@@ -3525,45 +3606,51 @@ if ($GITHUBRELEASE -eq "Y")
             if ($GITHUBASSETS.Length -gt 0)
             {
                 Log-Message "Uploading GitHub assets"
-                foreach ($asset in $GITHUBASSETS)
+                foreach ($Asset in $GITHUBASSETS)
                 {
-                    #
-                    # Set the content-type header value to the mime type of the asset
-                    #
-                    $Header["Content-Type"] = $ContentTypeMap[$file.Extension.ToLower()];
-                    #
-                    # Get filename to be use as a GET parameter in url
-                    #
-                    $AssetName = [Path]::GetFileName($asset)
-                    #
-                    # The request to upload an asset is the raw binary file data
-                    #
-                    $Request = [System.IO.File]::ReadAllBytes($asset)
-                    #$Request = Get-Content -Path $asset -Encoding Byte
-                    Check-PsCmdSuccess
-                    if ($? -eq $true)
+                    if (Test-Path($Asset))
                     {
                         #
-                        # Upload the asset via GitHub API.
+                        # Set the content-type header value to the mime type of the asset
                         #
-                        $url = $Response.upload_url
-                        $url = $url.Replace("{?name,label}", "") + "?name=$AssetName"
-                        $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
+                        $Header["Content-Type"] = $ContentTypeMap[$file.Extension.ToLower()];
+                        #
+                        # Get filename to be use as a GET parameter in url
+                        #
+                        $AssetName = [Path]::GetFileName($Asset)
+                        #
+                        # The request to upload an asset is the raw binary file data
+                        #
+                        $Request = [System.IO.File]::ReadAllBytes($Asset)
+                        #$Request = Get-Content -Path $asset -Encoding Byte
                         Check-PsCmdSuccess
-                        #
-                        # Make sure an id value exists on the response object to check for success
-                        #
-                        if ($? -eq $true -and $Response.id) {
-                            Log-Message "Successfully uploaded GitHub asset $AssetName" "darkgreen"
-                            Log-Message "   ID          : ${Response.id}" "darkgreen"
-                            Log-Message "   Download URL: ${Response.browser_download_url}" "darkgreen"
+                        if ($? -eq $true)
+                        {
+                            #
+                            # Upload the asset via GitHub API.
+                            #
+                            $url = $Response.upload_url
+                            $url = $url.Replace("{?name,label}", "") + "?name=$AssetName"
+                            $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
+                            Check-PsCmdSuccess
+                            #
+                            # Make sure an id value exists on the response object to check for success
+                            #
+                            if ($? -eq $true -and $Response.id) {
+                                Log-Message "Successfully uploaded GitHub asset $AssetName" "darkgreen"
+                                Log-Message "   ID          : ${Response.id}" "darkgreen"
+                                Log-Message "   Download URL: ${Response.browser_download_url}" "darkgreen"
+                            }
+                            else {
+                                Log-Message "Failed to upload GitHub asset $AssetName" "red"
+                            }
                         }
                         else {
-                            Log-Message "Failed to upload GitHub asset $AssetName" "red"
+                            Log-Message "Failed to upload GitHub asset $AssetName - could not read input file" "red"
                         }
                     }
                     else {
-                        Log-Message "Failed to upload GitHub asset $AssetName - could not read input file" "red"
+                        Log-Message "Failed to upload GitHub asset $AssetName - input file does not exist" "red"
                     }
                 }
             }
