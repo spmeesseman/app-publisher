@@ -83,9 +83,9 @@
         "app-publish-node": "npx ./build/bin/app-publisher.js --no-ci",
         "app-publish-node-dry": "npx ./build/bin/app-publisher.js --no-ci --dry-run"
     },
-    "main": "./build/index.js",
+    "main": "./build/bin/app-publisher.js",
     "bin": {
-        "app-publisher": "./build/index.js",
+        "app-publisher": "./build/bin/app-publisher.js",
         "app-publisher-json": "./node_modules/@spmeesseman/json/lib/json.js",
         "app-publisher-marked": "./node_modules/marked/lib/marked.js"
     },
