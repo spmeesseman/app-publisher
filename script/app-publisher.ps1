@@ -3644,9 +3644,9 @@ if ($GITHUBRELEASE -eq "Y")
         if ($? -eq $true -and $Response.upload_url)
         {
             Log-Message "Successfully created GitHub release v$VERSION" "darkgreen"
-            Log-Message "   ID         : $Response.id}" "darkgreen"
-            Log-Message "   Tarball URL: ${Response.zipball_url}" "darkgreen"
-            Log-Message "   Zipball URL: ${Response.tarball_url}" "darkgreen"
+            Log-Message "   ID         : $($Response.id)" "darkgreen"
+            Log-Message "   Tarball URL: $($Response.zipball_url)" "darkgreen"
+            Log-Message "   Zipball URL: $($Response.tarball_url)" "darkgreen"
             #
             # Creating the release was successful, upload assets if any were specified
             #
@@ -3686,8 +3686,8 @@ if ($GITHUBRELEASE -eq "Y")
                             #
                             if ($? -eq $true -and $Response2.id) {
                                 Log-Message "Successfully uploaded GitHub asset $AssetName" "darkgreen"
-                                Log-Message "   ID          : ${Response2.id}" "darkgreen"
-                                Log-Message "   Download URL: ${Response2.browser_download_url}" "darkgreen"
+                                Log-Message "   ID          : $($Response2.id)" "darkgreen"
+                                Log-Message "   Download URL: $($Response2.browser_download_url)" "darkgreen"
                             }
                             else {
                                 Log-Message "Failed to upload GitHub asset $AssetName" "red"
