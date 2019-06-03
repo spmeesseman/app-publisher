@@ -1,5 +1,15 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.5.5 (June 3rd, 2019)
+
+### Bug Fixes
+
+- if running from a sub-project, reverting files fails in cases where publish fails and reverting is performed.
+
+### Code Refactoring
+
+- when logging a multi-line message, attempt to bring all lines after the frust line break in alignment with the 1st line (including the log stamp)
+
 ## Version 1.5.4 (June 3rd, 2019)
 
 ### Bug Fixes

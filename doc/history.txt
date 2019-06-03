@@ -784,3 +784,36 @@ June 3rd, 2019
     Running 1.5 for a subversion build in run #1 causes an error and publish
     exits.
 
+
+Version 1.5.5
+June 3rd, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+
+    If running a publish from a sub-project within a main project directory 
+    structure, reverting files fails in cases where the publish fails and 
+    reverting needs to be performed.
+
+2.  Code Refactoring
+
+    When logging a multi-line message, attempt to bring all lines after
+    the first line break in alignment with the 1st line (including the log 
+    stamp).
+
