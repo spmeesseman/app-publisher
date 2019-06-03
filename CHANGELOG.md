@@ -1,5 +1,12 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.5.6 (June 3rd, 2019)
+
+### Bug Fixes
+
+- during a github release, the logged response values are not displaying
+- github release fails to load any assets past the first one
+
 ## Version 1.5.5 (June 3rd, 2019)
 
 ### Bug Fixes
