@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.5.3 (June 3rd, 2019)
+
+### Bug Fixes
+
+- package.json point to incorrect startup file for cli, run fails
+
 ## Version 1.5.2 (June 3rd, 2019)
 
 ## Version 1.5.1 (June 3rd, 2019)
