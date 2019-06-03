@@ -1,5 +1,37 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.5.0 (June 3rd, 2019)
+
+### Build System
+
+- **ap:** update publishrc to 1.5 config
+- **npm:** add --no-ci flags to app-publisher scripts
+
+### Chores
+
+- experimenting with semantic-release integration
+- merge node-cli branch for start of node app-publisher development
+- progress check in on node version
+- remove test continue statement
+
+### Features
+
+- add support for github release type
+
+### Bug Fixes
+
+- assemblyinfor version is not replaced when incremental versioning is used
+
+### Code Refactoring
+
+- pass entire options configiration object to ps script as opposed to breaking down into string parameters.  preparation for semantic-release style publish flow.
+- removed flag no longer needed from ps run
+- validate current version found and next version calculated
+
+### Code Styling
+
+- add banner image for use in README
+
 ## Version 1.4.6 (May 31st, 2019)
 
 ### Build System

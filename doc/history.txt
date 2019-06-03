@@ -646,3 +646,37 @@ May 31st, 2019
 
     Add full set of tslint definitions to tslint.json for typescript styling.
 
+
+Version 1.5.0
+June 3rd, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+
+    Add support for github release type.
+
+2.  Bug Fix
+
+    Assemblyinfor version is not replaced when incremental versioning is used.
+
+3.  Code Refactoring
+
+    Validate current version found and next version calculated before proceeding
+    with publish run.
+
