@@ -869,7 +869,7 @@ function Vc-IsVersioned($ObjectPath)
         $VcFile = Join-Path -Path "$PATHPREROOT" -ChildPath "$ObjectPath"
     }
 
-    if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) {
+    if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") {
         set-location $PATHTOMAINROOT
     }
     if ($_RepoType -eq "svn") {
@@ -885,7 +885,7 @@ function Vc-IsVersioned($ObjectPath)
     # Change directory back to project root
     # PATHTOPREROOT will be defined if PATHTOMAINROOT is
     #
-    if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) { 
+    if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") { 
         set-location $PATHPREROOT
     }
 
@@ -900,6 +900,13 @@ function Vc-Revert()
         Log-Message "Stored Commit List: $VCCHANGELIST"
         Log-Message "Stored Add List   : $VCCHANGELISTADD"
         Log-Message "Stored Remove List: $VCCHANGELISTRMV"
+
+        #
+        # Change dir to project root, all changelist entries will be in respect to the project root dir
+        #
+        if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") {
+            set-location $PATHTOMAINROOT
+        }
 
         $VcRevertList = ""
         $VcRevertListParts = $VCCHANGELISTRMV.Trim().Split(' ')
@@ -1006,6 +1013,13 @@ function Vc-Revert()
             else {
                 Log-Message "0 versioned files to revert"
             }
+        }
+        #
+        # Change directory back to project root
+        # PATHTOPREROOT will be defined if PATHTOMAINROOT is
+        #
+        if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") { 
+            set-location $PATHPREROOT
         }
     }
 }
@@ -2599,6 +2613,51 @@ if (![string]::IsNullOrEmpty($TEXTEDITOR))
 }
 
 #
+# If PATHTOMAINROOT is set, then PATHPREROOT must be set also, and refer to the same
+# mirrored location with respect to project/sub-project directories
+#
+
+if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and [string]::IsNullOrEmpty($PATHPREROOT)) {
+    Log-Message "pathPreRoot must be specified with pathToMainRoot" "red"
+    exit 1
+}
+
+if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($PATHTOMAINROOT)) {
+    Log-Message "pathToMainRoot must be specified with pathPreRoot" "red"
+    exit 1
+}
+
+if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) 
+{
+    if ([string]::IsNullOrEmpty($PATHPREROOT)) { 
+        Log-Message "Invalid value specified for pathPreRoot" "red"
+        exit 1
+    }
+    #
+    # Behavior:
+    #
+    #     pathToMainRoot indicates the path to the root project folder with respect to the 
+    #     initial working directory.
+    #
+    #     pathPreRoot indicates the path back to the initial working directory with respect
+    #     to the project root.
+    #
+    #     Check to ensire this holds true
+    #
+    $Path1 = Get-Location
+    Set-Location $PATHTOMAINROOT
+    $Path2 = Get-Location
+    $Path2 = [Path]::Combine($Path2, $PATHPREROOT)
+    if ($Path1 -ne $Path2) {
+        Log-Message "Invalid valuea specified for pathToMainRoot and pathPreRoot" "red"
+        Log-Message "    pathToMainRoot indicates the path to the root project folder with respect to the initial working directory" "red"
+        Log-Message "    pathPreRoot indicates the path back to the initial working directory with respect to the project root" "red"
+        exit 1
+    }
+    Set-Location $PATHPREROOT
+}
+
+#
 # Convert any Y/N vars to upper case and check validity
 #
 if (![string]::IsNullOrEmpty($DISTRELEASE)) {
@@ -2678,6 +2737,26 @@ if (![string]::IsNullOrEmpty($VCTAG)) {
 }
 
 #
+# Get execution policy, this needs to be equlat  to 'RemoteSigned'
+#
+$ExecPolicy = Get-ExecutionPolicy
+if ($ExecPolicy -ne "RemoteSigned")
+{
+    Log-Message "The powershell execution policy must be set to 'RemoteSigned'" "red"
+    Log-Message "Run the following command in a powershell with elevated priveleges:" "red"
+    Log-Message "   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine" "red"
+    exit 90
+}
+
+#
+# Check dist release path for dist release
+#
+if ($DISTRELEASE -eq "Y" -and [string]::IsNullOrEmpty($PATHTODIST)) {
+    Log-Message "pathToDist must be specified for dist release" "red"
+    exit 1
+}
+
+#
 # Write project specific properties
 #
 Log-Message "Project specific script configuration:"
@@ -2717,36 +2796,6 @@ Log-Message "   Test email       : $TESTEMAILRECIP"
 Log-Message "   Text editor      : $TEXTEDITOR"
 Log-Message "   Version files    : $VERSIONFILES"
 Log-Message "   Version text     : $VERSIONTEXT"
-
-#
-# Get execution policy, this needs to be equlat  to 'RemoteSigned'
-#
-$ExecPolicy = Get-ExecutionPolicy
-if ($ExecPolicy -ne "RemoteSigned")
-{
-    Log-Message "The powershell execution policy must be set to 'RemoteSigned'" "red"
-    Log-Message "Run the following command in a powershell with elevated priveleges:" "red"
-    Log-Message "   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine" "red"
-    exit 90
-}
-
-#
-# Check valid path params
-#
-if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and [string]::IsNullOrEmpty($PATHPREROOT)) {
-    Log-Message "pathPreRoot must be specified with pathToMainRoot" "red"
-    exit 1
-}
-
-if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($PATHTOMAINROOT)) {
-    Log-Message "pathToMainRoot must be specified with pathPreRoot" "red"
-    exit 1
-}
-
-if ($DISTRELEASE -eq "Y" -and [string]::IsNullOrEmpty($PATHTODIST)) {
-    Log-Message "pathToDist must be specified for dist release" "red"
-    exit 1
-}
 
 #
 # Convert array params to arrays, if specified as string on cmdline or publishrc
@@ -3609,13 +3658,14 @@ if ($GITHUBRELEASE -eq "Y")
                     if (Test-Path($Asset))
                     {
                         #
-                        # Set the content-type header value to the mime type of the asset
-                        #
-                        $Header["Content-Type"] = $ContentTypeMap[$file.Extension.ToLower()];
-                        #
                         # Get filename to be use as a GET parameter in url
                         #
                         $AssetName = [Path]::GetFileName($Asset)
+                        $Extension = [Path]::GetExtension($AssetName).ToLower()
+                        #
+                        # Set the content-type header value to the mime type of the asset
+                        #
+                        $Header["Content-Type"] = $ContentTypeMap[$Extension]
                         #
                         # The request to upload an asset is the raw binary file data
                         #
@@ -3779,7 +3829,7 @@ if ($EMAILNOTIFICATION -eq "Y") {
 # Change dircetory to svn/git root that contains the .svn/.git folder to isse SVN commands,
 # all paths in the changelist will be relative to this root
 #
-if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) {
+if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") {
     set-location $PATHTOMAINROOT
 }
 
