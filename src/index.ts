@@ -76,14 +76,22 @@ async function run(context, plugins)
         return false;
     }
 
-    if (ciBranch !== options.branch)
+    if (isCi && ciBranch !== options.branch)
     {
-        logger.log(
+        logger.error(
             `This test run was triggered on the branch ${ciBranch}, while app-publisher is configured to only publish from ${
             options.branch
             }, therefore a new version won’t be published.`
         );
         return false;
+    }
+    else if (ciBranch !== options.branch)
+    {
+        logger.warn(
+            `This test run was triggered on the branch ${ciBranch}, while app-publisher is configured to only publish from ${
+            options.branch
+            }, continuing due to non-ci environment.`
+        );
     }
 
     logger[options.dryRun ? "warn" : "success"](

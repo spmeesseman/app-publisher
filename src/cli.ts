@@ -18,6 +18,12 @@ export = async () =>
         prog: "app-publisher"
     });
     parser.addArgument(
+        [ "-b", "--branch" ],
+        {
+            help: "The branch to use for publishing."
+        }
+    );
+    parser.addArgument(
         "--dry-run",
         {
             dest: "dryRun",
