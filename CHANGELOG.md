@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.5.4 (June 3rd, 2019)
+
+### Bug Fixes
+
+- running 1.5 for a subversion build in run #1 causes an error and publish exits
+
 ## Version 1.5.3 (June 3rd, 2019)
 
 ### Bug Fixes
