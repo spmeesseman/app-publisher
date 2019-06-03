@@ -304,43 +304,14 @@ async function runPowershellScript(options: any, logger: any)
         if (child.killed) {
             return;
         }
-        data = data.trimRight();
-        if (!data) {
-            return;
-        }
-        if (data.includes("[INFO] ")) {
-            logger.log(data.substring(7));
-        }
-        else if (data.includes("[NOTICE] ")) {
-            logger.log(data.substring(9));
-        }
-        else if (data.includes("[WARNING] ")) {
-            logger.warn(data.substring(10));
-        }
-        else if (data.includes("[SUCCESS] ")) {
-            logger.success(data.substring(10));
-        }
-        else if (data.includes("[ERROR] ")) {
-            logger.error(data.substring(8));
-        }
-        else if (data.includes("[PROMPT] ")) {
-            logger.star(data.substring(9));
-        }
-        else if (data.includes("[INPUT] ")) {
-            logger.star(data.substring(8));
-        }
-        else {
-            logger.log(data);
-        }
+        logPowershell(data, logger);
     });
 
     child.stderr.on("data", data => {
-        if (!child.killed) {
-            if (!data.trim()) {
-                return;
-            }
-            logger.error(data);
+        if (child.killed) {
+            return;
         }
+        logPowershell(data, logger);
     });
 
     let iCode: number;
@@ -354,6 +325,42 @@ async function runPowershellScript(options: any, logger: any)
         }
         process.exit(iCode);
     });
+}
+
+
+function logPowershell(data: string, logger: any)
+{
+    data = data.trimRight();
+    while (data[0] === "\n" || data[0] === "\r") {
+        data = data.substring(1);
+    }
+    if (!data) {
+        return;
+    }
+    if (data.includes("[INFO] ")) {
+        logger.log(data.substring(7));
+    }
+    else if (data.includes("[NOTICE] ")) {
+        logger.log(data.substring(9));
+    }
+    else if (data.includes("[WARNING] ")) {
+        logger.warn(data.substring(10));
+    }
+    else if (data.includes("[SUCCESS] ")) {
+        logger.success(data.substring(10));
+    }
+    else if (data.includes("[ERROR] ")) {
+        logger.error(data.substring(8));
+    }
+    else if (data.includes("[PROMPT] ")) {
+        logger.star(data.substring(9));
+    }
+    else if (data.includes("[INPUT] ")) {
+        logger.star(data.substring(8));
+    }
+    else {
+        logger.log(data);
+    }
 }
 
 
