@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.5.1 (June 3rd, 2019)
+
+### Bug Fixes
+
+- external application stderr is logging with the error icon when it is just info
+
 ## Version 1.5.0 (June 3rd, 2019)
 
 ### Build System
