@@ -3644,7 +3644,7 @@ if ($GITHUBRELEASE -eq "Y")
         if ($? -eq $true -and $Response.upload_url)
         {
             Log-Message "Successfully created GitHub release v$VERSION" "darkgreen"
-            Log-Message "   ID         : ${Response.id}" "darkgreen"
+            Log-Message "   ID         : $Response.id}" "darkgreen"
             Log-Message "   Tarball URL: ${Response.zipball_url}" "darkgreen"
             Log-Message "   Zipball URL: ${Response.tarball_url}" "darkgreen"
             #
@@ -3679,15 +3679,15 @@ if ($GITHUBRELEASE -eq "Y")
                             #
                             $url = $Response.upload_url
                             $url = $url.Replace("{?name,label}", "") + "?name=$AssetName"
-                            $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
+                            $Response2 = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
                             Check-PsCmdSuccess
                             #
                             # Make sure an id value exists on the response object to check for success
                             #
-                            if ($? -eq $true -and $Response.id) {
+                            if ($? -eq $true -and $Response2.id) {
                                 Log-Message "Successfully uploaded GitHub asset $AssetName" "darkgreen"
-                                Log-Message "   ID          : ${Response.id}" "darkgreen"
-                                Log-Message "   Download URL: ${Response.browser_download_url}" "darkgreen"
+                                Log-Message "   ID          : ${Response2.id}" "darkgreen"
+                                Log-Message "   Download URL: ${Response2.browser_download_url}" "darkgreen"
                             }
                             else {
                                 Log-Message "Failed to upload GitHub asset $AssetName" "red"
