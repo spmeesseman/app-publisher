@@ -3942,7 +3942,7 @@ if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") {
 #
 # Github Release
 #
-if ($GITHUBRELEASE -eq "Y") 
+if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y") 
 {
     Log-Message "Starting GitHub release"
  
