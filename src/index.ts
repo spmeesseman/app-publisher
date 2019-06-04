@@ -346,7 +346,8 @@ function logPowershell(data: string, logger: any)
         return;
     }
     if (data.includes("\n")) {
-        data.replace(/\n/gi, "\n                                  ");
+        data.replace(/\r\n/gm, "\r\n                                  ");
+        data.replace(/\n/gm, "\n                                  ");
     }
     if (data.includes("[INFO] ")) {
         logger.log(data.substring(7));

@@ -862,15 +862,15 @@ function Vc-Changelist-AddNew($VcFile)
     }
 }
 
-function Vc-IsVersioned($ObjectPath)
+function Vc-IsVersioned($ObjectPath, $AppendPre = $false, $ChangePath = $false)
 {
     $IsVersioned = $false
 
-    if ($PATHPREROOT -ne "" -and $PATHPREROOT -ne $null) {
+    if ($AppendPre -and ![string]::IsNullOrEmpty($PATHPREROOT)) {
         $VcFile = Join-Path -Path "$PATHPREROOT" -ChildPath "$ObjectPath"
     }
 
-    if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") {
+    if ($ChangePath -and ![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") {
         set-location $PATHTOMAINROOT
     }
     if ($_RepoType -eq "svn") {
@@ -886,14 +886,14 @@ function Vc-IsVersioned($ObjectPath)
     # Change directory back to project root
     # PATHTOPREROOT will be defined if PATHTOMAINROOT is
     #
-    if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") { 
+    if ($ChangePath -and ![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") { 
         set-location $PATHPREROOT
     }
 
     return $IsVersioned
 }
 
-function Vc-Revert()
+function Vc-Revert($ChangePath = $false)
 {
     if (![string]::IsNullOrEmpty($VCCHANGELIST)) 
     {
@@ -905,7 +905,7 @@ function Vc-Revert()
         #
         # Change dir to project root, all changelist entries will be in respect to the project root dir
         #
-        if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") {
+        if ($ChangePath -and ![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") {
             set-location $PATHTOMAINROOT
         }
 
@@ -1019,13 +1019,13 @@ function Vc-Revert()
         # Change directory back to project root
         # PATHTOPREROOT will be defined if PATHTOMAINROOT is
         #
-        if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") { 
+        if ($ChangePath -and ![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") { 
             set-location $PATHPREROOT
         }
     }
 }
 
-function Check-ExitCode($ExitOnError = $false)
+function Check-ExitCode($ExitOnError = $false, $ChangePath = $true)
 {
     $ECode = $LASTEXITCODE
     #
@@ -1037,13 +1037,13 @@ function Check-ExitCode($ExitOnError = $false)
     else {
         Log-Message "Exit Code $ECode" "red"
         if ($ExitOnError -eq $true) {
-            Vc-Revert
+            Vc-Revert $ChangePath
             exit $ECode
         }
     }
 }
 
-function Check-PsCmdSuccess($ExitOnError = $false)
+function Check-PsCmdSuccess($ExitOnError = $false, $ChangePath = $true)
 {
     #
     # Check script error code, 0 is success
@@ -1054,7 +1054,7 @@ function Check-PsCmdSuccess($ExitOnError = $false)
     else {
         Log-Message "Status False" "red"
         if ($ExitOnError -eq $true) {
-            Vc-Revert
+            Vc-Revert $ChangePath
             exit 110
         }
     }
@@ -1398,7 +1398,7 @@ function Edit-File($File, $SeekToEnd = $false)
     {
         $script:VersionFilesEdited += $File
         
-        #if (Vc-IsVersioned($File)) {
+        #if (Vc-IsVersioned($File, $true, $true)) {
             Vc-Changelist-Add $File
         #}
 
@@ -3295,7 +3295,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE))
     }
     if (!(Test-Path($CHANGELOGFILE))) 
     {
-        Vc-Revert
+        Vc-Revert $true
         Log-Message "Could not create changelog file, exiting" "red"
         exit 141
     }
@@ -3456,7 +3456,7 @@ if ($DISTRELEASE -eq "Y")
     #
     # Get whether or not dist dir is under vesion control, in some cases it may not be
     #
-    $DistIsVersioned = Vc-IsVersioned($PATHTODIST)
+    $DistIsVersioned = Vc-IsVersioned($PATHTODIST, $true, $true)
     #
     #
     #
@@ -3582,7 +3582,7 @@ if ($NPMRELEASE -eq "Y")
             }
         }
         else {
-            Vc-Revert
+            Vc-Revert $true
             exit 150
         }
     }
@@ -3742,7 +3742,7 @@ if ($_RepoType -eq "svn")
                         Log-Message "Adding unversioned touched files to GIT version control"
                         Log-Message "   $VCCHANGELISTADD"
                         Invoke-Expression -Command "svn add $VCCHANGELISTADD"
-                        Check-ExitCode
+                        Check-ExitCode $false
                     }
                     Log-Message "Committing touched files to SVN version control"
                     Log-Message "   $VCCHANGELIST"
@@ -3750,7 +3750,7 @@ if ($_RepoType -eq "svn")
                     # SVN commit
                     #
                     Invoke-Expression -Command "svn commit $VCCHANGELIST -m `"chore(release): $VERSION [skip ci]`""
-                    Check-ExitCode
+                    Check-ExitCode $false
                 }
                 elseif (![string]::IsNullOrEmpty($VCCHANGELISTMLT)) 
                 {
@@ -3760,7 +3760,7 @@ if ($_RepoType -eq "svn")
                     # SVN commit
                     #
                     Invoke-Expression -Command "svn commit $VCCHANGELISTMLT -m `"chore(release-mlt): $VERSION [skip ci]`""
-                    Check-ExitCode
+                    Check-ExitCode $false
                 }
                 else {
                     Log-Message "Skipping touched file SVN commit, user specified" "darkyellow"
@@ -3810,7 +3810,7 @@ if ($_RepoType -eq "svn")
                     # Call svn copy to create 'tag'
                     #
                     & svn copy "$_Repo" "$TagLocation" -m "$TagMessage"
-                    Check-ExitCode
+                    Check-ExitCode $false
                 }
                 else {
                     Log-Message "Dry run, skipping create version tag" "magenta"
@@ -3850,7 +3850,7 @@ elseif ($_RepoType -eq "git")
                         Log-Message "Adding unversioned touched files to GIT version control"
                         Log-Message "   $VCCHANGELISTADD"
                         Invoke-Expression -Command "git add -- $VCCHANGELISTADD"
-                        Check-ExitCode
+                        Check-ExitCode $false
                     }
                     #
                     # GIT commit and GIT push
@@ -3858,9 +3858,9 @@ elseif ($_RepoType -eq "git")
                     Log-Message "Committing touched files to GIT version control"
                     Log-Message "   $VCCHANGELIST"
                     Invoke-Expression -Command "git commit --quiet -m `"chore(release): $VERSION [skip ci]`" -- $VCCHANGELIST"
-                    Check-ExitCode
+                    Check-ExitCode $false
                     Invoke-Expression -Command "git push origin master:master"
-                    Check-ExitCode
+                    Check-ExitCode $false
                 }
                 elseif (![string]::IsNullOrEmpty($VCCHANGELISTMLT))
                 {
@@ -3870,9 +3870,9 @@ elseif ($_RepoType -eq "git")
                     # GIT commit
                     #
                     Invoke-Expression -Command "git commit --quiet -m `"chore(release-mlt): $VERSION [skip ci]`" -- $VCCHANGELISTMLT"
-                    Check-ExitCode
+                    Check-ExitCode $false
                     Invoke-Expression -Command "git push origin master:master"
-                    Check-ExitCode
+                    Check-ExitCode $false
                 }
                 else {
                     Log-Message "Skipping touched file GIT commit, user specified" "darkyellow"
@@ -3917,9 +3917,9 @@ elseif ($_RepoType -eq "git")
                     # Call git tag to create 'tag', then push to remote with push --tags
                     #
                     & git tag -a $TagLocation -m "$TagMessage"
-                    Check-ExitCode
+                    Check-ExitCode $false
                     & git push --tags
-                    Check-ExitCode
+                    Check-ExitCode $false
                 }
                 else {
                     Log-Message "Dry run, skipping create version tag" "magenta"
