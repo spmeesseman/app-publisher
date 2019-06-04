@@ -865,6 +865,7 @@ function Vc-Changelist-AddNew($VcFile)
 function Vc-IsVersioned($ObjectPath, $AppendPre = $false, $ChangePath = $false)
 {
     $IsVersioned = $false
+    $VcFile = $ObjectPath
 
     if ($AppendPre -and ![string]::IsNullOrEmpty($PATHPREROOT)) {
         $VcFile = Join-Path -Path "$PATHPREROOT" -ChildPath "$ObjectPath"
@@ -874,10 +875,10 @@ function Vc-IsVersioned($ObjectPath, $AppendPre = $false, $ChangePath = $false)
         set-location $PATHTOMAINROOT
     }
     if ($_RepoType -eq "svn") {
-        $tmp = & svn info "$ObjectPath"
+        $tmp = & svn info "$VcFile"
     }
     else {
-        $tmp = & git ls-files --error-unmatch "$ObjectPath"
+        $tmp = & git ls-files --error-unmatch "$VcFile"
     }
     if ($LASTEXITCODE -eq 0) {
         $IsVersioned = $true
