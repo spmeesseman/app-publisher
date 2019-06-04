@@ -3601,124 +3601,6 @@ if ($NUGETRELEASE -eq "Y")
 }
 
 #
-# Github Release
-#
-if ($GITHUBRELEASE -eq "Y") 
-{
-    Log-Message "Starting GitHub release"
- 
-    if ($DRYRUN -eq $false) 
-    {
-        Log-Message "Creating GitHub v$VERSION release"
-        #
-        # Set up the request body for the 'create release' request
-        #
-        $Request = @{
-            "tag_name" = "v$VERSION"
-            "target_commitish" = "$BRANCH"
-            "name" = "v$VERSION"
-            "body" = "Version $VERSION Release"
-            "draft" = $false
-            "prerelease" = $false
-        } | ConvertTo-Json
-        #
-        # Set up the request header, this will be used to both create the release and to upload
-        # any assets.  Note that for each asset, the content-type must be set appropriately
-        # according to the type of asset being uploaded
-        #
-        $Header = @{
-            "Accept" = "application/vnd.github.v3+json"
-            "mediaTypeVersion" = "v3"
-            "squirrelAcceptHeader" = "application/vnd.github.squirrel-girl-preview"
-            "symmetraAcceptHeader" = "application/vnd.github.symmetra-preview+json"
-            "Authorization" = "token ${Env:GITHUB_TOKEN}"
-            "Content-Type" = "application/json; charset=UTF-8"
-        }
-        #
-        # Enable TLS1.2
-        #
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-        #
-        # Send the REST POST to create the release
-        #
-        $url = "https://api.github.com/repos/$GITHUBUSER/$PROJECTNAME/releases"
-        $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
-        Check-PsCmdSuccess
-        #
-        # Make sure an upload_url value exists on the response object to check for success
-        #
-        if ($? -eq $true -and $Response.upload_url)
-        {
-            Log-Message "Successfully created GitHub release v$VERSION" "darkgreen"
-            Log-Message "   ID         : $($Response.id)" "darkgreen"
-            Log-Message "   Tarball URL: $($Response.zipball_url)" "darkgreen"
-            Log-Message "   Zipball URL: $($Response.tarball_url)" "darkgreen"
-            #
-            # Creating the release was successful, upload assets if any were specified
-            #
-            if ($GITHUBASSETS.Length -gt 0)
-            {
-                Log-Message "Uploading GitHub assets"
-                foreach ($Asset in $GITHUBASSETS)
-                {
-                    if (Test-Path($Asset))
-                    {
-                        #
-                        # Get filename to be use as a GET parameter in url
-                        #
-                        $AssetName = [Path]::GetFileName($Asset)
-                        $Extension = [Path]::GetExtension($AssetName).ToLower()
-                        #
-                        # Set the content-type header value to the mime type of the asset
-                        #
-                        $Header["Content-Type"] = $ContentTypeMap[$Extension]
-                        #
-                        # The request to upload an asset is the raw binary file data
-                        #
-                        $Request = [System.IO.File]::ReadAllBytes($Asset)
-                        #$Request = Get-Content -Path $asset -Encoding Byte
-                        Check-PsCmdSuccess
-                        if ($? -eq $true)
-                        {
-                            #
-                            # Upload the asset via GitHub API.
-                            #
-                            $url = $Response.upload_url
-                            $url = $url.Replace("{?name,label}", "") + "?name=$AssetName"
-                            $Response2 = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
-                            Check-PsCmdSuccess
-                            #
-                            # Make sure an id value exists on the response object to check for success
-                            #
-                            if ($? -eq $true -and $Response2.id) {
-                                Log-Message "Successfully uploaded GitHub asset $AssetName" "darkgreen"
-                                Log-Message "   ID          : $($Response2.id)" "darkgreen"
-                                Log-Message "   Download URL: $($Response2.browser_download_url)" "darkgreen"
-                            }
-                            else {
-                                Log-Message "Failed to upload GitHub asset $AssetName" "red"
-                            }
-                        }
-                        else {
-                            Log-Message "Failed to upload GitHub asset $AssetName - could not read input file" "red"
-                        }
-                    }
-                    else {
-                        Log-Message "Failed to upload GitHub asset $AssetName - input file does not exist" "red"
-                    }
-                }
-            }
-        }
-        else {
-            Log-Message "Failed to create GitHub v$VERSION release" "red"
-        }
-    }
-    else {
-        Log-Message "Dry run, skipping GitHub release" "magenta"
-    }
-}
-
-#
 # Network Release
 #
 if ($DISTRELEASE -eq "Y") 
@@ -4050,6 +3932,124 @@ elseif ($_RepoType -eq "git")
     }
     else {
         Log-Message "Could not find .git folder, skipping commit and version tag" "red"
+    }
+}
+
+#
+# Github Release
+#
+if ($GITHUBRELEASE -eq "Y") 
+{
+    Log-Message "Starting GitHub release"
+ 
+    if ($DRYRUN -eq $false) 
+    {
+        Log-Message "Creating GitHub v$VERSION release"
+        #
+        # Set up the request body for the 'create release' request
+        #
+        $Request = @{
+            "tag_name" = "v$VERSION"
+            "target_commitish" = "$BRANCH"
+            "name" = "v$VERSION"
+            "body" = "Version $VERSION Release"
+            "draft" = $false
+            "prerelease" = $false
+        } | ConvertTo-Json
+        #
+        # Set up the request header, this will be used to both create the release and to upload
+        # any assets.  Note that for each asset, the content-type must be set appropriately
+        # according to the type of asset being uploaded
+        #
+        $Header = @{
+            "Accept" = "application/vnd.github.v3+json"
+            "mediaTypeVersion" = "v3"
+            "squirrelAcceptHeader" = "application/vnd.github.squirrel-girl-preview"
+            "symmetraAcceptHeader" = "application/vnd.github.symmetra-preview+json"
+            "Authorization" = "token ${Env:GITHUB_TOKEN}"
+            "Content-Type" = "application/json; charset=UTF-8"
+        }
+        #
+        # Enable TLS1.2
+        #
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        #
+        # Send the REST POST to create the release
+        #
+        $url = "https://api.github.com/repos/$GITHUBUSER/$PROJECTNAME/releases"
+        $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
+        Check-PsCmdSuccess
+        #
+        # Make sure an upload_url value exists on the response object to check for success
+        #
+        if ($? -eq $true -and $Response.upload_url)
+        {
+            Log-Message "Successfully created GitHub release v$VERSION" "darkgreen"
+            Log-Message "   ID         : $($Response.id)" "darkgreen"
+            Log-Message "   Tarball URL: $($Response.zipball_url)" "darkgreen"
+            Log-Message "   Zipball URL: $($Response.tarball_url)" "darkgreen"
+            #
+            # Creating the release was successful, upload assets if any were specified
+            #
+            if ($GITHUBASSETS.Length -gt 0)
+            {
+                Log-Message "Uploading GitHub assets"
+                foreach ($Asset in $GITHUBASSETS)
+                {
+                    if (Test-Path($Asset))
+                    {
+                        #
+                        # Get filename to be use as a GET parameter in url
+                        #
+                        $AssetName = [Path]::GetFileName($Asset)
+                        $Extension = [Path]::GetExtension($AssetName).ToLower()
+                        #
+                        # Set the content-type header value to the mime type of the asset
+                        #
+                        $Header["Content-Type"] = $ContentTypeMap[$Extension]
+                        #
+                        # The request to upload an asset is the raw binary file data
+                        #
+                        $Request = [System.IO.File]::ReadAllBytes($Asset)
+                        #$Request = Get-Content -Path $asset -Encoding Byte
+                        Check-PsCmdSuccess
+                        if ($? -eq $true)
+                        {
+                            #
+                            # Upload the asset via GitHub API.
+                            #
+                            $url = $Response.upload_url
+                            $url = $url.Replace("{?name,label}", "") + "?name=$AssetName"
+                            $Response2 = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
+                            Check-PsCmdSuccess
+                            #
+                            # Make sure an id value exists on the response object to check for success
+                            #
+                            if ($? -eq $true -and $Response2.id) {
+                                Log-Message "Successfully uploaded GitHub asset $AssetName" "darkgreen"
+                                Log-Message "   ID          : $($Response2.id)" "darkgreen"
+                                Log-Message "   Download URL: $($Response2.browser_download_url)" "darkgreen"
+                            }
+                            else {
+                                Log-Message "Failed to upload GitHub asset $AssetName" "red"
+                            }
+                        }
+                        else {
+                            Log-Message "Failed to upload GitHub asset $AssetName - could not read input file" "red"
+                        }
+                    }
+                    else {
+                        Log-Message "Failed to upload GitHub asset $AssetName - input file does not exist" "red"
+                    }
+                }
+            }
+        }
+        else {
+            Log-Message "Failed to create GitHub v$VERSION release" "red"
+        }
+    }
+    else {
+        Log-Message "Dry run, skipping GitHub release" "magenta"
     }
 }
 
