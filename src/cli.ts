@@ -24,11 +24,37 @@ export = async () =>
         }
     );
     parser.addArgument(
+        "--dist-release",
+        {
+            action: "storeTrue",
+            help: "Make a distribution release to the specified directory"
+        }
+    );
+    parser.addArgument(
         "--dry-run",
         {
             dest: "dryRun",
             action: "storeTrue",
             help: "Run the publisher chain in dry/test mode and exit."
+        }
+    );
+    parser.addArgument(
+        "--github-assets",
+        {
+            help: "A space delimited list of assets to upload for a github release"
+        }
+    );
+    parser.addArgument(
+        "--github-release",
+        {
+            action: "storeTrue",
+            help: "Make a github release to the project's git repository"
+        }
+    );
+    parser.addArgument(
+        "--github-user",
+        {
+            help: "The github username for the project's git repository"
         }
     );
     parser.addArgument(
@@ -47,6 +73,26 @@ export = async () =>
         }
     );
     parser.addArgument(
+        "--npm-release",
+        {
+            action: "storeTrue",
+            help: "Make an npm release to the specified npm registry"
+        }
+    );
+    parser.addArgument(
+        "--npm-registry",
+        {
+            help: "The NPM registry URL used for an NPM release",
+            defaultValue: "https://registry.npmjs.org/"
+        }
+    );
+    parser.addArgument(
+        "--npm-scope",
+        {
+            help: "The NPM scope to use for an NPM release (will temporarily overwrite the package.json name property)"
+        }
+    );
+    parser.addArgument(
         [ "-p", "--profile" ],
         {
             help: "The publish profile to use.",
@@ -60,6 +106,19 @@ export = async () =>
             dest: "readConfig",
             action: "storeTrue",
             help: "Display the contents of the configuration file end exit."
+        }
+    );
+    parser.addArgument(
+        [ "-r", "--repo" ],
+        {
+            help: "The repository URL."
+        }
+    );
+    parser.addArgument(
+        [ "-r", "--repo-type" ],
+        {
+            help: "The repository type.",
+            choices: [ "git", "svn" ]
         }
     );
     parser.addArgument(
