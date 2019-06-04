@@ -2649,8 +2649,8 @@ if (![string]::IsNullOrEmpty($PATHTOMAINROOT))
     Set-Location $PATHTOMAINROOT
     $Path2 = Get-Location
     $Path2 = [Path]::Combine($Path2, $PATHPREROOT)
-    if ($Path1 -ne $Path2) {
-        Log-Message "Invalid valuea specified for pathToMainRoot and pathPreRoot" "red"
+    if ($Path1.ToString() -ne $Path2.ToString()) {
+        Log-Message "Invalid values specified for pathToMainRoot and pathPreRoot" "red"
         Log-Message "    pathToMainRoot indicates the path to the root project folder with respect to the initial working directory" "red"
         Log-Message "    pathPreRoot indicates the path back to the initial working directory with respect to the project root" "red"
         exit 1
