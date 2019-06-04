@@ -53,8 +53,8 @@ async function run(context, plugins)
 
     if (!isCi && !options.dryRun && !options.noCi)
     {
-        logger.warn("This run was not triggered in a known CI environment, running in dry-run mode.");
-        options.dryRun = true;
+        logger.error("This run was not triggered in a known CI environment, use --no-ci flag for local publish.");
+        return false;
     }
     else
     {
@@ -72,7 +72,7 @@ async function run(context, plugins)
 
     if (isCi && isPr && !options.noCi)
     {
-        logger.log("This run was triggered by a pull request and therefore a new version won't be published.");
+        logger.error("This run was triggered by a pull request and therefore a new version won't be published.");
         return false;
     }
 
@@ -119,11 +119,6 @@ async function runNodeScript(context: any, plugins: any)
     const { cwd, env, options, logger } = context;
 
     await verify(context);
-
-    if (options.runCt > 1)
-    {
-        options.allowSameVersion = true;
-    }
 
     if (options.repoType === "git")
     {
