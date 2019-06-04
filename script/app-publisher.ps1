@@ -2292,7 +2292,7 @@ if ($options.interactive) {
     $INTERACTIVE = $options.interactive
 }
 #
-$TEXTEDITOR = "notepad++"
+$TEXTEDITOR = ""
 if ($options.textEditor) {
     $TEXTEDITOR = $options.textEditor
 }
@@ -2344,7 +2344,7 @@ if ($options.pathToMainRoot) {
 #
 # Path to DIST should be relative to PATHTOROOT
 #
-$PATHTODIST = "install\dist"
+$PATHTODIST = ""
 if ($options.pathToDist) {
     $PATHTODIST = $options.pathToDist
 }
@@ -2793,10 +2793,9 @@ Log-Message "   Tag format       : $VCTAGFORMAT"
 Log-Message "   Tag prefix       : $VCTAGPREFIX"
 Log-Message "   Text editor      : $TEXTEDITOR"
 Log-Message "   Test email       : $TESTEMAILRECIP"
-Log-Message "   Text editor      : $TEXTEDITOR"
 Log-Message "   Version files    : $VERSIONFILES"
 Log-Message "   Version text     : $VERSIONTEXT"
-
+exit
 #
 # Convert array params to arrays, if specified as string on cmdline or publishrc
 #
