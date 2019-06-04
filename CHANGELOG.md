@@ -1,5 +1,15 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.5.7 (June 3rd, 2019)
+
+### Bug Fixes
+
+- setting textEditor config value to empty still opens notepad
+
+### Code Refactoring
+
+- ignore commits with a subject of "chore" when making entries in history/changelog file
+
 ## Version 1.5.6 (June 3rd, 2019)
 
 ### Bug Fixes
