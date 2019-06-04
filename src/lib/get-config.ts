@@ -112,17 +112,26 @@ async function getConfig(context: any, opts: any)
 async function pkgRepoUrl(opts)
 {
     const pkg = await readPkgUp(opts);
+    if (!pkg) {
+        return "";
+    }
     return pkg.package && (isPlainObject(pkg.package.repository) ? pkg.package.repository.url : pkg.package.repository);
 }
 
 async function pkgRepoType(opts)
 {
     const pkg = await readPkgUp(opts);
+    if (!pkg) {
+        return "";
+    }
     return pkg.package && (isPlainObject(pkg.package.repository) ? pkg.package.repository.type : "git");
 }
 
 async function defBranch(opts)
 {
     const pkg = await readPkgUp(opts);
+    if (!pkg) {
+        return "";
+    }
     return pkg.package && (isPlainObject(pkg.package.repository) ? (pkg.package.repository.type === "git" ? "master" : "trunk") : "trunk");
 }
