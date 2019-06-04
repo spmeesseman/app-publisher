@@ -3935,6 +3935,10 @@ elseif ($_RepoType -eq "git")
     }
 }
 
+if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") {
+    set-location $PATHPREROOT
+}
+
 #
 # Github Release
 #
