@@ -268,7 +268,8 @@ class HistoryFile
         #
         foreach ($msg in $CommitsList)
         {
-            if($null -ne $msg -and $msg -ne "")
+            $msg = $msg.Trim()
+            if($null -ne $msg -and $msg -ne "" -and !$msg.ToLower().StartsWith("chore"))
             {
                 $line = "";
                 
@@ -2795,7 +2796,7 @@ Log-Message "   Text editor      : $TEXTEDITOR"
 Log-Message "   Test email       : $TESTEMAILRECIP"
 Log-Message "   Version files    : $VERSIONFILES"
 Log-Message "   Version text     : $VERSIONTEXT"
-exit
+
 #
 # Convert array params to arrays, if specified as string on cmdline or publishrc
 #
@@ -3346,6 +3347,12 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE))
             }
             else {
                 $Section = $TmpCommit.SubString(0, $idx2).TrimEnd();
+            }
+            #
+            # Ignore chores
+            #
+            if ($Section.ToLower() -eq "chore") {
+                continue;
             }
             $TmpCommit = $TmpCommit.SubString($idx2 + 1).Trim()
             #
