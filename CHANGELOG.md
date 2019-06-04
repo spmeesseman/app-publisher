@@ -1,5 +1,15 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.5.8 (June 3rd, 2019)
+
+### Bug Fixes
+
+- github release is tagging version before touched version files are commited
+
+### Code Refactoring
+
+- add check for git repo type before making github release
+
 ## Version 1.5.7 (June 3rd, 2019)
 
 ### Bug Fixes
