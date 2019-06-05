@@ -1,5 +1,18 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.5.9 (June 4th, 2019)
+
+### Bug Fixes
+
+- files in dist directory are not being checked in to vc
+- regression - reverting touched files fails after a dry run since v1.5.5.
+- running a global app-publisher install from a project without a package.json is failing in v1.5.x
+- when runnnig publish for a sub-project, failure occurs with the error "pathToMainRoot does not reverse match the pathPreRoot value"
+
+### Code Refactoring
+
+- exit when --no-ci flag is not passed instead of running in dry mode
+
 ## Version 1.5.8 (June 3rd, 2019)
 
 ### Bug Fixes

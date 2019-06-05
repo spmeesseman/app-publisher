@@ -906,3 +906,43 @@ June 3rd, 2019
 
     Add check for git repo type before making github release.
 
+
+Version 1.5.9
+June 4th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+
+    Files in dist directory are not being checked in to version control at the
+    end of the publish run.
+
+2.  Bug Fix
+
+    Regression - Reverting touched files in version control fails after a dry 
+    run since v1.5.5.
+
+3.  Bug Fix
+
+    Running a global app-publisher install from a project without a package.json
+    file is failing in v1.5.x
+
+4.  Code Refactoring
+
+    Exit when --no-ci flag is not passed instead of running in dry mode
+
