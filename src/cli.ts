@@ -115,7 +115,7 @@ export = async () =>
         }
     );
     parser.addArgument(
-        [ "-r", "--repo-type" ],
+        [ "-t", "--repo-type" ],
         {
             help: "The repository type.",
             choices: [ "git", "svn" ]
