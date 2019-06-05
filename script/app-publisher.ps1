@@ -3457,7 +3457,7 @@ if ($DISTRELEASE -eq "Y")
     #
     # Get whether or not dist dir is under vesion control, in some cases it may not be
     #
-    $DistIsVersioned = Vc-IsVersioned($PATHTODIST, $true, $true)
+    $DistIsVersioned = Vc-IsVersioned $PATHTODIST $true $true
     #
     #
     #
