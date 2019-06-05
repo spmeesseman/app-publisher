@@ -3633,7 +3633,7 @@ if ($DISTRELEASE -eq "Y")
     {
         # Copy contents of dist dir to target location, and pdf docs to docs location
         #
-        if ($DRYRUN -eq $true) 
+        if ($DRYRUN -eq $false) 
         {
             Log-Message "Deploying distribution files to specified location:"
             Log-Message "   $TargetNetLocation"
