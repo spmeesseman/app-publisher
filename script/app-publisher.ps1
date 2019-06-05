@@ -190,20 +190,20 @@ class CommitAnalyzer
         {
             if ($line -eq "") { continue; }
 
-            $linefmt = $line.ToLower();
+            $linefmt = $line.ToLower().Trim();
             if ($linefmt.Contains("breaking change")) # bump major on breaking change
             {
                 Log-Message "Breaking change found"
                 $ReleaseLevel = "major";
                 break;
             }
-            if ($linefmt.Contains("majfeat: ")) # bump major on major feature
+            if ($linefmt.StartsWith("majfeat: ")) # bump major on major feature
             {
                 Log-Message "Major feature found"
                 $ReleaseLevel = "major";
                 break;
             }
-            if ($linefmt.Contains("feat: ")) # bump minor on feature
+            if ($linefmt.StartsWith("feat: ")) # bump minor on feature
             {
                 Log-Message "Feature found";
                 $ReleaseLevel = "minor";
@@ -3181,9 +3181,9 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
         $TmpCommits = $TmpCommits.Replace("build: ", "Build System`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("chore: ", "Chore`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("docs: ", "Documentation`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("feat: ", "Feature`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("featmin: ", "Minor Feature`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("minfeat: ", "Minor Feature`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("featmin: ", "Minor Feature`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("feat: ", "Feature`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("fix: ", "Bug Fix`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("perf: ", "Performance Enhancement`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("refactor: ", "Code Refactoring`r`n`r`n    ")
@@ -3201,9 +3201,9 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
         $TmpCommits = $TmpCommits.Replace("build(", "Build System(")
         $TmpCommits = $TmpCommits.Replace("chore(", "Chore(")
         $TmpCommits = $TmpCommits.Replace("docs(", "Documentation(")
-        $TmpCommits = $TmpCommits.Replace("feat(", "Feature(")
         $TmpCommits = $TmpCommits.Replace("featmin(", "Minor Feature(")
         $TmpCommits = $TmpCommits.Replace("minfeat(", "Minor Feature(")
+        $TmpCommits = $TmpCommits.Replace("feat(", "Feature(")
         $TmpCommits = $TmpCommits.Replace("fix(", "Bug Fix(")
         $TmpCommits = $TmpCommits.Replace("perf(", "Performance Enhancement(")
         $TmpCommits = $TmpCommits.Replace("refactor(", "Code Refactoring(")
