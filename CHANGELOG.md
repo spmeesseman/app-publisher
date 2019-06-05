@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.5.10 (June 4th, 2019)
+
+### Bug Fixes
+
+- the previous release will not execute, caused by an invalid duplicate cmd line flag definition.
+
 ## Version 1.5.9 (June 4th, 2019)
 
 ### Bug Fixes

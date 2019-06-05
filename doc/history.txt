@@ -946,3 +946,29 @@ June 4th, 2019
 
     Exit when --no-ci flag is not passed instead of running in dry mode
 
+
+Version 1.5.10
+June 4th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+
+    In the previous release, an internally defined duplicate command line flag 
+	causes the publish to fail immediately after starting.
+
