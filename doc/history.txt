@@ -999,3 +999,30 @@ June 4th, 2019
 	and is not being checked in with other touched files at the end of the
 	publish run, thereby missing the version tag as well.
 
+
+Version 1.5.12
+June 4th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+
+    A commit subject of "minfeat" is causing a minor release number bump when
+    it should only cause a patch number bump (for semantically versioned 
+    projects only).
+

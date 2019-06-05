@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.5.12 (June 4th, 2019)
+
+### Bug Fixes
+
+- a commit subject of "minfeat" is causing a minor release number bump when it should only cause a path number bump.
+
 ## Version 1.5.11 (June 4th, 2019)
 
 ### Bug Fixes
