@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.5.11 (June 4th, 2019)
+
+### Bug Fixes
+
+- the check to see if dist path is under version control is failing
+
 ## Version 1.5.10 (June 4th, 2019)
 
 ### Bug Fixes
