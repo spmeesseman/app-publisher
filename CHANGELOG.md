@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.5.13 (June 6th, 2019)
+
+### Bug Fixes
+
+- The network dist release upload is not being performed during a distruibution type release.
+
 ## Version 1.5.12 (June 4th, 2019)
 
 ### Bug Fixes
