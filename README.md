@@ -1,7 +1,14 @@
 # App Publisher
 
+[![perry-johnson](https://img.shields.io/badge/perry%20johnson-pja%20pjr-blue.svg)](https://www.perryjohnson.com)
+[![app-type](https://img.shields.io/badge/category-release-blue.svg)](https://www.perryjohnson.com)
+[![app-lang](https://img.shields.io/badge/language-typescript%20powershell-blue.svg)](https://www.perryjohnson.com)
+[![app-publisher](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-app--publisher-e10000.svg)](https://github.com/perryjohnsoninc/app-publisher)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
-[![app-publisher](https://app1.development.pjats.com/res/img/app-publisher-badge.svg)](https://npm.development.pjats.com/-/web/detail/@perryjohnson/app-publisher)
+
+[![authors](https://img.shields.io/badge/authors-scott%20meesseman-6F02B5.svg?logo=visual%20studio%20code)](https://github.com/perryjohnsoninc)
+[![GitHub issues open](https://img.shields.io/github/issues-raw/perryjohnsoninc/app%2dpublisher.svg?maxAge=2592000&logo=github)](https://github.com/perryjohnsoninc/app-publisher/issues)
+[![GitHub issues closed](https://img.shields.io/github/issues-closed-raw/perryjohnsoninc/app%2dpublisher.svg?maxAge=2592000&logo=github)](https://github.com/perryjohnsoninc/app-publisher/issues)
 
 ## Description
 
@@ -15,6 +22,7 @@
   - [Features](#Features)
   - [Installation](#Installation)
   - [Usage](#Usage)
+    - [Commit Messages](#Commit-Messages)
     - [Usage - Configuration File](#Usage---Configuration-File)
     - [Usage - Configuration Parameter Details](#Usage---Configuration-Parameter-Details)
   - [NPM](#NPM)
@@ -55,6 +63,74 @@ After the port to JS, this no longer be required.
 
 ## Usage
 
+### Commit Messages
+
+See the GitHub standards [here](https://gist.github.com/stephenparish/9941e89d80e2bc58a153)
+
+Commit messages should be made in the following format:
+
+    subject(scope): short_message
+
+    body
+
+    footer
+
+The "subject" should be one of the following:
+
+- build
+- chore
+- ci
+- docs
+- feat
+- featmin
+- fix
+- perf
+- project
+- refactor
+- style
+
+The "scope" can be anything specific to the commit change, for example:
+
+    docs(readme): update info on commit messages
+
+It may also be ommitted, for example:
+
+    chore: update dependency for app-publisher to latest version
+
+The subject "short_message" should be a short description of the change, preferably less than 160 characters.
+
+The "body" should give a detailed explanation of the change.
+
+The "footer" should give a detailed explanation of what the change fixes, or how it affects the application.
+
+To reference issues from commit messages, use the "Refs" or "Closes" keyword in the footer, for example:
+
+    fix(usermanagement): the "add user" button doesnt work when selecting the option "clerk"
+
+    A typo was preventing the end user from being able to create a clerk type user.
+
+    Users hould nw be able to create a clerk type user successfully.
+    Note that non-administrators do not have access to this functionality.
+    Closes #142
+
+Including the "Closes #142" in the footer will link the issue to the commit, auto-close the issue, remove any relevant tags from the issue, and add the "fixed" tag to the closed issue.
+
+    feat(jobsearch): add support for the "modify status" action
+
+    The action "Modify Status" in the Search Results tabs of Job Administration is now functional.
+
+    Note that the list of statuses that the jobs may be changed to will be reduced in the next release.
+    Refs #142
+
+Including the "Refs #142" in the footer will link the issue to the commit.
+
+The commit messages will be used in the generation of the history and changelog files when running app-publisher.
+
+References:
+
+- [GitHub Commit Message Standards](https://gist.github.com/stephenparish/9941e89d80e2bc58a153)
+- [Angular Commenting Standards Updated](https://github.com/angular/angular/blob/master/CONTRIBUTING.md#type)
+
 ### Usage - Configuration File
 
 To configure app-publisher per project, create a .publishrc.json file in the root project directory.
@@ -62,31 +138,57 @@ To configure app-publisher per project, create a .publishrc.json file in the roo
 An example .publishrc.json file:
 
     {
-        "projectName":      "extjs-pkg-server",
-        "script": {
-            "buildCommand":  [
-                "ant.bat",
-                "npm pack",
-                "cmd /c move /Y perryjohnson-extjs-pkg-server-* install\\dist\\extjs-pkg-server.tgz"
-            ]
-        },
-        "historyFile":      "doc\\history.txt",
-        "historyHdrFile":   "install\\history-hdr.txt",
-        "historyLineLen":   80,
-        "installerRelease": "Y",
-        "installerExDist":  "Y",
-        "installerScript":  "install\\extjs-pkg-server.nsi",
-        "notepadEdits":     "Y",
-        "npmRelease":       "Y",
-        "npmScope":         "@perryjohnson",
-        "nugetRelease":     "Y",
-        "pathtoRoot":       ".",
-        "pathtoMainRoot":   "",
-        "pathPreRoot":      "",
-        "pathToDist":       "install\\dist",
-        "svnRepo":          "pja",
-        "testEmailRecip":   "smeesseman@pjats.com",
-        "versionText":      "Version"
+        "projectName":       "app-publisher",
+        "branch":            "master",
+        "bugs":              "",
+        "buildCommand": [
+            "npm run build",
+            "${CODE_HOME}\\nsis\\makensis.exe install\\installer-x86.nsi"
+        ],
+        "changelogFile":     "CHANGELOG.md",
+        "deployCommand":     "",
+        "distRelease":       "N",
+        "distReleasePath":   "\\\\192.168.68.120\\d$\\softwareimages",
+        "distDocPath":       "\\\\pjainc.pjvista.com@SSL\\DavWWWRoot\\Shared Documents\\Tech Support\\Application Installation and Configuration",
+        "dryRunVcRevert":    "Y",
+        "emailNotification": "N",
+        "emailServer":       "10.0.7.50",
+        "emailRecip":        "productrelease@pjats.com",
+        "emailSender":       "productbuild@pjats.com",
+        "githubRelease":     "Y",
+        "githubAssets": [
+            "install\\dist\\app-publisher.tgz",
+            "install\\dist\\App-Publisher_32bit.exe"
+        ],
+        "githubUser":        "spmeesseman",
+        "historyFile":       "doc\\history.txt",
+        "historyHdrFile":    "install\\history-hdr.txt",
+        "historyLineLen":    80,
+        "homePage":          "",
+        "interactive":       "N",
+        "npmPackDist":       "N",
+        "npmRegistry":       "",
+        "npmRelease":        "Y",
+        "npmScope":          "",
+        "nugetRelease":      "N",
+        "pathToDist":        "install\\dist",
+        "pathtoRoot":        ".",
+        "pathtoMainRoot":    "",
+        "pathPreRoot":       "",
+        "postBuildCommand":  "",
+        "repoType":          "",
+        "repo":              "",
+        "skipCommit":        "N",
+        "skipDeployPush":    "N",
+        "testEmailRecip":    "smeesseman@pjats.com",
+        "textEditor":        "notepad++",
+        "vcTag":             "Y",
+        "vcTagPrefix":       "",
+        "versionFiles": [
+            "install\\installer-x86.nsi"
+        ],
+        "versionText":       "Version",
+        "writeLog":          "N"
     }
 
 ### Usage - Configuration Parameter Details
@@ -171,13 +273,13 @@ This in most cases sould be an empty string if the project is the 'main' project
 
 For example, the following project contains a layout with 3 separate projects 'fp', 'ui', and 'svr':
 
-    GEMS2
+    app-publisher
         app
             fpc
             svr
             ui
 
-The main project root is GEMS2.  In the case of each of these projects, SVNPREPATH should be set to app\fpc, app\ui, or app\svr, for each specific sub-project.  This mainly is be used for SVN commands which need to be ran in the directory containing the .svn folder.
+The main project root is app-publisher.  In the case of each of these projects, SVNPREPATH should be set to app\fpc, app\ui, or app\svr, for each specific sub-project.  This mainly is be used for SVN commands which need to be ran in the directory containing the .svn folder.
 
     pathPreRoot: ""
 
