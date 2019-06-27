@@ -36,10 +36,6 @@
     "pathtoRoot":        ".",
     "pathtoMainRoot":    "",
     "pathPreRoot":       "",
-    "plugins": [
-        "@semantic-release/npm",
-        [ "@semantic-release/github", { "assets": [ "install/dist/**" ] } ]
-    ],
     "postBuildCommand":  "",
     "repoType":          "",
     "repo":              "",
@@ -58,14 +54,11 @@
     {
         "repoType":      "svn",
         "branch":        "trunk",
-        "repo":          "https://svn.development.pjats.com/repos/pja/app-publisher/trunk",
-        "homePage":      "https://projects.development.pjats.com/app-publisher",
-        "bugs":          "https://projects.development.pjats.com/app-publisher/ticket/1",
+        "repo":          "https://svn.development.pjats.com/pja/app-publisher/trunk",
+        "homePage":      "https://app1.development.pjats.com/projects/app-publisher",
+        "bugs":          "https://app1.development.pjats.com/projects/app-publisher",
         "npmPackDist":   "Y",
         "npmRegistry":   "https://npm.development.pjats.com",
-        "plugins": [
-            "@semantic-release/npm"
-        ],
         "textEditor":    "",
         "npmScope":      "@perryjohnson",
         "githubRelease": "N",
