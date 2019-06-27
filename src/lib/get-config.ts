@@ -100,8 +100,8 @@ async function getConfig(context: any, opts: any)
     for (const key in process.env)
     {
         const envVar = "[$][{]\\b" + key + "\\b[}]";
-        optStr = optStr.replace(new RegExp(envVar), process.env[key].replace(/\\/, "\\\\"));
-    }
+        optStr = optStr.replace(new RegExp(envVar, "mgi"), process.env[key].replace(/\\/, "\\\\"));
+    }"
     options = JSON.parse(optStr);
 
     debug("options values: %O", options);
