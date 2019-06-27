@@ -1,5 +1,21 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.5.14 (June 27th, 2019)
+
+### Build System
+
+- fix svn links in config publishrc
+
+### Documentation
+
+- **readme:** update badges
+
+### Bug Fixes
+
+- if more than one occurrence of an environment tag is used in publishrc, only the first occurrence gets replaced.
+- if more than one occurrence of an environment tag is used in publishrc, only the first occurrence gets replaced. [fixes #91]
+- publish fails if there is (1) no package.json or (2) no repository defined in package.json but one is defined in publishrc.
+
 ## Version 1.5.13 (June 6th, 2019)
 
 ### Bug Fixes

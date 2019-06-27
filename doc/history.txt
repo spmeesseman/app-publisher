@@ -1052,3 +1052,47 @@ June 6th, 2019
     For a distribution type release, the file upload to the directory specified
 	by 'distReleasePath' is not being performed.
 
+
+Version 1.5.14
+June 27th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+
+    If more than one occurrence of an environment tag is used in publishrc,
+    only the first occurrence gets replaced.
+
+    For example:
+
+    "buildCommand": [ "${CODE_HOME}\ant\ant.bat", "${CODE_HOME}\nsis\makensis" ]
+
+    The 2nd command fails as the tag is not replaced.
+
+    [fixes #90]
+
+2.  Bug Fix
+
+    Publish fails if one of the following conditions holds:
+    
+        (1) Project has no package.json file.
+        (2) No repository defined in package.json but one is defined in the
+            publishrc config file.
+    
+    [fixes #91]
+
