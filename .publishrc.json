@@ -18,6 +18,7 @@
     "emailSender":       "productbuild@pjats.com",
     "githubRelease":     "Y",
     "githubAssets": [
+        "install\\dist\\history.txt",
         "install\\dist\\app-publisher.tgz",
         "install\\dist\\App-Publisher_32bit.exe"
     ],
@@ -27,6 +28,9 @@
     "historyLineLen":    80,
     "homePage":          "",
     "interactive":       "N",
+    "mantisbtRelease":   "N",
+    "mantisbtUrl":       "",
+    "mantisbtAssets":    "",
     "npmPackDist":       "N",
     "npmRegistry":       "",
     "npmRelease":        "Y",
@@ -42,7 +46,7 @@
     "skipCommit":        "N",
     "skipDeployPush":    "N",
     "testEmailRecip":    "smeesseman@pjats.com",
-    "textEditor":        "notepad++",
+    "textEditor":        "notepad",
     "vcTag":             "Y",
     "vcTagPrefix":       "",
     "versionFiles": [
@@ -61,8 +65,14 @@
         "npmRegistry":   "https://npm.development.pjats.com",
         "textEditor":    "",
         "npmScope":      "@perryjohnson",
-        "githubRelease": "N",
+        "emailNotification": "Y",
         "distRelease":   "Y",
-        "emailNotification": "Y"
+        "githubRelease": "N",
+        "mantisbtRelease":"Y",
+        "mantisbtUrl":    "https://app1.development.pjats.com/projects",
+        "mantisbtAssets": [
+            "install\\dist\\app-publisher.tgz",
+            "install\\dist\\App-Publisher_32bit.exe"
+        ]
     }]    
 }

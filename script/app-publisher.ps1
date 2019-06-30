@@ -1,3 +1,4 @@
+using namespace System
 using namespace System.IO
 using namespace System.Text.RegularExpressions
 
@@ -222,7 +223,7 @@ class CommitAnalyzer
 
     [string] getFormatted($Subject)
     {
-        $FormattedSubject = $Subject
+        $FormattedSubject = $Subject.ToLower();
 
         switch ($Subject)
         {
@@ -230,6 +231,7 @@ class CommitAnalyzer
             "chore"   { $FormattedSubject = "Chores"; break }
             "docs"    { $FormattedSubject = "Documentation"; break }
             "feat"    { $FormattedSubject = "Features"; break }
+            "feature" { $FormattedSubject = "Features"; break }
             "featmin" { $FormattedSubject = "Minor Features"; break }
             "minfeat" { $FormattedSubject = "Minor Features"; break }
             "fix"     { $FormattedSubject = "Bug Fixes"; break }
@@ -239,6 +241,7 @@ class CommitAnalyzer
             "test"    { $FormattedSubject = "Tests"; break }
             "project" { $FormattedSubject = "Project Structure"; break }
             "layout"  { $FormattedSubject = "Layout"; break }
+            "visual"  { $FormattedSubject = "Visual Enhancement"; break }
             default   { $FormattedSubject = $Subject; break }
         }
 
@@ -323,6 +326,159 @@ class HistoryFile
         }
         
         return $comments
+    }
+
+    [string]getChangelog($project, $version, $numsections, $stringver, $in)
+    {
+        $szInputFile = $in;
+        $szNumSections = $numsections;
+        #
+        # Make sure user entered correct cmd line params
+        #
+        if (!(Test-Path $szInputFile) -or [string]::IsNullOrEmpty($szInputFile)) {
+            Log-Message "Error: No changelog file specified" "red"
+            exit 160;
+        }
+
+        if ([string]::IsNullOrEmpty($stringver)) {
+            $stringver = "Version"
+        }
+
+        #
+        # convert number of sections to int
+        #
+        try {
+            $iNumSections = [int32]::Parse($szNumSections);
+        }
+        catch {
+            Log-Message "   Parse Error - Invalid NumSections parameter" "red"
+            Log-Message "   Error type  : $_.Exception.GetType().FullName" "red"
+            Log-Message "   Error code  : $($_.Exception.ErrorCode)" "red"
+            Log-Message "   Error text  : $($_.Exception.Message)" "red"
+            exit 161;
+        }
+
+        Log-Message "Extract from changelog markdown file"
+        Log-Message "   Input File         : '$szInputFile'"
+        Log-Message "   Num Sections       : '$iNumSections'"
+
+        #
+        # Code operation:
+        #
+        # Open the file
+        #
+        # Find the following string structure for the last entry:
+        #
+        #    ## Version 1.5.14 (June 27th, 2019)
+        #
+        #    ### Subject line....
+        #
+        # Extract the latest entry
+        #
+
+        $szContents = "";
+        #
+        # Read in contents of file
+        #
+        $szContents = Get-Content $szInputFile | Out-String
+        #
+        # Initialize parsing variables
+        #
+        $iIndex1 = 0
+        $iIndex2 = 0
+        $bFoundStart = 0
+        $iSectionsFound = 0
+        #
+        # Loop to find our search text
+        #
+        while ($iIndex1 -le $szContents.Length)
+        {
+            # Get index of field name
+            #
+            $iIndex1 = $szContents.IndexOf("$stringver ", $iIndex1)
+            #
+            # make sure the field name was found
+            #
+            if ($iIndex1 -eq -1)
+            {
+                Log-Message "   Last section could not be found (0), exit" "red"
+                exit 162
+            }
+            
+            if ($szContents[$iIndex1 - 2] -ne "#")
+            {
+                $iIndex1++
+                continue
+            }
+            #
+            # Check to make sure this is the beginning line, if it is then 2 lines underneath
+            # will be a triple # (###)
+            #
+            $iIndex2 = $szContents.IndexOf("`n", $iIndex1)
+            # make sure the newline was found
+            if ($iIndex2 -eq -1)
+            {
+                Log-Message "   Last section could not be found (1), exit" "red"
+                exit 163
+            }
+
+            $iIndex2 = $szContents.IndexOf("`n", $iIndex2 + 1)
+            #
+            # Make sure the newline was found
+            #
+            if ($iIndex2 -eq -1)
+            {
+                Log-Message "   Last section could not be found (2), exit" "red"
+                exit 164
+            }
+            
+            #
+            # Increment index2 past new line and on to 1st ch in next line
+            #
+            $iIndex2++;
+            # Now $iIndex2 should be the index to the start of a dashed line
+    
+            if ($iIndex2 -lt $szContents.Length - 1) {
+                $numhashes = 0
+                for ($numhashes = 0; $numhashes -lt 3; $numhashes++) {
+                    if ($szContents[$iIndex2 + $numhashes] -ne '#') {
+                        break;
+                    }
+                }
+                #
+                # Make sure we found our dashed line
+                #
+                if ($numhashes -eq 3 -or $iIndex2 -ge $szContents.Length - 1) {
+                    $bFoundStart = 1
+                    $iSectionsFound++
+                    if ($iSectionsFound -gt $iNumSections -or $iIndex2 -ge $szContents.Length - 1) {
+                        $iIndex1 -= 3
+                        $iSectionsFound--
+                        break
+                    }
+                }
+            }
+            #
+            # Decrement $iIndex1, which is the index to the start of the string "Build ", but
+            # this could have occurred in the body of the text, keep searching
+            #
+            $iIndex1++
+        }
+        #
+        # Make sure we found our starting point  
+        #
+        if ($bFoundStart -eq 0)
+        {
+            Log-Message "   Last section could not be found, exit" "red"
+            exit 165
+        }
+
+        Log-Message "   Found version section(s)"
+        $szContents = $szContents.Substring(0, $iIndex1)
+
+        Log-Message "   Successful" "darkgreen"
+
+        return $szContents
     }
 
     [string]getHistory($project, $version, $numsections, $stringver, $listonly, $in, $out, $targetloc, $npmpkg, $nugetpkg)
@@ -696,7 +852,8 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
         #
         # Use marked module for conversion
         #
-        $EMAILBODY = & app-publisher-marked -f $CHANGELOGFILE
+        $EMAILBODY = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE);
+        $EMAILBODY = & app-publisher-marked -f $EMAILBODY
         Check-ExitCode
     }
     else {
@@ -2301,6 +2458,27 @@ if ($options.textEditor) {
 #
 #
 #
+$MANTISBTRELEASE = "N"
+if ($options.mantisbtRelease) {
+    $MANTISBTRELEASE = $options.mantisbtRelease
+}
+#
+#
+#
+$MANTISBTURL = ""
+if ($options.mantisbtUrl) {
+    $MANTISBTURL = $options.mantisbtUrl
+}
+#
+#
+#
+$MANTISBTASSETS = @()
+if ($options.mantisbtAssets) {
+    $MANTISBTASSETS = $options.mantisbtAssets
+}
+#
+#
+#
 $NPMREGISTRY = "https://registry.npmjs.org"
 if ($options.npmRegistry) {
     $NPMREGISTRY = $options.npmRegistry
@@ -2702,6 +2880,25 @@ if (![string]::IsNullOrEmpty($GITHUBRELEASE)) {
         }
     }
 }
+if (![string]::IsNullOrEmpty($MANTISBTRELEASE)) {
+    $MANTISBTRELEASE = $MANTISBTRELEASE.ToUpper()
+    if ($MANTISBTRELEASE -ne "Y" -and $MANTISBTRELEASE -ne "N") {
+        Log-Message "Invalid value specified for mantisbtRelease, accepted values are y/n/Y/N" "red"
+        exit 1
+    }
+    if ($MANTISBTRELEASE -eq "Y")
+    {
+        if ([string]::IsNullOrEmpty($MANTISBTURL)) {
+            Log-Message "You must specify mantisbtUrl for a MantisBT release type" "red"
+            exit 1
+        }
+        if ([string]::IsNullOrEmpty(${Env:MANTISBT_API_TOKEN})) {
+            Log-Message "You must have MANTISBT_API_TOKEN defined in the environment for a MantisBT release type" "red"
+            Log-Message "Set the environment variable MANTISBT_API_TOKEN using the token value created on the MantisBT website" "red"
+            exit 1
+        }
+    }
+}
 if (![string]::IsNullOrEmpty($SKIPDEPLOYPUSH)) {
     $SKIPDEPLOYPUSH = $SKIPDEPLOYPUSH.ToUpper()
     if ($SKIPDEPLOYPUSH -ne "Y" -and $SKIPDEPLOYPUSH -ne "N") {
@@ -2776,8 +2973,12 @@ Log-Message "   Github assets    : $GITHUBASSETS"
 Log-Message "   History file     : $HISTORYFILE"
 Log-Message "   History file line: $HISTORYLINELEN"
 Log-Message "   History hdr file : $HISTORYHDRFILE"
-Log-Message "   Home Page        : $HOMEPAGE"
+Log-Message "   Home page        : $HOMEPAGE"
 Log-Message "   Interactive      : $INTERACTIVE"
+Log-Message "   MantisBT release : $MANTISBTRELEASE"
+Log-Message "   MantisBT prj id  : $MANTISBTPROJECT"
+Log-Message "   MantisBT url     : $MANTISBTPROJECT"
+Log-Message "   MantisBT assets  : $MANTISBTASSETS"
 Log-Message "   NPM release      : $NPMRELEASE"
 Log-Message "   NPM registry     : $NPMREGISTRY"
 Log-Message "   NPM scope        : $NPMSCOPE"
@@ -4055,6 +4256,126 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
     }
     else {
         Log-Message "Dry run, skipping GitHub release" "magenta"
+    }
+}
+
+#
+# MantisBT Release
+#
+if ($MANTISBTRELEASE -eq "Y") 
+{
+    Log-Message "Starting MantisBT release"
+    Log-Message "Creating MantisBT v$VERSION release"
+    if ($DRYRUN -eq $true) 
+    {
+        Log-Message "Dry run only, will pass 'dryrun' flag to Mantis Releases API"
+    }
+    #
+    # Changelog...
+    #
+    $NotesIsMarkdown = 0
+    $MantisChangelog = ""
+    if (![string]::IsNullOrEmpty($HISTORYFILE)) 
+    {
+        Log-Message "   Converting history text to html"
+        $MantisChangelog = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $HISTORYFILE);
+    }
+    elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
+    {
+        $NotesIsMarkdown = 1
+        $MantisChangelog = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE);
+        #$MantisChangelog = & app-publisher-marked -f $MantisChangelog
+    }
+    #
+    # Set up the request body for the 'create release' request
+    #
+    $Request = @{
+        "dryrun" = 1
+        "version" = "$VERSION"
+        "notes" = "$MantisChangelog"
+        "notesismd" = $NotesIsMarkdown
+        "assets" = @()
+    }
+    #
+    # Build assets list
+    #
+    if ($MANTISBTASSETS.Length -gt 0)
+    {
+        Log-Message "Building MantisBT assets list"
+        foreach ($Asset in $MANTISBTASSETS)
+        {
+            if (Test-Path($Asset))
+            {
+                $AssetName = [Path]::GetFileName($Asset)
+                $Extension = [Path]::GetExtension($AssetName).ToLower()
+                #
+                # The request to upload an asset is the raw binary file data
+                #
+                $FileData = [System.IO.File]::ReadAllText($Asset)
+                Check-PsCmdSuccess
+                if ($? -eq $true)
+                {
+                    # Base 64 encode file data
+                    #
+                    $FileDataBase64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($FileData))
+                    #
+                    # Build json
+                    #
+                    $AssetData = @{
+                        "name" = $AssetName
+                        "desc" = "description"
+                        "type" = $ContentTypeMap[$Extension]
+                        "data" = $FileDataBase64
+                    }
+                    
+                    $Request.assets += $AssetData
+                }
+                else {
+                    Log-Message "Failed to build MantisBT asset $AssetName - could not read input file" "red"
+                }
+            }
+            else {
+                Log-Message "Failed to build MantisBT asset $AssetName - input file does not exist" "red"
+            }
+        }
+    }
+    #
+    # Set up the request header, this will be used to both create the release and to upload
+    # any assets.  Note that for each asset, the content-type must be set appropriately
+    # according to the type of asset being uploaded
+    #
+    $Header = @{
+        "Authorization" = ${Env:MANTISBT_API_TOKEN}
+        "Content-Type" = "application/json; charset=UTF-8"
+    }
+    #
+    # Format request JSON
+    #
+    $Request = $Request | ConvertTo-Json
+    #
+    # Enable TLS1.2 in the case of HTTPS
+    #
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    #
+    # Send the REST POST to create the release w/ assets
+    #
+    if ($MANTISBTURL.EndsWith("/")) {
+        $MANTISBTURL = $MANTISBTURL.Substring(0, $MANTISBTURL.Length - 1);
+    }
+    $url = "$MANTISBTURL/plugins/Releases/api/releases/$PROJECTNAME"
+    $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
+    Check-PsCmdSuccess
+    #
+    # Check response object for success
+    #
+    if ($? -eq $true)
+    {
+        Log-Message "Successfully created MantisBT release v$VERSION" "darkgreen"
+        Log-Message "   ID         : $($Response.id)" "darkgreen"
+        Log-Message "   Message    : $($Response.msg)" "darkgreen"
+    }
+    else {
+        Log-Message "Failed to create MantisBT v$VERSION release" "red"
     }
 }
 
