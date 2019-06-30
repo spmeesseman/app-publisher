@@ -4291,8 +4291,8 @@ if ($MANTISBTRELEASE -eq "Y")
     #
     $Request = @{
         "dryrun" = 1
-        "version" = "$VERSION"
-        "notes" = "$MantisChangelog"
+        "version" = $VERSION
+        "notes" = $MantisChangelog
         "notesismd" = $NotesIsMarkdown
         "assets" = @()
     }
@@ -4309,7 +4309,7 @@ if ($MANTISBTRELEASE -eq "Y")
                 $AssetName = [Path]::GetFileName($Asset)
                 $Extension = [Path]::GetExtension($AssetName).ToLower()
                 #
-                # The request to upload an asset is the raw binary file data
+                # The format to upload an asset is the base64 encoded binary file data
                 #
                 $FileData = [System.IO.File]::ReadAllBytes($Asset)
                 Check-PsCmdSuccess
@@ -4323,7 +4323,7 @@ if ($MANTISBTRELEASE -eq "Y")
                     #
                     $AssetData = @{
                         "name" = $AssetName
-                        "desc" = "description"
+                        "desc" = $MantisChangelog
                         "type" = $ContentTypeMap[$Extension]
                         "data" = $FileDataBase64
                     }
