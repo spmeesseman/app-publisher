@@ -4311,13 +4311,13 @@ if ($MANTISBTRELEASE -eq "Y")
                 #
                 # The request to upload an asset is the raw binary file data
                 #
-                $FileData = [System.IO.File]::ReadAllText($Asset)
+                $FileData = [System.IO.File]::ReadAllBytes($Asset)
                 Check-PsCmdSuccess
                 if ($? -eq $true)
                 {
                     # Base 64 encode file data
                     #
-                    $FileDataBase64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($FileData))
+                    $FileDataBase64 = [Convert]::ToBase64String($FileData)
                     #
                     # Build json
                     #
