@@ -650,36 +650,38 @@ class HistoryFile
 
         # $iIndex1 is our start index
         # if version is empty, then the script is to return the version
-        if ($version -ne "" -and $version -ne $null -and (![string]::IsNullOrEmpty($targetloc) -or ![string]::IsNullOrEmpty($npmpkg) -or ![string]::IsNullOrEmpty($nugetpkg)))
+        if ($version -ne "" -and $version -ne $null)
         {
             Log-Message "   Write header text to message"
 
-            $szFinalContents = "<b>$project $stringver $version has been released.</b><br><br>"
-                
-            if (![string]::IsNullOrEmpty($targetloc)) {
-                $szFinalContents += "Release Location: $targetloc<br><br>"
+            if (![string]::IsNullOrEmpty($targetloc) -or ![string]::IsNullOrEmpty($npmpkg) -or ![string]::IsNullOrEmpty($nugetpkg)) {
+                $szFinalContents = "<b>$project $stringver $version has been released.</b><br><br>"
+                    
+                if (![string]::IsNullOrEmpty($targetloc)) {
+                    $szFinalContents += "Release Location: $targetloc<br><br>"
+                }
+
+                if (![string]::IsNullOrEmpty($npmpkg))
+                {
+                    $szFinalContents += "NPM Location: $npmpkg<br><br>"
+                }
+
+                if (![string]::IsNullOrEmpty($nugetpkg))
+                {
+                    $szFinalContents += "Nuget Location: $nugetpkg<br><br>"
+                }
+
+                #
+                # Installer release, write unc path to history file
+                #
+                if (!$targetloc.Contains("http://") -and !$targetloc.Contains("https://")) {
+                    $szFinalContents += "Complete History: $targetloc\history.txt<br><br>"
+                }
+
+                $szFinalContents += "Most Recent History File Entry:<br><br>";
+
+                Log-Message "   Write $iNumSections history section(s) to message"
             }
-
-            if (![string]::IsNullOrEmpty($npmpkg))
-            {
-                $szFinalContents += "NPM Location: $npmpkg<br><br>"
-            }
-
-            if (![string]::IsNullOrEmpty($nugetpkg))
-            {
-                $szFinalContents += "Nuget Location: $nugetpkg<br><br>"
-            }
-
-            #
-            # Installer release, write unc path to history file
-            #
-            if (!$targetloc.Contains("http://") -and !$targetloc.Contains("https://")) {
-                $szFinalContents += "Complete History: $targetloc\history.txt<br><br>"
-            }
-
-            $szFinalContents += "Most Recent History File Entry:<br><br>";
-
-            Log-Message "   Write $iNumSections history section(s) to message"
 
             if ($listonly -eq $false) {
                 $szFinalContents += $szContents
@@ -690,10 +692,24 @@ class HistoryFile
                 while ($iIndex1 -ne -1)
                 {
                     $iIndex2 = $szContents.IndexOf("<br>", $iIndex1)
-                    $szContents = $szContents.Substring(0, $iIndex1) + $szContents.Substring($iIndex2 + 4)
-                    $iIndex1 = $szContents.IndexOf("*")
+                    $iIndex1 = $szContents.IndexOf("*", $iIndex2)
                 }
-                $szFinalContents = "<font face=`"Courier New`">" + $szContents + "</font>"
+                $szContents = $szContents.Substring($iIndex2 + 4)
+                while ($szContents.StartsWith("<br>")) {
+                    $szContents = $szContents.Substring(4)
+                }
+                if ($szContents.EndsWith("</font>")) {
+                    $szContents = $szContents.Substring(0, $szContents.Length - 7)
+                }
+                while ($szContents.EndsWith("<br>")) {
+                    $szContents = $szContents.Substring(0, $szContents.Length - 4)
+                }
+                [Match] $match = [Regex]::Match($szContents, "\w<br>&nbsp;&nbsp;&nbsp;&nbsp;");
+                while ($match.Success) {
+                    $szContents = $szContents.Replace($match.Value, $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;", ""));
+                    $match = $match.NextMatch()
+                }
+                $szFinalContents = $szContents
             }
             #
             # Reverse versions, display newest at top if more than 1 section
@@ -4266,9 +4282,12 @@ if ($MANTISBTRELEASE -eq "Y")
 {
     Log-Message "Starting MantisBT release"
     Log-Message "Creating MantisBT v$VERSION release"
+
+    $dry_run = 0;
     if ($DRYRUN -eq $true) 
     {
         Log-Message "Dry run only, will pass 'dryrun' flag to Mantis Releases API"
+        $dry_run = 1;
     }
     #
     # Changelog...
@@ -4286,11 +4305,12 @@ if ($MANTISBTRELEASE -eq "Y")
         $MantisChangelog = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE);
         #$MantisChangelog = & app-publisher-marked -f $MantisChangelog
     }
+
     #
     # Set up the request body for the 'create release' request
     #
     $Request = @{
-        "dryrun" = 1
+        "dryrun" = $dry_run
         "version" = $VERSION
         "notes" = $MantisChangelog
         "notesismd" = $NotesIsMarkdown
@@ -4311,6 +4331,7 @@ if ($MANTISBTRELEASE -eq "Y")
                 #
                 # The format to upload an asset is the base64 encoded binary file data
                 #
+                Log-Message "Reading file $Asset"
                 $FileData = [System.IO.File]::ReadAllBytes($Asset)
                 Check-PsCmdSuccess
                 if ($? -eq $true)
@@ -4323,7 +4344,7 @@ if ($MANTISBTRELEASE -eq "Y")
                     #
                     $AssetData = @{
                         "name" = $AssetName
-                        "desc" = $MantisChangelog
+                        "desc" = ""
                         "type" = $ContentTypeMap[$Extension]
                         "data" = $FileDataBase64
                     }
@@ -4363,6 +4384,7 @@ if ($MANTISBTRELEASE -eq "Y")
         $MANTISBTURL = $MANTISBTURL.Substring(0, $MANTISBTURL.Length - 1);
     }
     $url = "$MANTISBTURL/plugins/Releases/api/releases/$PROJECTNAME"
+    Log-Message "Sending Add-Release REST request to $url"
     $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
     Check-PsCmdSuccess
     #
@@ -4370,9 +4392,16 @@ if ($MANTISBTRELEASE -eq "Y")
     #
     if ($? -eq $true)
     {
-        Log-Message "Successfully created MantisBT release v$VERSION" "darkgreen"
-        Log-Message "   ID         : $($Response.id)" "darkgreen"
-        Log-Message "   Message    : $($Response.msg)" "darkgreen"
+        #write-host $MantisChangelog
+        #write-host $Response
+        #if ($AssemblyInfoLoc -is [System.String])
+        #{
+        #}
+        #else {
+            Log-Message "Successfully created MantisBT release v$VERSION" "darkgreen"
+            Log-Message "   ID         : $($Response.id)" "darkgreen"
+            Log-Message "   Message    : $($Response.msg)" "darkgreen"
+        #}
     }
     else {
         Log-Message "Failed to create MantisBT v$VERSION release" "red"
