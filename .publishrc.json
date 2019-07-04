@@ -18,7 +18,6 @@
     "emailSender":       "productbuild@pjats.com",
     "githubRelease":     "Y",
     "githubAssets": [
-        "install\\dist\\history.txt",
         "install\\dist\\app-publisher.tgz",
         "install\\dist\\App-Publisher_32bit.exe"
     ],
@@ -71,6 +70,7 @@
         "mantisbtRelease":"Y",
         "mantisbtUrl":    "https://app1.development.pjats.com/projects",
         "mantisbtAssets": [
+            "install\\dist\\history.txt",
             "install\\dist\\app-publisher.tgz",
             "install\\dist\\App-Publisher_32bit.exe"
         ]
