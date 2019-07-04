@@ -1096,3 +1096,50 @@ June 27th, 2019
     
     [fixes #91]
 
+
+Version 1.6.0
+July 4th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+
+    Add support for MantisBT releases via 'Releases' plugin, similar to a GitHub
+    release.
+
+    To use MantisBT 'Releases', set the following config in .publishrc.json:
+
+        "mantisbtRelease":"Y",
+        "mantisbtUrl":    "https://my.domain.com/mantisbt",
+        "mantisbtAssets": [
+            "install\\dist\\app-publisher.tgz",
+            "install\\dist\\App-Publisher_32bit.exe",
+            "doc\\history.txt"
+        ]
+
+    
+    The files listed in the mantisbtAssets array will be placed under the
+    current "lowest" unreleased version in the Mantis project.  The 'Releases' 
+    plugin will then mark the version as released.
+
+    The history.txt or changelog.md additions will also populate in the
+    appropriate version section of the Releases page.
+
+    Note that the project name defined in .publishrc.json must match the 
+    MantisBT project name.
+

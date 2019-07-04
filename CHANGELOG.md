@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.6.0 (July 4th, 2019)
+
+### Features
+
+- add support for mantisbt releases via 'Releases' plugin, similar to github release
+
 ## Version 1.5.14 (June 27th, 2019)
 
 ### Build System
