@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.6.1 (July 4th, 2019)
+
+### Bug Fixes
+
+- history file not properly sent to Releases plugin api, no release created
+
 ## Version 1.6.0 (July 4th, 2019)
 
 ### Features
