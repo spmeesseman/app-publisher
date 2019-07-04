@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.6.2 (July 4th, 2019)
+
+### Bug Fixes
+
+- The extracted history for the changelog sent to the MantisBT Releases plugin contains line breaks too short for web display
+
 ## Version 1.6.1 (July 4th, 2019)
 
 ### Bug Fixes
