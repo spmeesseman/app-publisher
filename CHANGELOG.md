@@ -1,5 +1,15 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.6.3 (July 13rd, 2019)
+
+### Build System
+
+- add history.txt to list of file assets to upload to MantisBT Releases Plugin
+
+### Bug Fixes
+
+- When a MantisBT release is uploaded, only parts of the changelog from a history file  are stripped of line break delimiters.
+
 ## Version 1.6.2 (July 4th, 2019)
 
 ### Bug Fixes
