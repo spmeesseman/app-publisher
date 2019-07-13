@@ -709,6 +709,11 @@ class HistoryFile
                     $szContents = $szContents.Replace($match.Value, $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;", ""));
                     $match = $match.NextMatch()
                 }
+                $match = [Regex]::Match($szContents, "\w&nbsp;{0,1}<br>&nbsp;&nbsp;&nbsp;&nbsp;");
+                while ($match.Success) {
+                    $szContents = $szContents.Replace($match.Value, $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;", ""));
+                    $match = $match.NextMatch()
+                }
                 $szFinalContents = $szContents
             }
             #
