@@ -254,7 +254,7 @@ class HistoryFile
 {
     [string]getVersion($in, $stringver)
     {
-        return $this.getHistory("", "", 0, $stringver, $false, $in, "", "", "", "")
+        return $this.getHistory("", "", 0, $stringver, $false, $in, "", "", "", "", "", "")
     }
 
     [string]createSectionFromCommits($CommitsList, $LineLen)
@@ -481,7 +481,7 @@ class HistoryFile
         return $szContents
     }
 
-    [string]getHistory($project, $version, $numsections, $stringver, $listonly, $in, $out, $targetloc, $npmpkg, $nugetpkg)
+    [string]getHistory($project, $version, $numsections, $stringver, $listonly, $in, $out, $targetloc, $npmpkg, $nugetpkg, $mantisRelease, $mantisUrl)
     {
         $szInputFile = $in;
         $szOutputFile = $out;
@@ -654,11 +654,19 @@ class HistoryFile
         {
             Log-Message "   Write header text to message"
 
-            if (![string]::IsNullOrEmpty($targetloc) -or ![string]::IsNullOrEmpty($npmpkg) -or ![string]::IsNullOrEmpty($nugetpkg)) {
+            if (![string]::IsNullOrEmpty($targetloc) -or ![string]::IsNullOrEmpty($npmpkg) -or ![string]::IsNullOrEmpty($nugetpkg)) 
+            {
                 $szFinalContents = "<b>$project $stringver $version has been released.</b><br><br>"
                     
+                if ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl)) {
+                    if ($mantisUrl.EndsWith("/")) {
+                        $mantisUrl = $mantisUrl.Substring(0, $mantisUrl.Length - 1);
+                    }
+                    $szFinalContents += "Release Page: $mantisUrl/set_project.php?project=$project&make_default=no&ref=plugin.php%3Fpage=Releases%2Freleases<br><br>"
+                }
+
                 if (![string]::IsNullOrEmpty($targetloc)) {
-                    $szFinalContents += "Release Location: $targetloc<br><br>"
+                    $szFinalContents += "Network Location: $targetloc<br><br>"
                 }
 
                 if (![string]::IsNullOrEmpty($npmpkg))
@@ -709,12 +717,41 @@ class HistoryFile
                     $szContents = $szContents.Replace($match.Value, $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;", ""));
                     $match = $match.NextMatch()
                 }
-                $match = [Regex]::Match($szContents, "\w&nbsp;{0,1}<br>&nbsp;&nbsp;&nbsp;&nbsp;");
+                $match = [Regex]::Match($szContents, "\w[,.:]*&nbsp;{0,1}<br>&nbsp;&nbsp;&nbsp;&nbsp;");
                 while ($match.Success) {
                     $szContents = $szContents.Replace($match.Value, $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;", ""));
                     $match = $match.NextMatch()
                 }
-                $szFinalContents = $szContents
+                # Bold all numbered lines
+                $match = [Regex]::Match($szContents, "[1-9][0-9]{0,1}.&nbsp;.+?(?=<br>)");
+                while ($match.Success) {
+                    $value = $match.Value;
+                    $szContents = $szContents.Replace($value, "<b>$value</b>");
+                    $match = $match.NextMatch()
+                }
+                if ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl))
+                {
+                    if ($mantisUrl.EndsWith("/")) {
+                        $mantisUrl = $mantisUrl.Substring(0, $mantisUrl.Length - 1);
+                    }
+                    # color resolved tags green, create links to tickets
+                    $match = [Regex]::Match($szContents, "\[(closes|fixes|resolves|fix|close){1}&nbsp;#[0-9]+(,#[0-9]+){0,}\]");
+                    while ($match.Success) {
+                        $value = $match.Value;
+                        $vi1 = $value.IndexOf("#");
+                        $vi2 = $value.IndexOf("]");
+                        $bugid = $value.Substring($vi1, $vi2 - $vi1);
+                        $bugids = $bugid.Split(",");
+                        for ($i = 0; $i -lt $bugids.Length; $i++) {
+                            $bid = $bugids[$i]; # with # i.e. #1919
+                            $bid_num = $bid.Replace("#", "") # w/o # i.e. 1919
+                            $value = $value.Replace($bid, "<a href=`"$mantisUrl/view.php?id=$bid_num`">$bid</a>");
+                        }
+                        $szContents = $szContents.Replace($match.Value, "<font style=`"color:gray`">$value</font>");
+                        $match = $match.NextMatch()
+                    }
+                    $szFinalContents = $szContents
+                }
             }
             #
             # Reverse versions, display newest at top if more than 1 section
@@ -864,7 +901,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to html"
-        $EMAILBODY = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $HISTORYFILE, $null, $targetloc, $npmloc, $nugetloc);
+        $EMAILBODY = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $HISTORYFILE, $null, $targetloc, $npmloc, $nugetloc, $MANTISBTRELEASE, $MANTISBTURL);
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
@@ -4302,7 +4339,7 @@ if ($MANTISBTRELEASE -eq "Y")
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to html"
-        $MantisChangelog = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $true, $HISTORYFILE, "", "", "", "");
+        $MantisChangelog = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $true, $HISTORYFILE, "", "", "", "", "", "");
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
