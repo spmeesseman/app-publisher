@@ -717,11 +717,13 @@ class HistoryFile
                     $szContents = $szContents.Replace($match.Value, $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;", ""));
                     $match = $match.NextMatch()
                 }
+
                 $match = [Regex]::Match($szContents, "\w[,.:]*&nbsp;{0,1}<br>&nbsp;&nbsp;&nbsp;&nbsp;");
                 while ($match.Success) {
                     $szContents = $szContents.Replace($match.Value, $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;", ""));
                     $match = $match.NextMatch()
                 }
+
                 # Bold all numbered lines
                 $match = [Regex]::Match($szContents, "[1-9][0-9]{0,1}.&nbsp;.+?(?=<br>)");
                 while ($match.Success) {
@@ -729,6 +731,7 @@ class HistoryFile
                     $szContents = $szContents.Replace($value, "<b>$value</b>");
                     $match = $match.NextMatch()
                 }
+
                 if ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl))
                 {
                     if ($mantisUrl.EndsWith("/")) {
@@ -736,7 +739,8 @@ class HistoryFile
                     }
                     # color resolved tags green, create links to tickets
                     $match = [Regex]::Match($szContents, "\[(closes|fixes|resolves|fix|close){1}&nbsp;#[0-9]+(,#[0-9]+){0,}\]");
-                    while ($match.Success) {
+                    while ($match.Success) 
+                    {
                         $value = $match.Value;
                         $vi1 = $value.IndexOf("#");
                         $vi2 = $value.IndexOf("]");
@@ -750,8 +754,9 @@ class HistoryFile
                         $szContents = $szContents.Replace($match.Value, "<font style=`"color:gray`">$value</font>");
                         $match = $match.NextMatch()
                     }
-                    $szFinalContents = $szContents
                 }
+
+                $szFinalContents = $szContents
             }
             #
             # Reverse versions, display newest at top if more than 1 section
@@ -4348,6 +4353,9 @@ if ($MANTISBTRELEASE -eq "Y")
         #$MantisChangelog = & app-publisher-marked -f $MantisChangelog
     }
 
+    write-host '7'
+    write-host $MantisChangelog
+
     #
     # Set up the request body for the 'create release' request
     #
@@ -4434,16 +4442,16 @@ if ($MANTISBTRELEASE -eq "Y")
     #
     if ($? -eq $true)
     {
-        #write-host $MantisChangelog
-        #write-host $Response
-        #if ($AssemblyInfoLoc -is [System.String])
-        #{
-        #}
-        #else {
+        if ($Response -is [System.String])
+        {
+            Log-Message "Partial error creating MantisBT release v$VERSION" "red"
+            Log-Message $Response "red"
+        }
+        else {
             Log-Message "Successfully created MantisBT release v$VERSION" "darkgreen"
             Log-Message "   ID         : $($Response.id)" "darkgreen"
             Log-Message "   Message    : $($Response.msg)" "darkgreen"
-        #}
+        }
     }
     else {
         Log-Message "Failed to create MantisBT v$VERSION release" "red"
