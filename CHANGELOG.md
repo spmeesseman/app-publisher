@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.6.5 (July 13rd, 2019)
+
+### Bug Fixes
+
+- Partial errors when creating a release are indicated as success in runtime log.
+
 ## Version 1.6.4 (July 13rd, 2019)
 
 ### Minor Features

@@ -1264,3 +1264,32 @@ July 13rd, 2019
     Some history entries do not have line breaks removed.  All single line 
     breaks should be removed for html browser display.
 
+
+Version 1.6.5
+July 13rd, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+
+    Partial errors when creating a release are indicated as success in runtime
+    log.
+
+    The log will now display the return HTML from the Mantis REST service on
+    any partial error.
+
