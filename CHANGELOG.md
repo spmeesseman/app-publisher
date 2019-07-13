@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.6.4 (July 13rd, 2019)
+
+### Minor Features
+
+- add a link to mantisbt release page in notification email
+
 ## Version 1.6.3 (July 13rd, 2019)
 
 ### Build System

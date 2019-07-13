@@ -1229,3 +1229,38 @@ July 13rd, 2019
     Proper behaviour should replace all line breaks aside from double line 
     breaks, for full width HTML display.
 
+
+Version 1.6.4
+July 13rd, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Minor Feature
+
+    Add a link to mantisbt release page in notification email.
+
+2.  Minor Feature
+
+    Add styling and bug/ticket links to history entries in for display in the
+    mantisbt release page.
+
+3.  Bug Fix
+
+    Some history entries do not have line breaks removed.  All single line 
+    breaks should be removed for html browser display.
+
