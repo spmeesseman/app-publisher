@@ -3562,9 +3562,6 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
     Edit-File $HISTORYFILE $true
 }
 
-Vc-Revert $true
-exit 150
-
 #
 # Process $CHANGELOGFILE
 #
