@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.7.2 (July 13rd, 2019)
+
+### Bug Fixes
+
+- The file description feature for a mantisbt release added in last version does not work if the description contains a space
+
 ## Version 1.7.1 (July 13rd, 2019)
 
 ### Minor Features
