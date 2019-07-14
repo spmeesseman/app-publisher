@@ -4402,8 +4402,17 @@ if ($MANTISBTRELEASE -eq "Y")
     if ($MANTISBTASSETS.Length -gt 0)
     {
         Log-Message "Building MantisBT assets list"
-        foreach ($Asset in $MANTISBTASSETS)
+        foreach ($MbtAsset in $MANTISBTASSETS)
         {
+            $Asset = $MbtAsset;
+            $AssetDescrip = ""
+
+            if ($GhAsset.Contains("|"))
+            {
+                $Asset = $MbtAsset.Split("|")[0]
+                $AssetDescrip = $MbtAsset.Split("|")[1]
+            }
+
             if (Test-Path($Asset))
             {
                 $AssetName = [Path]::GetFileName($Asset)
@@ -4424,7 +4433,7 @@ if ($MANTISBTRELEASE -eq "Y")
                     #
                     $AssetData = @{
                         "name" = $AssetName
-                        "desc" = ""
+                        "desc" = $AssetDescrip
                         "type" = $ContentTypeMap[$Extension]
                         "data" = $FileDataBase64
                     }
