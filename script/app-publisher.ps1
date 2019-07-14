@@ -141,9 +141,10 @@ class Vc
         {
             # Issue GIT log command
             #
-            $GitOut = & git log $TagPre$CurrentVersion..HEAD --pretty=format:"%s"
+            $GitOut = & git log $TagPre$CurrentVersion..HEAD --pretty=format:"%B-----"
+            $GitOut = $gitOut -join "`r`n"
             if ($LASTEXITCODE -eq 0 -and ![string]::IsNullOrEmpty($GitOut)) {
-                $comments = $GitOut.Split("`n")
+                $comments = $GitOut.Substring(0, $GitOut.Length - 5).Split("-----")
             }
             else {
                 Log-Message "No commits found or no version tag exists" "red"
@@ -910,7 +911,6 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
-        # TODO -  extract only latest version release notes
         Log-Message "   Converting changelog markdown to html"
         #
         # Use marked module for conversion
@@ -3560,6 +3560,9 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
     #
     Edit-File $HISTORYFILE $true
 }
+
+Vc-Revert $true
+exit 0
 
 #
 # Process $CHANGELOGFILE
