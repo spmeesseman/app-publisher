@@ -141,10 +141,10 @@ class Vc
         {
             # Issue GIT log command
             #
-            $GitOut = & git log $TagPre$CurrentVersion..HEAD --pretty=format:"%B-----"
+            $GitOut = & git log $TagPre$CurrentVersion..HEAD --pretty=format:"%B|^*|"
             $GitOut = $gitOut -join "`r`n"
             if ($LASTEXITCODE -eq 0 -and ![string]::IsNullOrEmpty($GitOut)) {
-                $comments = $GitOut.Substring(0, $GitOut.Length - 5).Split("-----")
+                $comments = $GitOut.Substring(0, $GitOut.Length - 5).Split("|^*|")
             }
             else {
                 Log-Message "No commits found or no version tag exists" "red"
@@ -3560,9 +3560,6 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
     #
     Edit-File $HISTORYFILE $true
 }
-
-Vc-Revert $true
-exit 0
 
 #
 # Process $CHANGELOGFILE
