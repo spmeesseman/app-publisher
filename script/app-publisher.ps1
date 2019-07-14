@@ -3545,7 +3545,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
         # with newlines only
         #
         [System.Threading.Thread]::Sleep(500);
-        Add-Content $HISTORYFILE $TmpCommits
+        Add-Content $HISTORYFILE $TmpCommits -NoNewline 
     }
     else {
         Log-Message "Version match, not touching history file" "darkyellow"
