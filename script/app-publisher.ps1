@@ -4407,7 +4407,7 @@ if ($MANTISBTRELEASE -eq "Y")
             $Asset = $MbtAsset;
             $AssetDescrip = ""
 
-            if ($GhAsset.Contains("|"))
+            if ($MbtAsset.Contains("|"))
             {
                 $Asset = $MbtAsset.Split("|")[0]
                 $AssetDescrip = $MbtAsset.Split("|")[1]
