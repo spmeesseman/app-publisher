@@ -1293,3 +1293,45 @@ July 13rd, 2019
     The log will now display the return HTML from the Mantis REST service on
     any partial error.
 
+
+Version 1.7.0
+July 13rd, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+
+    Add support for providing email server port and email mode configs.
+    
+    The following configs have been added:
+    
+        emailPort (default 25)
+        emailMode (default empty)
+    
+    Where emailMode can be one of "ssl", "tls", or an empty string "".
+
+2.  Bug Fix
+
+    The history extraction from the commit messages is missing all of the
+    multi-line entries when retrieving the commit history from a Git repo.
+
+3.  Bug Fix
+
+    The history file has an additional unecessary newline at the end of the new
+    section that is generated during the publish run.
+

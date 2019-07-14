@@ -1,5 +1,23 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.7.0 (July 13rd, 2019)
+
+### Features
+
+- Add support for providing email server port and email mode configs.
+
+	The following configs have been added:
+
+	    emailPort (default 25)
+	    emailMode (default empty)
+
+	Where emailMode can be one of "ssl", "tls", or empty.
+
+### Bug Fixes
+
+- The history extraction from the commit messages is missing all of the multi-line entries when retrieving the commit history from Git repo.
+- The history file has an additional unecessary newline at the end of the new section that is generated during the publish run.
+
 ## Version 1.6.5 (July 13rd, 2019)
 
 ### Bug Fixes
