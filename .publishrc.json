@@ -72,9 +72,9 @@
         "mantisbtRelease":"Y",
         "mantisbtUrl":    "https://app1.development.pjats.com/projects",
         "mantisbtAssets": [
-            "install\\dist\\history.txt",
-            "install\\dist\\app-publisher.tgz",
-            "install\\dist\\App-Publisher_32bit.exe"
+            "install\\dist\\history.txt|History File",
+            "install\\dist\\app-publisher.tgz|NPM Tarball",
+            "install\\dist\\App-Publisher_32bit.exe|Windows Installer (32-bit)"
         ]
     }]    
 }
