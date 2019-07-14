@@ -1335,3 +1335,37 @@ July 13rd, 2019
     The history file has an additional unecessary newline at the end of the new
     section that is generated during the publish run.
 
+
+Version 1.7.1
+July 13rd, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+
+    Add support for mantisbt release file/asset descriptions.
+    
+    A description can be provided along with the asset file location with a '|'
+    separator in the mantisbtAssets config, for example:
+    
+    build/app-publisher.tgz|NPM Tarball
+
+2.  Build System:  App Publisher
+
+    Add mantisbtAsset file descriptions to publishrc.json.
+

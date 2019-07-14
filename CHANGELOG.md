@@ -1,5 +1,19 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.7.1 (July 13rd, 2019)
+
+### Minor Features
+
+- add support for mantisbt release file/asset descriptions.
+
+	A description can be provided along with the asset file location with a | separator in the mantisbtAssets config, for example:
+
+	    build/app-publisher.tgz|NPM Tarball
+
+### Build System
+
+- **App Publisher:** add mantisbtAsset file descriptions to publishrc
+
 ## Version 1.7.0 (July 13rd, 2019)
 
 ### Features
