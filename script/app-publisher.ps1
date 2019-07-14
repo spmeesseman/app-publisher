@@ -936,13 +936,23 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
         {
             if (![string]::IsNullOrEmpty($EMAILRECIP) -and $EMAILRECIP.Contains("@") -and $EMAILRECIP.Contains(".")) 
             {
-                send-mailmessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $EMAILRECIP -Subject $Subject -Body $EMAILBODY
+                if ($EMAILMODE -eq "ssl" -or $EMAILMODE -eq "tls") {
+                    Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $EMAILRECIP -Subject $Subject -Body $EMAILBODY -Port $EMAILPORT -UseSsl
+                }
+                else {
+                    Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $EMAILRECIP -Subject $Subject -Body $EMAILBODY -Port $EMAILPORT
+                }
             }
             else {
                 if (![string]::IsNullOrEmpty($TESTEMAILRECIP) -and $TESTEMAILRECIP.Contains("@") -and $TESTEMAILRECIP.Contains(".")) 
                 {
                     Log-Message "   Notification could not be sent to email recip, sending to test recip" "darkyellow"
-                    Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY
+                    if ($EMAILMODE -eq "ssl" -or $EMAILMODE -eq "tls") {
+                        Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY -Port $EMAILPORT -UseSsl
+                    }
+                    else {
+                        Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY -Port $EMAILPORT
+                    }
                     Check-PsCmdSuccess
                 }
                 else {
@@ -953,7 +963,12 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
         else {
             if (![string]::IsNullOrEmpty($TESTEMAILRECIP) -and $TESTEMAILRECIP.Contains("@") -and $TESTEMAILRECIP.Contains(".")) 
             {
-                Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY
+                if ($EMAILMODE -eq "ssl" -or $EMAILMODE -eq "tls") {
+                    Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY -Port $EMAILPORT -UseSsl
+                }
+                else {
+                    Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY -Port $EMAILPORT
+                }
                 Check-PsCmdSuccess
             }
             else {
@@ -2446,7 +2461,7 @@ if ($options.dryRunVcRevert) {
     $DRYRUNVCREVERT = $options.dryRunVcRevert
 }
 #
-#
+# NOTIFICATION EMAIL CONFIG OPTIONS
 #
 $EMAILNOTIFICATION = "Y"
 if ($options.emailNotification) {
@@ -2468,7 +2483,17 @@ if ($options.emailSender) {
     $EMAILSENDER = $options.emailSender
 }
 #
+$EMAILMODE = ""
+if ($options.emailMode) {
+    $EMAILMODE = $options.emailMode
+}
 #
+$EMAILPORT = 25
+if ($options.emailPort) {
+    $EMAILPORT = $options.emailPort
+}
+#
+# GITHUB RELEASE CONFIG OPTIONS
 #
 $GITHUBRELEASE = "N"
 if ($options.githubRelease) {
@@ -3445,16 +3470,18 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
         $TmpCommits = $TmpCommits.Replace("build: ", "Build System`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("chore: ", "Chore`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("docs: ", "Documentation`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("minfeat: ", "Minor Feature`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("featmin: ", "Minor Feature`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("minfeat: ", "Feature`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("featmin: ", "Feature`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("feat: ", "Feature`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("fix: ", "Bug Fix`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("perf: ", "Performance Enhancement`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("refactor: ", "Code Refactoring`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("progress: ", "Ongoing Progress`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("refactor: ", "Refactoring`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("style: ", "Code Styling`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("test: ", "Tests`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("project: ", "Project Structure`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("layout: ", "Layout`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("layout: ", "Project Layout`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("visual: ", "Visual Enhancement`r`n`r`n    ")
         #
         # Replace commit tags with full text (scoped)
         #
@@ -3465,16 +3492,18 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
         $TmpCommits = $TmpCommits.Replace("build(", "Build System(")
         $TmpCommits = $TmpCommits.Replace("chore(", "Chore(")
         $TmpCommits = $TmpCommits.Replace("docs(", "Documentation(")
-        $TmpCommits = $TmpCommits.Replace("featmin(", "Minor Feature(")
-        $TmpCommits = $TmpCommits.Replace("minfeat(", "Minor Feature(")
+        $TmpCommits = $TmpCommits.Replace("featmin(", "Feature(")
+        $TmpCommits = $TmpCommits.Replace("minfeat(", "Feature(")
         $TmpCommits = $TmpCommits.Replace("feat(", "Feature(")
         $TmpCommits = $TmpCommits.Replace("fix(", "Bug Fix(")
         $TmpCommits = $TmpCommits.Replace("perf(", "Performance Enhancement(")
-        $TmpCommits = $TmpCommits.Replace("refactor(", "Code Refactoring(")
+        $TmpCommits = $TmpCommits.Replace("refactor(", "Refactoring(")
         $TmpCommits = $TmpCommits.Replace("project(", "Project Structure(")
         $TmpCommits = $TmpCommits.Replace("test(", "Tests(")
         $TmpCommits = $TmpCommits.Replace("style(", "Code Styling(")
-        $TmpCommits = $TmpCommits.Replace("layout(", "Layout(")
+        $TmpCommits = $TmpCommits.Replace("layout(", "Project Layout(")
+        $TmpCommits = $TmpCommits.Replace("visual(", "Visual Enhancement(")
+        $TmpCommits = $TmpCommits.Replace("progress(", "Ongoing Progress(")
         #
         # Take any parenthesized scopes, remove the prenthesis and line break the message
         # that follows

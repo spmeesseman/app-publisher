@@ -13,6 +13,8 @@
     "distDocPath":       "\\\\pjainc.pjvista.com@SSL\\DavWWWRoot\\Shared Documents\\Tech Support\\Application Installation and Configuration",
     "dryRunVcRevert":    "Y",
     "emailNotification": "N",
+    "emailMode":         "",
+    "emailPort":         25,
     "emailServer":       "10.0.7.50",
     "emailRecip":        "productrelease@pjats.com",
     "emailSender":       "productbuild@pjats.com",
