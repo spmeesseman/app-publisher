@@ -10,7 +10,7 @@
     "deployCommand":     "",
     "distRelease":       "N",
     "distReleasePath":   "\\\\192.168.68.120\\d$\\softwareimages",
-    "distDocPath":       "\\\\pjainc.pjvista.com@SSL\\DavWWWRoot\\Shared Documents\\Tech Support\\Application Installation and Configuration",
+    "distDocPath":       "",
     "dryRunVcRevert":    "Y",
     "emailNotification": "N",
     "emailMode":         "",

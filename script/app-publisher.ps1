@@ -3821,7 +3821,7 @@ if ($NPMRELEASE -eq "Y")
         #
         # Pack tarball and mvoe to dist dir if specified
         #
-        if ($NPMPACKDIST -eq "Y" -and $DISTRELEASE -eq "Y") 
+        if ($NPMPACKDIST -eq "Y") 
         {
             & npm pack
             Check-ExitCode
@@ -3949,23 +3949,29 @@ if ($DISTRELEASE -eq "Y")
             Copy-Item "$PATHTODIST\*" -Destination "$TargetNetLocation" | Out-Null
             Check-PsCmdSuccess
             #
-            # Create directory on doc share
+            # DOC
             #
-            New-Item -Path "$TargetDocLocation" -ItemType "directory" | Out-Null
-            #
-            # Copy all pdf files in 'dist' and 'doc' and 'documentation' directories
-            #
-            Log-Message "Deploying pdf documentation to $TargetDocLocation"
-            if (Test-Path("documentation")) {
-                Copy-Item "documentation\*.pdf" -Destination "$TargetDocLocation" | Out-Null
+            if ($DISTDOCPATH -ne "")
+            {
+                #
+                # Create directory on doc share
+                #
+                New-Item -Path "$TargetDocLocation" -ItemType "directory" | Out-Null
+                #
+                # Copy all pdf files in 'dist' and 'doc' and 'documentation' directories
+                #
+                Log-Message "Deploying pdf documentation to $TargetDocLocation"
+                if (Test-Path("documentation")) {
+                    Copy-Item "documentation\*.pdf" -Destination "$TargetDocLocation" | Out-Null
+                }
+                if (Test-Path("doc")) {
+                    Copy-Item "doc\*.pdf" -Destination "$TargetDocLocation" | Out-Null
+                }
+                if (Test-Path("$PATHTODIST")) {
+                    Copy-Item "$PATHTODIST\*.pdf" -Destination "$TargetDocLocation" | Out-Null
+                }
+                Check-PsCmdSuccess
             }
-            if (Test-Path("doc")) {
-                Copy-Item "doc\*.pdf" -Destination "$TargetDocLocation" | Out-Null
-            }
-            if (Test-Path("$PATHTODIST")) {
-                Copy-Item "$PATHTODIST\*.pdf" -Destination "$TargetDocLocation" | Out-Null
-            }
-            Check-PsCmdSuccess
         }
         else {
             Log-Message "Dry run, skipping basic push to network drive" "magenta"
