@@ -20,6 +20,7 @@
     "emailSender":       "productbuild@pjats.com",
     "githubRelease":     "Y",
     "githubAssets": [
+        "doc\\history.txt|History File",
         "install\\dist\\app-publisher.tgz",
         "install\\dist\\App-Publisher_32bit.exe"
     ],
