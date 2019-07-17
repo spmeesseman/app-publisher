@@ -1395,3 +1395,29 @@ July 13rd, 2019
     The file description feature for a mantisbt release added in the last
     version does not work if the description contains a space
 
+
+Version 1.7.3
+July 17th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+
+    If the distRelease flag is set for a network folder path type release, but
+    the distDocPath flag is not set, the publish run fails.
+

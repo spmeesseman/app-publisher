@@ -1,5 +1,19 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.7.3 (July 17th, 2019)
+
+### Build System
+
+- **App Publisher:** update homepage, and bugs page to latest
+
+### Documentation
+
+- **README:** update svg tags to latest
+
+### Bug Fixes
+
+- If the distRelease flag is set fora network folder path typerelease, but the distDocPath flag is not set, the publish run fails
+
 ## Version 1.7.2 (July 13rd, 2019)
 
 ### Bug Fixes
