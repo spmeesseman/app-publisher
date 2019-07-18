@@ -15,7 +15,7 @@
 - [App Publisher](#App-Publisher)
   - [Description](#Description)
   - [Table of Contents](#Table-of-Contents)
-  - [Features](#Features)
+  - [The Publishing Run](#The-Publishing-Run)
   - [Installation](#Installation)
   - [Usage](#Usage)
     - [Commit Messages](#Commit-Messages)
@@ -24,32 +24,33 @@
   - [NPM](#NPM)
   - [Windows Installer](#Windows-Installer)
 
-## Features
+## The Publishing Run
 
-The steps performed during app-publish are:
+The steps performed during an app-publisher run are:
 
-- Determine next version
+- Automatically determine next version from commit messages since last version
 - Auto-populate history file with commit messages since last version
 - Update all versioned files with new version
 - Run application specific build scripts
-- Build installer if specified
+- Build installer
 - Upload distribution files to network drive
-- Build and publish NPM package if specified
-- Build and publish Nuget package if specified
+- Build and publish NPM package
+- Build and publish Nuget package
 - Run application specific deploy scripts
-- Check all modifications into SVN
-- Tag with new version in SVN
+- Check all modifications into VC
+- Tag with new version in VC
+- Upload a MantisBT or GitHub release including changelog and file assets
 - Send release email
 
 ## Installation
 
 To instal app-publisher globally for ceonvenience, run the following command
 
-    $ npm install -g app-publisher
+    $ npm install -g @perryjohnson/app-publisher
 
 To install locally per project, run the following command from the directory containing the projects package.json file:
 
-    $ npm install app-publisher
+    $ npm install @perryjohnson/app-publisher
 
 Currently, the publish is ran from a powershell script.  You will need to set the powershell execution policy with the following command if you have not already done so on your computer at some point in the past:
 
@@ -61,7 +62,7 @@ After the port to JS, this no longer be required.
 
 ### Commit Messages
 
-See the GitHub standards [here](https://gist.github.com/stephenparish/9941e89d80e2bc58a153)
+See the PJ standards [here](https://app1.development.pjats.com/doc/developernotes.md#Commit-Messages).  See the GitHub standards [here](https://gist.github.com/stephenparish/9941e89d80e2bc58a153).
 
 Commit messages should be made in the following format:
 
@@ -99,7 +100,7 @@ The "body" should give a detailed explanation of the change.
 
 The "footer" should give a detailed explanation of what the change fixes, or how it affects the application.
 
-To reference issues from commit messages, use the "Refs" or "Closes" keyword in the footer, for example:
+To reference issues from commit messages, use the "refs", "fixes", or "closes" tag anywhere in the commit message, for example:
 
     fix(usermanagement): the "add user" button doesnt work when selecting the option "clerk"
 
@@ -107,23 +108,24 @@ To reference issues from commit messages, use the "Refs" or "Closes" keyword in 
 
     Users hould nw be able to create a clerk type user successfully.
     Note that non-administrators do not have access to this functionality.
-    Closes #142
+    [fixes #142]
 
-Including the "Closes #142" in the footer will link the issue to the commit, auto-close the issue, remove any relevant tags from the issue, and add the "fixed" tag to the closed issue.
+Including the [fixes #142] (or [closes #142]) tag in the footer will link the issue to the commit, auto-close the issue, remove any relevant tags from the issue, and add the "fixed" tag to the closed issue.
 
     feat(jobsearch): add support for the "modify status" action
 
     The action "Modify Status" in the Search Results tabs of Job Administration is now functional.
 
     Note that the list of statuses that the jobs may be changed to will be reduced in the next release.
-    Refs #142
+    [refs #142]
 
-Including the "Refs #142" in the footer will link the issue to the commit.
+Including the [refs #142] tag anywhere in the commit message will link the issue to the commit.
 
 The commit messages will be used in the generation of the history and changelog files when running app-publisher.
 
 References:
 
+- [Perry Johnson Commit Message Standards](https://app1.development.pjats.com/doc/developernotes.md#Commit-Messages)
 - [GitHub Commit Message Standards](https://gist.github.com/stephenparish/9941e89d80e2bc58a153)
 - [Angular Commenting Standards Updated](https://github.com/angular/angular/blob/master/CONTRIBUTING.md#type)
 
@@ -131,11 +133,15 @@ References:
 
 To configure app-publisher per project, create a .publishrc.json file in the root project directory.
 
+Environment variables can be used and expanded at runtime using the following syntax:
+
+    ${ENVIRONMENT_VARIABLE_NAME}
+
 An example .publishrc.json file:
 
     {
         "projectName":       "app-publisher",
-        "branch":            "master",
+        "branch":            "trunk",
         "bugs":              "",
         "buildCommand": [
             "npm run build",
@@ -144,13 +150,13 @@ An example .publishrc.json file:
         "changelogFile":     "CHANGELOG.md",
         "deployCommand":     "",
         "distRelease":       "N",
-        "distReleasePath":   "\\\\192.168.68.120\\d$\\softwareimages",
-        "distDocPath":       "\\\\pjainc.pjvista.com@SSL\\DavWWWRoot\\Shared Documents\\Tech Support\\Application Installation and Configuration",
+        "distReleasePath":   "\\\\network_machine\\share_name\\releases",
+        "distDocPath":       "",
         "dryRunVcRevert":    "Y",
         "emailNotification": "N",
         "emailServer":       "10.0.7.50",
-        "emailRecip":        "productrelease@pjats.com",
-        "emailSender":       "productbuild@pjats.com",
+        "emailRecip":        "release@domain.com",
+        "emailSender":       "build@domain.com",
         "githubRelease":     "Y",
         "githubAssets": [
             "install\\dist\\app-publisher.tgz",
@@ -162,6 +168,13 @@ An example .publishrc.json file:
         "historyLineLen":    80,
         "homePage":          "",
         "interactive":       "N",
+        "mantisbtRelease":"Y",
+        "mantisbtUrl":    "https://my.domain.com/mantisbt",
+        "mantisbtAssets": [
+            "install\\dist\\history.txt|History File",
+            "install\\dist\\app-publisher.tgz|NPM Tarball",
+            "install\\dist\\App-Publisher_32bit.exe|Windows Installer (32-bit)"
+        ]
         "npmPackDist":       "N",
         "npmRegistry":       "",
         "npmRelease":        "Y",
@@ -172,12 +185,12 @@ An example .publishrc.json file:
         "pathtoMainRoot":    "",
         "pathPreRoot":       "",
         "postBuildCommand":  "",
-        "repoType":          "",
+        "repoType":          "svn",
         "repo":              "",
         "skipCommit":        "N",
         "skipDeployPush":    "N",
-        "testEmailRecip":    "smeesseman@pjats.com",
-        "textEditor":        "notepad++",
+        "testEmailRecip":    "myname@domain.com",
+        "textEditor":        "notepad",
         "vcTag":             "Y",
         "vcTagPrefix":       "",
         "versionFiles": [
