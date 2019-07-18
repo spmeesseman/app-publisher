@@ -714,20 +714,22 @@ class HistoryFile
                 while ($szContents.EndsWith("<br>")) {
                     $szContents = $szContents.Substring(0, $szContents.Length - 4)
                 }
-                [Match] $match = [Regex]::Match($szContents, "\w<br>&nbsp;&nbsp;&nbsp;&nbsp;");
+
+                # the history file is written with a max line char count, remove all line breaks in running text
+                # for better display in web browser (and less vertical space)
+                [Match] $match = [Regex]::Match($szContents, "\w<br>(&nbsp;){4}\w");
                 while ($match.Success) {
-                    $szContents = $szContents.Replace($match.Value, $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;", ""));
+                    $szContents = $szContents.Replace($match.Value, $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;", "")); #leave a space
                     $match = $match.NextMatch()
                 }
-
-                $match = [Regex]::Match($szContents, "\w[,.:]*&nbsp;{0,1}<br>&nbsp;&nbsp;&nbsp;&nbsp;");
+                $match = [Regex]::Match($szContents, "\w[,.:]*(&nbsp;){0,1}<br>(&nbsp;){4}\w");
                 while ($match.Success) {
                     $szContents = $szContents.Replace($match.Value, $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;", ""));
                     $match = $match.NextMatch()
                 }
 
                 # Bold all numbered lines
-                $match = [Regex]::Match($szContents, "[1-9][0-9]{0,1}.&nbsp;.+?(?=<br>)");
+                $match = [Regex]::Match($szContents, "\w*(?<!&nbsp;)[1-9][0-9]{0,1}.&nbsp;.+?(?=<br>)");
                 while ($match.Success) {
                     $value = $match.Value;
                     $szContents = $szContents.Replace($value, "<b>$value</b>");
@@ -739,8 +741,8 @@ class HistoryFile
                     if ($mantisUrl.EndsWith("/")) {
                         $mantisUrl = $mantisUrl.Substring(0, $mantisUrl.Length - 1);
                     }
-                    # color resolved tags green, create links to tickets
-                    $match = [Regex]::Match($szContents, "\[(closes|fixes|resolves|fix|close){1}&nbsp;#[0-9]+(,#[0-9]+){0,}\]");
+                    # color resolved tags gray, create links to tickets
+                    $match = [Regex]::Match($szContents, "\[(&nbsp;)*(closes|fixes|resolves|fix|close){1}(&nbsp;)*#[0-9]+((&nbsp;)*,(&nbsp;)*#[0-9]+){0,}(&nbsp;)*\]");
                     while ($match.Success) 
                     {
                         $value = $match.Value;
@@ -749,8 +751,8 @@ class HistoryFile
                         $bugid = $value.Substring($vi1, $vi2 - $vi1);
                         $bugids = $bugid.Split(",");
                         for ($i = 0; $i -lt $bugids.Length; $i++) {
-                            $bid = $bugids[$i]; # with # i.e. #1919
-                            $bid_num = $bid.Replace("#", "") # w/o # i.e. 1919
+                            $bid = $bugids[$i].Replace("&nbsp;", ""); # with # i.e. #1919
+                            $bid_num = $bid.Replace("#", "").Replace("&nbsp;", "") # w/o # i.e. 1919
                             $value = $value.Replace($bid, "<a href=`"$mantisUrl/view.php?id=$bid_num`">$bid</a>");
                         }
                         $szContents = $szContents.Replace($match.Value, "<font style=`"color:gray`">$value</font>");
@@ -3066,7 +3068,7 @@ Log-Message "   Home page        : $HOMEPAGE"
 Log-Message "   Interactive      : $INTERACTIVE"
 Log-Message "   MantisBT release : $MANTISBTRELEASE"
 Log-Message "   MantisBT prj id  : $MANTISBTPROJECT"
-Log-Message "   MantisBT url     : $MANTISBTPROJECT"
+Log-Message "   MantisBT url     : $MANTISBTURL"
 Log-Message "   MantisBT assets  : $MANTISBTASSETS"
 Log-Message "   NPM release      : $NPMRELEASE"
 Log-Message "   NPM registry     : $NPMREGISTRY"
@@ -4380,7 +4382,7 @@ if ($MANTISBTRELEASE -eq "Y")
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to html"
-        $MantisChangelog = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $true, $HISTORYFILE, "", "", "", "", "", "");
+        $MantisChangelog = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $true, $HISTORYFILE, "", "", "", "", $MANTISBTRELEASE, $MANTISBTURL);
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
@@ -4388,9 +4390,6 @@ if ($MANTISBTRELEASE -eq "Y")
         $MantisChangelog = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE);
         #$MantisChangelog = & app-publisher-marked -f $MantisChangelog
     }
-
-    write-host '7'
-    write-host $MantisChangelog
 
     #
     # Set up the request body for the 'create release' request
