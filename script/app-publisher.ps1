@@ -227,7 +227,7 @@ class CommitAnalyzer
     {
         $FormattedSubject = $Subject.ToLower();
 
-        switch ($Subject)
+        switch ($FormattedSubject)
         {
             "build"   { $FormattedSubject = "Build System"; break }
             "chore"   { $FormattedSubject = "Chores"; break }
