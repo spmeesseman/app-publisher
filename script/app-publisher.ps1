@@ -2387,6 +2387,13 @@ Log-Message "   Run #     : $RUN of $NUMRUNS" "cyan" $true
 Log-Message "   Directory : $CWD" "cyan" $true
 Log-Message "----------------------------------------------------------------" "darkblue" $true
 #
+# Name of the project.  This must macth throughout the build files and the SVN project name
+#
+$PROJECTNAME = ""
+if ($options.projectName) {
+    $PROJECTNAME = $options.projectName
+}
+#
 #
 #
 $BRANCH = ""
@@ -2400,13 +2407,6 @@ if ($options.branch) {
 $BUILDCOMMAND = @()
 if ($options.buildCommand) {
     $BUILDCOMMAND = $options.buildCommand
-}
-#
-# Name of the project.  This must macth throughout the build files and the SVN project name
-#
-$PROJECTNAME = ""
-if ($options.projectName) {
-    $PROJECTNAME = $options.projectName
 }
 #
 # The location of this changelog file, can be a relative or full path.
@@ -2552,6 +2552,13 @@ if ($options.textEditor) {
 $MANTISBTRELEASE = "N"
 if ($options.mantisbtRelease) {
     $MANTISBTRELEASE = $options.mantisbtRelease
+}
+#
+#
+#
+$MANTISBTPROJECT = $PROJECTNAME
+if ($options.mantisbtProject) {
+    $MANTISBTPROJECT = $options.mantisbtProject
 }
 #
 #
@@ -4477,7 +4484,7 @@ if ($MANTISBTRELEASE -eq "Y")
     if ($MANTISBTURL.EndsWith("/")) {
         $MANTISBTURL = $MANTISBTURL.Substring(0, $MANTISBTURL.Length - 1);
     }
-    $url = "$MANTISBTURL/plugins/Releases/api/releases/$PROJECTNAME"
+    $url = "$MANTISBTURL/plugins/Releases/api/releases/$MANTISBTPROJECT"
     Log-Message "Sending Add-Release REST request to $url"
     $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
     Check-PsCmdSuccess

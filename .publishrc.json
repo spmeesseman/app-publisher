@@ -31,6 +31,7 @@
     "homePage":          "",
     "interactive":       "N",
     "mantisbtRelease":   "N",
+    "mantisbtProject":   "",
     "mantisbtUrl":       "",
     "mantisbtAssets":    "",
     "npmPackDist":       "N",
