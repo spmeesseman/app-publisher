@@ -100,7 +100,8 @@
         "release",
         "publish",
         "svn",
-        "git"
+        "git",
+        "mantisbt"
     ],
     "publishConfig": {
         "access": "restricted"
