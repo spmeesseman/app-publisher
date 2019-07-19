@@ -1421,3 +1421,40 @@ July 17th, 2019
     If the distRelease flag is set for a network folder path type release, but
     the distDocPath flag is not set, the publish run fails.
 
+
+Version 1.7.4
+July 19th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+
+    For a MantisBT release, add a new config variable to specify a MantisBT
+    project name (if different than the base project name).
+
+2.  Bug Fix
+
+    If the subject of a commit message is not entered in lower case, the
+    history file is incorrectly formatted for that commit message in the auto
+    generated text.
+
+3.  Bug Fix
+
+    Line breaks around inner numbered lists of a single release note are being
+    removed, and the entire inner list is bolded.
+

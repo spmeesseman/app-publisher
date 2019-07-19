@@ -1,5 +1,28 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.7.4 (July 19th, 2019)
+
+### Build System
+
+- **ap:** add history file to mantisbt release assets
+
+### Documentation
+
+- **README:** Updated information
+
+### Minor Features
+
+- For aMantisBT release, add a new config variable to specify a MantisBT project name (if different than the base project name).
+
+### Bug Fixes
+
+- If the subject of a commit message is not enetered in lowercase, the history file is incorrectly formatted for that commit message in the auto generated text.
+- Line breaks around inner numbered lists of a single release note are being removed, and the entire inner list is bolded.
+
+### Build System
+
+- **NPM:** update keywords with mantisbt
+
 ## Version 1.7.3 (July 17th, 2019)
 
 ### Build System
