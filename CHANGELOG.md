@@ -1,5 +1,14 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.7.5 (July 20th, 2019)
+
+### Bug Fixes
+
+- attempt to fix a random error 'access is denied' when the version in the sencha config of the package.json file is being updated.
+- The history text sent for a mantisbt release contains bolded numbered lines for items 1-9, but not for any items numbered 10 or higher.
+
+	fix: The history text sent for a mantisbt release sometimes writes off the side of the Releases page and is not wrapped properly.
+
 ## Version 1.7.4 (July 19th, 2019)
 
 ### Build System
