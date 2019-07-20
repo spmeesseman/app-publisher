@@ -727,37 +727,19 @@ class HistoryFile
                     $szContents = $szContents.Replace($match.Value, $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;", ""));
                     $match = $match.NextMatch()
                 }
-
-                # Bold all numbered lines
-                $match = [Regex]::Match($szContents, "\w*(?<!&nbsp;)[1-9][0-9]{0,1}.&nbsp;.+?(?=<br>)");
+                # break up &nbsp;s
+                $match = [Regex]::Match($szContents, "(&nbsp;)\w");
                 while ($match.Success) {
-                    $value = $match.Value;
-                    $szContents = $szContents.Replace($value, "<b>$value</b>");
+                    $szContents = $szContents.Replace($match.Value, $match.Value.Replace("&nbsp;", " "));
                     $match = $match.NextMatch()
                 }
 
-                if ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl))
-                {
-                    if ($mantisUrl.EndsWith("/")) {
-                        $mantisUrl = $mantisUrl.Substring(0, $mantisUrl.Length - 1);
-                    }
-                    # color resolved tags gray, create links to tickets
-                    $match = [Regex]::Match($szContents, "\[(&nbsp;)*(closes|fixes|resolves|fix|close){1}(&nbsp;)*#[0-9]+((&nbsp;)*,(&nbsp;)*#[0-9]+){0,}(&nbsp;)*\]");
-                    while ($match.Success) 
-                    {
-                        $value = $match.Value;
-                        $vi1 = $value.IndexOf("#");
-                        $vi2 = $value.IndexOf("]");
-                        $bugid = $value.Substring($vi1, $vi2 - $vi1);
-                        $bugids = $bugid.Split(",");
-                        for ($i = 0; $i -lt $bugids.Length; $i++) {
-                            $bid = $bugids[$i].Replace("&nbsp;", ""); # with # i.e. #1919
-                            $bid_num = $bid.Replace("#", "").Replace("&nbsp;", "") # w/o # i.e. 1919
-                            $value = $value.Replace($bid, "<a href=`"$mantisUrl/view.php?id=$bid_num`">$bid</a>");
-                        }
-                        $szContents = $szContents.Replace($match.Value, "<font style=`"color:gray`">$value</font>");
-                        $match = $match.NextMatch()
-                    }
+                # Bold all numbered lines
+                $match = [Regex]::Match($szContents, "\w*(?<!&nbsp;)[1-9][0-9]{0,1}.(&nbsp;| ).+?(?=<br>)");
+                while ($match.Success) {
+                    $value = $match.Value;
+                    $szContents = $szContents.Replace($value, "<b><font style=`"font-family:Courier New`">$value</font></b>");
+                    $match = $match.NextMatch()
                 }
 
                 $szFinalContents = $szContents
