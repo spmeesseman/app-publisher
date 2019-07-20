@@ -1,20 +1,20 @@
 {
-    "name": "@spmeesseman/app-publisher",
+    "name": "@perryjohnson/app-publisher",
     "version": "1.7.4",
     "displayName": "App Publisher",
     "description": "App Publisher",
     "license": "MIT",
     "author": {
         "name": "Scott Meesseman",
-        "email": "spmeesseman@gmail.com"
+        "email": "smeesseman@pjats.com"
     },
     "bugs": {
-        "url": "https://github.com/spmeesseman/app-publisher/issues"
+        "url": "https://app1.development.pjats.com/projects/set_project.php?project=app-publisher&make_default=no&ref=bug_report_page.php"
     },
-    "homepage": "https://github.com/spmeesseman/app-publisher/blob/master/README.md",
+    "homepage": "https://app1.development.pjats.com/svn/web/listing.php?repname=pja&path=%2Fapp-publisher%2Ftrunk%2F",
     "repository": {
-        "type": "git",
-        "url": "https://github.com/spmeesseman/app-publisher.git"
+        "type": "svn",
+        "url": "https://svn.development.pjats.com/pja/app-publisher/trunk"
     },
     "dependencies": {
         "@spmeesseman/json": "^9.1.1",

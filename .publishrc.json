@@ -1,6 +1,6 @@
 {
     "projectName":       "app-publisher",
-    "branch":            "master",
+    "branch":            "trunk",
     "bugs":              "",
     "buildCommand": [
         "npm run build",
@@ -12,29 +12,29 @@
     "distReleasePath":   "\\\\192.168.68.120\\d$\\softwareimages",
     "distDocPath":       "",
     "dryRunVcRevert":    "Y",
-    "emailNotification": "N",
+    "emailNotification": "Y",
     "emailMode":         "",
     "emailPort":         25,
     "emailServer":       "10.0.7.50",
     "emailRecip":        "productrelease@pjats.com",
     "emailSender":       "productbuild@pjats.com",
-    "githubRelease":     "Y",
-    "githubAssets": [
-        "doc\\history.txt|History File",
-        "install\\dist\\app-publisher.tgz",
-        "install\\dist\\App-Publisher_32bit.exe"
-    ],
-    "githubUser":        "spmeesseman",
+    "githubRelease":     "N",
+    "githubAssets":      [],
+    "githubUser":        "",
     "historyFile":       "doc\\history.txt",
     "historyHdrFile":    "install\\history-hdr.txt",
     "historyLineLen":    80,
     "homePage":          "",
     "interactive":       "N",
-    "mantisbtRelease":   "N",
+    "mantisbtRelease":   "Y",
     "mantisbtProject":   "",
-    "mantisbtUrl":       "",
-    "mantisbtAssets":    "",
-    "npmPackDist":       "N",
+    "mantisbtUrl":       "https://app1.development.pjats.com/projects",
+    "mantisbtAssets": [
+        "install\\dist\\history.txt|History File",
+        "install\\dist\\app-publisher.tgz|NPM Tarball",
+        "install\\dist\\App-Publisher_32bit.exe|Windows Installer (32-bit)"
+    ],
+    "npmPackDist":       "Y",
     "npmRegistry":       "",
     "npmRelease":        "Y",
     "npmScope":          "",
@@ -56,27 +56,5 @@
         "install\\installer-x86.nsi"
     ],
     "versionText":       "Version",
-    "writeLog":          "N",
-    "xRuns": [
-    {
-        "repoType":      "svn",
-        "branch":        "trunk",
-        "repo":          "https://svn.development.pjats.com/pja/app-publisher/trunk",
-        "homePage":      "https://app1.development.pjats.com/svn/web/listing.php?repname=pja&path=%2Fapp-publisher%2Ftrunk%2F",
-        "bugs":          "https://app1.development.pjats.com/projects/set_project.php?project=app-publisher&make_default=no&ref=bug_report_page.php",
-        "npmPackDist":   "Y",
-        "npmRegistry":   "https://npm.development.pjats.com",
-        "textEditor":    "",
-        "npmScope":      "@perryjohnson",
-        "emailNotification": "Y",
-        "distRelease":   "Y",
-        "githubRelease": "N",
-        "mantisbtRelease":"Y",
-        "mantisbtUrl":    "https://app1.development.pjats.com/projects",
-        "mantisbtAssets": [
-            "install\\dist\\history.txt|History File",
-            "install\\dist\\app-publisher.tgz|NPM Tarball",
-            "install\\dist\\App-Publisher_32bit.exe|Windows Installer (32-bit)"
-        ]
-    }]    
+    "writeLog":          "N"  
 }
