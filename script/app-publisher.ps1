@@ -1286,6 +1286,7 @@ function Replace-Version($File, $Old, $New)
     Log-Message "Write new version $VERSION to $File"
     ((Get-Content -path $File -Raw) -replace "$Old", "$New") | Set-Content -NoNewline -Path $File
     Check-PsCmdSuccess
+    [System.Threading.Thread]::Sleep(750)
 }
 
 function Run-Scripts($ScriptType, $Scripts, $ExitOnError, $RunInTestMode = $false)
@@ -1435,6 +1436,7 @@ function Prepare-PackageJson()
     Log-Message "Setting new version $VERSION in package.json"
     & npm version --no-git-tag-version --allow-same-version $VERSION
     Check-ExitCode
+    [System.Threading.Thread]::Sleep(750)
     Replace-Version "package.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
 
     if (![string]::IsNullOrEmpty($REPO))
