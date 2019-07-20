@@ -735,7 +735,7 @@ class HistoryFile
                 }
 
                 # Bold all numbered lines
-                $match = [Regex]::Match($szContents, "\w*(?<!&nbsp;)[1-9][0-9]{0,1}.(&nbsp;| ).+?(?=<br>)");
+                $match = [Regex]::Match($szContents, "\w*(?<!&nbsp;)[1-9][0-9]{0,1}\.(&nbsp;| ).+?(?=<br>)");
                 while ($match.Success) {
                     $value = $match.Value;
                     $szContents = $szContents.Replace($value, "<b><font style=`"font-family:Courier New`">$value</font></b>");
