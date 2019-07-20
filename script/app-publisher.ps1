@@ -2889,6 +2889,17 @@ if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($PATHTOM
     exit 1
 }
 
+#
+# Ensure version control directory exists
+# $_Repo is either git or svn
+#
+if ([string]::IsNullOrEmpty($PATHPREROOT) -and !(Test-Path(".$_Repo")))
+{
+    Log-Message "The .$_Repo directory was not found" "red"
+    Log-Message "Set pathToPreRoot or ensure a branch (i.e. trunk) is the root directory" "red"
+    exit 1
+}
+
 if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) 
 {
     if ([string]::IsNullOrEmpty($PATHPREROOT)) { 
