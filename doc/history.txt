@@ -1494,3 +1494,46 @@ July 20th, 2019
     The history text sent for a mantisbt release sometimes writes off the side
     of the Releases page and is not wrapped properly.
 
+
+Version 1.8.0
+July 21st, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+
+    Enhance the visual apperance of the changelog sent to the MantisBT Relases
+    page API. [closes #111]
+
+2.  Bug Fix
+
+    If a branch (i.e. trunk, master) is not the root directory containing the
+    .svn/.git folder of the project, both the final commit and the version tag
+    creation fails.
+    
+    An error will now be thrown when the publish run starts to inform the user
+    that this scenario is not supported, and subsequently exits.
+    
+    [fixes #172]
+
+3.  Bug Fix
+
+    In the text sent for the changelog in a MantisBT release, a line item that
+    contains a numeric character (1-9) followed by a comma, and any characters
+    that follow, are styled in bold.
+

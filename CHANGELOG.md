@@ -1,5 +1,22 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.8.0 (July 21st, 2019)
+
+### Features
+
+- Enhance the visual apperance of the changelog sent to the MantisBT Relases page API. [closes #111]
+
+### Bug Fixes
+
+- If a branch (i.e. trunk, master) is not the root directory containing the .svn/.git folder of the project, both the final commit and the version tag creation fails.
+
+	An error will now be thrown when the publish run starts to inform the user that this scenario is not supported, and subsequently exits.
+
+
+	[fixes #172]
+
+- In the text sent for the changelog in a MantisBT release, a line item that contains a numeric character (1-9) followed by a comma, and any characters that follow, are styled in bold.
+
 ## Version 1.7.5 (July 20th, 2019)
 
 ### Bug Fixes
