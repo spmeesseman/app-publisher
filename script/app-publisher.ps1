@@ -4453,7 +4453,7 @@ if ($MANTISBTRELEASE -eq "Y")
         $MantisChangelog = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $true, $HISTORYFILE, "", "", "", "", $MANTISBTRELEASE, $MANTISBTURL)[0];
         write-host $MantisChangelog
         $MantisChangeLogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", $MANTISBTRELEASE, $MANTISBTURL);
-        $MantisChangelog = "<span class=`"changelog-table`"><table style=`"display:inline`">"
+        $MantisChangelog = "<span class=`"changelog-table`"><table width=`"100%`" style=`"display:inline`">"
         foreach ($commit in $MantisChangeLogParts)
         {
             $MantisChangelog += "<tr><td nowrap valign=`"top`" style=`"font-weight:bold;color:#5090c1`">"
@@ -4490,7 +4490,7 @@ if ($MANTISBTRELEASE -eq "Y")
             else {
                 $MantisChangelog += "</td><td>"
             }
-            $MantisChangelog += "</td><td style=`"padding-left:15px`">"
+            $MantisChangelog += "</td><td width=`"100%`" style=`"padding-left:15px;padding-right:10px`">"
             $MantisChangelog += $commit.message
             if (![string]::IsNullOrEmpty($commit.tickets)) {
                 $MantisChangelog += "</td><td nowrap align=`"right`" valign=`"top`" style=`"padding-left:15px`">"
