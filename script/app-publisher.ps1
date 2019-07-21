@@ -717,12 +717,12 @@ class HistoryFile
 
                 # the history file is written with a max line char count, remove all line breaks in running text
                 # for better display in web browser (and less vertical space)
-                [Match] $match = [Regex]::Match($szContents, "\w<br>(&nbsp;){4}\w");
+                [Match] $match = [Regex]::Match($szContents, "[a-zA-z0-9_.,;\/|`"']<br>(&nbsp;){4}[a-zA-z0-9_.,;\/|`"']");
                 while ($match.Success) {
                     $szContents = $szContents.Replace($match.Value, $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;", "")); #leave a space
                     $match = $match.NextMatch()
                 }
-                $match = [Regex]::Match($szContents, "\w[,.:]*(&nbsp;){0,1}<br>(&nbsp;){4}\w");
+                $match = [Regex]::Match($szContents, "[a-zA-z0-9_\/|`"'][,.:]*(&nbsp;){0,1}<br>(&nbsp;){4}[a-zA-z0-9_\/|`"']");
                 while ($match.Success) {
                     $szContents = $szContents.Replace($match.Value, $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;", ""));
                     $match = $match.NextMatch()
