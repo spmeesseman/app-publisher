@@ -483,7 +483,7 @@ class HistoryFile
         return $szContents
     }
 
-    [string]getHistory($project, $version, $numsections, $stringver, $listonly, $in, $out, $targetloc, $npmpkg, $nugetpkg, $mantisRelease, $mantisUrl)
+    [array]getHistory($project, $version, $numsections, $stringver, $listonly, $in, $out, $targetloc, $npmpkg, $nugetpkg, $mantisRelease, $mantisUrl)
     {
         $szInputFile = $in;
         $szOutputFile = $out;
@@ -728,22 +728,85 @@ class HistoryFile
                     $match = $match.NextMatch()
                 }
                 # break up &nbsp;s
-                $match = [Regex]::Match($szContents, "(&nbsp;)\w");
+                $match = [Regex]::Match($szContents, "(&nbsp;)(\w|'|`")");
                 while ($match.Success) {
                     $szContents = $szContents.Replace($match.Value, $match.Value.Replace("&nbsp;", " "));
                     $match = $match.NextMatch()
                 }
 
                 # Bold all numbered lines
-                $match = [Regex]::Match($szContents, "\w*(?<!&nbsp;)[1-9][0-9]{0,1}\.(&nbsp;| ).+?(?=<br>)");
+                #$match = [Regex]::Match($szContents, "\w*(?<!&nbsp;)[1-9][0-9]{0,1}\.(&nbsp;| ).+?(?=<br>)   \w*(?<=^|>)[1-9][0-9]{0,1}\.(&nbsp;| ).+?(?=<br>)");
+                $match = [Regex]::Match($szContents, "\w*(?<=^|>)[1-9][0-9]{0,1}\.(&nbsp;| ).+?(?=<br>)");
                 while ($match.Success) {
                     $value = $match.Value;
-                    $szContents = $szContents.Replace($value, "<b><font style=`"font-family:Courier New`">$value</font></b>");
+                    $szContents = $szContents.Replace($value, "<b>$value</b>");
                     $match = $match.NextMatch()
                 }
+                
+                if ($listonly -is [system.string] -and $listonly -eq 'parts')
+                {
+                    $typeParts = @()
+                    $msgParts = @()
+                    $match = [Regex]::Match($szContents, "\w*(?<=^|>)[1-9][0-9]{0,1}\.(&nbsp;| ).+?(?=<br>|<\/font>)");
+                    while ($match.Success) {
+                        $value = $match.Value.Replace("&nbsp;", "").Replace(".", "")
+                        for ($i = 0; $i -lt 10; $i++) {
+                            $value = $value.Replace($i, "").Trim()
+                        }
+                        $typeParts += $value
+                        $match = $match.NextMatch()
+                    }
+                    $szContents = $szContents.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;<br>", "<br><br>")
+                    $szContents = $szContents.Replace("<br>&nbsp;&nbsp;&nbsp;<br>", "<br><br>")
+                    $match = [Regex]::Match($szContents, "<br>(&nbsp;){2,} {1}.+?(?=<br><br><b>|$)");
+                    while ($match.Success) {
+                        $value = $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;[", "<br>[") # ticket tags
+                        $value = $value.Replace("<br>&nbsp;&nbsp;&nbsp; ", "<br>")
+                        if ($value.StartsWith("<br>")) {
+                            $value = $value.Substring(4);
+                        }
+                        $msgParts += $value.Trim()
+                        $match = $match.NextMatch()
+                    }
 
-                $szFinalContents = $szContents
+                    $szContents = @()
+                    for ($i = 0; $i -lt $typeParts.Length; $i++)
+                    {
+                        $scope = ""
+                        $tickets = ""
+                        $subject = $typeParts[$i]
+                        $message = $msgParts[$i];
+                        if ($typeParts[$i].Contains(":")) {
+                            $subject = $typeParts[$i].Substring(0, $typeParts[$i].IndexOf(":")).Trim()
+                            $scope = $typeParts[$i].Substring($typeParts[$i].IndexOf(":") + 1).Trim()
+                        }
+                        $match = [Regex]::Match($msgParts[$i], "\[(&nbsp;| )*(closes|fixes|resolves|fix|close|refs|references|ref|reference){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]");
+                        while ($match.Success) {
+                            $tickets = $match.Value
+                            $tickets = $match.Value.Replace("[", "").Replace("]", "").Trim()
+                            $TextInfo = (Get-Culture).TextInfo
+                            $tickets = $TextInfo.ToTitleCase($tickets.Replace("&nbsp;", " "))
+                            $message = $message.Replace("<br><br>" + $match.Value, "")
+                            $message = $message.Replace("<br>" + $match.Value, "").Trim()
+                            $message = $message.Replace("&nbsp;&nbsp;" + $match.Value, "").Trim()
+                            $message = $message.Replace("&nbsp;" + $match.Value, "").Trim()
+                            $message = $message.Replace(" " + $match.Value, "").Trim()
+                            $message = $message.Replace($match.Value, "").Trim()
+                            $match = $match.NextMatch()
+                        }
+                        $obj = @{
+                            "subject" = $subject
+                            "scope" = $scope
+                            "message" = $message
+                            "tickets" = $tickets
+                        }
+                        $szContents += $obj
+                    }
+                }
+
+               return $szContents
             }
+
             #
             # Reverse versions, display newest at top if more than 1 section
             #
@@ -797,7 +860,7 @@ class HistoryFile
 
         Log-Message "   Successful" "darkgreen"
 
-        return $szFinalContents
+        return @($szFinalContents)
     }
 }
 
@@ -892,7 +955,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to html"
-        $EMAILBODY = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $HISTORYFILE, $null, $targetloc, $npmloc, $nugetloc, $MANTISBTRELEASE, $MANTISBTURL);
+        $EMAILBODY = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $HISTORYFILE, $null, $targetloc, $npmloc, $nugetloc, $MANTISBTRELEASE, $MANTISBTURL)[0];
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
@@ -2827,12 +2890,12 @@ if ($_RepoType -ne "git" -and $_RepoType -ne "svn")
 #
 if ([string]::IsNullOrEmpty($BRANCH)) 
 {
-    if ($_Repo -eq "git") 
+    if ($_RepoType -eq "git") 
     {
         Log-Message "Setting branch name to default 'master'" "darkyellow"
         $BRANCH = "master"
     }
-    elseif ($_Repo -eq "svn") 
+    elseif ($_RepoType -eq "svn") 
     {
         Log-Message "Setting branch name to default 'trunk'" "darkyellow"
         $BRANCH = "trunk"
@@ -2893,10 +2956,10 @@ if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($PATHTOM
 # Ensure version control directory exists
 # $_Repo is either git or svn
 #
-if ([string]::IsNullOrEmpty($PATHPREROOT) -and !(Test-Path(".$_Repo")))
+if ([string]::IsNullOrEmpty($PATHPREROOT) -and !(Test-Path(".$_RepoType")))
 {
-    Log-Message "The .$_Repo directory was not found" "red"
-    Log-Message "Set pathToPreRoot or ensure a branch (i.e. trunk) is the root directory" "red"
+    Log-Message "The .$_RepoType directory was not found" "red"
+    Log-Message "Set pathToPreRoot, or ensure a branch (i.e. trunk) is the root directory" "red"
     exit 1
 }
 
@@ -2988,6 +3051,7 @@ if (![string]::IsNullOrEmpty($MANTISBTRELEASE)) {
         if ([string]::IsNullOrEmpty(${Env:MANTISBT_API_TOKEN})) {
             Log-Message "You must have MANTISBT_API_TOKEN defined in the environment for a MantisBT release type" "red"
             Log-Message "Set the environment variable MANTISBT_API_TOKEN using the token value created on the MantisBT website" "red"
+            Log-Message "To create a token, see the `"Tokens`" section of your Mantis User Preferences page" "red"
             exit 1
         }
     }
@@ -4381,15 +4445,69 @@ if ($MANTISBTRELEASE -eq "Y")
     #
     $NotesIsMarkdown = 0
     $MantisChangelog = ""
+    $MantisChangeLogParts = @()
+
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
-        Log-Message "   Converting history text to html"
-        $MantisChangelog = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $true, $HISTORYFILE, "", "", "", "", $MANTISBTRELEASE, $MANTISBTURL);
+        Log-Message "   Converting history text to mantisbt release changelog html"
+        $MantisChangelog = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $true, $HISTORYFILE, "", "", "", "", $MANTISBTRELEASE, $MANTISBTURL)[0];
+        write-host $MantisChangelog
+        $MantisChangeLogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", $MANTISBTRELEASE, $MANTISBTURL);
+        $MantisChangelog = "<span class=`"changelog-table`"><table style=`"display:inline`">"
+        foreach ($commit in $MantisChangeLogParts)
+        {
+            $MantisChangelog += "<tr><td nowrap valign=`"top`" style=`"font-weight:bold;color:#5090c1`">"
+            if ($commit.subject.Contains("Bug")) {
+                $MantisChangelog += "<i class=`"fa fa-bug`"></i> ";
+            }
+            elseif ($commit.subject.Contains("Feature")) {
+                $MantisChangelog += "<i class=`"fa fa-plus`"></i> ";
+            }
+            elseif ($commit.subject.Contains("Refactor")) {
+                $MantisChangelog += "<i class=`"fa fa-recycle`"></i> ";
+            }
+            elseif ($commit.subject.Contains("Visual")) {
+                $MantisChangelog += "<i class=`"fa fa-eye`"></i> ";
+            }
+            elseif ($commit.subject.Contains("Documentation")) {
+                $MantisChangelog += "<i class=`"fa fa-book`"></i> ";
+            }
+            elseif ($commit.subject.Contains("Progress")) {
+                $MantisChangelog += "<i class=`"fa fa-tasks`"></i> ";
+            }
+            elseif ($commit.subject.Contains("Build")) {
+                $MantisChangelog += "<i class=`"fa fa-cog`"></i> ";
+            }
+            else {
+                $MantisChangelog += "<i class=`"fa fa-asterisk`"></i> ";
+            }
+            $MantisChangelog += "</td><td nowrap valign=`"top`" style=`"font-weight:bold;padding-left:3px`">"
+            $MantisChangelog += $commit.subject
+            if (![string]::IsNullOrEmpty($commit.scope)) {
+                $MantisChangelog += "</td><td nowrap valign=`"top`" style=`"padding-left:10px`">"
+                $MantisChangelog += $commit.scope
+            }
+            else {
+                $MantisChangelog += "</td><td>"
+            }
+            $MantisChangelog += "</td><td style=`"padding-left:15px`">"
+            $MantisChangelog += $commit.message
+            if (![string]::IsNullOrEmpty($commit.tickets)) {
+                $MantisChangelog += "</td><td nowrap align=`"right`" valign=`"top`" style=`"padding-left:15px`">"
+                $MantisChangelog += $commit.tickets
+            }
+            else {
+                $MantisChangelog += "</td><td>"
+            }
+            $MantisChangelog += "</td></tr>"
+        }
+        $MantisChangelog += "</table></span>"
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
         $NotesIsMarkdown = 1
         $MantisChangelog = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE);
+        # TODO - $MantisChangeLogParts
         #$MantisChangelog = & app-publisher-marked -f $MantisChangelog
     }
 
