@@ -4490,10 +4490,10 @@ if ($MANTISBTRELEASE -eq "Y")
             else {
                 $MantisChangelog += "</td><td>"
             }
-            $MantisChangelog += "</td><td width=`"100%`" style=`"padding-left:15px;padding-right:10px`">"
+            $MantisChangelog += "</td><td width=`"100%`" style=`"padding-left:15px`">"
             $MantisChangelog += $commit.message
             if (![string]::IsNullOrEmpty($commit.tickets)) {
-                $MantisChangelog += "</td><td nowrap align=`"right`" valign=`"top`" style=`"padding-left:15px`">"
+                $MantisChangelog += "</td><td nowrap align=`"right`" valign=`"top`" style=`"padding-left:15px;padding-right:10px`">"
                 $MantisChangelog += $commit.tickets
             }
             else {
