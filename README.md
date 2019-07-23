@@ -1,4 +1,4 @@
-# App Publisher
+# App Publisher - Release Automation
 
 [![perry-johnson](https://img.shields.io/badge/perry%20johnson-pja%20pjr-blue.svg)](https://www.perryjohnson.com)
 [![app-type](https://img.shields.io/badge/category-release-blue.svg)](https://www.perryjohnson.com)
@@ -6,19 +6,14 @@
 [![app-publisher](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-app--publisher-e10000.svg)](https://www.perryjohnson.com)
 [![authors](https://img.shields.io/badge/authors-scott%20meesseman-6F02B5.svg?logo=visual%20studio%20code)](https://www.perryjohnson.com)
 
-## Description
-
-> This package provides a semantic version style release mechanism as an option to the popular semantic-release modules.
-
 ## Table of Contents
 
-- [App Publisher](#App-Publisher)
-  - [Description](#Description)
+- [App Publisher - Release Automation](#App-Publisher---Release-Automation)
   - [Table of Contents](#Table-of-Contents)
-  - [The Publishing Run](#The-Publishing-Run)
+  - [Description](#Description)
   - [Installation](#Installation)
   - [Usage](#Usage)
-    - [Commit Messages](#Commit-Messages)
+  - [Commit Messages](#Commit-Messages)
     - [Usage - Configuration File](#Usage---Configuration-File)
     - [Usage - Configuration File Parameters](#Usage---Configuration-File-Parameters)
       - [projectName](#projectName)
@@ -56,7 +51,9 @@
   - [NPM Token](#NPM-Token)
   - [Windows Installer](#Windows-Installer)
 
-## The Publishing Run
+## Description
+
+This package provides a semantic version style release mechanism as an option to the popular semantic-release modules.
 
 The steps performed during an app-publisher run are:
 
@@ -92,7 +89,19 @@ After the port to JS, this no longer be required.
 
 ## Usage
 
-### Commit Messages
+App-Publisher can be run from the command line or in Visual Studio Code using the [Task Explorer](https://marketplace.visualstudio.com/items?itemName=spmeesseman.vscode-taskexplorer) Extension.  The Task Explorer extension will automatically detect .publishrc.json files in a project, and display the tasks within an app-publisher node.
+
+From the command line, the following command can be executed:
+
+    cd project_root
+    node app-publisher -p ps --no-ci
+
+A dry run can also be performed with the --dry-run option:
+
+    cd project_root
+    node app-publisher -p ps --no-ci --dry-run
+
+## Commit Messages
 
 See the PJ standards [here](https://app1.development.pjats.com/doc/developernotes.md#Commit-Messages).  See the GitHub standards [here](https://gist.github.com/stephenparish/9941e89d80e2bc58a153).
 
