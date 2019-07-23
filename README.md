@@ -20,8 +20,40 @@
   - [Usage](#Usage)
     - [Commit Messages](#Commit-Messages)
     - [Usage - Configuration File](#Usage---Configuration-File)
-    - [Usage - Configuration Parameter Details](#Usage---Configuration-Parameter-Details)
-  - [NPM](#NPM)
+    - [Usage - Configuration File Parameters](#Usage---Configuration-File-Parameters)
+      - [projectName](#projectName)
+      - [buildCommand](#buildCommand)
+      - [emailNotification](#emailNotification)
+      - [emailServer](#emailServer)
+      - [emailRecip](#emailRecip)
+      - [emailSender](#emailSender)
+      - [emailMode](#emailMode)
+      - [deployCommand](#deployCommand)
+      - [installerRelease](#installerRelease)
+      - [installerScript](#installerScript)
+      - [installerSkipBuild](#installerSkipBuild)
+      - [installerExDist](#installerExDist)
+      - [interactive](#interactive)
+      - [historyFile](#historyFile)
+      - [historyLineLen](#historyLineLen)
+      - [historyHdrFile](#historyHdrFile)
+      - [mantisbtRelease](#mantisbtRelease)
+      - [npmRelease](#npmRelease)
+      - [npmScope](#npmScope)
+      - [nugetRelease](#nugetRelease)
+      - [pathToRoot](#pathToRoot)
+      - [pathToMainRoot](#pathToMainRoot)
+      - [pathToDist](#pathToDist)
+      - [pathPreRoot](#pathPreRoot)
+      - [postBuildCommand](#postBuildCommand)
+      - [skipDeployPush](#skipDeployPush)
+      - [svnRepo](#svnRepo)
+      - [svnProjectName](#svnProjectName)
+      - [dryRun](#dryRun)
+      - [versionText](#versionText)
+      - [writeLog](#writeLog)
+  - [MantisBT Token](#MantisBT-Token)
+  - [NPM Token](#NPM-Token)
   - [Windows Installer](#Windows-Installer)
 
 ## The Publishing Run
@@ -80,11 +112,13 @@ The "subject" should be one of the following:
 - docs
 - feat
 - featmin
+- featmaj
 - fix
 - perf
 - project
 - refactor
 - style
+- visual
 
 The "scope" can be anything specific to the commit change, for example:
 
@@ -102,7 +136,7 @@ The "footer" should give a detailed explanation of what the change fixes, or how
 
 To reference issues from commit messages, use the "refs", "fixes", or "closes" tag anywhere in the commit message, for example:
 
-    fix(usermanagement): the "add user" button doesnt work when selecting the option "clerk"
+    fix(User Management): the "add user" button doesnt work when selecting the option "clerk"
 
     A typo was preventing the end user from being able to create a clerk type user.
 
@@ -112,7 +146,7 @@ To reference issues from commit messages, use the "refs", "fixes", or "closes" t
 
 Including the [fixes #142] (or [closes #142]) tag in the footer will link the issue to the commit, auto-close the issue, remove any relevant tags from the issue, and add the "fixed" tag to the closed issue.
 
-    feat(jobsearch): add support for the "modify status" action
+    feat(Job Administration): add support for the "modify status" action
 
     The action "Modify Status" in the Search Results tabs of Job Administration is now functional.
 
@@ -149,14 +183,15 @@ An example .publishrc.json file:
         ],
         "changelogFile":     "CHANGELOG.md",
         "deployCommand":     "",
-        "distRelease":       "N",
+        "distRelease":       "Y",
         "distReleasePath":   "\\\\network_machine\\share_name\\releases",
         "distDocPath":       "",
         "dryRunVcRevert":    "Y",
-        "emailNotification": "N",
-        "emailServer":       "10.0.7.50",
+        "emailNotification": "Y",
+        "emailServer":       "smtp.domain.com",
         "emailRecip":        "release@domain.com",
         "emailSender":       "build@domain.com",
+        "emailMode":         "",
         "githubRelease":     "Y",
         "githubAssets": [
             "install\\dist\\app-publisher.tgz",
@@ -200,79 +235,125 @@ An example .publishrc.json file:
         "writeLog":          "N"
     }
 
-### Usage - Configuration Parameter Details
+### Usage - Configuration File Parameters
 
-Author publishing package
+#### projectName
 
-    author: "${UserName}"
+Name of the project.  This must macth the version control repository project name.
+
+#### buildCommand
 
 The build command to run once versions have been updated in version files (i.e. package.json,history.txt, assemblyinfo.cs, etc)
 
-    buildCommand: []
+#### emailNotification
 
-Name of the project.  This must macth throughout the build files and the SVN project name
+    Default:  "emailNotification": "N"
 
-    projectName: ""
+#### emailServer
+
+#### emailRecip
+
+#### emailSender
+
+#### emailMode
+
+#### deployCommand
 
 Deploy commands
 
-    deployCommand: @()
+    Default: "deployCommand": []
+
+#### installerRelease
 
 To build the installer release, set this flag to "Y"
 
-    installeRelease: "N"
+    Default:  "installerRelease": "N"
+
+#### installerScript
 
 The location of the installer build script, this can be a relative to PATHTOROOT or a full path. Note this parameter applies only to INSTALLRELEASE="Y"
 
     installerScript: ""
 
+#### installerSkipBuild
+
 Set to Y if a custom specified build command builds the installer
 
-    installerSkipBuild: "N"
+    Default:  "installerSkipBuild": "N"
+
+#### installerExDist
 
 Use the contents of the PATHTODIST directory for the release files, dont build an
 installer.
 
-    installerExDist: "N"
+    Default:  "installerExDist": "N"
+
+#### interactive
 
 Interactive (prompts for version after extracting what we think should be the next version)
 
-    interactive: "N"
+    Default:  "interactive": "N"
+
+#### historyFile
 
 The location of this history file, can be a relative or full path.
 
     historyFile: "doc\history.txt"
 
+#### historyLineLen
+
 The max line length of the history file.
 
     historyLineLen: 80
+
+#### historyHdrFile
 
 The location of this history header file, can be a relative or full path.
 
     historyHdrFile: "install\history-hdr.txt",
 
-    notepadEdits: "Y"
+#### mantisbtRelease
+
+To perform a MantisBT release, set this paremeter to `Y` in .publishrc.json:
+
+    "mantisbtRelease": "Y"
+
+Note that the `Releases` plugin must be installed on the MantisBT instance to perform a Mantis Release.
+
+See the [MantisBT Token](#MantisBT-Token) section for additional information on performing a MantisBT release.
+
+#### npmRelease
 
 To build the npm release, set this flag to "Y"
 
     npmRelease: "N"
 
+#### npmScope
+
 The scope of the npm package, empty if none
 
     npmScope: ""
 
+#### nugetRelease
+
 To build the nuget release, set this flag to "Y"
 
     nugetRelease: "N"
+
+#### pathToRoot
 
 It is assumed that installer build files are in PATHTOROOT\install.  It is also assumed that the legacy CreateInstall.xml and Deploy.xml files are located in PATHTOROOT\install.  A relative or full path that will equate to the project root as seen from the  script's location.  For example, if this script is in PROJECTDIR\script, then the rel path to root would be "..".  If the script is in PROJECTDIR\install\script, then the rel path to root would be "..\\.."
 The value should be relative to the script dir, dont use a full path as this will not share across users well keeping project files in different directories
 
     pathToRoot: ".",
 
+#### pathToMainRoot
+
 This in most cases sould be an empty string if the project is the 'main' project.  If a sub-project exists within a main project in SVN, then this needs to be set to the relative directory to the main project root, as seen from the sub-project root.  Note this should be where the '.svn' folder resides.
 
     pathToMainRoot: ""
+
+#### pathToDist
 
 Path to DIST should be relative to PATHTOROOT
 
@@ -288,17 +369,25 @@ For example, the following project contains a layout with 3 separate projects 'f
             svr
             ui
 
+#### pathPreRoot
+
 The main project root is app-publisher.  In the case of each of these projects, SVNPREPATH should be set to app\fpc, app\ui, or app\svr, for each specific sub-project.  This mainly is be used for SVN commands which need to be ran in the directory containing the .svn folder.
 
     pathPreRoot: ""
+
+#### postBuildCommand
 
 The build command to run once versions have been updated in version files (i.e. package.json, history.txt, assemblyinfo.cs, etc)
 
     postBuildCommand: @()
 
+#### skipDeployPush
+
 Skip uploading installer to network release folder (primarily used for releasing from hom office where two datacenters cannot be reached at the same time, in this case the installer files are manually copied)
 
     skipDeployPush: "Y"
+
+#### svnRepo
 
 The svn server address, can be domain name or IP
 
@@ -310,6 +399,8 @@ The SVN repository.  It should be one of the following:
 - pjr
 
     svnRepo: "pja"
+
+#### svnProjectName
 
 The SVN project name if different than projectName:
 
@@ -326,7 +417,9 @@ Whether or not to tag the new version in SVN.  Default is Yes.
 
     svnTag: "Y",
 
-Test mode - Y for 'yes', N for 'no'.  In test mode, the following holds:
+#### dryRun
+
+Dry Run (Test mode) - Y for 'yes', N for 'no'.  In test mode, the following holds:
 
 - Installer is not released/published
 - Email notification will be sent only to TESTEMAILRECIP
@@ -339,6 +432,8 @@ Some local files may be changed in test mode (i.e. updated version numbers in bu
     testModeSvnRevert: "Y",
     testEmailRecip: "smeesseman@pjats.com",
 
+#### versionText
+
 The text tag to use in the history file for preceding the version number.  It should be one of the following:
 
 - Version
@@ -347,20 +442,38 @@ The text tag to use in the history file for preceding the version number.  It sh
 
     versionText: "Version",
 
+#### writeLog
+
 Whether or not to write stdout to log file.  Default is Yes
 
     writeLog: "N"
 
-## NPM
+## MantisBT Token
+
+A MantsBT release requires the MANTISBT_API_TOKEN to be set in the system environment.  To create a MantisBT token, perform the following steps:
+
+1. Log into the MantisBT website
+2. Go to User Preferences
+3. Select the `Tokens` tab
+4. Name the token `RESTAPI`
+5. Click `Create`.
+6. Copy the displayed token
+7. Create a system environment variable named `MANTISBT_API_TOKEN`, where the token is it's value.
+
+## NPM Token
+
+An NPM release requires the PJ_NPM_TOKEN or NPM_TOKEN to be set in the system environment.  To create a PJ NPM token, perform the following steps:
 
 To create an npm user if you dont have one, run the following command and follow the prompts:
 
     $ npm adduser --registry=npm.development.pjats.com --scope=@perryjohnson
 
-Locate the file USERDIR/.npmrc, copy the created token from within the file to the environment variable PJ_NPM_TOKEN
+Locate the file c:/Users/username/.npmrc (on Windows 10), copy the created token for npm.development.pjats.com from within the file to the environment variable PJ_NPM_TOKEN
 
-The project file .npmrc will be used by npm when publishing packages, it reads the NPM environment variables as well.
+For more details, see the [Internal NPM Registry](https://app1.development.pjats.com/doc/developernotes.md#Internal-NPM-Registry) section of the Perry Johnson Developer Notes document.
 
 ## Windows Installer
+
+App Publisher can be installed globally using `npm install -g app-publisher` or a Windows Installer (as of 5/14/19 WIndows Installer support has been removed).
 
 [Download the Windows Installer](file://///192.168.68.120/d$/softwareimages/app-publisher/1.2.1/app-publisher.exe)
