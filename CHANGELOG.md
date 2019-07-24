@@ -1,5 +1,15 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.8.1 (July 24th, 2019)
+
+### Documentation
+
+- **readme:** update info
+
+### Bug Fixes
+
+- If a history file entry is line broken, and the beginning word of the new line does not start with an alphanumeric character, the text for that entry is not properly formatted in the changelog sent to the MantisBT Releases page API.
+
 ## Version 1.8.0 (July 21st, 2019)
 
 ### Features
