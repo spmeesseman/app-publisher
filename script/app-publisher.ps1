@@ -673,9 +673,6 @@ class HistoryFile
                 $szFinalContents = "<b>$project $stringver $version has been released.</b><br><br>"
                     
                 if ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl)) {
-                    if ($mantisUrl.EndsWith("/")) {
-                        $mantisUrl = $mantisUrl.Substring(0, $mantisUrl.Length - 1);
-                    }
                     $szFinalContents += "Release Page: $mantisUrl/set_project.php?project=$project&make_default=no&ref=plugin.php%3Fpage=Releases%2Freleases<br><br>"
                 }
 
@@ -696,8 +693,11 @@ class HistoryFile
                 #
                 # Installer release, write unc path to history file
                 #
-                if (!$targetloc.Contains("http://") -and !$targetloc.Contains("https://")) {
+                if (![string]::IsNullOrEmpty($targetloc) -and !$targetloc.Contains("http://") -and !$targetloc.Contains("https://")) {
                     $szFinalContents += "Complete History: $targetloc\history.txt<br><br>"
+                }
+                elseif ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl)) {
+                    $szFinalContents += "Complete History: $mantisUrl/set_project.php?project=$project&make_default=no&ref=plugin.php%3Fpage=Releases%2Freleases<br><br>"
                 }
 
                 $szFinalContents += "Most Recent History File Entry:<br><br>";
@@ -990,18 +990,18 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     #
     # Attach app-publisher signature to body
     #
-    $EMAILBODY += "<br><br><font style=`"font-size:8px;font-weight:bold`">";
-    $EMAILBODY += "This automated email was generated and sent by <i>app-publisher</i>"
-    $EMAILBODY += "<br>Do not respond to this address</font><br>";
+    $EMAILBODY += "<br><table>tr><td valign=`"middle`"><font style=`"font-size:12px;font-weight:bold`">";
+    $EMAILBODY += "This automated email notification was generated and sent by </font></td><td>";
+    $EMAILBODY += "<img src=`"https://pjaproduction-sb.pjats.com/resources/images/app-publisher.png`" height=`"16`">"
+    $EMAILBODY += "</td><td valign=`"middle`"><font style=`"color:#0000AA;font-size:12px;font-weight:bold`"> "
+    $EMAILBODY += "<i>app-publisher</i></font></td></tr></table>"
+    $EMAILBODY += "<br><font style=`"font-size:10px;font-weight:bold`">Do not respond to this email address</font><br>";
 
     Log-Message "Sending release notification email"
     try 
     {
         $ProjectNameFmt = $PROJECTNAME.Replace("-", " ")
-        $TextInfo = (Get-Culture).TextInfo
-        $ProjectNameFmt = $TextInfo.ToTitleCase($ProjectNameFmt)
         $Subject = "$ProjectNameFmt $VERSIONTEXT $VERSION"
-
         if ($DRYRUN -eq $false) 
         {
             if (![string]::IsNullOrEmpty($EMAILRECIP) -and $EMAILRECIP.Contains("@") -and $EMAILRECIP.Contains(".")) 
@@ -2687,6 +2687,9 @@ if ($options.mantisbtProject) {
 $MANTISBTURL = ""
 if ($options.mantisbtUrl) {
     $MANTISBTURL = $options.mantisbtUrl
+    if ($MANTISBTURL.EndsWith("/")) {
+        $MANTISBTURL = $MANTISBTURL.Substring(0, $MANTISBTURL.Length - 1);
+    }
 }
 #
 #
@@ -2840,6 +2843,17 @@ if ($options.tagFormat) {
 #
 # Whether or not to tag the new version in SVN.  Default is Yes.
 #
+$VCFILES = @()
+if ($options.vcFiles) {
+    $VCFILES = $options.vcFiles
+    if ($VCFILES -is [system.string] -and ![string]::IsNullOrEmpty($VCFILES))
+    {
+        $VCFILES = @($VCFILES); #convert to array
+    }
+}
+#
+# Whether or not to tag the new version in SVN.  Default is Yes.
+#
 $VERSIONFILES = @()
 if ($options.versionFiles) {
     $VERSIONFILES = $options.versionFiles
@@ -2879,6 +2893,32 @@ $VCCHANGELIST = ""
 $VCCHANGELISTADD = ""
 $VCCHANGELISTRMV = ""
 $VCCHANGELISTMLT = ""
+#
+# Add any user defined files from config publishrc
+#
+if ($VCFILES.Length -gt 0)
+{
+    foreach ($File in $VCFILES) 
+    {
+        if (Test-Path($File)) 
+        {
+            $VcFile = $File
+            #
+            # If pathPreRoot is set, then prepend the named file with the preroot path
+            # This is used since the final commit is run from the directory containing the .svn/.git dir
+            #
+            if (![string]::IsNullOrEmpty($PATHPREROOT)) {
+                $VcFile = Join-Path -Path "$PATHPREROOT" -ChildPath "$File"
+            }
+            $VCCHANGELIST = "$VCCHANGELIST `"$VcFile`""
+        }
+        else {
+            Log-Message "Specified file $File for version control addition does not exist" "red"
+            exit 1
+        }
+    }
+}
+
 #
 # A flag to set if the build commands are run, which technically could happen up
 # to 3 times if distRelease, npmRelease, and nugetRelease command line
@@ -4821,9 +4861,6 @@ if ($MANTISBTRELEASE -eq "Y")
     #
     # Send the REST POST to create the release w/ assets
     #
-    if ($MANTISBTURL.EndsWith("/")) {
-        $MANTISBTURL = $MANTISBTURL.Substring(0, $MANTISBTURL.Length - 1);
-    }
     $url = "$MANTISBTURL/plugins/Releases/api/releases/$MANTISBTPROJECT"
     Log-Message "Sending Add-Release REST request to $url"
     $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
