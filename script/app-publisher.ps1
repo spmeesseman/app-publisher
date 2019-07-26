@@ -990,7 +990,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     #
     # Attach app-publisher signature to body
     #
-    $EMAILBODY += "<br><table>tr><td valign=`"middle`"><font style=`"font-size:12px;font-weight:bold`">";
+    $EMAILBODY += "<br><table><tr><td valign=`"middle`"><font style=`"font-size:12px;font-weight:bold`">";
     $EMAILBODY += "This automated email notification was generated and sent by </font></td><td>";
     $EMAILBODY += "<img src=`"https://pjaproduction-sb.pjats.com/resources/images/app-publisher.png`" height=`"16`">"
     $EMAILBODY += "</td><td valign=`"middle`"><font style=`"color:#0000AA;font-size:12px;font-weight:bold`"> "
