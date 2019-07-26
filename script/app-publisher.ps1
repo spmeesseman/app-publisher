@@ -987,6 +987,13 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
         return
     }
 
+    #
+    # Attach app-publisher signature to body
+    #
+    $EMAILBODY += "<br><br><font style=`"size:8px;font-weight:bold`">";
+    $EMAILBODY += "This automated email was generated and sent by <i>app-publisher</i>"
+    $EMAILBODY += "<br>Do not respond to this address</font><br>";
+
     Log-Message "Sending release notification email"
     try 
     {
