@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.9.0 (July 26th, 2019)
+
+### Features
+
+- add support for mantibt plugin releases
+
 ## Version 1.8.1 (July 24th, 2019)
 
 ### Documentation

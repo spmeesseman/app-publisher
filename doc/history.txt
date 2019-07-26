@@ -1564,3 +1564,28 @@ July 24th, 2019
     line does not start with an alphanumeric character, the text for that entry
     is not properly formatted in the changelog sent to the MantisBT Releases API.
 
+
+Version 1.9.0
+July 26th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+
+    Add support for MantisBT Plugin type releases.
+
