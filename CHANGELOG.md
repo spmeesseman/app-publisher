@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.10.1 (July 26th, 2019)
+
+### Bug Fixes
+
+- the email notification signature line is misaligned and displays a broken html tag.
+
 ## Version 1.10.0 (July 26th, 2019)
 
 ### Features

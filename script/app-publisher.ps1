@@ -993,9 +993,9 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     $EMAILBODY += "<br><table><tr><td valign=`"middle`"><font style=`"font-size:12px;font-weight:bold`">";
     $EMAILBODY += "This automated email notification was generated and sent by </font></td><td>";
     $EMAILBODY += "<img src=`"https://pjaproduction-sb.pjats.com/resources/images/app-publisher.png`" height=`"16`">"
-    $EMAILBODY += "</td><td valign=`"middle`"><font style=`"color:#0000AA;font-size:12px;font-weight:bold`"> "
-    $EMAILBODY += "<i>app-publisher</i></font></td></tr></table>"
-    $EMAILBODY += "<br><font style=`"font-size:10px;font-weight:bold`">Do not respond to this email address</font><br>";
+    $EMAILBODY += "</td><td valign=`"middle`"><font style=`"color:#0000AA;font-size:12px;font-weight:bold`">"
+    $EMAILBODY += "<i>app-publisher</i></font></td></tr><tr><td valign=`"middle`" colspan=`"3`">"
+    $EMAILBODY += "<font style=`"font-size:10px;font-weight:bold`">Do not respond to this email address</font></td></tr></table>";
 
     Log-Message "Sending release notification email"
     try 
