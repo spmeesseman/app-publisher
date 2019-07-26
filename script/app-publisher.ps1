@@ -990,7 +990,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     #
     # Attach app-publisher signature to body
     #
-    $EMAILBODY += "<br><br><font style=`"size:8px;font-weight:bold`">";
+    $EMAILBODY += "<br><br><font style=`"font-size:8px;font-weight:bold`">";
     $EMAILBODY += "This automated email was generated and sent by <i>app-publisher</i>"
     $EMAILBODY += "<br>Do not respond to this address</font><br>";
 
