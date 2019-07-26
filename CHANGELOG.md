@@ -1,5 +1,21 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.10.0 (July 26th, 2019)
+
+### Features
+
+- Add support for specifying files to check in to version control that are not touched by the publish run.
+
+	The publishrc config value 'vcFiles' can be used to specify an array of files that are to be checked in addition to the files that have been touched by the publish run before the version tag is made.  For example:
+
+	    "vcFiles": [ "script\update.sh", "script\update.bat" ]
+
+[closes #214]
+
+### Bug Fixes
+
+- The history file path is invalid in the email notification for publish runs that have the 'distRelease' flag set to 'N'.  [fixes #215]
+
 ## Version 1.9.1 (July 26th, 2019)
 
 ### Code Refactoring
