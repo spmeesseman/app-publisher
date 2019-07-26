@@ -1001,6 +1001,14 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     try 
     {
         $ProjectNameFmt = $PROJECTNAME.Replace("-", " ")
+        #
+        # If all lower case project name, then title case the project name
+        #
+        if ($ProjectNameFmt -cmatch "^[a-z]*$")
+        {
+            $TextInfo = (Get-Culture).TextInfo
+            $ProjectNameFmt = $TextInfo.ToTitleCase($ProjectNameFmt)
+        }
         $Subject = "$ProjectNameFmt $VERSIONTEXT $VERSION"
         if ($DRYRUN -eq $false) 
         {
