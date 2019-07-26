@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.9.1 (July 26th, 2019)
+
+### Code Refactoring
+
+- add app-publisher signature to bottom of release emails and note stating not to reply to the automated email.
+
 ## Version 1.9.0 (July 26th, 2019)
 
 ### Features
