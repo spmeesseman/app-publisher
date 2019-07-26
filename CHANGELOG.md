@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.10.2 (July 26th, 2019)
+
+### Code Refactoring
+
+- enhance email notification signature line
+
 ## Version 1.10.1 (July 26th, 2019)
 
 ### Bug Fixes
