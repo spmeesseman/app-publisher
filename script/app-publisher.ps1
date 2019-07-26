@@ -330,7 +330,7 @@ class HistoryFile
         return $comments
     }
 
-    [string]getChangelog($project, $version, $numsections, $stringver, $in)
+    [string]getChangelog($project, $version, $numsections, $stringver, $in, $includeVersionHdr)
     {
         $szInputFile = $in;
         $szNumSections = $numsections;
@@ -383,6 +383,7 @@ class HistoryFile
         # Read in contents of file
         #
         $szContents = Get-Content $szInputFile | Out-String
+
         #
         # Initialize parsing variables
         #
@@ -403,8 +404,14 @@ class HistoryFile
             #
             if ($iIndex1 -eq -1)
             {
-                Log-Message "   Last section could not be found (0), exit" "red"
-                exit 162
+                if ($iSectionsFound -eq 0) {
+                    Log-Message "   Last section could not be found (0), exit" "red"
+                    exit 162
+                }
+                else { # eof
+                    $iIndex1 = $szContents.Length - 1;
+                    break;
+                }
             }
             
             if ($szContents[$iIndex1 - 2] -ne "#")
@@ -477,6 +484,11 @@ class HistoryFile
 
         Log-Message "   Found version section(s)"
         $szContents = $szContents.Substring(0, $iIndex1)
+
+        if ($includeVersionHdr -eq $false)
+        {
+            $szContents = $szContents.Substring($szContents.IndexOf("###"))
+        }
 
         Log-Message "   Successful" "darkgreen"
 
@@ -963,9 +975,12 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
         #
         # Use marked module for conversion
         #
-        $EMAILBODY = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE);
-        $EMAILBODY = & app-publisher-marked -f $EMAILBODY
+        $EMAILBODY = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, $true);
+        $EMAILBODY = $EMAILBODY.Replace("`r`n", "`n")
+        New-Item -ItemType "file" -Path "${Env:Temp}\changelog.md" -Value "$EMAILBODY" | Out-Null
+        $EMAILBODY = & marked --breaks --gfm --file "${Env:Temp}\changelog.md"
         Check-ExitCode
+        Remove-Item -Path "${Env:Temp}\changelog.md"
     }
     else {
         Log-Message "   Notification could not be sent, history file not specified" "red"
@@ -1457,6 +1472,26 @@ function Prepare-DotNetBuild($AssemblyInfoLocation)
 }
 
 
+function Prepare-MantisPluginBuild()
+{
+    if (![string]::IsNullOrEmpty($MANTISBTPLUGIN))
+    {
+        if (Test-Path($MANTISBTPLUGIN))
+        {
+            #
+            # Replace version in defined main mantisbt plugin file
+            #
+            Replace-Version $MANTISBTPLUGIN "this->version[ ]*[=][ ]*[`"]$CURRENTVERSION" "this->version = `"$VERSION"
+            Replace-Version $MANTISBTPLUGIN "this->version[ ]*[=][ ]*[']$CURRENTVERSION" "this->version = '$VERSION"
+            #
+            # Allow manual modifications to assembly file
+            #
+            Edit-File $MANTISBTPLUGIN
+        }
+    }
+}
+
+
 function Get-AssemblyInfoVersion($AssemblyInfoLocation)
 {
     $AssemblyInfoVersion = ""
@@ -1464,12 +1499,13 @@ function Get-AssemblyInfoVersion($AssemblyInfoLocation)
     if (Test-Path($AssemblyInfoLocation))
     {
         $AssemblyInfoContent = Get-Content -Path $AssemblyInfoLocation -Raw
-        [Match] $match = [Regex]::Match($AssemblyInfoContent, "AssemblyVersion[ ]*[(][ ]*[`"][1-9.]*");
+        [Match] $match = [Regex]::Match($AssemblyInfoContent, "AssemblyVersion[ ]*[(][ ]*[`"][0-9]+[.]{1}[0-9]+[.]{1}[0-9]+");
         if ($match.Success) 
         {
             $AssemblyInfoVersion = $match.Value.Replace("AssemblyVersion", "")
-            $AssemblyInfoVersion = $match.Value.Replace(" ", "")
-            $AssemblyInfoVersion = $match.Value.Replace("(", "")
+            $AssemblyInfoVersion = $AssemblyInfoVersion.Replace(" ", "")
+            $AssemblyInfoVersion = $AssemblyInfoVersion.Replace("(", "")
+            $AssemblyInfoVersion = $AssemblyInfoVersion.Replace("`"", "")
             # Rid build number
             $AssemblyInfoVersion = $AssemblyInfoVersion.Substring(0, $AssemblyInfoVersion.LastIndexOf("."))
         }
@@ -1478,6 +1514,30 @@ function Get-AssemblyInfoVersion($AssemblyInfoLocation)
         Log-Message "Could not retrieve version, $AssemblyInfoLocation does not exist" "red"
     }
     return $AssemblyInfoVersion
+}
+
+
+function Get-MantisPluginVersion()
+{
+    $MantisVersion = ""
+    Log-Message "Retrieving MantisBT plugin version from $MANTISBTPLUGIN"
+    if (Test-Path($MANTISBTPLUGIN))
+    {
+        $PluginFileContent = Get-Content -Path $MANTISBTPLUGIN -Raw
+        [Match] $match = [Regex]::Match($PluginFileContent, "this->version[ ]*=[ ]*(`"|')[0-9]+.{1}[0-9]+.{1}[0-9]+");
+        if ($match.Success)
+        {
+            $MantisVersion = $match.Value.Replace("this->version", "")
+            $MantisVersion = $MantisVersion.Replace(" ", "")
+            $MantisVersion = $MantisVersion.Replace("=", "")
+            $MantisVersion = $MantisVersion.Replace("`"", "")
+            $MantisVersion = $MantisVersion.Replace("'", "")
+        }
+    }
+    else {
+        Log-Message "Could not retrieve version, $AssemblyInfoLocation does not exist" "red"
+    }
+    return $MantisVersion
 }
 
 
@@ -2596,6 +2656,13 @@ if ($options.textEditor) {
 #
 #
 #
+$MANTISBTPLUGIN = ""
+if ($options.mantisbtPlugin) {
+    $MANTISBTPLUGIN = $options.mantisbtPlugin
+}
+#
+#
+#
 $MANTISBTRELEASE = "N"
 if ($options.mantisbtRelease) {
     $MANTISBTRELEASE = $options.mantisbtRelease
@@ -3036,6 +3103,16 @@ if (![string]::IsNullOrEmpty($GITHUBRELEASE)) {
         }
     }
 }
+if (![string]::IsNullOrEmpty($MANTISBTPLUGIN)) {
+    if (!$MANTISBTPLUGIN.Contains((".php"))) {
+        Log-Message "Invalid value for mantisbtPlugin, file must have a php extension" "red"
+        exit 1
+    }
+    if (!(Test-Path($MANTISBTPLUGIN))) {
+        Log-Message "Invalid value for mantisbtPlugin, non-existent file specified" "red"
+        exit 1
+    }
+}
 if (![string]::IsNullOrEmpty($MANTISBTRELEASE)) {
     $MANTISBTRELEASE = $MANTISBTRELEASE.ToUpper()
     if ($MANTISBTRELEASE -ne "Y" -and $MANTISBTRELEASE -ne "N") {
@@ -3115,7 +3192,7 @@ if ($DISTRELEASE -eq "Y" -and [string]::IsNullOrEmpty($PATHTODIST)) {
 #
 # Write project specific properties
 #
-Log-Message "Project specific script configuration:"
+Log-Message "22Project specific script configuration:"
 Log-Message "   Project          : $PROJECTNAME"
 Log-Message "   Build cmd        : $BUILDCOMMAND"
 Log-Message "   Bugs Page        : $BUGS"
@@ -3132,8 +3209,9 @@ Log-Message "   History file line: $HISTORYLINELEN"
 Log-Message "   History hdr file : $HISTORYHDRFILE"
 Log-Message "   Home page        : $HOMEPAGE"
 Log-Message "   Interactive      : $INTERACTIVE"
+Log-Message "   MantisBT plugin  : $MANTISBTPLUGIN"
 Log-Message "   MantisBT release : $MANTISBTRELEASE"
-Log-Message "   MantisBT prj id  : $MANTISBTPROJECT"
+Log-Message "   MantisBT project : $MANTISBTPROJECT"
 Log-Message "   MantisBT url     : $MANTISBTURL"
 Log-Message "   MantisBT assets  : $MANTISBTASSETS"
 Log-Message "   NPM release      : $NPMRELEASE"
@@ -3193,6 +3271,9 @@ if ($CURRENTVERSION -eq "")
 {
     Log-Message "Retrieve current version and calculate next version number"
 
+    #
+    # NPM/PACKAGE.JSON
+    #
     if (Test-Path("node_modules"))
     {
         if (Test-Path("node_modules\semver"))
@@ -3216,6 +3297,25 @@ if ($CURRENTVERSION -eq "")
             exit 129
         }
     }
+    #
+    # MantisBT Plugin
+    # $MANTISBTPLUGIN specified the main class file, containing version #
+    #
+    elseif (![string]::IsNullOrEmpty($MANTISBTPLUGIN))
+    {
+        $CURRENTVERSION = Get-MantisPluginVersion
+        if (!$CURRENTVERSION.Contains(".")) 
+        {
+            Log-Message "MantisBT plugins must use semantic versioning" "red"
+            Log-Message "Invalid version found '$CURRENTVERSION'" "red"
+            Log-Message "Check you mantis plugin file for valid version syntax" "red"
+            exit 130
+        }
+        $VersionSystem = "mantisbt"
+    } 
+    #
+    # PJ History file
+    #
     elseif (![string]::IsNullOrEmpty($HISTORYFILE))
     {
         $CURRENTVERSION = $ClsHistoryFile.getVersion($HISTORYFILE, $VERSIONTEXT)
@@ -3231,6 +3331,9 @@ if ($CURRENTVERSION -eq "")
             Log-Message "Semver not found, run 'npm install -g semver' to automate semantic versioning of non-NPM projects" "darkyellow"
         }
     } 
+    #
+    # .NET with AssemblyInfo.cs file
+    #
     else 
     {
         $AssemblyInfoLoc = Get-ChildItem -Name -Recurse -Depth 1 -Filter "assemblyinfo.cs" -File -Path . -ErrorAction SilentlyContinue
@@ -3238,7 +3341,7 @@ if ($CURRENTVERSION -eq "")
         {
             $CURRENTVERSION = Get-AssemblyInfoVersion $AssemblyInfoLoc
             if (![string]::IsNullOrEmpty($CURRENTVERSION )) {
-                $VersionSystem = "semver"
+                $VersionSystem = ".net"
             }
             else {
                 Log-Message "The current version cannot be determined" "red"
@@ -3259,9 +3362,53 @@ if ($CURRENTVERSION -eq "")
     }
 }
 
-if ($CURRENTVERSION -eq "") {
-    Log-Message "Could not determine current version, correct issue and re-run publish" "red"
-    exit 131
+#
+# If version system is mantisbt or .net, then look fora global semver installation
+# to use for finding the next version number using semantic versioning module semver
+#
+if ($VersionSystem -eq ".net" -or $VersionSystem -eq "mantisbt")
+{
+    $Paths = ${Env::Path}.Split(";");
+    foreach ($Path in $Paths) 
+    {
+        if (Test-Path([Path]::Combine($Path, "node.exe")))
+        {
+            if (Test-Path([Path]::Combine($Path, "\node_modules\semver")))
+            {
+                $VersionSystem = "semver";
+            }
+        }
+    }
+}
+
+#
+# If current version was not found, then interactively get the current version, or exit with error
+#
+if ($CURRENTVERSION -eq "") 
+{
+    if ($INTERACTIVE) 
+    {
+        Log-Message "[PROMPT] User input required"
+        $CurVersion = read-host -prompt "Enter the current version #, or C to cancel [$CURRENTVERSION]"
+        if ($CurVersion.ToUpper() -eq "C") {
+            Log-Message "User cancelled process, exiting" "red"
+            exit 155
+        }
+        if (![string]::IsNullOrEmpty($CurVersion)) {
+            $CURRENTVERSION = $CurVersion
+        }
+        else {
+            Log-Message "Invalid current version, exiting" "red"
+            exit 133
+        }
+    
+        $VersionSystem = "manual";
+    }
+    else {
+        Log-Message "New version has been validated" "darkgreen"
+        Log-Message "Could not determine current version, correct issue and re-run publish" "red"
+        exit 131
+    }
 }
 
 #
@@ -3276,8 +3423,19 @@ if ($VersionSystem -eq "semver")
         exit 132
     }
 }
-else # incremental versioning
+elseif ($VersionSystem -eq '.net' -or $VersionSystem -eq 'mantisbt')
 {
+    Log-Message "MantisBT version has no validation method - todo" "darkyellow"
+    # TODO - Version should digits and two dots
+    #
+    if ($false) {
+        Log-Message "The current mantisbt version ($CURRENTVERSION) is invalid" "red"
+        exit 134
+    }
+}
+elseif ($VersionSystem -eq 'incremental')
+{
+    Log-Message "Incremental version has no validation method - todo" "darkyellow"
     # TODO - Version should contain all digits
     #
     if ($false) {
@@ -3363,6 +3521,11 @@ if ($RUN -eq 1 -or $DRYRUN -eq $true)
             $VERSION = $CURRENTVERSION
         }
     }
+    elseif ($VersionSystem -eq "mantisbt" -or $VersionSystem -eq '.net')
+    {
+        $VERSION = ""
+        $VersionInteractive = "Y"
+    }
     elseif ($VersionSystem -eq "incremental")
     {
         #
@@ -3382,18 +3545,18 @@ if ($RUN -eq 1 -or $DRYRUN -eq $true)
         }
     }
     #
-    # If version could not be found, then prompt for version 
+    # If version could not be found or version system is 'manual', then prompt for version 
     #
     if (![string]::IsNullOrEmpty($VERSION)) 
     {
         Log-Message "The suggested new version is $VERSION"
     }
-    else 
+    elseif ($VersionSystem -ne "manual" -and $VersionInteractive -eq "N")
     {
         Log-Message "New version could not be determined, you must manually input the new version"
         $VersionInteractive = "Y"
     }
-    if ($INTERACTIVE -eq "Y" -or $VersionInteractive -eq "Y") 
+    if ($VersionSystem -eq "manual" -or $INTERACTIVE -eq "Y" -or $VersionInteractive -eq "Y") 
     {
         Log-Message "[PROMPT] User input required"
         $NewVersion = read-host -prompt "Enter the version #, or C to cancel [$VERSION]"
@@ -3415,13 +3578,17 @@ if ($RUN -eq 1 -or $DRYRUN -eq $true)
     # Validate new version
     #
     Log-Message "Validating new version: $VERSION"
-    if ($VersionSystem -eq "semver" -or $VERSION.Contains("."))
+    if ($VersionSystem -eq "semver")
     {
         $ValidationVersion = & node -e "console.log(require('semver').valid('$VERSION'));"
         if ([string]::IsNullOrEmpty($ValidationVersion)) {
             Log-Message "The new semantic version ($VERSION) is invalid" "red"
             exit 133
         }
+    }
+    elseif ( $VERSION.Contains(".")) # $VersionSystem -eq "mantisbt" -or $VersionSystem -eq '.net'
+    {
+        #
     }
     else # incremental versioning
     {
@@ -3844,6 +4011,12 @@ if ((Test-Path("app.json")) -and (Test-Path("package.json"))) {
 #
 if ((Test-Path("package.json"))) {
     Prepare-PackageJson
+}
+#
+# Check to see if its a mantisbt plugin project, update main plugin file if required
+#
+if (![string]::IsNullOrEmpty($MANTISBTPLUGIN)) {
+    Prepare-MantisPluginBuild
 }
 #
 # If this is a .NET build, update assemblyinfo file
@@ -4313,19 +4486,62 @@ if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") {
 #
 if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y") 
 {
-    Log-Message "Starting GitHub release"
- 
+    Log-Message "Creating GitHub v$VERSION release"
+
+    #
+    # Create changelog content
+    #
+
+    $GithubChangelog = "Version $VERSION Release"
+
+    if (![string]::IsNullOrEmpty($HISTORYFILE)) 
+    {
+        Log-Message "   Converting history text to github release changelog html"
+        $GithubChangelogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", $MANTISBTRELEASE, $MANTISBTURL);
+        $GithubChangelogParts = "<span class=`"changelog-table`"><table width=`"100%`" style=`"display:inline`">"
+        foreach ($commit in $GithubChangelogParts)
+        {
+            $GithubChangelog += "<tr><td nowrap valign=`"top`" style=`"font-weight:bold;padding-left:3px`">"
+            $GithubChangelog += $commit.subject
+            if (![string]::IsNullOrEmpty($commit.scope)) {
+                $GithubChangelog += "</td><td nowrap valign=`"top`" style=`"padding-left:10px`">"
+                $GithubChangelog += $commit.scope
+            }
+            else {
+                $GithubChangelog += "</td><td>"
+            }
+            $GithubChangelog += "</td><td width=`"100%`" style=`"padding-left:15px`">"
+            $GithubChangelog += $commit.message
+            if (![string]::IsNullOrEmpty($commit.tickets)) {
+                $GithubChangelog += "</td><td nowrap align=`"right`" valign=`"top`" style=`"padding-left:15px;padding-right:10px`">"
+                $GithubChangelog += $commit.tickets
+            }
+            else {
+                $GithubChangelog += "</td><td>"
+            }
+            $GithubChangelog += "</td></tr>"
+        }
+        $GithubChangelog += "</table></span>"
+    }
+    elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
+    {
+        $GithubChangelog = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, $false)
+        $GithubChangelog = $GithubChangelog.Replace("`r`n", "`n")
+        New-Item -ItemType "file" -Path "${Env:Temp}\changelog.md" -Value "$GithubChangelog" | Out-Null
+        $GithubChangelog = & marked --breaks --gfm --file "${Env:Temp}\changelog.md"
+        Check-ExitCode
+        Remove-Item -Path "${Env:Temp}\changelog.md"
+    }
+    
     if ($DRYRUN -eq $false) 
     {
-        Log-Message "Creating GitHub v$VERSION release"
-        #
         # Set up the request body for the 'create release' request
         #
         $Request = @{
             "tag_name" = "v$VERSION"
             "target_commitish" = "$BRANCH"
             "name" = "v$VERSION"
-            "body" = "Version $VERSION Release"
+            "body" = "$GithubChangelog"
             "draft" = $false
             "prerelease" = $false
         } | ConvertTo-Json
@@ -4422,7 +4638,8 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
         }
     }
     else {
-        Log-Message "Dry run, skipping GitHub release" "magenta"
+        Log-Message "Dry run, skipping GitHub release, changelog contents from previous version printed below" "magenta"
+        Log-Message $GithubChangelog
     }
 }
 
@@ -4450,8 +4667,8 @@ if ($MANTISBTRELEASE -eq "Y")
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to mantisbt release changelog html"
-        $MantisChangelog = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $true, $HISTORYFILE, "", "", "", "", $MANTISBTRELEASE, $MANTISBTURL)[0];
-        write-host $MantisChangelog
+        #$MantisChangelog = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $true, $HISTORYFILE, "", "", "", "", $MANTISBTRELEASE, $MANTISBTURL)[0];
+        #write-host $MantisChangelog
         $MantisChangeLogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", $MANTISBTRELEASE, $MANTISBTURL);
         $MantisChangelog = "<span class=`"changelog-table`"><table width=`"100%`" style=`"display:inline`">"
         foreach ($commit in $MantisChangeLogParts)
@@ -4506,9 +4723,12 @@ if ($MANTISBTRELEASE -eq "Y")
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
         $NotesIsMarkdown = 1
-        $MantisChangelog = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE);
-        # TODO - $MantisChangeLogParts
-        #$MantisChangelog = & app-publisher-marked -f $MantisChangelog
+        $MantisChangelog = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, $false)
+        $MantisChangelog = $MantisChangelog.Replace("`r`n", "`n")
+        New-Item -ItemType "file" -Path "${Env:Temp}\changelog.md" -Value "$MantisChangelog" | Out-Null
+        $MantisChangelog = & marked --breaks --gfm --file "${Env:Temp}\changelog.md"
+        Check-ExitCode
+        Remove-Item -Path "${Env:Temp}\changelog.md"
     }
 
     #
