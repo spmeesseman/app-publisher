@@ -689,7 +689,7 @@ class HistoryFile
             {
                 $szHrefs = "<table>"
 
-                $szHrefs = "<tr><td colspan=`"2`"><b>$project $stringver $version has been released.</b><br><br></td></tr>"
+                $szHrefs += "<tr><td colspan=`"2`"><b>$project $stringver $version has been released.</b><br><br></td></tr>"
 
                 if ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl)) {
                     $szHrefs += "<tr><td>Release Page</td><td style=`"padding-left:10px`"><a href=`"$mantisUrl/set_project.php?project=$project&make_default=no&ref=plugin.php%3Fpage=Releases%2Freleases`">Projects Board Releases</a></td></tr>"
@@ -728,19 +728,9 @@ class HistoryFile
                 #}
                 
                 $szHrefs += "</table>";
-
-                #
-                # Replace special chars
-                #
-                $szHrefs = $szHrefs.Replace("&", "&amp;")
-                # Replace '<' and '>' with 'lt;' and 'gt;'
-                $szHrefs = $szHrefs.Replace("<", "&lt;")
-                $szHrefs = $szHrefs.Replace(">", "&gt;")
-                # Replace spaces with &nbsp;
-                $szHrefs = $szHrefs.Replace(" ", "&nbsp;")
             }
 
-            $szFinalContents += "$szHrefs<br><br>Most Recent History File Entry:<br><br>";
+            $szFinalContents += "$szHrefs<br>Most Recent History File Entry:<br><br>";
             Log-Message "   Write $iNumSections history section(s) to message"
 
             if ($listonly -eq $false) {

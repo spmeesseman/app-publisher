@@ -16,7 +16,7 @@
     "emailMode":         "",
     "emailPort":         25,
     "emailServer":       "10.0.7.50",
-    "emailRecip":        "smeesseman@pjats.com",
+    "emailRecip":        "productrelease@pjats.com",
     "emailSender":       "productbuild@pjats.com",
     "githubRelease":     "N",
     "githubAssets":      [],
