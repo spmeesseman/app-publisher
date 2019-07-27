@@ -685,7 +685,7 @@ class HistoryFile
             Log-Message "   Write header text to message"
             $szHrefs = ""
 
-            if (![string]::IsNullOrEmpty($targetloc) -or ![string]::IsNullOrEmpty($npmpkg) -or ![string]::IsNullOrEmpty($nugetpkg)) 
+            if (![string]::IsNullOrEmpty($targetloc) -or ![string]::IsNullOrEmpty($npmpkg) -or ![string]::IsNullOrEmpty($nugetpkg) -or ![string]::IsNullOrEmpty($historyFileHref) -or ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl))) 
             {
                 $szHrefs = "<table>"
 
@@ -995,7 +995,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to html"
-        $EMAILBODY = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $HISTORYFILE, $null, $targetloc, $npmloc, $nugetloc, $MANTISBTRELEASE, $MANTISBTURL, $HISTORYHREF)[0];
+        $EMAILBODY = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $HISTORYFILE, $null, $targetloc, $npmloc, $nugetloc, $MANTISBTRELEASE, $MANTISBTURL[0], $HISTORYHREF)[0];
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
@@ -2813,11 +2813,23 @@ if ($options.mantisbtProject) {
 #
 #
 #
-$MANTISBTURL = ""
+$MANTISBTURL = @()
 if ($options.mantisbtUrl) {
     $MANTISBTURL = $options.mantisbtUrl
-    if ($MANTISBTURL.EndsWith("/")) {
-        $MANTISBTURL = $MANTISBTURL.Substring(0, $MANTISBTURL.Length - 1);
+    if ($MANTISBTURL -is [system.string])
+    {
+        if (![string]::IsNullOrEmpty($MANTISBTURL)) {
+            $MANTISBTURL = @($MANTISBTURL); #convert to array
+        }
+        else {
+            $MANTISBTURL = @()
+        }
+    }
+    for ($i = 0; $i -lt $MANTISBTURL.Length; $i++)
+    {
+        if ($MANTISBTURL[$i].EndsWith("/")) {
+            $MANTISBTURL[$i] = $MANTISBTURL[$i].Substring(0, $MANTISBTURL[$i].Length - 1);
+        }
     }
 }
 #
@@ -3316,7 +3328,7 @@ if (![string]::IsNullOrEmpty($MANTISBTRELEASE)) {
     }
     if ($MANTISBTRELEASE -eq "Y")
     {
-        if ([string]::IsNullOrEmpty($MANTISBTURL)) {
+        if ($MANTISBTURL.Length -eq 0) {
             Log-Message "You must specify mantisbtUrl for a MantisBT release type" "red"
             exit 1
         }
@@ -3452,10 +3464,7 @@ if ($GITHUBASSETS -is [system.string] -and ![string]::IsNullOrEmpty($GITHUBASSET
 {
     $GITHUBASSETS = @($GITHUBASSETS); #convert to array
 }
-if ($GITHUBASSETS -is [system.string] -and ![string]::IsNullOrEmpty($GITHUBASSETS))
-{
-    $GITHUBASSETS = @($GITHUBASSETS); #convert to array
-}
+
 #
 # Get the current version number
 #
@@ -4713,7 +4722,7 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to github release changelog html"
-        $GithubChangelogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", $MANTISBTRELEASE, $MANTISBTURL, $HISTORYHREF);
+        $GithubChangelogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE);
         $GithubChangelogParts = "<span class=`"changelog-table`"><table width=`"100%`" style=`"display:inline`">"
         foreach ($commit in $GithubChangelogParts)
         {
@@ -4890,7 +4899,7 @@ if ($MANTISBTRELEASE -eq "Y")
         Log-Message "   Converting history text to mantisbt release changelog html"
         #$MantisChangelog = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $true, $HISTORYFILE, "", "", "", "", $MANTISBTRELEASE, $MANTISBTURL)[0];
         #write-host $MantisChangelog
-        $MantisChangeLogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", $MANTISBTRELEASE, $MANTISBTURL, $HISTORYHREF);
+        $MantisChangeLogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE);
         $MantisChangelog = "<span class=`"changelog-table`"><table width=`"100%`" style=`"display:inline`">"
         foreach ($commit in $MantisChangeLogParts)
         {
