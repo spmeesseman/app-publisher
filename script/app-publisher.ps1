@@ -88,35 +88,51 @@ class Vc
                 Log-Message "No commits found or no version tag exists" "red"
                 return $comments
             }
+
             #
             # Parse log response
             #
+
             $path = $null
+            $rev = $null
+            $date = $null
+
             Log-Message "Parsing response from SVN"
             try {
-                $path = (([Xml] ($xml)).Log.LogEntry.Paths.Path |
+                $xmlObj = (([Xml] ($xml)).Log.LogEntry.Paths.Path |
                 Where-Object { $_.action -eq 'A' -and $_.kind -eq 'dir' -and $_.InnerText -like "*tags/$TagPre[1-9]*"} |
                 Select-Object -Property @(
+                    @{N='revision'; E={$_.ParentNode.ParentNode.Revision}},
                     @{N='date'; E={$_.ParentNode.ParentNode.Date}},
                     @{N='path'; E={$_.InnerText}} )|
-                Sort-Object Date -Descending | Select-Object -First 1).path
+                Sort-Object Date -Descending | Select-Object -First 1)
+                $path = $xmlObj.path
+                $rev = $xmlObj.revision
+                $date = $xmlObj.date
             }
             catch {
                 Log-Message "Response could not be parsed, invalid module, no commits found, or no version tag exists" "red"
                 return $comments
             }
-            #
-            $rev = (([Xml]($xml)).Log.LogEntry | Where-Object { $_.revision -ne ''} | Select-Object -First 1).revision
+
+            if ([string]::IsNullOrEmpty($path) -or [string]::IsNullOrEmpty($rev) -or [string]::IsNullOrEmpty($date)) {
+                Log-Message "Response could not be parsed, invalid module, no commits found, or no version tag exists" "red"
+                return $comments
+            }
+
             #
             Log-Message "   Found version tag:"
             Log-Message "      Rev     : $rev"
             Log-Message "      Path    : $path"
+            Log-Message "      Date    : $date"
+
             #
             # Retrieve commits since last version tag
             #
             Log-Message "Retrieving commits since last version"
             $xml = svn log --xml --verbose --limit 50 -r ${rev}:HEAD
             Log-Message "Parsing response from SVN"
+
             #
             # Create xml document object from SVN log response
             #
@@ -166,7 +182,7 @@ class Vc
         # Sort comments array
         #
         if ($comments.Length -gt 0) {
-            $comments = $comments | Sort -Unique
+            $comments = $comments | Sort-Object -Unique
         }
 
         return $comments
