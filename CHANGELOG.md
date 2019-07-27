@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.10.6 (July 27th, 2019)
+
+### Bug Fixes
+
+- history file link is still incorrect in the release email notification for non network released projects
+
 ## Version 1.10.5 (July 27th, 2019)
 
 ### Bug Fixes

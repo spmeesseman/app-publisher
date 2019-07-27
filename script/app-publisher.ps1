@@ -686,24 +686,26 @@ class HistoryFile
 
             if (![string]::IsNullOrEmpty($targetloc) -or ![string]::IsNullOrEmpty($npmpkg) -or ![string]::IsNullOrEmpty($nugetpkg)) 
             {
-                $szFinalContents = "<b>$project $stringver $version has been released.</b><br><br>"
-                    
+                $szFinalContents += "<table>";
+
+                $szFinalContents = "<tr><td colspan=`"2`"><b>$project $stringver $version has been released.</b><br><br></td></tr>"
+
                 if ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl)) {
-                    $szFinalContents += "Release Page: $mantisUrl/set_project.php?project=$project&make_default=no&ref=plugin.php%3Fpage=Releases%2Freleases<br><br>"
+                    $szFinalContents += "<tr><td>Release Page</td><td style=`"padding-left:10px`"><a href=`"$mantisUrl/set_project.php?project=$project&make_default=no&ref=plugin.php%3Fpage=Releases%2Freleases`">Projects Board Releases</a></td></tr>"
                 }
 
                 if (![string]::IsNullOrEmpty($targetloc)) {
-                    $szFinalContents += "Network Location: $targetloc<br><br>"
+                    $szFinalContents += "<tr><td>Network Location</td><td style=`"padding-left:10px`"><a href=`"$targetloc`">Network Drive Location</a></td></tr>"
                 }
 
                 if (![string]::IsNullOrEmpty($npmpkg))
                 {
-                    $szFinalContents += "NPM Location: $npmpkg<br><br>"
+                    $szFinalContents += "<tr><td>NPM Location</td><td style=`"padding-left:10px`"><a href=`"$npmpkg`">NPM Registry</a></td></tr>"
                 }
 
                 if (![string]::IsNullOrEmpty($nugetpkg))
                 {
-                    $szFinalContents += "Nuget Location: $nugetpkg<br><br>"
+                    $szFinalContents += "<tr><td>Nuget Location</td><td style=`"padding-left:10px`"><a href=`"$nugetpkg`">Nuget Registry</a></td></tr>"
                 }
 
                 #
@@ -712,19 +714,19 @@ class HistoryFile
                 #if (![string]::IsNullOrEmpty($HISTORYFILE))
                 #{
                     if (![string]::IsNullOrEmpty($historyFileHref)) {
-                        $szFinalContents += "Complete History: $historyFileHref<br><br>"
+                        $szFinalContents += "<tr><td>Complete History</td><td style=`"padding-left:10px`">$historyFileHref</td></tr>"
                     }
                     elseif (![string]::IsNullOrEmpty($targetloc) -and !$targetloc.Contains("http://") -and !$targetloc.Contains("https://")) {
-                        $szFinalContents += "Complete History: $targetloc\history.txt<br><br>"
+                        $szFinalContents += "<tr><td>Complete History</td><td style=`"padding-left:10px`"><a href=`"$targetloc\history.txt`">Network Stored History File</a></td></tr>"
                     }
                     elseif ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl)) {
                         #$szFinalContents += "Complete History: $mantisUrl/set_project.php?project=$project&make_default=no&ref=plugin.php%3Fpage=$mantisUrl/plugin.php?page=IFramed/main&title=History.txt&url=https://app1.development.pjats.com/svn/web/filedetails.php%3Frepname=pja%26path=%2F$project%2Ftrunk%2Fdoc%2Fhistory.txt%26usemime=1<br><br>"
                         #$szFinalContents += "Complete History:$mantisUrl/plugin.php?page=IFramed/main&title=History.txt&url=https://app1.development.pjats.com/svn/web/filedetails.php%3Frepname=pja%26path=%2F$project%2Ftrunk%2Fdoc%2Fhistory.txt%26usemime=1"
-                        $szFinalContents += "<a href=`"$mantisUrl/plugin.php?page=IFramed/main?title=History.txt&url=https://app1.development.pjats.com/svn/web/filedetails.php%3Frepname=pja%26path=%2F$project%2Ftrunk%2Fdoc%2Fhistory.txt%26usemime=1`">Projects Board History File</a>"
+                        $szFinalContents += "<tr><td>Complete History</td><td style=`"padding-left:10px`"><a href=`"$mantisUrl/plugin.php?page=IFramed/main?title=History.txt&url=https://app1.development.pjats.com/svn/web/filedetails.php%3Frepname=pja%26path=%2F$project%2Ftrunk%2Fdoc%2Fhistory.txt%26usemime=1`">Projects Board History File</a></td></tr>"
                     }
                 #}
                 
-                $szFinalContents += "Most Recent History File Entry:<br><br>";
+                $szFinalContents += "</table><br><br>Most Recent History File Entry:<br><br>";
 
                 Log-Message "   Write $iNumSections history section(s) to message"
             }
