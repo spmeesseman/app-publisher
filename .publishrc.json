@@ -36,7 +36,7 @@
         "install\\dist\\App-Publisher_32bit.exe|Windows Installer"
     ],
     "npmPackDist":       "Y",
-    "npmRegistry":       "",
+    "npmRegistry":       "https://npm.development.pjats.com",
     "npmRelease":        "Y",
     "npmScope":          "",
     "nugetRelease":      "N",
