@@ -2806,6 +2806,18 @@ if ($options.mantisbtRelease) {
 #
 #
 #
+$MANTISBTAPITOKEN = ""
+if ($options.mantisbtApiToken) {
+    $MANTISBTAPITOKEN = $options.mantisbtApiToken
+}
+if ([string]::IsNullOrEmpty($MANTISBTAPITOKEN) {
+    if (![string]::IsNullOrEmpty(${Env:MANTISBT_API_TOKEN})) {
+        $MANTISBTAPITOKEN = ${Env:MANTISBT_API_TOKEN}
+    }
+}
+#
+#
+#
 $MANTISBTPROJECT = $PROJECTNAME
 if ($options.mantisbtProject) {
     $MANTISBTPROJECT = $options.mantisbtProject
@@ -3332,9 +3344,10 @@ if (![string]::IsNullOrEmpty($MANTISBTRELEASE)) {
             Log-Message "You must specify mantisbtUrl for a MantisBT release type" "red"
             exit 1
         }
-        if ([string]::IsNullOrEmpty(${Env:MANTISBT_API_TOKEN})) {
+        if ([string]::IsNullOrEmpty($MANTISBTAPITOKEN)) {
             Log-Message "You must have MANTISBT_API_TOKEN defined in the environment for a MantisBT release type" "red"
-            Log-Message "Set the environment variable MANTISBT_API_TOKEN using the token value created on the MantisBT website" "red"
+            Log-Message "-or- you must have mantisbtApiToken defined in publishrc" "red"
+            Log-Message "Set the envvar MANTISBT_API_TOKEN or the config mantisApiToken with the token value created on the MantisBT website" "red"
             Log-Message "To create a token, see the `"Tokens`" section of your Mantis User Preferences page" "red"
             exit 1
         }
@@ -5035,7 +5048,7 @@ if ($MANTISBTRELEASE -eq "Y")
     # according to the type of asset being uploaded
     #
     $Header = @{
-        "Authorization" = ${Env:MANTISBT_API_TOKEN}
+        "Authorization" = $MANTISBTAPITOKEN
         "Content-Type" = "application/json; charset=UTF-8"
     }
     #
