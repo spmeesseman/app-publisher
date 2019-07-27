@@ -3452,7 +3452,10 @@ if ($GITHUBASSETS -is [system.string] -and ![string]::IsNullOrEmpty($GITHUBASSET
 {
     $GITHUBASSETS = @($GITHUBASSETS); #convert to array
 }
-
+if ($GITHUBASSETS -is [system.string] -and ![string]::IsNullOrEmpty($GITHUBASSETS))
+{
+    $GITHUBASSETS = @($GITHUBASSETS); #convert to array
+}
 #
 # Get the current version number
 #

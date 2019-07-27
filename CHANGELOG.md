@@ -1,5 +1,15 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.10.9 (July 27th, 2019)
+
+### Bug Fixes
+
+- a github release is sending the entire changelog when creating a release, this was broken in 1.10.3
+
+### Code Refactoring
+
+- forcefully create new files throughout application, in a case where file already exists, it should be overwritten.
+
 ## Version 1.10.8 (July 27th, 2019)
 
 ### Build System

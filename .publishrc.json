@@ -16,7 +16,7 @@
     "emailMode":         "",
     "emailPort":         25,
     "emailServer":       "10.0.7.50",
-    "emailRecip":        "productrelease@pjats.com",
+    "emailRecip":        "smeesseman@pjats.com",
     "emailSender":       "productbuild@pjats.com",
     "githubRelease":     "N",
     "githubAssets":      [],
@@ -28,6 +28,7 @@
     "homePage":          "",
     "interactive":       "N",
     "mantisbtRelease":   "Y",
+    "mantisbtApiToken":  "${MANTISBT_API_TOKEN}",
     "mantisbtProject":   "",
     "mantisbtUrl":       "https://app1.development.pjats.com/projects",
     "mantisbtAssets": [
