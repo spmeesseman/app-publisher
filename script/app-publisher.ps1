@@ -994,7 +994,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
         $EMAILBODY = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, $true);
         $EMAILBODY = $EMAILBODY.Replace("`r`n", "`n")
         New-Item -ItemType "file" -Path "${Env:Temp}\changelog.md" -Value "$EMAILBODY" | Out-Null
-        $EMAILBODY = & marked --breaks --gfm --file "${Env:Temp}\changelog.md"
+        $EMAILBODY = & app-publisher-marked --breaks --gfm --file "${Env:Temp}\changelog.md"
         Check-ExitCode
         Remove-Item -Path "${Env:Temp}\changelog.md"
     }
@@ -3361,15 +3361,15 @@ if ($CURRENTVERSION -eq "")
     Log-Message "Retrieve current version and calculate next version number"
 
     #
-    # NPM/PACKAGE.JSON
+    # If node_modules dir exists, use package.json to obtain cur version
     #
     if (Test-Path("node_modules"))
     {
-        if (Test-Path("node_modules\semver"))
-        {
+        #if (Test-Path("node_modules\semver"))
+        #{
             if (Test-Path("package.json"))
             {
-                Log-Message "Using semver to obtain next version number"
+                Log-Message "Using node to obtain next version number"
                 #
                 # use package.json properties to retrieve current version
                 #
@@ -3377,14 +3377,15 @@ if ($CURRENTVERSION -eq "")
                 $VersionSystem = "semver"
             } 
             else {
-                Log-Message "Semver found, but package.json not found" "red"
+                Log-Message "Npm based project found, but package.json is missing" "red"
                 exit 127
             }
-        } 
-        else {
-            Log-Message "Semver not found.  Run 'npm install --save-dev semver'" "red"
-            exit 129
-        }
+        #} 
+        #else {
+        #    Log-Message "Semver not found.  Run 'npm install --save-dev semver'" "red"
+        #    exit 129
+        #}
+        $VersionSystem = "semver"
     }
     #
     # MantisBT Plugin
@@ -3400,7 +3401,8 @@ if ($CURRENTVERSION -eq "")
             Log-Message "Check you mantis plugin file for valid version syntax" "red"
             exit 130
         }
-        $VersionSystem = "mantisbt"
+        #$VersionSystem = "mantisbt"
+        $VersionSystem = "semver"
     } 
     #
     # PJ History file
@@ -3413,11 +3415,12 @@ if ($CURRENTVERSION -eq "")
             $VersionSystem = "incremental"
         }
         else {
+            $VersionSystem = "semver"
             #
             # Semantic versioning non-npm project
             #
-            Log-Message "Using non-npm project semantic versioning"
-            Log-Message "Semver not found, run 'npm install -g semver' to automate semantic versioning of non-NPM projects" "darkyellow"
+            #Log-Message "Using non-npm project semantic versioning"
+            #Log-Message "Semver not found, run 'npm install -g semver' to automate semantic versioning of non-NPM projects" "darkyellow"
         }
     } 
     #
@@ -3506,7 +3509,7 @@ if ($CURRENTVERSION -eq "")
 Log-Message "Validating current version found: $CURRENTVERSION"
 if ($VersionSystem -eq "semver")
 {
-    $ValidationVersion = & node -e "console.log(require('semver').valid('$CURRENTVERSION'));"
+    $ValidationVersion = & node -e "console.log(require('app-publisher-semver').valid('$CURRENTVERSION'));"
     if ([string]::IsNullOrEmpty($ValidationVersion)) {
         Log-Message "The current semantic version found ($CURRENTVERSION) is invalid" "red"
         exit 132
@@ -3604,7 +3607,7 @@ if ($RUN -eq 1 -or $DRYRUN -eq $true)
         # Get next version
         #
         if ($RUN -eq 1 -or $DRYRUN -eq $true) {
-            $VERSION = & node -e "console.log(require('semver').inc('$CURRENTVERSION', '$RELEASELEVEL'));"
+            $VERSION = & node -e "console.log(require('app-publisher-semver').inc('$CURRENTVERSION', '$RELEASELEVEL'));"
         }
         else {
             $VERSION = $CURRENTVERSION
@@ -3669,7 +3672,7 @@ if ($RUN -eq 1 -or $DRYRUN -eq $true)
     Log-Message "Validating new version: $VERSION"
     if ($VersionSystem -eq "semver")
     {
-        $ValidationVersion = & node -e "console.log(require('semver').valid('$VERSION'));"
+        $ValidationVersion = & node -e "console.log(require('app-publisher-semver').valid('$VERSION'));"
         if ([string]::IsNullOrEmpty($ValidationVersion)) {
             Log-Message "The new semantic version ($VERSION) is invalid" "red"
             exit 133
@@ -4617,7 +4620,7 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
         $GithubChangelog = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, $false)
         $GithubChangelog = $GithubChangelog.Replace("`r`n", "`n")
         New-Item -ItemType "file" -Path "${Env:Temp}\changelog.md" -Value "$GithubChangelog" | Out-Null
-        $GithubChangelog = & marked --breaks --gfm --file "${Env:Temp}\changelog.md"
+        $GithubChangelog = & app-publisher-marked --breaks --gfm --file "${Env:Temp}\changelog.md"
         Check-ExitCode
         Remove-Item -Path "${Env:Temp}\changelog.md"
     }
@@ -4815,7 +4818,7 @@ if ($MANTISBTRELEASE -eq "Y")
         $MantisChangelog = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, $false)
         $MantisChangelog = $MantisChangelog.Replace("`r`n", "`n")
         New-Item -ItemType "file" -Path "${Env:Temp}\changelog.md" -Value "$MantisChangelog" | Out-Null
-        $MantisChangelog = & marked --breaks --gfm --file "${Env:Temp}\changelog.md"
+        $MantisChangelog = & app-publisher-marked --breaks --gfm --file "${Env:Temp}\changelog.md"
         Check-ExitCode
         Remove-Item -Path "${Env:Temp}\changelog.md"
     }
