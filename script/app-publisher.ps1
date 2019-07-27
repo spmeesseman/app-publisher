@@ -894,7 +894,7 @@ class HistoryFile
         }
 
         if ($szOutputFile -ne "" -and $szOutputFile -ne $null) {
-            New-Item -ItemType "file" -Path "$szOutputFile" -Value $szFinalContents | Out-Null
+            New-Item -ItemType "file" -Force -Path "$szOutputFile" -Value $szFinalContents | Out-Null
             Log-Message "   Saved release history output to $szOutputFile"
         }
 
@@ -1005,15 +1005,15 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
         #
         $EMAILBODY = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, $true);
         $EMAILBODY = $EMAILBODY.Replace("`r`n", "`n")
-        New-Item -ItemType "file" -Path "${Env:Temp}\changelog.md" -Value "$EMAILBODY" | Out-Null
+        New-Item -ItemType "file" -Force -Path "${Env:Temp}\changelog-email.md" -Value "$EMAILBODY" | Out-Null
         if (!$IsAppPublisher) {
-            $EMAILBODY = & app-publisher-marked --breaks --gfm --file "${Env:Temp}\changelog.md"
+            $EMAILBODY = & app-publisher-marked --breaks --gfm --file "${Env:Temp}\changelog-email.md"
         }
         else {
-            $EMAILBODY = & marked --breaks --gfm --file "${Env:Temp}\changelog.md"
+            $EMAILBODY = & marked --breaks --gfm --file "${Env:Temp}\changelog-email.md"
         }
         Check-ExitCode
-        Remove-Item -Path "${Env:Temp}\changelog.md"
+        Remove-Item -Path "${Env:Temp}\changelog-email.md"
     }
     else {
         Log-Message "   Notification could not be sent, history file not specified" "red"
@@ -3862,7 +3862,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
     if ($HistoryPath -ne "" -and !(Test-Path($HistoryPath))) 
     {
         Log-Message "Creating history file directory and adding to version control" "magenta"
-        New-Item -ItemType "directory" -Path "$HistoryPath" | Out-Null
+        New-Item -ItemType "directory" -Force -Path "$HistoryPath" | Out-Null
         Vc-Changelist-AddNew "$HistoryPath"
         Vc-Changelist-AddRemove "$HistoryPath"
         Vc-Changelist-Add "$HistoryPath"
@@ -3870,7 +3870,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
     if (!(Test-Path($HISTORYFILE))) 
     {
         Log-Message "Creating new history file and adding to version control" "magenta"
-        New-Item -ItemType "file" -Path "$HISTORYFILE" -Value "$PROJECTNAME`r`n`r`n" | Out-Null
+        New-Item -ItemType "file" -Force -Path "$HISTORYFILE" -Value "$PROJECTNAME`r`n`r`n" | Out-Null
         Vc-Changelist-AddRemove "$HISTORYFILE"
         Vc-Changelist-AddNew "$HISTORYFILE"
     }
@@ -4740,7 +4740,7 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
     {
         $GithubChangelog = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, $false)
         $GithubChangelog = $GithubChangelog.Replace("`r`n", "`n")
-        New-Item -ItemType "file" -Path "${Env:Temp}\changelog.md" -Value "$GithubChangelog" | Out-Null
+        New-Item -ItemType "file" -Force -Path "${Env:Temp}\changelog.md" -Value "$GithubChangelog" | Out-Null
         if (!$IsAppPublisher) {
             $GithubChangelog = & app-publisher-marked --breaks --gfm --file "${Env:Temp}\changelog.md"
         }
@@ -4943,7 +4943,7 @@ if ($MANTISBTRELEASE -eq "Y")
         $NotesIsMarkdown = 1
         $MantisChangelog = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, $false)
         $MantisChangelog = $MantisChangelog.Replace("`r`n", "`n")
-        New-Item -ItemType "file" -Path "${Env:Temp}\changelog.md" -Value "$MantisChangelog" | Out-Null
+        New-Item -ItemType "file" -Force -Path "${Env:Temp}\changelog.md" -Value "$MantisChangelog" | Out-Null
         if (!$IsAppPublisher) {
             $MantisChangelog = & app-publisher-marked --breaks --gfm --file "${Env:Temp}\changelog.md"
         }
