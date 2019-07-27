@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.10.7 (July 27th, 2019)
+
+### Code Refactoring
+
+- improve the display of the various project links in the release email notification
+
 ## Version 1.10.6 (July 27th, 2019)
 
 ### Bug Fixes
