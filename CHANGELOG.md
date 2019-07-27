@@ -1,5 +1,19 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.10.8 (July 27th, 2019)
+
+### Build System
+
+- the NPM location link is broken in the release notification email due to an invalid config 'npmRegistry' in publishrc.
+
+### Bug Fixes
+
+- the project links display change in the release email notification displays all text in a row with no spaces.
+
+### Code Refactoring
+
+- improve the display of the various project links in the release email notification.
+
 ## Version 1.10.7 (July 27th, 2019)
 
 ### Code Refactoring
