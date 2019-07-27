@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.10.4 (July 27th, 2019)
+
+### Bug Fixes
+
+- the npm install fails with 'cannot find module marked'
+
 ## Version 1.10.3 (July 27th, 2019)
 
 ### Build System

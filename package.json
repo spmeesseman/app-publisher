@@ -1,6 +1,6 @@
 {
     "name": "@perryjohnson/app-publisher",
-    "version": "1.10.3",
+    "version": "1.10.4",
     "displayName": "App Publisher",
     "description": "App Publisher",
     "license": "MIT",
@@ -76,7 +76,11 @@
         "semver"
     ],
     "scripts": {
-        "build": "npx tsc -p ./"
+        "build": "npx tsc -p ./",
+        "app-publish-ps": "npx ./build/bin/app-publisher.js -p ps --no-ci",
+        "app-publish-ps-dry": "npx ./build/bin/app-publisher.js -p ps --no-ci --dry-run",
+        "app-publish-node": "npx ./build/bin/app-publisher.js --no-ci",
+        "app-publish-node-dry": "npx ./build/bin/app-publisher.js --no-ci --dry-run"
     },
     "main": "./build/bin/app-publisher.js",
     "bin": {
