@@ -994,7 +994,12 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
         $EMAILBODY = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, $true);
         $EMAILBODY = $EMAILBODY.Replace("`r`n", "`n")
         New-Item -ItemType "file" -Path "${Env:Temp}\changelog.md" -Value "$EMAILBODY" | Out-Null
-        $EMAILBODY = & app-publisher-marked --breaks --gfm --file "${Env:Temp}\changelog.md"
+        if (!$IsAppPublisher) {
+            $EMAILBODY = & app-publisher-marked --breaks --gfm --file "${Env:Temp}\changelog.md"
+        }
+        else {
+            $EMAILBODY = & marked --breaks --gfm --file "${Env:Temp}\changelog.md"
+        }
         Check-ExitCode
         Remove-Item -Path "${Env:Temp}\changelog.md"
     }
@@ -1615,12 +1620,22 @@ function Prepare-PackageJson()
     {
         #Save
         Log-Message "Saving repository in package.json"
-        $script:DefaultRepo = & app-publisher-json -f package.json repository.url
+        if (!$IsAppPublisher) {
+            $script:DefaultRepo = & app-publisher-json -f package.json repository.url
+        }
+        else {
+            $script:DefaultRepo = & json -f package.json repository.url
+        }
         Check-ExitCode
         Log-Message "Repository: $DefaultRepo"
         # Set repo
         Log-Message "Setting repository in package.json: $REPO"
-        & app-publisher-json -I -4 -f package.json -e "this.repository.url='$REPO'"
+        if (!$IsAppPublisher) {
+            & app-publisher-json -I -4 -f package.json -e "this.repository.url='$REPO'"
+        }
+        else {
+            & json -I -4 -f package.json -e "this.repository.url='$REPO'"
+        }
         Check-ExitCode
     }
 
@@ -1628,12 +1643,22 @@ function Prepare-PackageJson()
     {
         #Save
         Log-Message "Saving repository type in package.json"
-        $script:DefaultRepoType = & app-publisher-json -f package.json repository.type
+        if (!$IsAppPublisher) {
+            $script:DefaultRepoType = & app-publisher-json -f package.json repository.type
+        }
+        else {
+            $script:DefaultRepoType = & json -f package.json repository.type
+        }
         Check-ExitCode
         Log-Message "Repository Type: $DefaultRepoType"
         # Set repo type
         Log-Message "Setting repository type in package.json: $REPOTYPE"
-        & app-publisher-json -I -4 -f package.json -e "this.repository.type='$REPOTYPE'"
+        if (!$IsAppPublisher) {
+            & app-publisher-json -I -4 -f package.json -e "this.repository.type='$REPOTYPE'"
+        }
+        else {
+            & json -I -4 -f package.json -e "this.repository.type='$REPOTYPE'"
+        }
         Check-ExitCode
     }
 
@@ -1641,12 +1666,22 @@ function Prepare-PackageJson()
     {
         #Save
         Log-Message "Saving homepage in package.json"
-        $script:DefaultHomePage = & app-publisher-json -f package.json homepage
+        if (!$IsAppPublisher) {
+            $script:DefaultHomePage = & app-publisher-json -f package.json homepage
+        }
+        else {
+            $script:DefaultHomePage = & json -f package.json homepage
+        }
         Check-ExitCode
         Log-Message "Homepage: $DefaultHomePage"
         # Set homepage 
         Log-Message "Setting homepage in package.json: $HOMEPAGE"
-        & app-publisher-json -I -4 -f package.json -e "this.homepage='$HOMEPAGE'"
+        if (!$IsAppPublisher) {
+            & app-publisher-json -I -4 -f package.json -e "this.homepage='$HOMEPAGE'"
+        }
+        else {
+            & json -I -4 -f package.json -e "this.homepage='$HOMEPAGE'"
+        }
         Check-ExitCode
     }
 
@@ -1654,12 +1689,22 @@ function Prepare-PackageJson()
     {
         #Save
         Log-Message "Saving bugs page in package.json"
-        $script:DefaultBugs = & app-publisher-json -f package.json bugs.url
+        if (!$IsAppPublisher) {
+            $script:DefaultBugs = & app-publisher-json -f package.json bugs.url
+        }
+        else {
+            $script:DefaultBugs =  & json -f package.json bugs.url
+        }
         Check-ExitCode
         Log-Message "Bugs page: $DefaultBugs"
         # Set
         Log-Message "Setting bugs page in package.json: $BUGS"
-        & app-publisher-json -I -4 -f package.json -e "this.bugs.url='$BUGS'"
+        if (!$IsAppPublisher) {
+            & app-publisher-json -I -4 -f package.json -e "this.bugs.url='$BUGS'"
+        }
+        else {
+            & json -I -4 -f package.json -e "this.bugs.url='$BUGS'"
+        }
         Check-ExitCode
     }
 
@@ -1667,7 +1712,12 @@ function Prepare-PackageJson()
     # Scope/name - package.json
     #
     Log-Message "Saving package name in package.json"
-    $script:DefaultName = & app-publisher-json -f package.json name
+    if (!$IsAppPublisher) {
+        $script:DefaultName = & app-publisher-json -f package.json name
+    }
+    else {
+        $script:DefaultName = & json -f package.json name
+    }
     Check-ExitCode
     Log-Message "Package name : $DefaultName"
     if ($DefaultName.Contains("@") -and $DefaultName.Contains("/")) {
@@ -1680,12 +1730,22 @@ function Prepare-PackageJson()
         if (!$DefaultName.Contains($NPMSCOPE))
         {
             Log-Message "Setting package name in package.json: $NPMSCOPE/$PROJECTNAME"
-            & app-publisher-json -I -4 -f package.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
+            if (!$IsAppPublisher) {
+                & app-publisher-json -I -4 -f package.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
+            }
+            else {
+                & json -I -4 -f package.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
+            }
             Check-ExitCode
             if ($LASTEXITCODE -ne 0) {
                 Log-Message "Setting package name in package.json failed, retrying"
                 [System.Threading.Thread]::Sleep(500)
-                & app-publisher-json -I -4 -f package.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
+                if (!$IsAppPublisher) {
+                    & app-publisher-json -I -4 -f package.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
+                }
+                else {
+                    & json -I -4 -f package.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
+                }
                 Check-ExitCode
             }
             #
@@ -1694,12 +1754,22 @@ function Prepare-PackageJson()
             if (Test-Path("package-lock.json")) 
             {
                 Log-Message "Setting package name in package-lock.json: $NPMSCOPE/$PROJECTNAME"
-                & app-publisher-json -I -4 -f package-lock.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
+                if (!$IsAppPublisher) {
+                    & app-publisher-json -I -4 -f package-lock.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
+                }
+                else {
+                    & json -I -4 -f package-lock.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
+                }
                 Check-ExitCode
                 if ($LASTEXITCODE -ne 0) {
                     Log-Message "Setting package name in package-lock.json failed, retrying"
                     [System.Threading.Thread]::Sleep(500)
-                    & app-publisher-json -I -4 -f package-lock.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
+                    if (!$IsAppPublisher) {
+                        & app-publisher-json -I -4 -f package-lock.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
+                    }
+                    else {
+                        & json -I -4 -f package-lock.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
+                    }
                     Check-ExitCode
                 }
             }
@@ -2920,6 +2990,15 @@ if ($options.writeLog) {
     $WRITELOG = $options.writeLog
 }
 
+#
+# Set flag whether or not this is app-publisher, we run npm commands differently for
+# this project since it is running a publish run on itself
+#
+$IsAppPublisher = $false
+if ($PROJECTNAME -eq "app-publisher") {
+    $IsAppPublisher = $true
+}
+
 $SKIPCOMMIT = "N"
 $CURRENTVERSION = ""
 $VERSION = "" 
@@ -3014,7 +3093,12 @@ if (Test-Path("package.json"))
     if ([string]::IsNullOrEmpty($_Repo))
     {
         Log-Message "Reading repository in package.json"
-        $_Repo = & app-publisher-json -f package.json repository.url
+        if (!$IsAppPublisher) {
+            $_Repo = & app-publisher-json -f package.json repository.url
+        }
+        else {
+            $_Repo = & json -f package.json repository.url
+        }
         Check-ExitCode
         Log-Message "Repository: $_Repo"
     }
@@ -3022,7 +3106,12 @@ if (Test-Path("package.json"))
     if ([string]::IsNullOrEmpty($_RepoType))
     {
         Log-Message "Saving repository type in package.json"
-        $_RepoType = & app-publisher-json -f package.json repository.type
+        if (!$IsAppPublisher) {
+            $_RepoType = & app-publisher-json -f package.json repository.type
+        }
+        else {
+            $_RepoType = & json -f package.json repository.type
+        }
         Check-ExitCode
         Log-Message "Repository Type: $_RepoType"
     }
@@ -3509,7 +3598,7 @@ if ($CURRENTVERSION -eq "")
 Log-Message "Validating current version found: $CURRENTVERSION"
 if ($VersionSystem -eq "semver")
 {
-    $ValidationVersion = & node -e "console.log(require('app-publisher-semver').valid('$CURRENTVERSION'));"
+    $ValidationVersion = & node -e "console.log(require('semver').valid('$CURRENTVERSION'));"
     if ([string]::IsNullOrEmpty($ValidationVersion)) {
         Log-Message "The current semantic version found ($CURRENTVERSION) is invalid" "red"
         exit 132
@@ -3607,7 +3696,7 @@ if ($RUN -eq 1 -or $DRYRUN -eq $true)
         # Get next version
         #
         if ($RUN -eq 1 -or $DRYRUN -eq $true) {
-            $VERSION = & node -e "console.log(require('app-publisher-semver').inc('$CURRENTVERSION', '$RELEASELEVEL'));"
+            $VERSION = & node -e "console.log(require('semver').inc('$CURRENTVERSION', '$RELEASELEVEL'));"
         }
         else {
             $VERSION = $CURRENTVERSION
@@ -3672,7 +3761,7 @@ if ($RUN -eq 1 -or $DRYRUN -eq $true)
     Log-Message "Validating new version: $VERSION"
     if ($VersionSystem -eq "semver")
     {
-        $ValidationVersion = & node -e "console.log(require('app-publisher-semver').valid('$VERSION'));"
+        $ValidationVersion = & node -e "console.log(require('semver').valid('$VERSION'));"
         if ([string]::IsNullOrEmpty($ValidationVersion)) {
             Log-Message "The new semantic version ($VERSION) is invalid" "red"
             exit 133
@@ -4620,7 +4709,12 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
         $GithubChangelog = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, $false)
         $GithubChangelog = $GithubChangelog.Replace("`r`n", "`n")
         New-Item -ItemType "file" -Path "${Env:Temp}\changelog.md" -Value "$GithubChangelog" | Out-Null
-        $GithubChangelog = & app-publisher-marked --breaks --gfm --file "${Env:Temp}\changelog.md"
+        if (!$IsAppPublisher) {
+            $GithubChangelog = & app-publisher-marked --breaks --gfm --file "${Env:Temp}\changelog.md"
+        }
+        else {
+            $GithubChangelog = & marked --breaks --gfm --file "${Env:Temp}\changelog.md"
+        }
         Check-ExitCode
         Remove-Item -Path "${Env:Temp}\changelog.md"
     }
@@ -4818,7 +4912,12 @@ if ($MANTISBTRELEASE -eq "Y")
         $MantisChangelog = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, $false)
         $MantisChangelog = $MantisChangelog.Replace("`r`n", "`n")
         New-Item -ItemType "file" -Path "${Env:Temp}\changelog.md" -Value "$MantisChangelog" | Out-Null
-        $MantisChangelog = & app-publisher-marked --breaks --gfm --file "${Env:Temp}\changelog.md"
+        if (!$IsAppPublisher) {
+            $MantisChangelog = & app-publisher-marked --breaks --gfm --file "${Env:Temp}\changelog.md"
+        }
+        else {
+            $MantisChangelog = & marked --breaks --gfm --file "${Env:Temp}\changelog.md"
+        }
         Check-ExitCode
         Remove-Item -Path "${Env:Temp}\changelog.md"
     }

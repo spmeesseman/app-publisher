@@ -1,5 +1,24 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.10.3 (July 27th, 2019)
+
+### Build System
+
+- **npm:** bundle semver module for use with non-npm projects in a global install
+- changes/fix for compiling with new typescript version
+
+### Minor Features
+
+- use semver to determine next version for non-npm semantically versioned projects.  Bundle semver and marked as opposed to using node installed version.
+
+### Bug Fixes
+
+- History edits are lost when publish run fails and a version control reversion.
+
+  The history and changelog fles will now be saved to temporary dircetory before reverting.  [fixes #212]
+
+- if an SVN project is tagged manually or by another process since the last automated version tag, it is used as the revision base for retrieving commits since the last release, thereby missing all the appropriate commit messages.
+
 ## Version 1.10.2 (July 26th, 2019)
 
 ### Code Refactoring

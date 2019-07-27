@@ -1709,3 +1709,45 @@ July 26th, 2019
 
     Enhance email notification signature line.
 
+
+Version 1.10.3
+July 27th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+
+    Use semver to determine next version for non-npm semantically versioned
+    projects.
+
+2.  Bug Fix
+
+    History edits are lost when publish run fails and a version control
+    reversion is automatically performed.
+    
+    The history and changelog fles will now be saved to temporary directory
+    before reverting.
+    
+    [fixes #212]
+
+3.  Bug Fix
+
+    If an SVN project is tagged manually or by another process since the last
+    automated version tag, it is used as the revision base for retrieving commits
+    since the last release, thereby missing all the appropriate commit messages.
+

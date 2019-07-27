@@ -1,6 +1,6 @@
 {
     "name": "@perryjohnson/app-publisher",
-    "version": "1.10.2",
+    "version": "1.10.3",
     "displayName": "App Publisher",
     "description": "App Publisher",
     "license": "MIT",
@@ -82,7 +82,7 @@
     "bin": {
         "app-publisher": "./build/bin/app-publisher.js",
         "app-publisher-json": "./node_modules/@spmeesseman/json/lib/json.js",
-        "app-publisher-marked": "./node_modules/marked/bim/marked",
+        "app-publisher-marked": "./node_modules/marked/bin/marked",
         "app-publisher-semver": "./node_modules/semver/bin/semver.js"
     },
     "files": [
