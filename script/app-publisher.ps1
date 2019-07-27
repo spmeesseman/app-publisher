@@ -1255,14 +1255,14 @@ function Vc-Revert($ChangePath = $false)
         #
         if (![string]::IsNullOrEmpty($HISTORYFILE) -and (Test-Path($HISTORYFILE)))
         {
-            $TmpFile = "${Env:Temp}\history.txt"
+            $TmpFile = "${Env:Temp}\history.save.txt"
             Log-Message "Saving temporary copy of history file to $TmpFile" "magenta"
             Copy-Item -Path "$HISTORYFILE" -PassThru -Force -Destination "$TmpFile" | Out-Null
         }
 
         if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and (Test-Path($CHANGELOGFILE)))
         {
-            $TmpFile = "${Env:Temp}\changelog.md"
+            $TmpFile = "${Env:Temp}\changelog.save.md"
             Log-Message "Saving temporary copy of history file to $TmpFile" "magenta"
             Copy-Item -Path "$CHANGELOGFILE" -PassThru -Force -Destination "$TmpFile" | Out-Null
         }
