@@ -3598,7 +3598,12 @@ if ($CURRENTVERSION -eq "")
 Log-Message "Validating current version found: $CURRENTVERSION"
 if ($VersionSystem -eq "semver")
 {
-    $ValidationVersion = & node -e "console.log(require('semver').valid('$CURRENTVERSION'));"
+    if (!$IsAppPublisher) {
+        $ValidationVersion = & app-publisher-semver $CURRENTVERSION
+    }
+    else {
+        $ValidationVersion = & semver $CURRENTVERSION
+    }
     if ([string]::IsNullOrEmpty($ValidationVersion)) {
         Log-Message "The current semantic version found ($CURRENTVERSION) is invalid" "red"
         exit 132
@@ -3696,7 +3701,12 @@ if ($RUN -eq 1 -or $DRYRUN -eq $true)
         # Get next version
         #
         if ($RUN -eq 1 -or $DRYRUN -eq $true) {
-            $VERSION = & node -e "console.log(require('semver').inc('$CURRENTVERSION', '$RELEASELEVEL'));"
+            if (!$IsAppPublisher) {
+                $VERSION = & app-publisher-semver -i $RELEASELEVEL $CURRENTVERSION
+            }
+            else {
+                $VERSION = & semver -i $RELEASELEVEL $CURRENTVERSION
+            }
         }
         else {
             $VERSION = $CURRENTVERSION
@@ -3761,7 +3771,12 @@ if ($RUN -eq 1 -or $DRYRUN -eq $true)
     Log-Message "Validating new version: $VERSION"
     if ($VersionSystem -eq "semver")
     {
-        $ValidationVersion = & node -e "console.log(require('semver').valid('$VERSION'));"
+        if (!$IsAppPublisher) {
+            $ValidationVersion = & app-publisher-semver $VERSION
+        }
+        else {
+            $ValidationVersion = & semver $VERSION
+        }
         if ([string]::IsNullOrEmpty($ValidationVersion)) {
             Log-Message "The new semantic version ($VERSION) is invalid" "red"
             exit 133
