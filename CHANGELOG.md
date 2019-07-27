@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.10.5 (July 27th, 2019)
+
+### Bug Fixes
+
+- validating determined new version causes publish run to fail for non-npm based projects
+
 ## Version 1.10.4 (July 27th, 2019)
 
 ### Bug Fixes
