@@ -24,6 +24,7 @@
     "historyFile":       "doc\\history.txt",
     "historyHdrFile":    "install\\history-hdr.txt",
     "historyLineLen":    80,
+    "historyHref":       "<a href=\"https://app1.development.pjats.com/projects/plugin.php?page=IFramed/main?title=History.txt&url=https://app1.development.pjats.com/svn/web/filedetails.php%3Frepname=pja%26path=%2Fapp-publisher%2Ftrunk%2Fdoc%2Fhistory.txt%26usemime=1\">Projects Board History File</a>",
     "homePage":          "",
     "interactive":       "N",
     "mantisbtRelease":   "Y",
