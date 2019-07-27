@@ -25,7 +25,7 @@ module.exports = (context, pluginsPath) =>
                     {
                         if (PLUGINS_DEFINITIONS[type])
                         {
-                            Reflect.defineProperty(func, "pluginName", {
+                            Reflect.defineProperty(func as object, "pluginName", {
                                 value: isPlainObject(name) ? "Inline plugin" : name,
                                 writable: false,
                                 enumerable: true,
