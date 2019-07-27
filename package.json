@@ -72,7 +72,8 @@
     },
     "bundleDependencies": [
         "@spmeesseman/json",
-        "marked"
+        "marked",
+        "semver"
     ],
     "scripts": {
         "build": "npx tsc -p ./"
@@ -81,7 +82,8 @@
     "bin": {
         "app-publisher": "./build/bin/app-publisher.js",
         "app-publisher-json": "./node_modules/@spmeesseman/json/lib/json.js",
-        "app-publisher-marked": "./node_modules/marked/lib/marked.js"
+        "app-publisher-marked": "./node_modules/marked/bim/marked",
+        "app-publisher-semver": "./node_modules/semver/bin/semver.js"
     },
     "files": [
         "build/*.js",
