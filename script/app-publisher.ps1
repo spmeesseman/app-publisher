@@ -1233,6 +1233,24 @@ function Vc-Revert($ChangePath = $false)
         Log-Message "Stored Remove List: $VCCHANGELISTRMV"
 
         #
+        # Back up copies of history/changelog just in case user made edits and they are about
+        # to be lost because of a publish run error
+        #
+        if (![string]::IsNullOrEmpty($HISTORYFILE) -and (Test-Path($HISTORYFILE)))
+        {
+            $TmpFile = "${Env:Temp}\history.txt"
+            Log-Message "Saving temporary copy of history file to $TmpFile" "magenta"
+            Copy-Item -Path "$HISTORYFILE" -PassThru -Force -Destination "$TmpFile" | Out-Null
+        }
+
+        if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and (Test-Path($CHANGELOGFILE)))
+        {
+            $TmpFile = "${Env:Temp}\changelog.md"
+            Log-Message "Saving temporary copy of history file to $TmpFile" "magenta"
+            Copy-Item -Path "$CHANGELOGFILE" -PassThru -Force -Destination "$TmpFile" | Out-Null
+        }
+
+        #
         # Change dir to project root, all changelist entries will be in respect to the project root dir
         #
         if ($ChangePath -and ![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") {
