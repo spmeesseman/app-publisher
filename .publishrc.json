@@ -28,9 +28,13 @@
     "homePage":          "",
     "interactive":       "N",
     "mantisbtRelease":   "Y",
-    "mantisbtApiToken":  "${MANTISBT_API_TOKEN}",
+    "mantisbtApiToken":  [
+        "${MANTISBT_API_TOKEN}"
+    ],
     "mantisbtProject":   "",
-    "mantisbtUrl":       "https://app1.development.pjats.com/projects",
+    "mantisbtUrl":       [
+        "https://app1.development.pjats.com/projects"
+    ],
     "mantisbtAssets": [
         "install\\dist\\history.txt|History File",
         "install\\dist\\app-publisher.tgz|NPM Tarball",

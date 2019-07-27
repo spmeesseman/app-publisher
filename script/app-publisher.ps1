@@ -2806,13 +2806,22 @@ if ($options.mantisbtRelease) {
 #
 #
 #
-$MANTISBTAPITOKEN = ""
+$MANTISBTAPITOKEN = @()
 if ($options.mantisbtApiToken) {
     $MANTISBTAPITOKEN = $options.mantisbtApiToken
+    if ($MANTISBTAPITOKEN -is [system.string])
+    {
+        if (![string]::IsNullOrEmpty($MANTISBTAPITOKEN)) {
+            $MANTISBTAPITOKEN = @($MANTISBTAPITOKEN); #convert to array
+        }
+        else {
+            $MANTISBTAPITOKEN = @()
+        }
+    }
 }
-if ([string]::IsNullOrEmpty($MANTISBTAPITOKEN) {
+if ([string]::IsNullOrEmpty($MANTISBTAPITOKEN)) {
     if (![string]::IsNullOrEmpty(${Env:MANTISBT_API_TOKEN})) {
-        $MANTISBTAPITOKEN = ${Env:MANTISBT_API_TOKEN}
+        $MANTISBTAPITOKEN = @( ${Env:MANTISBT_API_TOKEN} )
     }
 }
 #
@@ -2844,6 +2853,7 @@ if ($options.mantisbtUrl) {
         }
     }
 }
+
 #
 #
 #
@@ -3344,11 +3354,15 @@ if (![string]::IsNullOrEmpty($MANTISBTRELEASE)) {
             Log-Message "You must specify mantisbtUrl for a MantisBT release type" "red"
             exit 1
         }
-        if ([string]::IsNullOrEmpty($MANTISBTAPITOKEN)) {
+        if ($MANTISBTAPITOKEN.Length -eq 0) {
             Log-Message "You must have MANTISBT_API_TOKEN defined in the environment for a MantisBT release type" "red"
             Log-Message "-or- you must have mantisbtApiToken defined in publishrc" "red"
             Log-Message "Set the envvar MANTISBT_API_TOKEN or the config mantisApiToken with the token value created on the MantisBT website" "red"
             Log-Message "To create a token, see the `"Tokens`" section of your Mantis User Preferences page" "red"
+            exit 1
+        }
+        if ($MANTISBTURL.Length -ne $MANTISBTAPITOKEN.Length) {
+            Log-Message "You must specify the same number of MantisBT urls and API tokens" "red"
             exit 1
         }
     }
@@ -4910,9 +4924,9 @@ if ($MANTISBTRELEASE -eq "Y")
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to mantisbt release changelog html"
-        #$MantisChangelog = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $true, $HISTORYFILE, "", "", "", "", $MANTISBTRELEASE, $MANTISBTURL)[0];
+        #$MantisChangelog = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $true, $HISTORYFILE)
         #write-host $MantisChangelog
-        $MantisChangeLogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE);
+        $MantisChangeLogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE)
         $MantisChangelog = "<span class=`"changelog-table`"><table width=`"100%`" style=`"display:inline`">"
         foreach ($commit in $MantisChangeLogParts)
         {
@@ -5042,48 +5056,53 @@ if ($MANTISBTRELEASE -eq "Y")
             }
         }
     }
-    #
-    # Set up the request header, this will be used to both create the release and to upload
-    # any assets.  Note that for each asset, the content-type must be set appropriately
-    # according to the type of asset being uploaded
-    #
-    $Header = @{
-        "Authorization" = $MANTISBTAPITOKEN
-        "Content-Type" = "application/json; charset=UTF-8"
-    }
-    #
-    # Format request JSON
-    #
-    $Request = $Request | ConvertTo-Json
-    #
-    # Enable TLS1.2 in the case of HTTPS
-    #
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    #
-    # Send the REST POST to create the release w/ assets
-    #
-    $url = "$MANTISBTURL/plugins/Releases/api/releases/$MANTISBTPROJECT"
-    Log-Message "Sending Add-Release REST request to $url"
-    $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
-    Check-PsCmdSuccess
-    #
-    # Check response object for success
-    #
-    if ($? -eq $true)
+    
+    for ($i = 0; $i -lt $MANTISBTURL)
     {
-        if ($Response -is [System.String])
+        #
+        # Set up the request header, this will be used to both create the release and to upload
+        # any assets.  Note that for each asset, the content-type must be set appropriately
+        # according to the type of asset being uploaded
+        #
+        $Header = @{
+            "Authorization" = $MANTISBTAPITOKEN[$i]
+            "Content-Type" = "application/json; charset=UTF-8"
+        }
+        #
+        # Format request JSON
+        #
+        $Request = $Request | ConvertTo-Json
+        #
+        # Enable TLS1.2 in the case of HTTPS
+        #
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        #
+        # Send the REST POST to create the release w/ assets
+        #
+        $url = $MANTISBTURL[$i] + "/plugins/Releases/api/releases/$MANTISBTPROJECT"
+        Log-Message "Sending Add-Release REST request to $url"
+        $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
+        Check-PsCmdSuccess
+        #
+        # Check response object for success
+        #
+        if ($? -eq $true)
         {
-            Log-Message "Partial error creating MantisBT release v$VERSION" "red"
-            Log-Message $Response "red"
+            if ($Response -is [System.String])
+            {
+                Log-Message "Partial error creating MantisBT release v$VERSION" "red"
+                Log-Message $Response "red"
+            }
+            else {
+                Log-Message "Successfully created MantisBT release v$VERSION" "darkgreen"
+                Log-Message "   ID         : $($Response.id)" "darkgreen"
+                Log-Message "   Message    : $($Response.msg)" "darkgreen"
+                Log-Message "   URL        : $($MANTISBTURL[$i])" "darkgreen"
+            }
         }
         else {
-            Log-Message "Successfully created MantisBT release v$VERSION" "darkgreen"
-            Log-Message "   ID         : $($Response.id)" "darkgreen"
-            Log-Message "   Message    : $($Response.msg)" "darkgreen"
+            Log-Message "Failed to create MantisBT v$VERSION release" "red"
         }
-    }
-    else {
-        Log-Message "Failed to create MantisBT v$VERSION release" "red"
     }
 }
 
