@@ -5057,7 +5057,7 @@ if ($MANTISBTRELEASE -eq "Y")
         }
     }
     
-    for ($i = 0; $i -lt $MANTISBTURL)
+    for ($i = 0; $i -lt $MANTISBTURL.Length; $i++)
     {
         #
         # Set up the request header, this will be used to both create the release and to upload
@@ -5116,6 +5116,6 @@ if ($DRYRUN -eq $true) {
 Log-Message "Completed"
 Log-Message "Finished successfully" "darkgreen"
 
-}
+} # end xRun
 
 exit
