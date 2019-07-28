@@ -272,7 +272,7 @@ class HistoryFile
 {
     [string]getVersion($in, $stringver)
     {
-        return $this.getHistory("", "", 0, $stringver, $false, $in, "", "", "", "", "", "", "")
+        return $this.getHistory("", "", 0, $stringver, $false, $in, "", "", "", "", "", "", "", @())
     }
 
     [string]createSectionFromCommits($CommitsList, $LineLen)
@@ -511,7 +511,7 @@ class HistoryFile
         return $szContents
     }
 
-    [array]getHistory($project, $version, $numsections, $stringver, $listonly, $in, $out, $targetloc, $npmpkg, $nugetpkg, $mantisRelease, $mantisUrl, $historyFileHref)
+    [array]getHistory($project, $version, $numsections, $stringver, $listonly, $in, $out, $targetloc, $npmpkg, $nugetpkg, $mantisRelease, $mantisUrl, $historyFileHref, $emailHrefs)
     {
         $szInputFile = $in;
         $szOutputFile = $out;
@@ -712,22 +712,37 @@ class HistoryFile
                 #
                 # Installer release, write unc path to history file
                 #
-                #if (![string]::IsNullOrEmpty($HISTORYFILE))
-                #{
-                    if (![string]::IsNullOrEmpty($historyFileHref)) {
-                        $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`">$historyFileHref</td></tr>"
-                    }
-                    elseif (![string]::IsNullOrEmpty($targetloc) -and !$targetloc.Contains("http://") -and !$targetloc.Contains("https://")) {
-                        $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`"><a href=`"$targetloc\history.txt`">Network Stored History File</a></td></tr>"
-                    }
-                    elseif ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl)) {
-                        #$szHrefs += "Complete History: $mantisUrl/set_project.php?project=$project&make_default=no&ref=plugin.php%3Fpage=$mantisUrl/plugin.php?page=IFramed/main&title=History.txt&url=https://app1.development.pjats.com/svn/web/filedetails.php%3Frepname=pja%26path=%2F$project%2Ftrunk%2Fdoc%2Fhistory.txt%26usemime=1<br><br>"
-                        #$szHrefs += "Complete History:$mantisUrl/plugin.php?page=IFramed/main&title=History.txt&url=https://app1.development.pjats.com/svn/web/filedetails.php%3Frepname=pja%26path=%2F$project%2Ftrunk%2Fdoc%2Fhistory.txt%26usemime=1"
-                        $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`"><a href=`"$mantisUrl/plugin.php?page=IFramed/main?title=History.txt&url=https://app1.development.pjats.com/svn/web/filedetails.php%3Frepname=pja%26path=%2F$project%2Ftrunk%2Fdoc%2Fhistory.txt%26usemime=1`">Projects Board History File</a></td></tr>"
-                    }
-                #}
+                if (![string]::IsNullOrEmpty($historyFileHref)) {
+                    $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`">$historyFileHref</td></tr>"
+                }
+                elseif (![string]::IsNullOrEmpty($targetloc) -and !$targetloc.Contains("http://") -and !$targetloc.Contains("https://")) {
+                    $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`"><a href=`"$targetloc\history.txt`">Network Stored History File</a></td></tr>"
+                }
+                elseif ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl)) {
+                    #$szHrefs += "Complete History: $mantisUrl/set_project.php?project=$project&make_default=no&ref=plugin.php%3Fpage=$mantisUrl/plugin.php?page=IFramed/main&title=History.txt&url=https://app1.development.pjats.com/svn/web/filedetails.php%3Frepname=pja%26path=%2F$project%2Ftrunk%2Fdoc%2Fhistory.txt%26usemime=1<br><br>"
+                    #$szHrefs += "Complete History:$mantisUrl/plugin.php?page=IFramed/main&title=History.txt&url=https://app1.development.pjats.com/svn/web/filedetails.php%3Frepname=pja%26path=%2F$project%2Ftrunk%2Fdoc%2Fhistory.txt%26usemime=1"
+                    $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`"><a href=`"$mantisUrl/plugin.php?page=IFramed/main?title=History.txt&url=https://app1.development.pjats.com/svn/web/filedetails.php%3Frepname=pja%26path=%2F$project%2Ftrunk%2Fdoc%2Fhistory.txt%26usemime=1`">Projects Board History File</a></td></tr>"
+                }
                 
+                foreach ($emailHref in $emailHrefs) 
+                {
+                    $eLink = $emailHref;
+                    $eLinkName = $emailHref;
+                    $eLinkDescrip = ""
+                    if ($emailHref.Contains("|"))
+                    {
+                        $emailHrefParts = $emailHref.Split("|")
+                        $eLink = $emailHrefParts[0]
+                        $eLinkDescrip= $emailHrefParts[1]
+                        if ($emailHrefParts.Length > 2) {
+                            $eLinkName = $emailHrefParts[2]
+                        }
+                        $szHrefs += "<tr><td>$eLinkDescrip</td><td style=`"padding-left:10px`"><a href=`"$eLink`">$eLinkName</a></td></tr>"
+                    }
+                }
+
                 $szHrefs += "</table>";
+
             }
 
             $szFinalContents += "$szHrefs<br>Most Recent History File Entry:<br><br>";
@@ -995,7 +1010,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to html"
-        $EMAILBODY = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $HISTORYFILE, $null, $targetloc, $npmloc, $nugetloc, $MANTISBTRELEASE, $MANTISBTURL[0], $HISTORYHREF)[0];
+        $EMAILBODY = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $HISTORYFILE, $null, $targetloc, $npmloc, $nugetloc, $MANTISBTRELEASE, $MANTISBTURL[0], $HISTORYHREF, $EMAILHREFS)[0];
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
@@ -2734,6 +2749,15 @@ if ($options.emailPort) {
     $EMAILPORT = $options.emailPort
 }
 #
+$EMAILHREFS = @()
+if ($options.emailHrefs) {
+    $EMAILHREFS = $options.emailHrefs
+}
+if ($EMAILHREFS -is [system.string])
+{
+    $EMAILHREFS = @($EMAILHREFS); #convert to array
+}
+#
 # GITHUB RELEASE CONFIG OPTIONS
 #
 $GITHUBRELEASE = "N"
@@ -3004,7 +3028,8 @@ if ($options.tagFormat) {
     $VCTAGFORMAT = $options.tagFormat
 }
 #
-# Whether or not to tag the new version in SVN.  Default is Yes.
+# Array of files that are to be checked into version control (in addition to any files touched
+# by the publish run)
 #
 $VCFILES = @()
 if ($options.vcFiles) {
@@ -3015,7 +3040,7 @@ if ($options.vcFiles) {
     }
 }
 #
-# Whether or not to tag the new version in SVN.  Default is Yes.
+# Array of files that will have version number text replacements
 #
 $VERSIONFILES = @()
 if ($options.versionFiles) {
@@ -4749,7 +4774,7 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to github release changelog html"
-        $GithubChangelogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "");
+        $GithubChangelogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "", @());
         $GithubChangelogParts = "<span class=`"changelog-table`"><table width=`"100%`" style=`"display:inline`">"
         foreach ($commit in $GithubChangelogParts)
         {
@@ -4924,9 +4949,9 @@ if ($MANTISBTRELEASE -eq "Y")
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to mantisbt release changelog html"
-        #$MantisChangelog = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $true, $HISTORYFILE, "", "", "", "", "", "", "")
+        #$MantisChangelog = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $true, $HISTORYFILE, "", "", "", "", "", "", "", @())
         #write-host $MantisChangelog
-        $MantisChangeLogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "")
+        $MantisChangeLogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "", @())
         $MantisChangelog = "<span class=`"changelog-table`"><table width=`"100%`" style=`"display:inline`">"
         foreach ($commit in $MantisChangeLogParts)
         {
