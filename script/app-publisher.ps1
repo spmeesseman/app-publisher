@@ -400,7 +400,7 @@ class HistoryFile
                     $emailHrefParts = $emailHref.Split("|")
                     $eLink = $emailHrefParts[0]
                     $eLinkDescrip= $emailHrefParts[1]
-                    if ($emailHrefParts.Length > 2) {
+                    if ($emailHrefParts.Length -gt 2) {
                         $eLinkName = $emailHrefParts[2]
                     }
                     $szHrefs += "<tr><td>$eLinkDescrip</td><td style=`"padding-left:10px`"><a href=`"$eLink`">$eLinkName</a></td></tr>"
