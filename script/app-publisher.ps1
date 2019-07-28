@@ -20,7 +20,7 @@ using namespace System.Text.RegularExpressions
 # by the semver module.
 # If this is not a node based project (i.e. C project, Java, .NET), we determine the current
 # version from the history.txt file.  Depending on the current version semantics, we either
-# increment the version number (legacy pj versioning) or use the semver module (semantic
+# increment the version number (legacy incremental versioning) or use the semver module (semantic
 # versioning maj.min.patch) to determine the next version number.
 #
 param ( 
@@ -383,12 +383,9 @@ class HistoryFile
             elseif (![string]::IsNullOrEmpty($targetloc) -and !$targetloc.Contains("http://") -and !$targetloc.Contains("https://")) {
                 $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`"><a href=`"$targetloc\history.txt`">Network Stored History File</a></td></tr>"
             }
-            #elseif (![string]::IsNullOrEmpty($vcWebPath)) {
-            #    $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`"><a href=`"$vcWebPath/filedetails.php?repname=pja&path=%2F$project%2Ftrunk%2Fdoc%2Fhistory.txt&usemime=1`">History File</a></td></tr>"
-            #}
-            #elseif ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl)) {
-            #    $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`"><a href=`"$mantisUrl/plugin.php?page=IFramed/main?title=History.txt&url=$vcWebPath/filedetails.php%3Frepname=pja%26path=%2F$project%2Ftrunk%2Fdoc%2Fhistory.txt%26usemime=1`">Projects Board History File</a></td></tr>"
-            #}
+            elseif ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl) -and ![string]::IsNullOrEmpty($vcWebPath)) {
+                $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`"><a href=`"$mantisUrl/plugin.php?page=IFramed/main?title=History&url=$vcWebPath%2F$project%2Ftrunk%2Fdoc%2Fhistory.txt`">History File - Projects Board</a></td></tr>"
+            }
             
             foreach ($emailHref in $emailHrefs) 
             {
@@ -1052,7 +1049,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     #
     $EMAILBODY += "<br><table><tr><td valign=`"middle`"><font style=`"font-size:12px;font-weight:bold`">";
     $EMAILBODY += "This automated email notification was generated and sent by </font></td><td>";
-    $EMAILBODY += "<img src=`"https://pjaproduction-sb.pjats.com/resources/images/app-publisher.png`" height=`"16`">"
+    $EMAILBODY += "<img src=`"https://app1.spmeesseman.com/res/img/app/app-publisher.png`" height=`"16`">"
     $EMAILBODY += "</td><td valign=`"middle`"><font style=`"color:#0000AA;font-size:12px;font-weight:bold`">"
     $EMAILBODY += "<i>app-publisher</i></font></td></tr><tr><td valign=`"middle`" colspan=`"3`">"
     $EMAILBODY += "<font style=`"font-size:10px;font-weight:bold`">Do not respond to this email address</font></td></tr></table>";
@@ -3624,7 +3621,7 @@ if ($CURRENTVERSION -eq "")
         $VersionSystem = "semver"
     } 
     #
-    # PJ History file
+    # Test style History file
     #
     elseif (![string]::IsNullOrEmpty($HISTORYFILE))
     {
@@ -3808,14 +3805,14 @@ if ($RUN -eq 1 -or $DRYRUN -eq $true)
     #
     # Currently projects are versioned in one of two ways:
     #
-    #     1. Legacy PJ version (100, 101, 102)
+    #     1. Legacy incremental whole number version (100, 101, 102)
     #     2. Semantically versioned (major.minor.patch)
     #
     # If this is a semantically versioned project (whether the version was obtained via node or 
     # history file parsing), we will use semver to calculate the next version if possible.  If 
     # semver is not available, prompt user for next version number.
     #
-    # If this is a legacy PJ versioned project, the verison obtained in the history will be
+    # If this is a legacy incremental versioned project, the verison obtained in the history will be
     # incremented by +1.
     #
     $VersionInteractive = "N"
@@ -3852,7 +3849,7 @@ if ($RUN -eq 1 -or $DRYRUN -eq $true)
         #
         # Whole # incremental versioning, i.e. 100, 101, 102...
         #
-        Log-Message "Using legacy PJ versioning"
+        Log-Message "Using legacy incremental versioning"
         if ($RUN -eq 1 -or $DRYRUN -eq $true) {
             try {
                 $VERSION = ([System.Int32]::Parse($CURRENTVERSION) + 1).ToString()

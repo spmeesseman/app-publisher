@@ -68,7 +68,7 @@
     "textEditor":        "notepad",
     "vcTag":             "Y",
     "vcTagPrefix":       "",
-    "vcWebPath":         "https://app1.development.pjats.com/web/svn",
+    "vcWebPath":         "https://app1.development.pjats.com/web/svn/filedetails.php%3Frepname=pja%26usemime=1%26path=",
     "versionFiles": [
         "install\\installer-x86.nsi"
     ],
