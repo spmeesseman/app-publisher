@@ -4962,8 +4962,9 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
         #
         # Log the changelog contents if this is a dry run
         #
+        Log-Message "Dry run, skipping GitHub release"
+        Log-Message "Dry run has generated an html changelog from previous version to test functionality:"
         Log-Message $GithubChangelog
-        Log-Message "Dry run, skipping GitHub release, changelog contents from previous version printed below" "magenta"
     }
 }
 
@@ -5053,6 +5054,7 @@ if ($MANTISBTRELEASE -eq "Y")
     #
     if ($DRYRUN -eq $true)
     {
+        Log-Message "Dry run has generated an html changelog from previous version to test functionality:"
         Log-Message $MantisChangelog
     }
 
