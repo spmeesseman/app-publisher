@@ -1916,3 +1916,36 @@ July 27th, 2019
     Forcefully create new files throughout application, in a case where the
     file already exists, it should be overwritten.
 
+
+Version 1.11.0
+July 27th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+
+    Add support for multiple MantisBT releases in one publish run.
+
+2.  Feature
+
+    Add support for providing a MantisBT API token in publishrc as opposed to
+    setting a system environment variable.
+    
+    Note that setting the MANTISBT_API_TOKEN environment variable is still an
+    option.
+

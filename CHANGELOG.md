@@ -1,5 +1,21 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.11.0 (July 27th, 2019)
+
+### Features
+
+- add support for multiple MantisBT releases in one publish run.
+
+### Minor Features
+
+- add support for providing a MantisBT API token in publishrc as opposed to setting a system environment variable.
+  Note that setting the MANTISBT_API_TOKEN environment variable is still an option.
+
+
+### progress
+
+- add support for multiple MantisBT releases.
+
 ## Version 1.10.9 (July 27th, 2019)
 
 ### Bug Fixes
