@@ -1,16 +1,20 @@
 # App Publisher - Release Automation
 
 [![perry-johnson](https://img.shields.io/badge/perry%20johnson-pja%20pjr-blue.svg)](https://www.perryjohnson.com)
-[![app-type](https://img.shields.io/badge/category-release-blue.svg)](https://www.perryjohnson.com)
-[![app-lang](https://img.shields.io/badge/language-typescript%20powershell-blue.svg)](https://www.perryjohnson.com)
+[![app-category](https://img.shields.io/badge/category-releases%20automation%20npm-blue.svg)](https://www.perryjohnson.com)
+[![app-lang](https://img.shields.io/badge/language-typescript%20powershell5-blue.svg)](https://www.perryjohnson.com)
 [![app-publisher](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-app--publisher-e10000.svg)](https://www.perryjohnson.com)
+
 [![authors](https://img.shields.io/badge/authors-scott%20meesseman-6F02B5.svg?logo=visual%20studio%20code)](https://www.perryjohnson.com)
+[![MantisBT issues open](https://app1.development.pjats.com/projects/plugins/ApiExtend/api/issues/countbadge/app-publisher/open)](https://app1.development.pjats.com/projects)
+[![MantisBT issues closed](https://app1.development.pjats.com/projects/plugins/ApiExtend/api/issues/countbadge/app-publisher/closed)](https://app1.development.pjats.com/projects)
 
 ## Table of Contents
 
 - [App Publisher - Release Automation](#App-Publisher---Release-Automation)
   - [Table of Contents](#Table-of-Contents)
   - [Description](#Description)
+  - [Requirements](#Requirements)
   - [Installation](#Installation)
   - [Usage](#Usage)
   - [Commit Messages](#Commit-Messages)
@@ -70,6 +74,12 @@ The steps performed during an app-publisher run are:
 - Tag with new version in VC
 - Upload a MantisBT or GitHub release including changelog and file assets
 - Send release email
+
+## Requirements
+
+- Windows 10
+- Powershell 5
+- Code Package Environment (Optional)
 
 ## Installation
 
