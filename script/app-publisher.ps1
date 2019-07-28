@@ -4749,7 +4749,7 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to github release changelog html"
-        $GithubChangelogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE);
+        $GithubChangelogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "");
         $GithubChangelogParts = "<span class=`"changelog-table`"><table width=`"100%`" style=`"display:inline`">"
         foreach ($commit in $GithubChangelogParts)
         {
@@ -4924,9 +4924,9 @@ if ($MANTISBTRELEASE -eq "Y")
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to mantisbt release changelog html"
-        #$MantisChangelog = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $true, $HISTORYFILE)
+        #$MantisChangelog = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $true, $HISTORYFILE, "", "", "", "", "", "", "")
         #write-host $MantisChangelog
-        $MantisChangeLogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE)
+        $MantisChangeLogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "")
         $MantisChangelog = "<span class=`"changelog-table`"><table width=`"100%`" style=`"display:inline`">"
         foreach ($commit in $MantisChangeLogParts)
         {
@@ -5057,6 +5057,15 @@ if ($MANTISBTRELEASE -eq "Y")
         }
     }
     
+    #
+    # Format request JSON
+    #
+    $Request = $Request | ConvertTo-Json
+    #
+    # Enable TLS1.2 in the case of HTTPS
+    #
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
     for ($i = 0; $i -lt $MANTISBTURL.Length; $i++)
     {
         #
@@ -5068,14 +5077,6 @@ if ($MANTISBTRELEASE -eq "Y")
             "Authorization" = $MANTISBTAPITOKEN[$i]
             "Content-Type" = "application/json; charset=UTF-8"
         }
-        #
-        # Format request JSON
-        #
-        $Request = $Request | ConvertTo-Json
-        #
-        # Enable TLS1.2 in the case of HTTPS
-        #
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         #
         # Send the REST POST to create the release w/ assets
         #
@@ -5098,6 +5099,7 @@ if ($MANTISBTRELEASE -eq "Y")
                 Log-Message "   ID         : $($Response.id)" "darkgreen"
                 Log-Message "   Message    : $($Response.msg)" "darkgreen"
                 Log-Message "   URL        : $($MANTISBTURL[$i])" "darkgreen"
+                Log-Message "   Token      : $($MANTISBTAPITOKEN[$i])" "darkgreen"
             }
         }
         else {
