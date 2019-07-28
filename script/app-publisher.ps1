@@ -248,18 +248,20 @@ class CommitAnalyzer
             "build"   { $FormattedSubject = "Build System"; break }
             "chore"   { $FormattedSubject = "Chores"; break }
             "docs"    { $FormattedSubject = "Documentation"; break }
+            "doc"     { $FormattedSubject = "Documentation"; break }
             "feat"    { $FormattedSubject = "Features"; break }
             "feature" { $FormattedSubject = "Features"; break }
             "featmin" { $FormattedSubject = "Minor Features"; break }
             "minfeat" { $FormattedSubject = "Minor Features"; break }
             "fix"     { $FormattedSubject = "Bug Fixes"; break }
-            "perf"    { $FormattedSubject = "Performance Enhancement"; break }
-            "refactor"{ $FormattedSubject = "Code Refactoring"; break }
+            "perf"    { $FormattedSubject = "Performance Enhancements"; break }
+            "progress"{ $FormattedSubject = "Ongoing Progress"; break }
+            "refactor"{ $FormattedSubject = "Refactoring"; break }
             "style"   { $FormattedSubject = "Code Styling"; break }
             "test"    { $FormattedSubject = "Tests"; break }
             "project" { $FormattedSubject = "Project Structure"; break }
-            "layout"  { $FormattedSubject = "Layout"; break }
-            "visual"  { $FormattedSubject = "Visual Enhancement"; break }
+            "layout"  { $FormattedSubject = "Project Layout"; break }
+            "visual"  { $FormattedSubject = "Visual Enhancements"; break }
             default   { $FormattedSubject = $Subject; break }
         }
 
@@ -357,7 +359,7 @@ class HistoryFile
             $szHrefs += "<tr><td colspan=`"2`"><b>$project $stringver $version has been released.</b><br><br></td></tr>"
 
             if ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl)) {
-                $szHrefs += "<tr><td>Release Page</td><td style=`"padding-left:10px`"><a href=`"$mantisUrl/set_project.php?project=$project&make_default=no&ref=plugin.php%3Fpage=Releases%2Freleases`">Projects Board Releases</a></td></tr>"
+                $szHrefs += "<tr><td>Release Page</td><td style=`"padding-left:10px`"><a href=`"$mantisUrl/set_project.php?project=$project&make_default=no&ref=plugin.php%3Fpage=Releases%2Freleases`">Releases - Projects Board</a></td></tr>"
             }
 
             if (![string]::IsNullOrEmpty($targetloc)) {
@@ -381,7 +383,7 @@ class HistoryFile
                 $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`">$historyFileHref</td></tr>"
             }
             elseif (![string]::IsNullOrEmpty($targetloc) -and !$targetloc.Contains("http://") -and !$targetloc.Contains("https://")) {
-                $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`"><a href=`"$targetloc\history.txt`">Network Stored History File</a></td></tr>"
+                $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`"><a href=`"$targetloc\history.txt`">History File - Filesystem Storage</a></td></tr>"
             }
             elseif ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl) -and ![string]::IsNullOrEmpty($vcWebPath)) {
                 $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`"><a href=`"$mantisUrl/plugin.php?page=IFramed/main?title=History&url=$vcWebPath%2F$project%2Ftrunk%2Fdoc%2Fhistory.txt`">History File - Projects Board</a></td></tr>"
@@ -408,6 +410,31 @@ class HistoryFile
         }
 
         return $szHrefs
+    }
+
+    getChangelogTypes($Section, $Changelog, $ChangelogTypes)
+    {
+        $i1 = $Changelog.IndexOf("## $Section")
+        if ($i1 -ne -1) {
+            $i2 = $Changelog.IndexOf("###", $i1)
+            $i3 = $Changelog.IndexOf("## ", $i1)
+            if ($i3 -lt $i2) {
+                $i2 = $i3;
+            }
+            if ($i2 -eq -1) {
+                $i2 = $Changelog.Length
+            }
+            $szFeatures = $Changelog.Substring($i1, $i2 - $i1)
+            $Type = $Section
+            if ($Section.EndsWith("s")) {
+                $Type = $Section.SubString(0, $Section.Length - 1); # remove plural
+            }
+            $match = [Regex]::Match($szFeatures, "\w*(?<=^|>)(- ){1}.+?(?=(<br>-|$))");
+            while ($match.Success) {
+                $ChangelogTypes += $Type
+                $match = $match.NextMatch()
+            }
+        }
     }
 
     [array]getChangelog($project, $version, $numsections, $stringver, $listonly, $in, $out, $targetloc, $npmpkg, $nugetpkg, $mantisRelease, $mantisUrl, $historyFileHref, $emailHrefs, $vcWebPath, $includeEmailHdr, $isAp)
@@ -567,6 +594,77 @@ class HistoryFile
 
         $szContents = $szContents.Substring($szContents.IndexOf("###"))
         
+        if ($listonly -is [system.string] -and $listonly -eq 'parts') 
+        {
+            $typeParts = @()
+            $msgParts = @()
+
+            $szContents = $szContents.Replace("`r`n", "<br>")
+            $szContents = $szContents.Replace("`n", "<br>")
+            $szContents = $szContents.Replace("`t", "&nbsp;&nbsp;&nbsp;&nbsp;")
+
+            $this.getChangelogTypes("Features", $szContents, $typeParts)
+            $this.getChangelogTypes("Minor Features", $szContents, $typeParts)
+            $this.getChangelogTypes("Bug Fixes", $szContents, $typeParts)
+            $this.getChangelogTypes("Refactoring", $szContents, $typeParts)
+            $this.getChangelogTypes("Build System", $szContents, $typeParts)
+            $this.getChangelogTypes("Documentation", $szContents, $typeParts)
+            $this.getChangelogTypes("Visual Enhancements", $szContents, $typeParts)
+            $this.getChangelogTypes("Performance Enhancements", $szContents, $typeParts)
+
+            $match = [Regex]::Match($szContents, "\w*(?<=^|>)(- ){1}.+?(?=(<br>-|$))");
+            while ($match.Success) {
+                $value = $match.Value.Substring(2)
+                $value = $value.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;[", "<br>[") # ticket tags
+                if ($value.StartsWith("<br>")) {
+                    $value = $value.Substring(4);
+                }
+                if ($value.EndsWith("<br>")) {
+                    $value = $value.Substring(0, $value.Length - 4)
+                }
+                $msgParts += $value.Trim()
+                $match = $match.NextMatch()
+            }
+
+            $szContents = @()
+            for ($i = 0; $i -lt $typeParts.Length; $i++)
+            {
+                $scope = ""
+                $tickets = ""
+                $subject = $typeParts[$i]
+                $message = $msgParts[$i];
+                if ($typeParts[$i].Contains(":")) {
+                    $subject = $typeParts[$i].Substring(0, $typeParts[$i].IndexOf(":")).Trim()
+                    $scope = $typeParts[$i].Substring($typeParts[$i].IndexOf(":") + 1).Trim()
+                }
+                $match = [Regex]::Match($msgParts[$i], "\[(&nbsp;| )*(closes|fixes|resolves|fix|close|refs|references|ref|reference){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]");
+                while ($match.Success) {
+                    $tickets = $match.Value
+                    $tickets = $match.Value.Replace("[", "").Replace("]", "").Trim()
+                    $TextInfo = (Get-Culture).TextInfo
+                    $tickets = $TextInfo.ToTitleCase($tickets.Replace("&nbsp;", " "))
+                    $message = $message.Replace("<br><br>" + $match.Value, "")
+                    $message = $message.Replace("<br>" + $match.Value, "").Trim()
+                    $message = $message.Replace("&nbsp;&nbsp;&nbsp;&nbsp;" + $match.Value, "").Trim()
+                    $message = $message.Replace("&nbsp;&nbsp;&nbsp;" + $match.Value, "").Trim()
+                    $message = $message.Replace("&nbsp;&nbsp;" + $match.Value, "").Trim()
+                    $message = $message.Replace("&nbsp;" + $match.Value, "").Trim()
+                    $message = $message.Replace(" " + $match.Value, "").Trim()
+                    $message = $message.Replace($match.Value, "").Trim()
+                    $match = $match.NextMatch()
+                }
+                $obj = @{
+                    "subject" = $subject
+                    "scope" = $scope
+                    "message" = $message
+                    "tickets" = $tickets
+                }
+                $szContents += $obj
+            }
+
+            return $szContents
+        }
+
         #
         # Convert to html
         #
@@ -842,6 +940,9 @@ class HistoryFile
                         if ($value.StartsWith("<br>")) {
                             $value = $value.Substring(4);
                         }
+                        if ($value.EndsWith("<br>")) {
+                            $value = $value.Substring(0, $value.Length - 4)
+                        }
                         $msgParts += $value.Trim()
                         $match = $match.NextMatch()
                     }
@@ -1037,7 +1138,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
         Log-Message "   Converting changelog markdown to html"
-        $EMAILBODY = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, $null, $targetloc, $npmloc, $nugetloc, $MANTISBTRELEASE, $MANTISBTURL[0], $HISTORYHREF, $EMAILHREFS, $VCWEBPATH, $true, $IsAppPublisher)[0];
+        $EMAILBODY = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $CHANGELOGFILE, $null, $targetloc, $npmloc, $nugetloc, $MANTISBTRELEASE, $MANTISBTURL[0], $HISTORYHREF, $EMAILHREFS, $VCWEBPATH, $true, $IsAppPublisher)[0];
     }
     else {
         Log-Message "   Notification could not be sent, history file not specified" "red"
@@ -1987,6 +2088,90 @@ function Edit-File($File, $SeekToEnd = $false, $skipEdit = $false)
         }
     }
 }
+
+function Get-ReleaseChangelog($ChangeLogParts, $UseFaIcons = $false, $IncludeStyling = $false)
+{
+    $ChangeLog = ""
+    
+    if ($ChangeLogParts.Length -gt 0)
+    {
+        if ($IncludeStyling -eq $true)
+        {
+            $ChangeLog += "<span><style type=`"text/css`" scoped>"
+            $ChangeLog += ".changelog-table td { padding-top: 5px; padding-bottom: 5px; }"
+            $ChangeLog += ".changelog-table tr { display: tr; border-collapse: separate; border-style: solid; border-color: rgb(211, 208, 208); border-width: 0px; border-spacing: 2px; border-bottom-width: 1px !important; }"
+            $ChangeLog += "</style>"
+        }
+
+        $ChangeLog = "<span class=`"changelog-table`">"
+        $ChangeLog += "<table width=`"100%`" style=`"display:inline`">"
+
+        foreach ($commit in $ChangeLogParts)
+        {
+            $ChangeLog += "<tr>"
+            if ($UseFaIcons -eq $true)
+            {
+                $ChangeLog += "<td nowrap valign=`"top`" style=`"font-weight:bold;color:#5090c1`">"
+                if ($commit.subject.Contains("Bug")) {
+                    $ChangeLog += "<i class=`"fa fa-bug`"></i> ";
+                }
+                elseif ($commit.subject.Contains("Feature")) {
+                    $ChangeLog += "<i class=`"fa fa-plus`"></i> ";
+                }
+                elseif ($commit.subject.Contains("Refactor")) {
+                    $ChangeLog += "<i class=`"fa fa-recycle`"></i> ";
+                }
+                elseif ($commit.subject.Contains("Visual")) {
+                    $ChangeLog += "<i class=`"fa fa-eye`"></i> ";
+                }
+                elseif ($commit.subject.Contains("Documentation")) {
+                    $ChangeLog += "<i class=`"fa fa-book`"></i> ";
+                }
+                elseif ($commit.subject.Contains("Progress")) {
+                    $ChangeLog += "<i class=`"fa fa-tasks`"></i> ";
+                }
+                elseif ($commit.subject.Contains("Build")) {
+                    $ChangeLog += "<i class=`"fa fa-cog`"></i> ";
+                }
+                else {
+                    $ChangeLog += "<i class=`"fa fa-asterisk`"></i> ";
+                }
+                $ChangeLog += "</td><td nowrap valign=`"top`" style=`"font-weight:bold;padding-left:3px`">"
+            }
+            else {
+                $ChangeLog += "<td nowrap valign=`"top`" style=`"font-weight:bold`">"
+            }
+
+            $ChangeLog += $commit.subject
+            if (![string]::IsNullOrEmpty($commit.scope)) {
+                $ChangeLog += "</td><td nowrap valign=`"top`" style=`"padding-left:10px`">"
+                $ChangeLog += $commit.scope
+            }
+            else {
+                $ChangeLog += "</td><td>"
+            }
+            $ChangeLog += "</td><td width=`"100%`" style=`"padding-left:15px`">"
+            $ChangeLog += $commit.message
+            if (![string]::IsNullOrEmpty($commit.tickets)) {
+                $ChangeLog += "</td><td nowrap align=`"right`" valign=`"top`" style=`"padding-left:15px;padding-right:10px`">"
+                $ChangeLog += $commit.tickets
+            }
+            else {
+                $ChangeLog += "</td><td>"
+            }
+            $ChangeLog += "</td></tr>"
+        }
+
+        $ChangeLog += "</table></span>"
+        if ($IncludeStyling -eq $true)
+        {
+            $ChangeLog += "</span>"
+        }
+    }
+
+    return $ChangeLog      
+}
+
 
 $ContentTypeMap = @{
     ".323"= "text/h323";
@@ -4029,6 +4214,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
         $TmpCommits = $TmpCommits.Replace("build: ", "Build System`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("chore: ", "Chore`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("docs: ", "Documentation`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("doc: ", "Documentation`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("minfeat: ", "Feature`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("featmin: ", "Feature`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("feat: ", "Feature`r`n`r`n    ")
@@ -4051,6 +4237,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
         $TmpCommits = $TmpCommits.Replace("build(", "Build System(")
         $TmpCommits = $TmpCommits.Replace("chore(", "Chore(")
         $TmpCommits = $TmpCommits.Replace("docs(", "Documentation(")
+        $TmpCommits = $TmpCommits.Replace("doc(", "Documentation(")
         $TmpCommits = $TmpCommits.Replace("featmin(", "Feature(")
         $TmpCommits = $TmpCommits.Replace("minfeat(", "Feature(")
         $TmpCommits = $TmpCommits.Replace("feat(", "Feature(")
@@ -4814,43 +5001,45 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
     #
     # Create changelog content
     #
-
-    $GithubChangelog = "Version $VERSION Release"
-
+    $GithubChangelogParts = @()
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to github release changelog html"
         $GithubChangelogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "", @(), "")
-        $GithubChangelogParts = "<span class=`"changelog-table`"><table width=`"100%`" style=`"display:inline`">"
-        foreach ($commit in $GithubChangelogParts)
-        {
-            $GithubChangelog += "<tr><td nowrap valign=`"top`" style=`"font-weight:bold;padding-left:3px`">"
-            $GithubChangelog += $commit.subject
-            if (![string]::IsNullOrEmpty($commit.scope)) {
-                $GithubChangelog += "</td><td nowrap valign=`"top`" style=`"padding-left:10px`">"
-                $GithubChangelog += $commit.scope
-            }
-            else {
-                $GithubChangelog += "</td><td>"
-            }
-            $GithubChangelog += "</td><td width=`"100%`" style=`"padding-left:15px`">"
-            $GithubChangelog += $commit.message
-            if (![string]::IsNullOrEmpty($commit.tickets)) {
-                $GithubChangelog += "</td><td nowrap align=`"right`" valign=`"top`" style=`"padding-left:15px;padding-right:10px`">"
-                $GithubChangelog += $commit.tickets
-            }
-            else {
-                $GithubChangelog += "</td><td>"
-            }
-            $GithubChangelog += "</td></tr>"
-        }
-        $GithubChangelog += "</table></span>"
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
-        $GithubChangelog = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, "", "", "", "", "", "", "", @(), "", $false, $IsAppPublisher)[0]
+        Log-Message "   Converting changelog markdown to github release changelog html"
+        $GithubChangelogParts = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $CHANGELOGFILE, "", "", "", "", "", "", "", @(), "", $false, $IsAppPublisher)
     }
-    
+    $GithubChangelog = Get-ReleaseChangelog $GithubChangelogParts $false $true
+
+    #$GithubChangelogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "", @(), "")
+    #$GithubChangelogParts = "<span class=`"changelog-table`"><table width=`"100%`" style=`"display:inline`">"
+    #foreach ($commit in $GithubChangelogParts)
+    #{
+    #    $GithubChangelog += "<tr><td nowrap valign=`"top`" style=`"font-weight:bold;padding-left:3px`">"
+    #    $GithubChangelog += $commit.subject
+    #    if (![string]::IsNullOrEmpty($commit.scope)) {
+    #        $GithubChangelog += "</td><td nowrap valign=`"top`" style=`"padding-left:10px`">"
+    #        $GithubChangelog += $commit.scope
+    #    }
+    #    else {
+    #        $GithubChangelog += "</td><td>"
+    #    }
+    #    $GithubChangelog += "</td><td width=`"100%`" style=`"padding-left:15px`">"
+    #    $GithubChangelog += $commit.message
+    #    if (![string]::IsNullOrEmpty($commit.tickets)) {
+    #        $GithubChangelog += "</td><td nowrap align=`"right`" valign=`"top`" style=`"padding-left:15px;padding-right:10px`">"
+    #        $GithubChangelog += $commit.tickets
+    #    }
+    #    else {
+    #        $GithubChangelog += "</td><td>"
+    #    }
+    #    $GithubChangelog += "</td></tr>"
+    #}
+    #$GithubChangelog += "</table></span>"
+        
     if ($DRYRUN -eq $false) 
     {
         # Set up the request body for the 'create release' request
@@ -4983,68 +5172,18 @@ if ($MANTISBTRELEASE -eq "Y")
     # Changelog...
     #
     $NotesIsMarkdown = 0
-    $MantisChangelog = ""
     $MantisChangeLogParts = @()
-
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to mantisbt release changelog html"
         $MantisChangeLogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "", @(), "")
-        $MantisChangelog = "<span class=`"changelog-table`"><table width=`"100%`" style=`"display:inline`">"
-        foreach ($commit in $MantisChangeLogParts)
-        {
-            $MantisChangelog += "<tr><td nowrap valign=`"top`" style=`"font-weight:bold;color:#5090c1`">"
-            if ($commit.subject.Contains("Bug")) {
-                $MantisChangelog += "<i class=`"fa fa-bug`"></i> ";
-            }
-            elseif ($commit.subject.Contains("Feature")) {
-                $MantisChangelog += "<i class=`"fa fa-plus`"></i> ";
-            }
-            elseif ($commit.subject.Contains("Refactor")) {
-                $MantisChangelog += "<i class=`"fa fa-recycle`"></i> ";
-            }
-            elseif ($commit.subject.Contains("Visual")) {
-                $MantisChangelog += "<i class=`"fa fa-eye`"></i> ";
-            }
-            elseif ($commit.subject.Contains("Documentation")) {
-                $MantisChangelog += "<i class=`"fa fa-book`"></i> ";
-            }
-            elseif ($commit.subject.Contains("Progress")) {
-                $MantisChangelog += "<i class=`"fa fa-tasks`"></i> ";
-            }
-            elseif ($commit.subject.Contains("Build")) {
-                $MantisChangelog += "<i class=`"fa fa-cog`"></i> ";
-            }
-            else {
-                $MantisChangelog += "<i class=`"fa fa-asterisk`"></i> ";
-            }
-            $MantisChangelog += "</td><td nowrap valign=`"top`" style=`"font-weight:bold;padding-left:3px`">"
-            $MantisChangelog += $commit.subject
-            if (![string]::IsNullOrEmpty($commit.scope)) {
-                $MantisChangelog += "</td><td nowrap valign=`"top`" style=`"padding-left:10px`">"
-                $MantisChangelog += $commit.scope
-            }
-            else {
-                $MantisChangelog += "</td><td>"
-            }
-            $MantisChangelog += "</td><td width=`"100%`" style=`"padding-left:15px`">"
-            $MantisChangelog += $commit.message
-            if (![string]::IsNullOrEmpty($commit.tickets)) {
-                $MantisChangelog += "</td><td nowrap align=`"right`" valign=`"top`" style=`"padding-left:15px;padding-right:10px`">"
-                $MantisChangelog += $commit.tickets
-            }
-            else {
-                $MantisChangelog += "</td><td>"
-            }
-            $MantisChangelog += "</td></tr>"
-        }
-        $MantisChangelog += "</table></span>"
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
-        #$NotesIsMarkdown = 1
-        $MantisChangelog = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, "", "", "", "", "", "", "", @(), "", $false, $IsAppPublisher)[0]
+        Log-Message "   Converting changelog markdown to mantisbt release changelog html"
+        $MantisChangelogParts = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $CHANGELOGFILE, "", "", "", "", "", "", "", @(), "", $false, $IsAppPublisher)
     }
+    $MantisChangelog = Get-ReleaseChangelog $MantisChangeLogParts $true
 
     #
     # Log the changelog contents if this is a dry run

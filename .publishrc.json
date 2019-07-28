@@ -18,12 +18,10 @@
     "emailServer":       "10.0.7.50",
     "emailRecip":        "productrelease@pjats.com",
     "emailSender":       "productbuild@pjats.com",
-    "emailHrefs":        [
-        "https://app1.development.pjats.com/projects/plugin.php?page=IFramed/main?title=History.txt&url=https://app1.development.pjats.com/svn/web/filedetails.php%3Frepname=pja%26path=%2Fapp-publisher%2Ftrunk%2Fdoc%2Fhistory.txt%26usemime=1|Complete History|History File - Projects Board",
-        "https://app1.development.pjats.com/projects//set_project.php?project=app-publisher&make_default=no&ref=roadmap_page.php|Project Roadmap|Roadmap - Projects Board",
-        "https://app1.development.pjats.com/projects//set_project.php?project=app-publisher&make_default=no&ref=changelog_page.php|Project Changelog|Changelog - Projects Board",
-        "https://app1.development.pjats.com/projects/plugin.php?page=IFramed/main?title=History.txt&url=https://app1.development.pjats.com/svn/web/filedetails.php%3Frepname=pja%26path=%2Fapp-publisher%2Ftrunk%2FREADME.md%26usemime=1|ReadMe File|Readme File - Projects Board",
-        "https://app1.development.pjats.com/svn/web/filedetails.php?repname=pja&path=%2Fapp-publisher%2Ftrunk%2FREADME.md&usemime=1|ReadMe File|Readme File - WebSVN"
+    "emailHrefs": [
+        "https://app1.development.pjats.com/svn/web/filedetails.php?repname=pja&path=%2Fapp-publisher%2Ftrunk%2FREADME.md&usemime=1|ReadMe File|Readme File - WebSVN",
+        "https://app1.development.pjats.com/projects/set_project.php?project=app-publisher&make_default=no&ref=roadmap_page.php|Project Roadmap|Roadmap - Projects Board",
+        "https://app1.development.pjats.com/projects/set_project.php?project=app-publisher&make_default=no&ref=changelog_page.php|Project Changelog|Changelog - Projects Board"
     ],
     "githubRelease":     "N",
     "githubAssets":      [],
