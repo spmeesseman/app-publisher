@@ -56,10 +56,12 @@
     "repo":              "",
     "skipCommit":        "N",
     "skipDeployPush":    "N",
+    "skipVersionEdits":  "Y",
     "testEmailRecip":    "smeesseman@pjats.com",
     "textEditor":        "notepad",
     "vcTag":             "Y",
     "vcTagPrefix":       "",
+    "vcWebPath":         "https://app1.development.pjats.com/web/svn",
     "versionFiles": [
         "install\\installer-x86.nsi"
     ],

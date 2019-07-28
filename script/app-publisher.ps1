@@ -272,7 +272,7 @@ class HistoryFile
 {
     [string]getVersion($in, $stringver)
     {
-        return $this.getHistory("", "", 0, $stringver, $false, $in, "", "", "", "", "", "", "", @())
+        return $this.getHistory("", "", 0, $stringver, $false, $in, "", "", "", "", "", "", "", @(), "")
     }
 
     [string]createSectionFromCommits($CommitsList, $LineLen)
@@ -346,7 +346,74 @@ class HistoryFile
         return $comments
     }
 
-    [string]getChangelog($project, $version, $numsections, $stringver, $in, $includeVersionHdr)
+    [string]getEmailHeader($project, $version, $stringver, $targetloc, $npmpkg, $nugetpkg, $mantisRelease, $mantisUrl, $historyFileHref, $emailHrefs, $vcWebPath)
+    {
+        $szHrefs = ""
+
+        if (![string]::IsNullOrEmpty($targetloc) -or ![string]::IsNullOrEmpty($npmpkg) -or ![string]::IsNullOrEmpty($nugetpkg) -or ![string]::IsNullOrEmpty($historyFileHref) -or ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl))) 
+        {
+            $szHrefs = "<table>"
+
+            $szHrefs += "<tr><td colspan=`"2`"><b>$project $stringver $version has been released.</b><br><br></td></tr>"
+
+            if ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl)) {
+                $szHrefs += "<tr><td>Release Page</td><td style=`"padding-left:10px`"><a href=`"$mantisUrl/set_project.php?project=$project&make_default=no&ref=plugin.php%3Fpage=Releases%2Freleases`">Projects Board Releases</a></td></tr>"
+            }
+
+            if (![string]::IsNullOrEmpty($targetloc)) {
+                $szHrefs += "<tr><td>Network Location</td><td style=`"padding-left:10px`"><a href=`"$targetloc`">Network Drive Location</a></td></tr>"
+            }
+
+            if (![string]::IsNullOrEmpty($npmpkg))
+            {
+                $szHrefs += "<tr><td>NPM Location</td><td style=`"padding-left:10px`"><a href=`"$npmpkg`">NPM Registry</a></td></tr>"
+            }
+
+            if (![string]::IsNullOrEmpty($nugetpkg))
+            {
+                $szHrefs += "<tr><td>Nuget Location</td><td style=`"padding-left:10px`"><a href=`"$nugetpkg`">Nuget Registry</a></td></tr>"
+            }
+
+            #
+            # history file
+            #
+            if (![string]::IsNullOrEmpty($historyFileHref)) {
+                $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`">$historyFileHref</td></tr>"
+            }
+            elseif (![string]::IsNullOrEmpty($targetloc) -and !$targetloc.Contains("http://") -and !$targetloc.Contains("https://")) {
+                $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`"><a href=`"$targetloc\history.txt`">Network Stored History File</a></td></tr>"
+            }
+            #elseif (![string]::IsNullOrEmpty($vcWebPath)) {
+            #    $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`"><a href=`"$vcWebPath/filedetails.php?repname=pja&path=%2F$project%2Ftrunk%2Fdoc%2Fhistory.txt&usemime=1`">History File</a></td></tr>"
+            #}
+            #elseif ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl)) {
+            #    $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`"><a href=`"$mantisUrl/plugin.php?page=IFramed/main?title=History.txt&url=$vcWebPath/filedetails.php%3Frepname=pja%26path=%2F$project%2Ftrunk%2Fdoc%2Fhistory.txt%26usemime=1`">Projects Board History File</a></td></tr>"
+            #}
+            
+            foreach ($emailHref in $emailHrefs) 
+            {
+                $eLink = $emailHref;
+                $eLinkName = $emailHref;
+                $eLinkDescrip = ""
+                if ($emailHref.Contains("|"))
+                {
+                    $emailHrefParts = $emailHref.Split("|")
+                    $eLink = $emailHrefParts[0]
+                    $eLinkDescrip= $emailHrefParts[1]
+                    if ($emailHrefParts.Length > 2) {
+                        $eLinkName = $emailHrefParts[2]
+                    }
+                    $szHrefs += "<tr><td>$eLinkDescrip</td><td style=`"padding-left:10px`"><a href=`"$eLink`">$eLinkName</a></td></tr>"
+                }
+            }
+
+            $szHrefs += "</table>";
+        }
+
+        return $szHrefs
+    }
+
+    [array]getChangelog($project, $version, $numsections, $stringver, $listonly, $in, $out, $targetloc, $npmpkg, $nugetpkg, $mantisRelease, $mantisUrl, $historyFileHref, $emailHrefs, $vcWebPath, $includeEmailHdr, $isAp)
     {
         $szInputFile = $in;
         $szNumSections = $numsections;
@@ -501,17 +568,34 @@ class HistoryFile
         Log-Message "   Found version section(s)"
         $szContents = $szContents.Substring(0, $iIndex1)
 
-        if ($includeVersionHdr -eq $false)
+        $szContents = $szContents.Substring($szContents.IndexOf("###"))
+        
+        #
+        # Convert to html
+        #
+        $szContents = $szContents.Replace("`r`n", "`n")
+        New-Item -ItemType "file" -Force -Path "${Env:Temp}\changelog.md" -Value "$szContents" | Out-Null
+        if (!$isAp) {
+            $szContents = & app-publisher-marked --breaks --gfm --file "${Env:Temp}\changelog.md"
+        }
+        else {
+            $szContents = & marked --breaks --gfm --file "${Env:Temp}\changelog.md"
+        }
+        Check-ExitCode
+        Remove-Item -Path "${Env:Temp}\changelog.md"
+
+        if ($includeEmailHdr -eq $true)
         {
-            $szContents = $szContents.Substring($szContents.IndexOf("###"))
+            $szHrefs = $this.getEmailHeader($project, $version, $stringver, $targetloc, $npmpkg, $nugetpkg, $mantisRelease, $mantisUrl, $historyFileHref, $emailHrefs, $vcWebPath)
+            $szContents = $szHrefs + $szContents
         }
 
         Log-Message "   Successful" "darkgreen"
 
-        return $szContents
+        return @($szContents)
     }
 
-    [array]getHistory($project, $version, $numsections, $stringver, $listonly, $in, $out, $targetloc, $npmpkg, $nugetpkg, $mantisRelease, $mantisUrl, $historyFileHref, $emailHrefs)
+    [array]getHistory($project, $version, $numsections, $stringver, $listonly, $in, $out, $targetloc, $npmpkg, $nugetpkg, $mantisRelease, $mantisUrl, $historyFileHref, $emailHrefs, $vcWebPath)
     {
         $szInputFile = $in;
         $szOutputFile = $out;
@@ -683,67 +767,8 @@ class HistoryFile
         if ($version -ne "" -and $version -ne $null)
         {
             Log-Message "   Write header text to message"
-            $szHrefs = ""
-
-            if (![string]::IsNullOrEmpty($targetloc) -or ![string]::IsNullOrEmpty($npmpkg) -or ![string]::IsNullOrEmpty($nugetpkg) -or ![string]::IsNullOrEmpty($historyFileHref) -or ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl))) 
-            {
-                $szHrefs = "<table>"
-
-                $szHrefs += "<tr><td colspan=`"2`"><b>$project $stringver $version has been released.</b><br><br></td></tr>"
-
-                if ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl)) {
-                    $szHrefs += "<tr><td>Release Page</td><td style=`"padding-left:10px`"><a href=`"$mantisUrl/set_project.php?project=$project&make_default=no&ref=plugin.php%3Fpage=Releases%2Freleases`">Projects Board Releases</a></td></tr>"
-                }
-
-                if (![string]::IsNullOrEmpty($targetloc)) {
-                    $szHrefs += "<tr><td>Network Location</td><td style=`"padding-left:10px`"><a href=`"$targetloc`">Network Drive Location</a></td></tr>"
-                }
-
-                if (![string]::IsNullOrEmpty($npmpkg))
-                {
-                    $szHrefs += "<tr><td>NPM Location</td><td style=`"padding-left:10px`"><a href=`"$npmpkg`">NPM Registry</a></td></tr>"
-                }
-
-                if (![string]::IsNullOrEmpty($nugetpkg))
-                {
-                    $szHrefs += "<tr><td>Nuget Location</td><td style=`"padding-left:10px`"><a href=`"$nugetpkg`">Nuget Registry</a></td></tr>"
-                }
-
-                #
-                # Installer release, write unc path to history file
-                #
-                if (![string]::IsNullOrEmpty($historyFileHref)) {
-                    $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`">$historyFileHref</td></tr>"
-                }
-                elseif (![string]::IsNullOrEmpty($targetloc) -and !$targetloc.Contains("http://") -and !$targetloc.Contains("https://")) {
-                    $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`"><a href=`"$targetloc\history.txt`">Network Stored History File</a></td></tr>"
-                }
-                elseif ($mantisRelease -eq "Y" -and ![string]::IsNullOrEmpty($mantisUrl)) {
-                    #$szHrefs += "Complete History: $mantisUrl/set_project.php?project=$project&make_default=no&ref=plugin.php%3Fpage=$mantisUrl/plugin.php?page=IFramed/main&title=History.txt&url=https://app1.development.pjats.com/svn/web/filedetails.php%3Frepname=pja%26path=%2F$project%2Ftrunk%2Fdoc%2Fhistory.txt%26usemime=1<br><br>"
-                    #$szHrefs += "Complete History:$mantisUrl/plugin.php?page=IFramed/main&title=History.txt&url=https://app1.development.pjats.com/svn/web/filedetails.php%3Frepname=pja%26path=%2F$project%2Ftrunk%2Fdoc%2Fhistory.txt%26usemime=1"
-                    $szHrefs += "<tr><td>Complete History</td><td style=`"padding-left:10px`"><a href=`"$mantisUrl/plugin.php?page=IFramed/main?title=History.txt&url=https://app1.development.pjats.com/svn/web/filedetails.php%3Frepname=pja%26path=%2F$project%2Ftrunk%2Fdoc%2Fhistory.txt%26usemime=1`">Projects Board History File</a></td></tr>"
-                }
-                
-                foreach ($emailHref in $emailHrefs) 
-                {
-                    $eLink = $emailHref;
-                    $eLinkName = $emailHref;
-                    $eLinkDescrip = ""
-                    if ($emailHref.Contains("|"))
-                    {
-                        $emailHrefParts = $emailHref.Split("|")
-                        $eLink = $emailHrefParts[0]
-                        $eLinkDescrip= $emailHrefParts[1]
-                        if ($emailHrefParts.Length > 2) {
-                            $eLinkName = $emailHrefParts[2]
-                        }
-                        $szHrefs += "<tr><td>$eLinkDescrip</td><td style=`"padding-left:10px`"><a href=`"$eLink`">$eLinkName</a></td></tr>"
-                    }
-                }
-
-                $szHrefs += "</table>";
-
-            }
+            
+            $szHrefs = $this.getEmailHeader($project, $version, $stringver, $targetloc, $npmpkg, $nugetpkg, $mantisRelease, $mantisUrl, $historyFileHref, $emailHrefs, $vcWebPath)
 
             $szFinalContents += "$szHrefs<br>Most Recent History File Entry:<br><br>";
             Log-Message "   Write $iNumSections history section(s) to message"
@@ -1010,25 +1035,12 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to html"
-        $EMAILBODY = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $HISTORYFILE, $null, $targetloc, $npmloc, $nugetloc, $MANTISBTRELEASE, $MANTISBTURL[0], $HISTORYHREF, $EMAILHREFS)[0];
+        $EMAILBODY = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $HISTORYFILE, $null, $targetloc, $npmloc, $nugetloc, $MANTISBTRELEASE, $MANTISBTURL[0], $HISTORYHREF, $EMAILHREFS, $VCWEBPATH)[0];
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
         Log-Message "   Converting changelog markdown to html"
-        #
-        # Use marked module for conversion
-        #
-        $EMAILBODY = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, $true);
-        $EMAILBODY = $EMAILBODY.Replace("`r`n", "`n")
-        New-Item -ItemType "file" -Force -Path "${Env:Temp}\changelog-email.md" -Value "$EMAILBODY" | Out-Null
-        if (!$IsAppPublisher) {
-            $EMAILBODY = & app-publisher-marked --breaks --gfm --file "${Env:Temp}\changelog-email.md"
-        }
-        else {
-            $EMAILBODY = & marked --breaks --gfm --file "${Env:Temp}\changelog-email.md"
-        }
-        Check-ExitCode
-        Remove-Item -Path "${Env:Temp}\changelog-email.md"
+        $EMAILBODY = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, $null, $targetloc, $npmloc, $nugetloc, $MANTISBTRELEASE, $MANTISBTURL[0], $HISTORYHREF, $EMAILHREFS, $VCWEBPATH, $true, $IsAppPublisher)[0];
     }
     else {
         Log-Message "   Notification could not be sent, history file not specified" "red"
@@ -1499,7 +1511,7 @@ function Prepare-VersionFiles()
                 # Allow manual modifications to $VersionFile
                 # Edit-File will add this file to $VersionFilesEdited
                 #
-                Edit-File $VersionFile
+                Edit-File $VersionFile $false $SKIPVERSIONEDITS
             }
         }
     }
@@ -1514,7 +1526,7 @@ function Prepare-ExtJsBuild()
     #
     # Allow manual modifications to app.json
     #
-    Edit-File "app.json"
+    Edit-File "app.json" # $false $SKIPVERSIONEDITS
 }
 
 function Prepare-DotNetBuild($AssemblyInfoLocation)
@@ -1549,7 +1561,7 @@ function Prepare-DotNetBuild($AssemblyInfoLocation)
     #
     # Allow manual modifications to assembly file
     #
-    Edit-File $AssemblyInfoLocation
+    Edit-File $AssemblyInfoLocation $false $SKIPVERSIONEDITS
 }
 
 
@@ -1567,7 +1579,7 @@ function Prepare-MantisPluginBuild()
             #
             # Allow manual modifications to assembly file
             #
-            Edit-File $MANTISBTPLUGIN
+            Edit-File $MANTISBTPLUGIN $false $SKIPVERSIONEDITS
         }
     }
 }
@@ -1812,7 +1824,7 @@ function Prepare-PackageJson()
     #
     # Allow manual modifications to package.json and package-lock.json
     #
-    Edit-File "package.json"
+    Edit-File "package.json" $false $SKIPVERSIONEDITS
     if (Test-Path("package-lock.json")) 
     {
         # The json utility will output line feed only, replace with windows stle crlf
@@ -1820,7 +1832,7 @@ function Prepare-PackageJson()
         #Log-Message "Set windows line feeds in package-lock.json"
         #((Get-Content -path "package-lock.json" -Raw) -replace "`n", "`r`n") | Set-Content -NoNewline -Path "package-lock.json"
         #Check-PsCmdSuccess
-        Edit-File "package-lock.json"
+        Edit-File "package-lock.json" $false $SKIPVERSIONEDITS
     }
 }
 
@@ -1884,7 +1896,7 @@ function Restore-PackageJson()
 
 $FirstEditFileDone = $false
 
-function Edit-File($File, $SeekToEnd = $false)
+function Edit-File($File, $SeekToEnd = $false, $skipEdit = $false)
 {
     if (![string]::IsNullOrEmpty($File) -and (Test-Path($File)) -and !$VersionFilesEdited.Contains($File))
     {
@@ -1894,7 +1906,7 @@ function Edit-File($File, $SeekToEnd = $false)
             Vc-Changelist-Add $File
         #}
 
-        if (![string]::IsNullOrEmpty($TEXTEDITOR))
+        if (!$skipEdit -and ![string]::IsNullOrEmpty($TEXTEDITOR))
         {
             Log-Message "Edit $File"
             #
@@ -3000,6 +3012,15 @@ if ($options.skipDeployPush) {
     $SKIPDEPLOYPUSH = $options.skipDeployPush
 }
 #
+#
+#
+$SKIPVERSIONEDITS = "N"
+if ($options.skipVersionEdits) {
+    $SKIPVERSIONEDITS = $options.skipVersionEdits
+}
+#
+#
+#
 $TESTEMAILRECIP = ""
 if ($options.testEmailRecip) {
     $TESTEMAILRECIP = $options.testEmailRecip
@@ -3026,6 +3047,27 @@ if ($options.vcTagPrefix) {
 $VCTAGFORMAT = ""
 if ($options.tagFormat) {
     $VCTAGFORMAT = $options.tagFormat
+}
+#
+# The path to the web viewer for version control
+#
+# WebSVN example:
+#
+#     https://websvn.domain.com/filedetails.php?repname=reponame&path=%2Fapp-publisher%2Ftrunk%2Fdoc%2Fhistory.txt&usemime=1
+#
+# GitHub example:
+#
+#     https://github.com/username/projectname/master/raw/filename.ext
+#
+$VCWEBPATH = ""
+if ($options.vcWebPath) {
+    $VCWEBPATH = $options.vcWebPath
+}
+if (![string]::IsNullOrEmpty($VCWEBPATH))
+{
+    if ($VCWEBPATH.EndsWith("/")) {
+        $VCWEBPATH = $VCWEBPATH.Substring(0, $VCWEBPATH.Length - 1);
+    }
 }
 #
 # Array of files that are to be checked into version control (in addition to any files touched
@@ -3424,6 +3466,13 @@ if (![string]::IsNullOrEmpty($VCTAG)) {
     $VCTAG = $VCTAG.ToUpper()
     if ($VCTAG -ne "Y" -and $VCTAG -ne "N") {
         Log-Message "Invalid value specified for svnTag, accepted values are y/n/Y/N" "red"
+        exit 1
+    }
+}
+if (![string]::IsNullOrEmpty($SKIPVERSIONEDITS)) {
+    $SKIPVERSIONEDITS = $SKIPVERSIONEDITS.ToUpper()
+    if ($SKIPVERSIONEDITS -ne "Y" -and $SKIPVERSIONEDITS -ne "N") {
+        Log-Message "Invalid value specified for skipVersionEdits, accepted values are y/n/Y/N" "red"
         exit 1
     }
 }
@@ -4071,7 +4120,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
     #
     # Allow manual modifications to history file
     #
-    Edit-File $HISTORYFILE $true
+    Edit-File $HISTORYFILE $true $false
 }
 
 #
@@ -4239,7 +4288,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE))
     #
     # Allow manual modifications to changelog file
     #
-    Edit-File $CHANGELOGFILE
+    Edit-File $CHANGELOGFILE $false $false
     #
     # Add to changelist for svn check in.  This would be the first file modified so just
     # set changelist equal to history file
@@ -4774,7 +4823,7 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to github release changelog html"
-        $GithubChangelogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "", @());
+        $GithubChangelogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "", @(), "")
         $GithubChangelogParts = "<span class=`"changelog-table`"><table width=`"100%`" style=`"display:inline`">"
         foreach ($commit in $GithubChangelogParts)
         {
@@ -4802,17 +4851,7 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
-        $GithubChangelog = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, $false)
-        $GithubChangelog = $GithubChangelog.Replace("`r`n", "`n")
-        New-Item -ItemType "file" -Force -Path "${Env:Temp}\changelog.md" -Value "$GithubChangelog" | Out-Null
-        if (!$IsAppPublisher) {
-            $GithubChangelog = & app-publisher-marked --breaks --gfm --file "${Env:Temp}\changelog.md"
-        }
-        else {
-            $GithubChangelog = & marked --breaks --gfm --file "${Env:Temp}\changelog.md"
-        }
-        Check-ExitCode
-        Remove-Item -Path "${Env:Temp}\changelog.md"
+        $GithubChangelog = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, "", "", "", "", "", "", "", @(), "", $false, $IsAppPublisher)[0]
     }
     
     if ($DRYRUN -eq $false) 
@@ -4920,8 +4959,11 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
         }
     }
     else {
-        Log-Message "Dry run, skipping GitHub release, changelog contents from previous version printed below" "magenta"
+        #
+        # Log the changelog contents if this is a dry run
+        #
         Log-Message $GithubChangelog
+        Log-Message "Dry run, skipping GitHub release, changelog contents from previous version printed below" "magenta"
     }
 }
 
@@ -4949,9 +4991,7 @@ if ($MANTISBTRELEASE -eq "Y")
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to mantisbt release changelog html"
-        #$MantisChangelog = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $true, $HISTORYFILE, "", "", "", "", "", "", "", @())
-        #write-host $MantisChangelog
-        $MantisChangeLogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "", @())
+        $MantisChangeLogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "", @(), "")
         $MantisChangelog = "<span class=`"changelog-table`"><table width=`"100%`" style=`"display:inline`">"
         foreach ($commit in $MantisChangeLogParts)
         {
@@ -5004,18 +5044,16 @@ if ($MANTISBTRELEASE -eq "Y")
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
-        $NotesIsMarkdown = 1
-        $MantisChangelog = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, $false)
-        $MantisChangelog = $MantisChangelog.Replace("`r`n", "`n")
-        New-Item -ItemType "file" -Force -Path "${Env:Temp}\changelog.md" -Value "$MantisChangelog" | Out-Null
-        if (!$IsAppPublisher) {
-            $MantisChangelog = & app-publisher-marked --breaks --gfm --file "${Env:Temp}\changelog.md"
-        }
-        else {
-            $MantisChangelog = & marked --breaks --gfm --file "${Env:Temp}\changelog.md"
-        }
-        Check-ExitCode
-        Remove-Item -Path "${Env:Temp}\changelog.md"
+        #$NotesIsMarkdown = 1
+        $MantisChangelog = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $CHANGELOGFILE, "", "", "", "", "", "", "", @(), "", $false, $IsAppPublisher)[0]
+    }
+
+    #
+    # Log the changelog contents if this is a dry run
+    #
+    if ($DRYRUN -eq $true)
+    {
+        Log-Message $MantisChangelog
     }
 
     #
