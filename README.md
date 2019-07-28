@@ -16,8 +16,8 @@
   - [Description](#Description)
   - [Requirements](#Requirements)
   - [Installation](#Installation)
-  - [Usage](#Usage)
   - [Commit Messages](#Commit-Messages)
+  - [Usage](#Usage)
     - [Usage - Configuration File](#Usage---Configuration-File)
     - [Usage - Configuration File Parameters](#Usage---Configuration-File-Parameters)
   - [MantisBT Token](#MantisBT-Token)
@@ -66,23 +66,11 @@ Currently, the publish is ran from a powershell script.  You will need to set th
 
 After the port to JS, this no longer be required.
 
-## Usage
-
-App-Publisher can be run from the command line or in Visual Studio Code using the [Task Explorer](https://marketplace.visualstudio.com/items?itemName=spmeesseman.vscode-taskexplorer) Extension.  The Task Explorer extension will automatically detect .publishrc.json files in a project, and display the tasks within an app-publisher node.
-
-From the command line, the following command can be executed:
-
-    cd project_root
-    node app-publisher -p ps --no-ci
-
-A dry run can also be performed with the --dry-run option:
-
-    cd project_root
-    node app-publisher -p ps --no-ci --dry-run
-
 ## Commit Messages
 
-See the PJ standards [here](https://app1.development.pjats.com/doc/developernotes.md#Commit-Messages).  See the GitHub standards [here](https://gist.github.com/stephenparish/9941e89d80e2bc58a153).
+Commit message format is an integral part of the App Publisher release process.
+
+See the standards [here](https://app1.development.pjats.com/doc/developernotes.md#Commit-Messages).  See the GitHub standards [here](https://gist.github.com/stephenparish/9941e89d80e2bc58a153).
 
 Commit messages should be made in the following format:
 
@@ -150,6 +138,20 @@ References:
 - [Perry Johnson Commit Message Standards](https://app1.development.pjats.com/doc/developernotes.md#Commit-Messages)
 - [GitHub Commit Message Standards](https://gist.github.com/stephenparish/9941e89d80e2bc58a153)
 - [Angular Commenting Standards Updated](https://github.com/angular/angular/blob/master/CONTRIBUTING.md#type)
+
+## Usage
+
+App-Publisher can be run from the command line or in Visual Studio Code using the [Task Explorer](https://marketplace.visualstudio.com/items?itemName=spmeesseman.vscode-taskexplorer) Extension.  The Task Explorer extension will automatically detect .publishrc.json files in a project, and display the tasks within an app-publisher node.
+
+From the command line, the following command can be executed:
+
+    cd project_root
+    node app-publisher -p ps --no-ci
+
+A dry run can also be performed with the --dry-run option:
+
+    cd project_root
+    node app-publisher -p ps --no-ci --dry-run
 
 ### Usage - Configuration File
 
