@@ -20,37 +20,6 @@
   - [Commit Messages](#Commit-Messages)
     - [Usage - Configuration File](#Usage---Configuration-File)
     - [Usage - Configuration File Parameters](#Usage---Configuration-File-Parameters)
-      - [projectName](#projectName)
-      - [buildCommand](#buildCommand)
-      - [emailNotification](#emailNotification)
-      - [emailServer](#emailServer)
-      - [emailRecip](#emailRecip)
-      - [emailSender](#emailSender)
-      - [emailMode](#emailMode)
-      - [deployCommand](#deployCommand)
-      - [installerRelease](#installerRelease)
-      - [installerScript](#installerScript)
-      - [installerSkipBuild](#installerSkipBuild)
-      - [installerExDist](#installerExDist)
-      - [interactive](#interactive)
-      - [historyFile](#historyFile)
-      - [historyLineLen](#historyLineLen)
-      - [historyHdrFile](#historyHdrFile)
-      - [mantisbtRelease](#mantisbtRelease)
-      - [npmRelease](#npmRelease)
-      - [npmScope](#npmScope)
-      - [nugetRelease](#nugetRelease)
-      - [pathToRoot](#pathToRoot)
-      - [pathToMainRoot](#pathToMainRoot)
-      - [pathToDist](#pathToDist)
-      - [pathPreRoot](#pathPreRoot)
-      - [postBuildCommand](#postBuildCommand)
-      - [skipDeployPush](#skipDeployPush)
-      - [svnRepo](#svnRepo)
-      - [svnProjectName](#svnProjectName)
-      - [dryRun](#dryRun)
-      - [versionText](#versionText)
-      - [writeLog](#writeLog)
   - [MantisBT Token](#MantisBT-Token)
   - [NPM Token](#NPM-Token)
   - [Windows Installer](#Windows-Installer)
@@ -210,6 +179,7 @@ An example .publishrc.json file:
         "emailServer":       "smtp.domain.com",
         "emailRecip":        "release@domain.com",
         "emailSender":       "build@domain.com",
+        "emailHrefs":        [],
         "emailMode":         "",
         "githubRelease":     "Y",
         "githubAssets": [
@@ -220,6 +190,7 @@ An example .publishrc.json file:
         "historyFile":       "doc\\history.txt",
         "historyHdrFile":    "install\\history-hdr.txt",
         "historyLineLen":    80,
+        "historyHref":       "",
         "homePage":          "",
         "interactive":       "N",
         "mantisbtRelease":"Y",
@@ -256,216 +227,40 @@ An example .publishrc.json file:
 
 ### Usage - Configuration File Parameters
 
-#### projectName
-
-Name of the project.  This must macth the version control repository project name.
-
-#### buildCommand
-
-The build command to run once versions have been updated in version files (i.e. package.json,history.txt, assemblyinfo.cs, etc)
-
-#### emailNotification
-
-    Default:  "emailNotification": "N"
-
-#### emailServer
-
-#### emailRecip
-
-#### emailSender
-
-#### emailMode
-
-#### deployCommand
-
-Deploy commands
-
-    Default: "deployCommand": []
-
-#### installerRelease
-
-To build the installer release, set this flag to "Y"
-
-    Default:  "installerRelease": "N"
-
-#### installerScript
-
-The location of the installer build script, this can be a relative to PATHTOROOT or a full path. Note this parameter applies only to INSTALLRELEASE="Y"
-
-    installerScript: ""
-
-#### installerSkipBuild
-
-Set to Y if a custom specified build command builds the installer
-
-    Default:  "installerSkipBuild": "N"
-
-#### installerExDist
-
-Use the contents of the PATHTODIST directory for the release files, dont build an
-installer.
-
-    Default:  "installerExDist": "N"
-
-#### interactive
-
-Interactive (prompts for version after extracting what we think should be the next version)
-
-    Default:  "interactive": "N"
-
-#### historyFile
-
-The location of this history file, can be a relative or full path.
-
-    historyFile: "doc\history.txt"
-
-#### historyLineLen
-
-The max line length of the history file.
-
-    historyLineLen: 80
-
-#### historyHdrFile
-
-The location of this history header file, can be a relative or full path.
-
-    historyHdrFile: "install\history-hdr.txt",
-
-#### mantisbtRelease
-
-To perform a MantisBT release, set this paremeter to `Y` in .publishrc.json:
-
-    "mantisbtRelease": "Y"
-
-Note that the `Releases` plugin must be installed on the MantisBT instance to perform a Mantis Release.
-
-See the [MantisBT Token](#MantisBT-Token) section for additional information on performing a MantisBT release.
-
-#### npmRelease
-
-To build the npm release, set this flag to "Y"
-
-    npmRelease: "N"
-
-#### npmScope
-
-The scope of the npm package, empty if none
-
-    npmScope: ""
-
-#### nugetRelease
-
-To build the nuget release, set this flag to "Y"
-
-    nugetRelease: "N"
-
-#### pathToRoot
-
-It is assumed that installer build files are in PATHTOROOT\install.  It is also assumed that the legacy CreateInstall.xml and Deploy.xml files are located in PATHTOROOT\install.  A relative or full path that will equate to the project root as seen from the  script's location.  For example, if this script is in PROJECTDIR\script, then the rel path to root would be "..".  If the script is in PROJECTDIR\install\script, then the rel path to root would be "..\\.."
-The value should be relative to the script dir, dont use a full path as this will not share across users well keeping project files in different directories
-
-    pathToRoot: ".",
-
-#### pathToMainRoot
-
-This in most cases sould be an empty string if the project is the 'main' project.  If a sub-project exists within a main project in SVN, then this needs to be set to the relative directory to the main project root, as seen from the sub-project root.  Note this should be where the '.svn' folder resides.
-
-    pathToMainRoot: ""
-
-#### pathToDist
-
-Path to DIST should be relative to PATHTOROOT
-
-    pathToDist: "install\dist"
-
-This in most cases sould be an empty string if the project is the 'main' project.  If a sub-project exists within a main project in SVN, then this needs to be set to the relative directory to the project path, as seen from the main project root.
-
-For example, the following project contains a layout with 3 separate projects 'fp', 'ui', and 'svr':
-
-    app-publisher
-        app
-            fpc
-            svr
-            ui
-
-#### pathPreRoot
-
-The main project root is app-publisher.  In the case of each of these projects, SVNPREPATH should be set to app\fpc, app\ui, or app\svr, for each specific sub-project.  This mainly is be used for SVN commands which need to be ran in the directory containing the .svn folder.
-
-    pathPreRoot: ""
-
-#### postBuildCommand
-
-The build command to run once versions have been updated in version files (i.e. package.json, history.txt, assemblyinfo.cs, etc)
-
-    postBuildCommand: @()
-
-#### skipDeployPush
-
-Skip uploading installer to network release folder (primarily used for releasing from hom office where two datacenters cannot be reached at the same time, in this case the installer files are manually copied)
-
-    skipDeployPush: "Y"
-
-#### svnRepo
-
-The svn server address, can be domain name or IP
-
-    svnServer: "svn.development.pjats.com"
-
-The SVN repository.  It should be one of the following:
-
-- pja
-- pjr
-
-    svnRepo: "pja"
-
-#### svnProjectName
-
-The SVN project name if different than projectName:
-
-    svnProjectName: ""
-
-The SVN protocol to use for SVN commands.  It should be one of the following:
-
-- svn
-- https
-
-    svnProtocol: "svn",
-
-Whether or not to tag the new version in SVN.  Default is Yes.
-
-    svnTag: "Y",
-
-#### dryRun
-
-Dry Run (Test mode) - Y for 'yes', N for 'no'.  In test mode, the following holds:
-
-- Installer is not released/published
-- Email notification will be sent only to TESTEMAILRECIP
-- Commit package/build file changes (svn) are not made
-- Version tag (svn) is not made
-
-Some local files may be changed in test mode (i.e. updated version numbers in build and package files).  These changes should be reverted to original state via SCM
-
-    testMode: "Y",
-    testModeSvnRevert: "Y",
-    testEmailRecip: "smeesseman@pjats.com",
-
-#### versionText
-
-The text tag to use in the history file for preceding the version number.  It should be one of the following:
-
-- Version
-- Build
-- Release
-
-    versionText: "Version",
-
-#### writeLog
-
-Whether or not to write stdout to log file.  Default is Yes
-
-    writeLog: "N"
+The .publishrc.json file can be used to define the configuration parameters, defined below.
+
+|Parameter Name|Description|Default Value|
+|-|-|-|
+|projectName|Name of the project.  This must macth the version control repository project name||
+|buildCommand|The build command to run once versions have been updated in version files (i.e. package.json,history.txt, assemblyinfo.cs, etc)||
+|emailNotification||N|
+|emailServer|||
+|emailRecip|||
+|emailSender|||
+|emailMode|||
+|deployCommand|Project specific deploy commands|[]|
+|installerRelease|To build the installer release, set this flag to `Y`|N|
+|installerScript|The location of the installer build script, this can be a relative to PATHTOROOT or a full path. Note this parameter applies only to INSTALLRELEASE=Y||
+|installerSkipBuild|Set to `Y` if a custom specified build command builds the installer|N|
+|installerExDist|Use the contents of the PATHTODIST directory for the release files, dont build an installer|N|
+|interactive|Interactive (prompts for version after extracting what we think should be the next version)|N|
+|historyFile|The location of this history file, can be a relative or full path||
+|historyLineLen|The max line length of the history file|80|
+|historyHdrFile|The location of this history header file, can be a relative or full path||
+|mantisbtRelease|To perform a MantisBT release, set this paremeter to `Y` in .publishrc.json.  Note that the `Releases` plugin must be installed on the MantisBT instance to perform a Mantis Release.  See the [MantisBT Token](#MantisBT-Token) section for additional information on performing a MantisBT release.|N|
+|npmRelease|To build the npm release, set this flag to `Y`|N|
+|npmScope|The scope of the npm package, empty if none||
+|nugetRelease|To build the nuget release, set this flag to `Y`|N|
+|pathToRoot|It is assumed that installer build files are in PATHTOROOT\install.  It is also assumed that the legacy CreateInstall.xml and Deploy.xml files are located in PATHTOROOT\install.  A relative or full path that will equate to the project root as seen from the  script's location.  For example, if this script is in PROJECTDIR\script, then the rel path to root would be "..".  If the script is in PROJECTDIR\install\script, then the rel path to root would be "..\\..".  The value should be relative to the script dir, dont use a full path as this will not share across users well keeping project files in different directories|.|
+|pathToMainRoot|This in most cases sould be an empty string if the project is the 'main' project.  If a sub-project exists within a main project in SVN, then this needs to be set to the relative directory to the main project root, as seen from the sub-project root.  Note this should be where the '.svn' folder resides||
+|pathToDist|Path to DIST should be relative to PATHTOROOT.  This in most cases sould be an empty string if the project is the 'main' project.  If a sub-project exists within a main project in SVN, then this needs to be set to the relative directory to the project path, as seen from the main project root||
+|pathPreRoot|The main project root is app-publisher.  In the case of each of these projects, SVNPREPATH should be set to app\fpc, app\ui, or app\svr, for each specific sub-project.  This mainly is be used for SVN commands which need to be ran in the directory containing the .svn folder||
+|postBuildCommand|The project specific build commands to run once versions have been updated in version files (i.e. package.json, history.txt, assemblyinfo.cs, etc)||
+|skipDeployPush|Skip uploading installer to network release folder (primarily used for releasing from hom office where two datacenters cannot be reached at the same time, in this case the installer files are manually copied)|Y|
+|svnRepo|The svn server address, can be domain name or IP, includes project path to branch||
+|dryRun|Dry Run (Test mode) - Y for 'yes', N for 'no'.  In test mode, the installer is not released/published, email notification will be sent only to TESTEMAILRECIP, commit package/build file changes (svn) are not made, version tag (svn) is not made.  Some local files may be changed in test mode (i.e. updated version numbers in build and package files).  These changes should be reverted to original state via SCM||
+|versionText|The text tag to use in the history file for preceding the version number.  It should be one of Version, Build, or Release||
+|writeLog|Whether or not to write stdout to log file|Y||
 
 ## MantisBT Token
 
