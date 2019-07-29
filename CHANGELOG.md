@@ -1,5 +1,23 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.11.1 (July 29th, 2019)
+
+### Documentation
+
+- **README:** update configuration parameter section
+
+### Minor Features
+
+- add support for providing a list of links to display in the release notification email.
+
+	The publishrc config variable 'emailHrefs' has been added to configure this functionality.  Note that the links printed in the email notification will be in addition to the default links that are  automatically generated.
+
+- add support for skipping edits of files touched by version text replacement.
+
+	The publishrc config variable 'skipVersionEdits' has been added to configure this functionality.
+
+- Add support for the same style changelog html to be pushed for a GitHub release as that of a MantisBT release
+
 ## Version 1.11.0 (July 27th, 2019)
 
 ### Features

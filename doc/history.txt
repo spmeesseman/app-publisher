@@ -1949,3 +1949,49 @@ July 27th, 2019
     Note that setting the MANTISBT_API_TOKEN environment variable is still an
     option.
 
+
+Version 1.11.1
+July 29th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Documentation:  README
+
+    Update configuration parameter section.
+
+2.  Feature
+
+    Add support for providing a list of links to display in the release
+    notification email.
+    
+    The publishrc config variable 'emailHrefs' has been added to configure this
+    functionality.  Note that the links printed in the email notification will 
+    be in addition to the default links that are  automatically generated.
+
+3.  Feature
+
+    Add support for skipping edits of files touched by version text replacement.
+    
+    The publishrc config variable 'skipVersionEdits' has been added to configure
+    this functionality.
+
+4.  Feature
+
+    Add support for the same style changelog html to be pushed for a GitHub
+    release as that of a MantisBT release
+

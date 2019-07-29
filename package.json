@@ -1,6 +1,6 @@
 {
     "name": "@perryjohnson/app-publisher",
-    "version": "1.11.0",
+    "version": "1.11.1",
     "displayName": "App Publisher",
     "description": "App Publisher",
     "license": "MIT",
@@ -17,7 +17,6 @@
         "url": "https://svn.development.pjats.com/pja/app-publisher/trunk"
     },
     "dependencies": {
-        "@spmeesseman/json": "^9.1.1",
         "@types/aggregate-error": "^1.0.1",
         "@types/env-ci": "^3.1.0",
         "@types/get-stream": "^3.0.2",
@@ -40,6 +39,7 @@
         "glob": "^7.1.4",
         "gradient-string": "^1.2.0",
         "hook-std": "^2.0.0",
+        "json": "^9.0.6",
         "jsonc-parser": "^2.1.0",
         "lodash": "^4.17.15",
         "marked": "^0.7.0",
@@ -71,7 +71,7 @@
         "typescript": "^3.5.3"
     },
     "bundleDependencies": [
-        "@spmeesseman/json",
+        "json",
         "marked",
         "semver"
     ],
@@ -85,7 +85,7 @@
     "main": "./build/bin/app-publisher.js",
     "bin": {
         "app-publisher": "./build/bin/app-publisher.js",
-        "app-publisher-json": "./node_modules/@spmeesseman/json/lib/json.js",
+        "app-publisher-json": "./node_modules/json/lib/json.js",
         "app-publisher-marked": "./node_modules/marked/bin/marked",
         "app-publisher-semver": "./node_modules/semver/bin/semver.js"
     },
