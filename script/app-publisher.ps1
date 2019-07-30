@@ -412,29 +412,40 @@ class HistoryFile
         return $szHrefs
     }
 
-    getChangelogTypes($Section, $Changelog, $ChangelogTypes)
+    [array]getChangelogTypes($Changelog)
     {
-        $i1 = $Changelog.IndexOf("## $Section")
-        if ($i1 -ne -1) {
-            $i2 = $Changelog.IndexOf("###", $i1)
-            $i3 = $Changelog.IndexOf("## ", $i1)
-            if ($i3 -lt $i2) {
-                $i2 = $i3;
+        $ChangelogTypes = @()
+
+        $match = [Regex]::Match($Changelog, "\w*(?<=### ).+?(?=(<br>-))")
+        while ($match.Success) 
+        {
+            $Section = $match.Value
+            #
+            # Trim plurality
+            #
+            if ($Section.EndsWith("es<br>")) {
+                $Section = $Section.SubString(0, $Section.Length - 6);
             }
-            if ($i2 -eq -1) {
-                $i2 = $Changelog.Length
+            elseif ($Section.EndsWith("s<br>") -and $Section -ne "Miscellaneous<br>") {
+                $Section = $Section.SubString(0, $Section.Length - 5);
             }
-            $szFeatures = $Changelog.Substring($i1, $i2 - $i1)
-            $Type = $Section
-            if ($Section.EndsWith("s")) {
-                $Type = $Section.SubString(0, $Section.Length - 1); # remove plural
+            #
+            # count the messages for each section and add the subjects to the types array
+            #
+            $match2 = [Regex]::Match($Changelog, "\w*(?<=$Section).+?(?=(<br>###|$))")
+            while ($match2.Success) 
+            {
+                $i1 = $match2.Value.IndexOf("<br>- ");
+                while ($i1 -ne -1) {
+                    $ChangelogTypes += $Section.Replace("<br>", "").Trim()
+                    $i1 = $match2.Value.IndexOf("<br>- ", $i1 + 1);
+                }
+                $match2 = $match2.NextMatch()
             }
-            $match = [Regex]::Match($szFeatures, "\w*(?<=^|>)(- ){1}.+?(?=(<br>-|$))");
-            while ($match.Success) {
-                $ChangelogTypes += $Type
-                $match = $match.NextMatch()
-            }
+            $match = $match.NextMatch()
         }
+
+        return $ChangelogTypes
     }
 
     [array]getChangelog($project, $version, $numsections, $stringver, $listonly, $in, $out, $targetloc, $npmpkg, $nugetpkg, $mantisRelease, $mantisUrl, $historyFileHref, $emailHrefs, $vcWebPath, $includeEmailHdr, $isAp)
@@ -470,6 +481,19 @@ class HistoryFile
         Log-Message "Extract from changelog markdown file"
         Log-Message "   Input File         : '$szInputFile'"
         Log-Message "   Num Sections       : '$iNumSections'"
+        Log-Message "   Version            : '$version'"
+        Log-Message "   Version string     : '$stringver'"
+        Log-Message "   List only          : '$listonly'"
+        Log-Message "   Target Location    : '$targetloc'"
+        Log-Message "   NPM                : '$npmpkg'"
+        Log-Message "   Nuget              : '$nugetpkg'"
+        Log-Message "   MantisBT release   : '$mantisRelease'"
+        Log-Message "   MantisBT url       : '$mantisUrl'"
+        Log-Message "   History file href  : '$historyFileHref'"
+        Log-Message "   Email hrefs        : '$emailHrefs'"
+        Log-Message "   Vc web path        : '$vcWebPath'"
+        Log-Message "   Include email hdr  : '$includeEmailHdr'"
+        Log-Message "   Is app-publisher   : '$isAp'"
 
         #
         # Code operation:
@@ -482,10 +506,18 @@ class HistoryFile
         #
         #    ### Subject line....
         #
-        # Extract the latest entry
+        #    - commit message 1
+        #    - commit message 2
+        #
+        #    ### Subject 2 line...
+        #
+        #    - commit message 3
         #
 
-        $szContents = "";
+        #
+        # Extract the specified version entry, which in changelog convention should be at top of file
+        #
+
         #
         # Read in contents of file
         #
@@ -496,106 +528,23 @@ class HistoryFile
         #
         $iIndex1 = 0
         $iIndex2 = 0
-        $bFoundStart = 0
-        $iSectionsFound = 0
-        #
-        # Loop to find our search text
-        #
-        while ($iIndex1 -le $szContents.Length)
-        {
-            # Get index of field name
-            #
-            $iIndex1 = $szContents.IndexOf("$stringver ", $iIndex1)
-            #
-            # make sure the field name was found
-            #
-            if ($iIndex1 -eq -1)
-            {
-                if ($iSectionsFound -eq 0) {
-                    Log-Message "   Last section could not be found (0), exit" "red"
-                    exit 162
-                }
-                else { # eof
-                    $iIndex1 = $szContents.Length - 1;
-                    break;
-                }
-            }
-            
-            if ($szContents[$iIndex1 - 2] -ne "#")
-            {
-                $iIndex1++
-                continue
-            }
-            #
-            # Check to make sure this is the beginning line, if it is then 2 lines underneath
-            # will be a triple # (###)
-            #
-            $iIndex2 = $szContents.IndexOf("`n", $iIndex1)
-            # make sure the newline was found
-            if ($iIndex2 -eq -1)
-            {
-                Log-Message "   Last section could not be found (1), exit" "red"
-                exit 163
-            }
 
-            $iIndex2 = $szContents.IndexOf("`n", $iIndex2 + 1)
-            #
-            # Make sure the newline was found
-            #
-            if ($iIndex2 -eq -1)
-            {
-                Log-Message "   Last section could not be found (2), exit" "red"
-                exit 164
-            }
-            
-            #
-            # Increment index2 past new line and on to 1st ch in next line
-            #
-            $iIndex2++;
-            # Now $iIndex2 should be the index to the start of a dashed line
-    
-            if ($iIndex2 -lt $szContents.Length - 1) {
-                $numhashes = 0
-                for ($numhashes = 0; $numhashes -lt 3; $numhashes++) {
-                    if ($szContents[$iIndex2 + $numhashes] -ne '#') {
-                        break;
-                    }
-                }
-                #
-                # Make sure we found our dashed line
-                #
-                if ($numhashes -eq 3 -or $iIndex2 -ge $szContents.Length - 1) {
-                    $bFoundStart = 1
-                    $iSectionsFound++
-                    if ($iSectionsFound -gt $iNumSections -or $iIndex2 -ge $szContents.Length - 1) {
-                        $iIndex1 -= 3
-                        $iSectionsFound--
-                        break
-                    }
-                }
-            }
-            #
-            # Decrement $iIndex1, which is the index to the start of the string "Build ", but
-            # this could have occurred in the body of the text, keep searching
-            #
-            $iIndex1++
-        }
-        #
-        # Make sure we found our starting point  
-        #
-        if ($bFoundStart -eq 0)
-        {
-            Log-Message "   Last section could not be found, exit" "red"
+        $iIndex1 = $szContents.IndexOf("## $stringver $version")
+        if ($iIndex1 -eq -1) {
+            Log-Message "   Section could not be found, exit" "red"
             exit 165
         }
-
+        $iIndex2 = $szContents.IndexOf("## $stringver ", $iIndex1 + 1)
+        if ($iIndex2 -eq -1) {
+            $iIndex2 = $szContents.Length
+        }
         Log-Message "   Found version section(s)"
-        $szContents = $szContents.Substring(0, $iIndex1)
+        $szContents = $szContents.Substring($iIndex1, $iIndex2 - $iIndex1)
 
-        $szContents = $szContents.Substring($szContents.IndexOf("###"))
-        
         if ($listonly -is [system.string] -and $listonly -eq 'parts') 
         {
+            Log-Message "Determining changelog parts"
+
             $typeParts = @()
             $msgParts = @()
 
@@ -603,16 +552,12 @@ class HistoryFile
             $szContents = $szContents.Replace("`n", "<br>")
             $szContents = $szContents.Replace("`t", "&nbsp;&nbsp;&nbsp;&nbsp;")
 
-            $this.getChangelogTypes("Features", $szContents, $typeParts)
-            $this.getChangelogTypes("Minor Features", $szContents, $typeParts)
-            $this.getChangelogTypes("Bug Fixes", $szContents, $typeParts)
-            $this.getChangelogTypes("Refactoring", $szContents, $typeParts)
-            $this.getChangelogTypes("Build System", $szContents, $typeParts)
-            $this.getChangelogTypes("Documentation", $szContents, $typeParts)
-            $this.getChangelogTypes("Visual Enhancements", $szContents, $typeParts)
-            $this.getChangelogTypes("Performance Enhancements", $szContents, $typeParts)
+            $typeParts = $this.getChangelogTypes($szContents)
+            if ($typeParts -eq $null -or $typeParts.Length -eq 0) {
+                return @( "error" )
+            }
 
-            $match = [Regex]::Match($szContents, "\w*(?<=^|>)(- ){1}.+?(?=(<br>-|$))");
+            $match = [Regex]::Match($szContents, "\w*(?<=^|>)(- ){1}.+?(?=(<br>-|<br>##|$))");
             while ($match.Success) {
                 $value = $match.Value.Substring(2)
                 $value = $value.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;[", "<br>[") # ticket tags
@@ -627,15 +572,22 @@ class HistoryFile
             }
 
             $szContents = @()
+
+            if ($msgParts.Length -ne $typeParts.Length) {
+                Log-Message "Error parsing changelog for commit parts" "red"
+                Log-Message "Message parts array length $($msgParts.Length) is less than types array length $($typeParts.Length)" "red"
+                return @( "error" )
+            }
+
             for ($i = 0; $i -lt $typeParts.Length; $i++)
             {
                 $scope = ""
                 $tickets = ""
                 $subject = $typeParts[$i]
                 $message = $msgParts[$i];
-                if ($typeParts[$i].Contains(":")) {
-                    $subject = $typeParts[$i].Substring(0, $typeParts[$i].IndexOf(":")).Trim()
-                    $scope = $typeParts[$i].Substring($typeParts[$i].IndexOf(":") + 1).Trim()
+                if ($msgParts[$i].Contains(":")) {
+                    $scope = $msgParts[$i].Substring(0, $msgParts[$i].IndexOf(":")).Replace("**", "").Trim()
+                    $message = $msgParts[$i].Substring($msgParts[$i].IndexOf(":") + 1).Replace("**", "").Trim()
                 }
                 $match = [Regex]::Match($msgParts[$i], "\[(&nbsp;| )*(closes|fixes|resolves|fix|close|refs|references|ref|reference){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]");
                 while ($match.Success) {
@@ -731,6 +683,17 @@ class HistoryFile
         Log-Message "   Input File         : '$szInputFile'"
         Log-Message "   Output File        : '$szOutputFile'"
         Log-Message "   Num Sections       : '$iNumSections'"
+        Log-Message "   Version            : '$version'"
+        Log-Message "   Version string     : '$stringver'"       
+        Log-Message "   List only          : '$listonly'"
+        Log-Message "   Target Location    : '$targetloc'"
+        Log-Message "   NPM                : '$npmpkg'"
+        Log-Message "   Nuget              : '$nugetpkg'"
+        Log-Message "   MantisBT release   : '$mantisRelease'"
+        Log-Message "   MantisBT url       : '$mantisUrl'"
+        Log-Message "   History file href  : '$historyFileHref'"
+        Log-Message "   Email hrefs        : '$emailHrefs'"
+        Log-Message "   Vc web path        : '$vcWebPath'"
 
         #
         # Code operation:
@@ -1133,18 +1096,25 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to html"
-        $EMAILBODY = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $HISTORYFILE, $null, $targetloc, $npmloc, $nugetloc, $MANTISBTRELEASE, $MANTISBTURL[0], $HISTORYHREF, $EMAILHREFS, $VCWEBPATH)[0];
+        $EMAILBODY = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $HISTORYFILE, $null, $targetloc, $npmloc, $nugetloc, $MANTISBTRELEASE, $MANTISBTURL[0], $HISTORYHREF, $EMAILHREFS, $VCWEBPATH)
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
         Log-Message "   Converting changelog markdown to html"
-        $EMAILBODY = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $CHANGELOGFILE, $null, $targetloc, $npmloc, $nugetloc, $MANTISBTRELEASE, $MANTISBTURL[0], $HISTORYHREF, $EMAILHREFS, $VCWEBPATH, $true, $IsAppPublisher)[0];
+        $EMAILBODY = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $CHANGELOGFILE, $null, $targetloc, $npmloc, $nugetloc, $MANTISBTRELEASE, $MANTISBTURL[0], $HISTORYHREF, $EMAILHREFS, $VCWEBPATH, $true, $IsAppPublisher)
     }
     else {
         Log-Message "   Notification could not be sent, history file not specified" "red"
         return
     }
 
+    if ($EMAILBODY-eq $null -or $EMAILBODY.Length -eq 0 -or $EMAILBODY[0] -eq "error") {
+        $EMAILBODY = "There was an error extracting the changelog, notify development"
+    }
+    else {
+        $EMAILBODY = $EMAILBODY[0];
+    }
+    
     #
     # Attach app-publisher signature to body
     #
@@ -2103,7 +2073,7 @@ function Get-ReleaseChangelog($ChangeLogParts, $UseFaIcons = $false, $IncludeSty
             $ChangeLog += "</style>"
         }
 
-        $ChangeLog = "<span class=`"changelog-table`">"
+        $ChangeLog += "<span class=`"changelog-table`">"
         $ChangeLog += "<table width=`"100%`" style=`"display:inline`">"
 
         foreach ($commit in $ChangeLogParts)
@@ -4227,6 +4197,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
         $TmpCommits = $TmpCommits.Replace("project: ", "Project Structure`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("layout: ", "Project Layout`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("visual: ", "Visual Enhancement`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("misc: ", "Miscellaneous`r`n`r`n    ")
         #
         # Replace commit tags with full text (scoped)
         #
@@ -4250,6 +4221,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
         $TmpCommits = $TmpCommits.Replace("layout(", "Project Layout(")
         $TmpCommits = $TmpCommits.Replace("visual(", "Visual Enhancement(")
         $TmpCommits = $TmpCommits.Replace("progress(", "Ongoing Progress(")
+        $TmpCommits = $TmpCommits.Replace("misc(", "Miscellaneous(")
         #
         # Take any parenthesized scopes, remove the prenthesis and line break the message
         # that follows
@@ -5001,46 +4973,34 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
     #
     # Create changelog content
     #
+    # If this is a dry run, use "current_version" since "version" will have been reverted by 
+    # version control already
+    #
+    $ReleaseVersion = $VERSION;
+    if ($DRYRUN -eq $true) {
+        $ReleaseVersion = $CURRENTVERSION;
+    }
+    #
     $GithubChangelogParts = @()
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to github release changelog html"
-        $GithubChangelogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "", @(), "")
+        $GithubChangelogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $ReleaseVersion, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "", @(), "")
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
         Log-Message "   Converting changelog markdown to github release changelog html"
-        $GithubChangelogParts = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $CHANGELOGFILE, "", "", "", "", "", "", "", @(), "", $false, $IsAppPublisher)
+        $GithubChangelogParts = $ClsHistoryFile.getChangelog($PROJECTNAME, $ReleaseVersion, 1, $VERSIONTEXT, "parts", $CHANGELOGFILE, "", "", "", "", "", "", "", @(), "", $false, $IsAppPublisher)
     }
-    $GithubChangelog = Get-ReleaseChangelog $GithubChangelogParts $false $true
 
-    #$GithubChangelogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "", @(), "")
-    #$GithubChangelogParts = "<span class=`"changelog-table`"><table width=`"100%`" style=`"display:inline`">"
-    #foreach ($commit in $GithubChangelogParts)
-    #{
-    #    $GithubChangelog += "<tr><td nowrap valign=`"top`" style=`"font-weight:bold;padding-left:3px`">"
-    #    $GithubChangelog += $commit.subject
-    #    if (![string]::IsNullOrEmpty($commit.scope)) {
-    #        $GithubChangelog += "</td><td nowrap valign=`"top`" style=`"padding-left:10px`">"
-    #        $GithubChangelog += $commit.scope
-    #    }
-    #    else {
-    #        $GithubChangelog += "</td><td>"
-    #    }
-    #    $GithubChangelog += "</td><td width=`"100%`" style=`"padding-left:15px`">"
-    #    $GithubChangelog += $commit.message
-    #    if (![string]::IsNullOrEmpty($commit.tickets)) {
-    #        $GithubChangelog += "</td><td nowrap align=`"right`" valign=`"top`" style=`"padding-left:15px;padding-right:10px`">"
-    #        $GithubChangelog += $commit.tickets
-    #    }
-    #    else {
-    #        $GithubChangelog += "</td><td>"
-    #    }
-    #    $GithubChangelog += "</td></tr>"
-    #}
-    #$GithubChangelog += "</table></span>"
-        
-    if ($DRYRUN -eq $false) 
+    if ($GithubChangelogParts-eq $null -or $GithubChangelogParts.Length -eq 0 -or $GithubChangelogParts[0] -eq "error") {
+        $GithubChangelogParts = $null
+    }
+    else {
+        $GithubChangelog = Get-ReleaseChangelog $GithubChangelogParts $false $false # $true
+    }
+
+    if ($GithubChangelog -ne $null -and $DRYRUN -eq $false) 
     {
         # Set up the request body for the 'create release' request
         #
@@ -5145,12 +5105,14 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
         }
     }
     else {
-        #
-        # Log the changelog contents if this is a dry run
-        #
-        Log-Message "Dry run, skipping GitHub release"
-        Log-Message "Dry run has generated an html changelog from previous version to test functionality:"
-        Log-Message $GithubChangelog
+        if ($GithubChangelog -ne $null) {
+            Log-Message "Dry run, skipping GitHub release"
+            Log-Message "Dry run has generated an html changelog from previous version to test functionality:"
+            Log-Message $GithubChangelog
+        }
+        else {
+            Log-Message "Failed to create GitHub v$VERSION release" "red"
+        }
     }
 }
 
@@ -5162,150 +5124,174 @@ if ($MANTISBTRELEASE -eq "Y")
     Log-Message "Starting MantisBT release"
     Log-Message "Creating MantisBT v$VERSION release"
 
+     #
+    # If this is a dry run, use "current_version" since "version" will have been reverted by 
+    # version control already
+    #
     $dry_run = 0;
+    $ReleaseVersion = $VERSION;
     if ($DRYRUN -eq $true) 
     {
         Log-Message "Dry run only, will pass 'dryrun' flag to Mantis Releases API"
         $dry_run = 1;
+        $ReleaseVersion = $CURRENTVERSION;
     }
     #
     # Changelog...
     #
+    $ReleaseVersion = $VERSION;
+    if ($DRYRUN -eq $true) {
+        $ReleaseVersion = $CURRENTVERSION;
+    }
     $NotesIsMarkdown = 0
+    $MantisChangelog = $null
     $MantisChangeLogParts = @()
+    
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
         Log-Message "   Converting history text to mantisbt release changelog html"
-        $MantisChangeLogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "", @(), "")
+        $MantisChangeLogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $ReleaseVersion, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "", @(), "")
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
         Log-Message "   Converting changelog markdown to mantisbt release changelog html"
-        $MantisChangelogParts = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, "parts", $CHANGELOGFILE, "", "", "", "", "", "", "", @(), "", $false, $IsAppPublisher)
-    }
-    $MantisChangelog = Get-ReleaseChangelog $MantisChangeLogParts $true
-
-    #
-    # Log the changelog contents if this is a dry run
-    #
-    if ($DRYRUN -eq $true)
-    {
-        Log-Message "Dry run has generated an html changelog from previous version to test functionality:"
-        Log-Message $MantisChangelog
+        $MantisChangelogParts = $ClsHistoryFile.getChangelog($PROJECTNAME, $ReleaseVersion, 1, $VERSIONTEXT, "parts", $CHANGELOGFILE, "", "", "", "", "", "", "", @(), "", $false, $IsAppPublisher)
     }
 
-    #
-    # Set up the request body for the 'create release' request
-    #
-    $Request = @{
-        "dryrun" = $dry_run
-        "version" = $VERSION
-        "notes" = $MantisChangelog
-        "notesismd" = $NotesIsMarkdown
-        "assets" = @()
+    if ($MantisChangelogParts -eq $null -or $MantisChangelogParts.Length -eq 0 -or $MantisChangelogParts[0] -eq "error") {
+        $MantisChangelog = $null
     }
-    #
-    # Build assets list
-    #
-    if ($MANTISBTASSETS.Length -gt 0)
+    else {
+        $MantisChangelog = Get-ReleaseChangelog $MantisChangeLogParts $true
+    }
+
+    if ($MantisChangelog -ne $null) 
     {
-        Log-Message "Building MantisBT assets list"
-        foreach ($MbtAsset in $MANTISBTASSETS)
+        #
+        # Log the changelog contents if this is a dry run
+        #
+        if ($DRYRUN -eq $true)
         {
-            $Asset = $MbtAsset;
-            $AssetDescrip = ""
+            Log-Message "Dry run has generated an html changelog from previous version to test functionality:"
+            Log-Message $MantisChangelog
+        }
 
-            if ($MbtAsset.Contains("|"))
+        #
+        # Set up the request body for the 'create release' request
+        #
+        $Request = @{
+            "dryrun" = $dry_run
+            "version" = $VERSION
+            "notes" = $MantisChangelog
+            "notesismd" = $NotesIsMarkdown
+            "assets" = @()
+        }
+        #
+        # Build assets list
+        #
+        if ($MANTISBTASSETS.Length -gt 0)
+        {
+            Log-Message "Building MantisBT assets list"
+            foreach ($MbtAsset in $MANTISBTASSETS)
             {
-                $Asset = $MbtAsset.Split("|")[0]
-                $AssetDescrip = $MbtAsset.Split("|")[1]
-            }
+                $Asset = $MbtAsset;
+                $AssetDescrip = ""
 
-            if (Test-Path($Asset))
-            {
-                $AssetName = [Path]::GetFileName($Asset)
-                $Extension = [Path]::GetExtension($AssetName).ToLower()
-                #
-                # The format to upload an asset is the base64 encoded binary file data
-                #
-                Log-Message "Reading file $Asset"
-                $FileData = [System.IO.File]::ReadAllBytes($Asset)
-                Check-PsCmdSuccess
-                if ($? -eq $true)
+                if ($MbtAsset.Contains("|"))
                 {
-                    # Base 64 encode file data
+                    $Asset = $MbtAsset.Split("|")[0]
+                    $AssetDescrip = $MbtAsset.Split("|")[1]
+                }
+
+                if (Test-Path($Asset))
+                {
+                    $AssetName = [Path]::GetFileName($Asset)
+                    $Extension = [Path]::GetExtension($AssetName).ToLower()
                     #
-                    $FileDataBase64 = [Convert]::ToBase64String($FileData)
+                    # The format to upload an asset is the base64 encoded binary file data
                     #
-                    # Build json
-                    #
-                    $AssetData = @{
-                        "name" = $AssetName
-                        "desc" = $AssetDescrip
-                        "type" = $ContentTypeMap[$Extension]
-                        "data" = $FileDataBase64
+                    Log-Message "Reading file $Asset"
+                    $FileData = [System.IO.File]::ReadAllBytes($Asset)
+                    Check-PsCmdSuccess
+                    if ($? -eq $true)
+                    {
+                        # Base 64 encode file data
+                        #
+                        $FileDataBase64 = [Convert]::ToBase64String($FileData)
+                        #
+                        # Build json
+                        #
+                        $AssetData = @{
+                            "name" = $AssetName
+                            "desc" = $AssetDescrip
+                            "type" = $ContentTypeMap[$Extension]
+                            "data" = $FileDataBase64
+                        }
+                        
+                        $Request.assets += $AssetData
                     }
-                    
-                    $Request.assets += $AssetData
+                    else {
+                        Log-Message "Failed to build MantisBT asset $AssetName - could not read input file" "red"
+                    }
                 }
                 else {
-                    Log-Message "Failed to build MantisBT asset $AssetName - could not read input file" "red"
+                    Log-Message "Failed to build MantisBT asset $AssetName - input file does not exist" "red"
+                }
+            }
+        }
+        
+        #
+        # Format request JSON
+        #
+        $Request = $Request | ConvertTo-Json
+        #
+        # Enable TLS1.2 in the case of HTTPS
+        #
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+        for ($i = 0; $i -lt $MANTISBTURL.Length; $i++)
+        {
+            #
+            # Set up the request header, this will be used to both create the release and to upload
+            # any assets.  Note that for each asset, the content-type must be set appropriately
+            # according to the type of asset being uploaded
+            #
+            $Header = @{
+                "Authorization" = $MANTISBTAPITOKEN[$i]
+                "Content-Type" = "application/json; charset=UTF-8"
+            }
+            #
+            # Send the REST POST to create the release w/ assets
+            #
+            $url = $MANTISBTURL[$i] + "/plugins/Releases/api/releases/$MANTISBTPROJECT"
+            Log-Message "Sending Add-Release REST request to $url"
+            $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
+            Check-PsCmdSuccess
+            #
+            # Check response object for success
+            #
+            if ($? -eq $true)
+            {
+                if ($Response -is [System.String])
+                {
+                    Log-Message "Partial error creating MantisBT release v$VERSION" "red"
+                    Log-Message $Response "red"
+                }
+                else {
+                    Log-Message "Successfully created MantisBT release v$VERSION" "darkgreen"
+                    Log-Message "   ID         : $($Response.id)" "darkgreen"
+                    Log-Message "   Message    : $($Response.msg)" "darkgreen"
+                    Log-Message "   URL        : $($MANTISBTURL[$i])" "darkgreen"
+                    Log-Message "   Token      : $($MANTISBTAPITOKEN[$i])" "darkgreen"
                 }
             }
             else {
-                Log-Message "Failed to build MantisBT asset $AssetName - input file does not exist" "red"
+                Log-Message "Failed to create MantisBT v$VERSION release" "red"
             }
         }
     }
-    
-    #
-    # Format request JSON
-    #
-    $Request = $Request | ConvertTo-Json
-    #
-    # Enable TLS1.2 in the case of HTTPS
-    #
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
-    for ($i = 0; $i -lt $MANTISBTURL.Length; $i++)
-    {
-        #
-        # Set up the request header, this will be used to both create the release and to upload
-        # any assets.  Note that for each asset, the content-type must be set appropriately
-        # according to the type of asset being uploaded
-        #
-        $Header = @{
-            "Authorization" = $MANTISBTAPITOKEN[$i]
-            "Content-Type" = "application/json; charset=UTF-8"
-        }
-        #
-        # Send the REST POST to create the release w/ assets
-        #
-        $url = $MANTISBTURL[$i] + "/plugins/Releases/api/releases/$MANTISBTPROJECT"
-        Log-Message "Sending Add-Release REST request to $url"
-        $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
-        Check-PsCmdSuccess
-        #
-        # Check response object for success
-        #
-        if ($? -eq $true)
-        {
-            if ($Response -is [System.String])
-            {
-                Log-Message "Partial error creating MantisBT release v$VERSION" "red"
-                Log-Message $Response "red"
-            }
-            else {
-                Log-Message "Successfully created MantisBT release v$VERSION" "darkgreen"
-                Log-Message "   ID         : $($Response.id)" "darkgreen"
-                Log-Message "   Message    : $($Response.msg)" "darkgreen"
-                Log-Message "   URL        : $($MANTISBTURL[$i])" "darkgreen"
-                Log-Message "   Token      : $($MANTISBTAPITOKEN[$i])" "darkgreen"
-            }
-        }
-        else {
-            Log-Message "Failed to create MantisBT v$VERSION release" "red"
-        }
+    else {
+        Log-Message "Failed to create MantisBT v$VERSION release" "red"
     }
 }
 
