@@ -23,14 +23,9 @@
         "https://app1.development.pjats.com/projects/set_project.php?project=app-publisher&make_default=no&ref=roadmap_page.php|Project Roadmap|Roadmap - Projects Board",
         "https://app1.development.pjats.com/projects/set_project.php?project=app-publisher&make_default=no&ref=changelog_page.php|Project Changelog|Changelog - Projects Board"
     ],
-    "gitRepo":           "https://github.com/spmeesseman/app-publisher",
-    "githubRelease":     "Y",
-    "githubAssets":      [
-        "install\\dist\\history.txt",
-        "install\\dist\\app-publisher.tgz",
-        "install\\dist\\App-Publisher_32bit.exe"
-    ],
-    "githubUser":        "spmeesseman",
+    "githubRelease":     "N",
+    "githubAssets":      [],
+    "githubUser":        "",
     "historyFile":       "doc\\history.txt",
     "historyHdrFile":    "install\\history-hdr.txt",
     "historyLineLen":    80,
@@ -67,7 +62,6 @@
     "skipCommit":        "N",
     "skipDeployPush":    "N",
     "skipVersionEdits":  "Y",
-    "svnRepo":           "https://svn.development.pjats.com/pja/app-publisher/trunk",
     "testEmailRecip":    "smeesseman@pjats.com",
     "textEditor":        "notepad",
     "vcTag":             "Y",
