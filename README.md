@@ -299,6 +299,10 @@ If a history text file is defined in .publishrc.json:
 
 In the case where Semver is used to calculate the next version, the commit messages are examined to determine the next version level.  See the standards [here](https://app1.development.pjats.com/doc/developernotes.md#Commit-Messages).
 
+In the case where the current version canot be read in order to determine the next, the publish run halts with an error.
+
+TODO - Check version control tags for most recent/current version as an additional method of determing current version (the semantic-release module from which this module was conceptualized uses this method).
+
 ## MantisBT Token
 
 A MantsBT release requires the MANTISBT_API_TOKEN to be set in the system environment.  To create a MantisBT token, perform the following steps:
