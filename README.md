@@ -20,8 +20,9 @@
   - [Installation](#Installation)
   - [Commit Messages](#Commit-Messages)
   - [Usage](#Usage)
-    - [Usage - Configuration File](#Usage---Configuration-File)
     - [Usage - Configuration File Parameters](#Usage---Configuration-File-Parameters)
+    - [Usage - Example Configuration File](#Usage---Example-Configuration-File)
+  - [Determining the Next Version](#Determining-the-Next-Version)
   - [MantisBT Token](#MantisBT-Token)
   - [NPM Token](#NPM-Token)
   - [Windows Installer](#Windows-Installer)
@@ -32,7 +33,7 @@ This package provides a semantic version style release mechanism as an option to
 
 The steps performed during an app-publisher run are:
 
-- Automatically determine next version from commit messages since last version
+- Automatically determine next version from commit messages since last version. See the section on determining the next version [here](#Determining-the-Next-Version).
 - Auto-populate history text file and/or changelog markdown with commit messages since last version
 - Update all versioned files with new version
 - Run application specific build scripts
@@ -278,6 +279,25 @@ An example .publishrc.json file:
         "versionText":       "Version",
         "writeLog":          "N"
     }
+
+## Determining the Next Version
+
+The next version is determined depnding on the versioning system the application uses.
+
+If a package.json exists in the project directory:
+
+1. Current version is read from package.json
+2. Semver is user to validate the current version
+3. Semver is used to increment the version
+
+If a history text file is defined in .publishrc.json:
+
+1. Current version is read from the defined history text file
+2. Determine if project uses semantic (x.y.z) or incremental versioning (x)
+3. If semantic, use Semver is user to validate the current version
+4. If semantic, Semver is used to increment the version, if incremental, the version is simply incre,ented by one
+
+In the case where Semver is used to calculate the next version, the commit messages are examined to determine the next version level.  See the standards [here](https://app1.development.pjats.com/doc/developernotes.md#Commit-Messages).
 
 ## MantisBT Token
 
