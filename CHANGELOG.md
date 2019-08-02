@@ -1,5 +1,18 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.11.2 (August 1st, 2019)
+
+### Documentation
+
+- **README:** add 'Determining the Next Version' section
+- **README:** update badge links
+
+### Bug Fixes
+
+- Changelog parsing is broken for a Github or MantisBT release changelog .  Occurs if the project has no history text file and the changelog markdown file is used for parsing the commit parts.
+- The skipVersionEdits config flag does not work, version edits are now skipped whether the flag is set to Y or N.
+- when installing globally, the install process always fails the first time with the error '@spmeesseman/json/lib/json.js' file does not exist.
+
 ## Version 1.11.1 (July 29th, 2019)
 
 ### Documentation

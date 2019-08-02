@@ -1995,3 +1995,44 @@ July 29th, 2019
     Add support for the same style changelog html to be pushed for a GitHub
     release as that of a MantisBT release
 
+
+Version 1.11.2
+August 1st, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Documentation:  README
+
+    Add 'Determining the Next Version' section
+
+2.  Bug Fix
+
+    Changelog parsing is broken for a Github or MantisBT release changelog.
+    Occurs if the project has no history text file and the changelog markdown
+    file is used for parsing the commit parts.
+
+3.  Bug Fix
+
+    The skipVersionEdits config flag does not work, version edits are now
+    skipped whether the flag is set to Y or N.
+
+4.  Bug Fix
+
+    When installing globally, the install process always fails the first time
+    with the error '@spmeesseman/json/lib/json.js' file does not exist.
+
