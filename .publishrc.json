@@ -37,6 +37,7 @@
         "${MANTISBT_API_TOKEN}",
         "${MANTIS_API_TOKEN}"
     ],
+    "mantisbtPlugin":    "",
     "mantisbtProject":   "",
     "mantisbtUrl": [
         "https://app1.development.pjats.com/projects",
@@ -57,8 +58,8 @@
     "pathtoMainRoot":    "",
     "pathPreRoot":       "",
     "postBuildCommand":  "",
-    "repoType":          "",
-    "repo":              "",
+    "repo":              "https://svn.development.pjats.com/pja/app-publisher/trunk",
+    "repoType":          "svn",
     "skipCommit":        "N",
     "skipDeployPush":    "N",
     "skipVersionEdits":  "Y",
