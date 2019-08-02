@@ -1579,7 +1579,7 @@ function Prepare-VersionFiles()
                 # Allow manual modifications to $VersionFile
                 # Edit-File will add this file to $VersionFilesEdited
                 #
-                Edit-File $VersionFile $false $SKIPVERSIONEDITS
+                Edit-File $VersionFile $false ($SKIPVERSIONEDITS -eq "Y")
             }
         }
     }
@@ -1629,7 +1629,7 @@ function Prepare-DotNetBuild($AssemblyInfoLocation)
     #
     # Allow manual modifications to assembly file
     #
-    Edit-File $AssemblyInfoLocation $false $SKIPVERSIONEDITS
+    Edit-File $AssemblyInfoLocation $false  ($SKIPVERSIONEDITS -eq "Y")
 }
 
 
@@ -1647,7 +1647,7 @@ function Prepare-MantisPluginBuild()
             #
             # Allow manual modifications to assembly file
             #
-            Edit-File $MANTISBTPLUGIN $false $SKIPVERSIONEDITS
+            Edit-File $MANTISBTPLUGIN $false  ($SKIPVERSIONEDITS -eq "Y")
         }
     }
 }
@@ -1892,7 +1892,7 @@ function Prepare-PackageJson()
     #
     # Allow manual modifications to package.json and package-lock.json
     #
-    Edit-File "package.json" $false $SKIPVERSIONEDITS
+    Edit-File "package.json" $false  ($SKIPVERSIONEDITS -eq "Y")
     if (Test-Path("package-lock.json")) 
     {
         # The json utility will output line feed only, replace with windows stle crlf
@@ -1900,7 +1900,7 @@ function Prepare-PackageJson()
         #Log-Message "Set windows line feeds in package-lock.json"
         #((Get-Content -path "package-lock.json" -Raw) -replace "`n", "`r`n") | Set-Content -NoNewline -Path "package-lock.json"
         #Check-PsCmdSuccess
-        Edit-File "package-lock.json" $false $SKIPVERSIONEDITS
+        Edit-File "package-lock.json" $false  ($SKIPVERSIONEDITS -eq "Y")
     }
 }
 
