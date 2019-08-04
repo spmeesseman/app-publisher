@@ -251,8 +251,8 @@ class CommitAnalyzer
             "doc"     { $FormattedSubject = "Documentation"; break }
             "feat"    { $FormattedSubject = "Features"; break }
             "feature" { $FormattedSubject = "Features"; break }
-            "featmin" { $FormattedSubject = "Minor Features"; break }
-            "minfeat" { $FormattedSubject = "Minor Features"; break }
+            "featmin" { $FormattedSubject = "Features"; break }
+            "minfeat" { $FormattedSubject = "Features"; break }
             "fix"     { $FormattedSubject = "Bug Fixes"; break }
             "perf"    { $FormattedSubject = "Performance Enhancements"; break }
             "progress"{ $FormattedSubject = "Ongoing Progress"; break }
@@ -423,7 +423,7 @@ class HistoryFile
             #
             # Trim plurality
             #
-            if ($Section.EndsWith("es<br>")) {
+            if ($Section.EndsWith("es<br>") -and $Section -ne "Features<br>") {
                 $Section = $Section.SubString(0, $Section.Length - 6);
             }
             elseif ($Section.EndsWith("s<br>") -and $Section -ne "Miscellaneous<br>") {
@@ -2081,7 +2081,7 @@ function Get-ReleaseChangelog($ChangeLogParts, $UseFaIcons = $false, $IncludeSty
             $ChangeLog += "<tr>"
             if ($UseFaIcons -eq $true)
             {
-                $ChangeLog += "<td nowrap valign=`"top`" style=`"font-weight:bold;color:#5090c1`">"
+                $ChangeLog += "<td nowrap valign=`"top`" style=`"font-weight:bold;color:#5090c1`"><b>"
                 if ($commit.subject.Contains("Bug")) {
                     $ChangeLog += "<i class=`"fa fa-bug`"></i> ";
                 }
@@ -2109,12 +2109,12 @@ function Get-ReleaseChangelog($ChangeLogParts, $UseFaIcons = $false, $IncludeSty
                 $ChangeLog += "</td><td nowrap valign=`"top`" style=`"font-weight:bold;padding-left:3px`">"
             }
             else {
-                $ChangeLog += "<td nowrap valign=`"top`" style=`"font-weight:bold`">"
+                $ChangeLog += "<td nowrap valign=`"top`" style=`"font-weight:bold`"><b>"
             }
 
             $ChangeLog += $commit.subject
             if (![string]::IsNullOrEmpty($commit.scope)) {
-                $ChangeLog += "</td><td nowrap valign=`"top`" style=`"padding-left:10px`">"
+                $ChangeLog += "</b></td><td nowrap valign=`"top`" style=`"padding-left:10px`">"
                 $ChangeLog += $commit.scope
             }
             else {
