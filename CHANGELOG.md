@@ -1,5 +1,16 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.11.3 (August 5th, 2019)
+
+### Build System
+
+- **NPM:** remove @types/aggregate-error and @types/get-stream, packages now come with own definitions
+
+### Bug Fixes
+
+- Release changelog built from markdown showing 'Featur' instead of 'Feature'
+- Release changelog built from markdown doesnt bold the subject
+
 ## Version 1.11.2 (August 1st, 2019)
 
 ### Documentation
