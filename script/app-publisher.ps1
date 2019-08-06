@@ -2024,7 +2024,7 @@ function Edit-File($File, $SeekToEnd = $false, $skipEdit = $false)
             # Code window and call SendKeys, the keys are not received by the Code window, but without
             # this the notepad window opens in the background as described above.
             #
-            if ($FirstEditFileDone -eq $false -or ($TEXTEDITOR.ToLower() -eq "notepad" -or $TEXTEDITOR.ToLower() -eq "notepad.exe"))
+            if ($FirstEditFileDone -eq $false -or $TEXTEDITOR.ToLower() -eq "notepad" -or $TEXTEDITOR.ToLower() -eq "notepad.exe")
             {
                 $CodeProcess = Get-Process "Code" | Where-Object {$_.mainWindowTitle}
                 #[System.Threading.Thread]::Sleep(500);
