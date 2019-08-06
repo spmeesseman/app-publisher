@@ -9,7 +9,7 @@
 !define APPLICATION_NAME     "App-Publisher"
 
 ; Define build level
-!define BUILD_LEVEL          "1.11.3"
+!define BUILD_LEVEL          "1.11.4"
 
 ; Define install file name
 !define INSTALL_FILE_NAME    "${APPLICATION_NAME}_32bit.exe"

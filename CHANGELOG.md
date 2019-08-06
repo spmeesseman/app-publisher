@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.11.4 (August 6th, 2019)
+
+### Bug Fixes
+
+- Notepad windows open in background after first edit, notepadd++ behaves as intended [fixes #256]
+
 ## Version 1.11.3 (August 5th, 2019)
 
 ### Build System
