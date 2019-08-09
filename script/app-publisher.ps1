@@ -3164,14 +3164,14 @@ if ($options.skipDeployPush) {
     $SKIPDEPLOYPUSH = $options.skipDeployPush
 }
 #
-#
+# Skip version edits (notepad/notepad++ window)
 #
 $SKIPVERSIONEDITS = "N"
 if ($options.skipVersionEdits) {
     $SKIPVERSIONEDITS = $options.skipVersionEdits
 }
 #
-#
+# Email recipients to use when a dry run is being performed (overrides emailRecip)
 #
 $TESTEMAILRECIP = ""
 if ($options.testEmailRecip) {
@@ -3626,6 +3626,10 @@ if (![string]::IsNullOrEmpty($SKIPVERSIONEDITS)) {
     if ($SKIPVERSIONEDITS -ne "Y" -and $SKIPVERSIONEDITS -ne "N") {
         Log-Message "Invalid value specified for skipVersionEdits, accepted values are y/n/Y/N" "red"
         exit 1
+    }
+    if ($DRYRUN -eq $true) {
+        $SKIPVERSIONEDITS = "N"
+        Log-Message "Overriding skipVersionEdits on dry run, auto set to 'N'" "darkyellow"
     }
 }
 
