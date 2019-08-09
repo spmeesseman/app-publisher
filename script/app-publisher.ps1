@@ -4123,6 +4123,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
     #
     # If history file doesnt exist, create one with the project name as a title
     #
+    $IsNewHistoryFile = $false;
     $HistoryPath = Split-Path "$HISTORYFILE"
     if ($HistoryPath -ne "" -and !(Test-Path($HistoryPath))) 
     {
@@ -4138,23 +4139,34 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
         New-Item -ItemType "file" -Force -Path "$HISTORYFILE" -Value "$PROJECTNAME`r`n`r`n" | Out-Null
         Vc-Changelist-AddRemove "$HISTORYFILE"
         Vc-Changelist-AddNew "$HISTORYFILE"
+        $IsNewHistoryFile = $true;
     }
     if (!(Test-Path($HISTORYFILE))) 
     {
         Log-Message "Could not create history file, exiting" "red"
         exit 140;
     }
-    if ($CURRENTVERSION -ne $VERSION -and ($RUN -eq 1 -or $DRYRUN -eq $true))
+
+    if (($CURRENTVERSION -ne $VERSION -or $IsNewHistoryFile) -and ($RUN -eq 1 -or $DRYRUN -eq $true))
     {
         $TmpCommits = $ClsHistoryFile.createSectionFromCommits($COMMITS, $HISTORYLINELEN)
 
         Log-Message "Preparing history file"
+
+        #
+        # New file
+        #
+        if ($IsNewHistoryFile) {
+            $HistoryFileTitle = "$PROJECTNAME History"
+            Add-Content -NoNewline -Path $HISTORYFILE -Value "$HistoryFileTitle`r`n"
+        }
+
         #
         # Touch history file with the latest version info, either update existing, or create 
         # a new one if it doesnt exist
         #
         # Add lines 'version', 'date', then the header content
-        #                         
+        #
         Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n"                        #
         Add-Content -NoNewline -Path $HISTORYFILE -Value "$VERSIONTEXT $VERSION`r`n"   # Version x.y.z
         Add-Content -NoNewline -Path $HISTORYFILE -Value "$TDATE`r`n"                  # May 9, 2019
@@ -4312,7 +4324,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE))
         exit 141
     }
 
-    if ($CURRENTVERSION -ne $VERSION -and ($RUN -eq 1 -or $DRYRUN -eq $true))
+    if (($CURRENTVERSION -ne $VERSION -or $NewChangelog) -and ($RUN -eq 1 -or $DRYRUN -eq $true))
     {
         $TmpCommits = ""
         $LastSection = ""
