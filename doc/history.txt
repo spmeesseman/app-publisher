@@ -2097,3 +2097,44 @@ August 6th, 2019
     Notepad windows open in background after first edit, Notepadd++ behaves as
     intended.  [fixes #256]
 
+
+Version 1.11.5
+August 9th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+
+    When performing a dry run, the 'skipVersionEdits' config should be overriden
+    or disabled.
+
+    Setting dryRun="Y" will now cause skipVersionEdits ro be set to "N" in all
+    cases.
+
+    [fixes #248]
+
+2.  Bug Fix
+
+    The first publish run for a project doesn't write to the changelog/history 
+    file. [fixes #253]
+
+3.  Bug Fix
+
+    PDF documentation is not copied to the directory release documentation 
+    path. [fixes #251]
+

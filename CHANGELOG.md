@@ -1,5 +1,13 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.11.5 (August 9th, 2019)
+
+### Bug Fixes
+
+- Dry run should override the skipVersionEdits config [fixes #248]
+- First publish run doesn't write to changelog/history file. [fixes #253]
+- PDF docs are not copied to directory release documentation path. [fixes #251]
+
 ## Version 1.11.4 (August 6th, 2019)
 
 ### Bug Fixes
