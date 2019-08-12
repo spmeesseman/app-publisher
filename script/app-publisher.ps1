@@ -1152,8 +1152,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
             else {
                 if ($TESTEMAILRECIP.Length -gt 0) 
                 {
-                    $EMAILBODY = "<br><b>THIS IS A DRY RUN RELEASE, PLEASE IGNORE</b><br><br>" + $EMAILBODY
-                    $Subject = "[DRY RUN] " + $Subject    
+                    Log-Message "   Notification could not be sent to email recip, sending to test recip" "darkyellow"
                     if ($EMAILMODE -eq "ssl" -or $EMAILMODE -eq "tls") {
                         Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY -Port $EMAILPORT -UseSsl
                     }
@@ -1162,13 +1161,16 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
                     }
                     Check-PsCmdSuccess
                 }
+                else {
+                    Log-Message "   Notification could not be sent, invalid email address specified" "red"
+                }
             }
         }
         else {
+            $EMAILBODY = "<br><b>THIS IS A DRY RUN RELEASE, PLEASE IGNORE</b><br><br>" + $EMAILBODY
+            $Subject = "[DRY RUN] " + $Subject
             if ($TESTEMAILRECIP.Length -gt 0) 
             {
-                $EMAILBODY = "<br><b>THIS IS A DRY RUN RELEASE, PLEASE IGNORE</b><br><br>" + $EMAILBODY
-                $Subject = "[DRY RUN] " + $Subject
                 if ($EMAILMODE -eq "ssl" -or $EMAILMODE -eq "tls") {
                     Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY -Port $EMAILPORT -UseSsl
                 }
@@ -1176,6 +1178,9 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
                     Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY -Port $EMAILPORT
                 }
                 Check-PsCmdSuccess
+            }
+            else {
+                Log-Message "   Notification could not be sent, invalid email address specified" "red"
             }
         }
     }
@@ -3197,6 +3202,13 @@ if ($options.postBuildCommand) {
     $POSTBUILDCOMMAND = $options.postBuildCommand
 }
 #
+# The build command(s) to after the internal builds have been completed
+#
+$POSTRELEASECOMMAND = @()
+if ($options.postReleaseCommand) {
+    $POSTRELEASECOMMAND = $options.postReleaseCommand
+}
+#
 #
 #
 $REPO = ""
@@ -3758,6 +3770,7 @@ Log-Message "   NPM registry     : $NPMREGISTRY"
 Log-Message "   NPM scope        : $NPMSCOPE"
 Log-Message "   Nuget release    : $NUGETRELEASE"
 Log-Message "   Post Build cmd   : $POSTBUILDCOMMAND"
+Log-Message "   Post Release cmd : $POSTRELEASECOMMAND"
 Log-Message "   Path to root     : $PATHTOROOT"
 Log-Message "   Path to main root: $PATHTOMAINROOT"
 Log-Message "   Path pre root    : $PATHPREROOT"
@@ -3787,6 +3800,10 @@ if ($BUILDCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($BUILDCOMMAN
 if ($POSTBUILDCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($POSTBUILDCOMMAND))
 {
     $POSTBUILDCOMMAND = @($POSTBUILDCOMMAND); #convert to array
+}
+if ($POSTRELEASECOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($POSTRELEASECOMMAND))
+{
+    $POSTRELEASECOMMAND = @($POSTRELEASECOMMAND); #convert to array
 }
 if ($VERSIONFILES -is [system.string] -and ![string]::IsNullOrEmpty($VERSIONFILES))
 {
@@ -5420,6 +5437,11 @@ if ($MANTISBTRELEASE -eq "Y")
         Log-Message "Failed to create MantisBT v$VERSION release" "red"
     }
 }
+
+#
+# Run post build scripts if specified
+#
+Run-Scripts "postRelease" $POSTRELEASECOMMAND $false $false
 
 if ($DRYRUN -eq $true) {
     Log-Message "Dry run completed"
