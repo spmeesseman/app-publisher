@@ -1,5 +1,42 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.12.0 (August 12nd, 2019)
+
+### Features
+
+- add support for bumping version in c project rc files.
+
+	The following config has been added to publishrc for specifying a C project and its rc file:
+
+	    cProjectRcFile
+
+	Example usage in .publishrc.json:
+
+	    "cProjectRcFile": "src/main.rc"
+
+	[closes #294]
+
+- add support to run post release commands and scripts.
+
+	The following publishrc config has been added:
+
+	    postReleaseCommand
+
+	Example usage in .publishrc.json:
+
+	    "postReleaseCommand": [
+	        "script/post-release.bat",
+	        "cmd /c copy /Y install/dist/fpc.exe build"
+	    ]
+
+	[closes #264]
+
+- add support to specify more than one email address in the emailRecip and testEmailRecip publishrc configs.
+
+	Recipients can now be specified as an array of strings, with the notification email being sent to each specified address.
+
+	[closes #284]
+
 ## Version 1.11.5 (August 9th, 2019)
 
 ### Bug Fixes

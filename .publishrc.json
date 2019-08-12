@@ -58,6 +58,7 @@
     "pathtoMainRoot":    "",
     "pathPreRoot":       "",
     "postBuildCommand":  "",
+    "postReleaseCommand":"",
     "repo":              "https://svn.development.pjats.com/pja/app-publisher/trunk",
     "repoType":          "svn",
     "skipCommit":        "N",
