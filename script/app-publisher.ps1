@@ -1140,7 +1140,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
         $Subject = "$ProjectNameFmt $VERSIONTEXT $VERSION"
         if ($DRYRUN -eq $false) 
         {
-            if (![string]::IsNullOrEmpty($EMAILRECIP) -and $EMAILRECIP.Contains("@") -and $EMAILRECIP.Contains(".")) 
+            if ($EMAILRECIP.Length -gt 0) 
             {
                 if ($EMAILMODE -eq "ssl" -or $EMAILMODE -eq "tls") {
                     Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $EMAILRECIP -Subject $Subject -Body $EMAILBODY -Port $EMAILPORT -UseSsl
@@ -1150,9 +1150,10 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
                 }
             }
             else {
-                if (![string]::IsNullOrEmpty($TESTEMAILRECIP) -and $TESTEMAILRECIP.Contains("@") -and $TESTEMAILRECIP.Contains(".")) 
+                if ($TESTEMAILRECIP.Length -gt 0) 
                 {
-                    Log-Message "   Notification could not be sent to email recip, sending to test recip" "darkyellow"
+                    $EMAILBODY = "<br><b>THIS IS A DRY RUN RELEASE, PLEASE IGNORE</b><br><br>" + $EMAILBODY
+                    $Subject = "[DRY RUN] " + $Subject    
                     if ($EMAILMODE -eq "ssl" -or $EMAILMODE -eq "tls") {
                         Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY -Port $EMAILPORT -UseSsl
                     }
@@ -1161,24 +1162,20 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
                     }
                     Check-PsCmdSuccess
                 }
-                else {
-                    Log-Message "   Notification could not be sent, invalid email address specified" "red"
-                }
             }
         }
         else {
-            if (![string]::IsNullOrEmpty($TESTEMAILRECIP) -and $TESTEMAILRECIP.Contains("@") -and $TESTEMAILRECIP.Contains(".")) 
+            if ($TESTEMAILRECIP.Length -gt 0) 
             {
-                if ($EMAILMODE -eq "ssl" -or $EMAILMODE -eq "tls") {
+                $EMAILBODY = "<br><b>THIS IS A DRY RUN RELEASE, PLEASE IGNORE</b><br><br>" + $EMAILBODY
+                $Subject = "[DRY RUN] " + $Subject
+            if ($EMAILMODE -eq "ssl" -or $EMAILMODE -eq "tls") {
                     Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY -Port $EMAILPORT -UseSsl
                 }
                 else {
                     Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY -Port $EMAILPORT
                 }
                 Check-PsCmdSuccess
-            }
-            else {
-                Log-Message "   Notification could not be sent, invalid email address specified" "red"
             }
         }
     }
@@ -1692,8 +1689,6 @@ function Prepare-CProjectBuild()
             else {
                 $RcVersionCUR = $CURRENTVERSION.Replace(".", ", ") + ", 0"
             }
-            write-host $RcVersion
-            Write-Host $RcVersionCUR
             #
             # Replace version in defined rc file
             #
@@ -1703,7 +1698,7 @@ function Prepare-CProjectBuild()
             #
             Replace-Version $CPROJECTRCFILE "FileVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "FileVersion`", `"$RcVersion`""
             Replace-Version $CPROJECTRCFILE "ProductVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "FileVersion`", `"$RcVersion`""
-            $RcVersionCUR = $RcVersionCUR.Replace(" ", "");
+            $RcVersionCUR = $RcVersionCUR.Replace(" ", ""); # and try without spaces in the version number too
             Replace-Version $CPROJECTRCFILE "FileVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "FileVersion`", `"$RcVersion`""
             Replace-Version $CPROJECTRCFILE "ProductVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "FileVersion`", `"$RcVersion`""
             #
@@ -2962,7 +2957,7 @@ if ($options.emailServer) {
     $EMAILSERVER = $options.emailServer
 }
 #
-$EMAILRECIP = ""
+$EMAILRECIP = @()
 if ($options.emailRecip) {
     $EMAILRECIP = $options.emailRecip
 }
@@ -3242,7 +3237,7 @@ if ($options.skipVersionEdits) {
 #
 # Email recipients to use when a dry run is being performed (overrides emailRecip)
 #
-$TESTEMAILRECIP = ""
+$TESTEMAILRECIP = @()
 if ($options.testEmailRecip) {
     $TESTEMAILRECIP = $options.testEmailRecip
 }
@@ -3800,6 +3795,14 @@ if ($VERSIONFILES -is [system.string] -and ![string]::IsNullOrEmpty($VERSIONFILE
 if ($GITHUBASSETS -is [system.string] -and ![string]::IsNullOrEmpty($GITHUBASSETS))
 {
     $GITHUBASSETS = @($GITHUBASSETS); #convert to array
+}
+if ($EMAILRECIP -is [system.string] -and ![string]::IsNullOrEmpty($EMAILRECIP))
+{
+    $EMAILRECIP = @($EMAILRECIP); #convert to array
+}
+if ($TESTEMAILRECIP -is [system.string] -and ![string]::IsNullOrEmpty($TESTEMAILRECIP))
+{
+    $TESTEMAILRECIP = @($TESTEMAILRECIP); #convert to array
 }
 
 #
