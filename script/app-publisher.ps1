@@ -1647,7 +1647,69 @@ function Prepare-MantisPluginBuild()
             #
             # Allow manual modifications to assembly file
             #
-            Edit-File $MANTISBTPLUGIN $false  ($SKIPVERSIONEDITS -eq "Y")
+            Edit-File $MANTISBTPLUGIN $false ($SKIPVERSIONEDITS -eq "Y")
+        }
+    }
+}
+
+
+function Prepare-CProjectBuild()
+{
+    if (![string]::IsNullOrEmpty($CPROJECTRCFILE))
+    {
+        if (Test-Path($CPROJECTRCFILE))
+        {
+            $i = 0;
+            $RcVersion = ""
+            if (!$VERSION.Contains("."))
+            {
+                for ($i = 0; $i -lt $VERSION.Length; $i++) {
+                    if (($i -eq 0 -and $VERSION.Length -gt 3) -or $i -eq $VERSION.Length - 1) {
+                        $RcVersion = "$RcVersion$($VERSION[$i])";
+                    }
+                    else {
+                        $RcVersion = "$RcVersion$($VERSION[$i]), "
+                    }
+                }
+                $RcVersion = $RcVersion + ", 0"
+            }
+            else {
+                $RcVersion = $VERSION.Replace(".", ", ") + ", 0"
+            }
+            $RcVersionCUR = ""
+            if (!$CURRENTVERSION.Contains("."))
+            {
+                for ($i = 0; $i -lt $CURRENTVERSION.Length; $i++) {
+                    if (($i -eq 0 -and $CURRENTVERSION.Length -gt 3) -or $i -eq $CURRENTVERSION.Length - 1) {
+                        $RcVersionCUR = "$RcVersionCUR$($CURRENTVERSION[$i])";
+                    }
+                    else {
+                        $RcVersionCUR = "$RcVersionCUR$($CURRENTVERSION[$i]), "
+                    }
+                }
+                $RcVersionCUR = $RcVersionCUR + ", 0"
+            }
+            else {
+                $RcVersionCUR = $CURRENTVERSION.Replace(".", ", ") + ", 0"
+            }
+            write-host $RcVersion
+            Write-Host $RcVersionCUR
+            #
+            # Replace version in defined rc file
+            #
+            # VALUE "FileVersion", "8, 7, 3, 0"
+            # VALUE "FileVersion", "10,4,1,0"
+            # VALUE "ProductVersion", "7, 0, 0, 0"
+            #
+            Replace-Version $CPROJECTRCFILE "FileVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "FileVersion`", `"$RcVersion`""
+            Replace-Version $CPROJECTRCFILE "ProductVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "FileVersion`", `"$RcVersion`""
+            $RcVersionCUR = $RcVersionCUR.Replace(" ", "");
+            Replace-Version $CPROJECTRCFILE "FileVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "FileVersion`", `"$RcVersion`""
+            Replace-Version $CPROJECTRCFILE "ProductVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "FileVersion`", `"$RcVersion`""
+            #
+            # Allow manual modifications to assembly file
+            #
+            Edit-File $CPROJECTRCFILE $false ($SKIPVERSIONEDITS -eq "Y")
         }
     }
 }
@@ -2833,6 +2895,13 @@ if ($options.changelogFile) {
     $CHANGELOGFILE = $options.changelogFile
 }
 #
+#
+#
+$CPROJECTRCFILE = ""
+if ($options.cProjectRcFile) {
+    $CPROJECTRCFILE = $options.cProjectRcFile
+}
+#
 # The deploy command(s) to run once internal deployment has been completed
 #
 $DEPLOYCOMMAND = @()
@@ -3586,6 +3655,16 @@ if (![string]::IsNullOrEmpty($MANTISBTRELEASE)) {
         }
     }
 }
+if (![string]::IsNullOrEmpty($CPROJECTRCFILE)) {
+    if (!$CPROJECTRCFILE.Contains((".rc"))) {
+        Log-Message "Invalid value for cProjectRcFile, file must have an rc extension" "red"
+        exit 1
+    }
+    if (!(Test-Path($CPROJECTRCFILE))) {
+        Log-Message "Invalid value for cProjectRcFile, non-existent file specified" "red"
+        exit 1
+    }
+}
 if (![string]::IsNullOrEmpty($SKIPDEPLOYPUSH)) {
     $SKIPDEPLOYPUSH = $SKIPDEPLOYPUSH.ToUpper()
     if ($SKIPDEPLOYPUSH -ne "Y" -and $SKIPDEPLOYPUSH -ne "N") {
@@ -3661,6 +3740,7 @@ Log-Message "   Project          : $PROJECTNAME"
 Log-Message "   Build cmd        : $BUILDCOMMAND"
 Log-Message "   Bugs Page        : $BUGS"
 Log-Message "   Changelog file   : $CHANGELOGFILE"
+Log-Message "   C Project Rc File: $CPROJECTRCFILE"
 Log-Message "   Deploy cmd       : $DEPLOYCOMMAND"
 Log-Message "   Dist release     : $DISTRELEASE"
 Log-Message "   Dry run          : $DRYRUN"
@@ -4515,6 +4595,12 @@ if ((Test-Path("package.json"))) {
 #
 if (![string]::IsNullOrEmpty($MANTISBTPLUGIN)) {
     Prepare-MantisPluginBuild
+}
+#
+# Check to see if its a c project project, update main rc file if required
+#
+if (![string]::IsNullOrEmpty($CPROJECTRCFILE)) {
+    Prepare-CprojectBuild $VersionSystem
 }
 #
 # If this is a .NET build, update assemblyinfo file
