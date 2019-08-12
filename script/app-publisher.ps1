@@ -1169,7 +1169,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
             {
                 $EMAILBODY = "<br><b>THIS IS A DRY RUN RELEASE, PLEASE IGNORE</b><br><br>" + $EMAILBODY
                 $Subject = "[DRY RUN] " + $Subject
-            if ($EMAILMODE -eq "ssl" -or $EMAILMODE -eq "tls") {
+                if ($EMAILMODE -eq "ssl" -or $EMAILMODE -eq "tls") {
                     Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY -Port $EMAILPORT -UseSsl
                 }
                 else {
