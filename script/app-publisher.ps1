@@ -1663,20 +1663,14 @@ function Prepare-DotNetBuild($AssemblyInfoLocation)
 
 function Prepare-AppPublisherBuild()
 {
-    if (![string]::IsNullOrEmpty($MANTISBTPLUGIN))
-    {
-        if (Test-Path($MANTISBTPLUGIN))
-        {
-            #
-            # Replace version in defined main mantisbt plugin file
-            #
-            Replace-Version ".publishrc.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
-            #
-            # Allow manual modifications to publishrc and commit to modified list
-            #
-            Edit-File ".publishrc.json" $false ($SKIPVERSIONEDITS -eq "Y")
-        }
-    }
+    #
+    # Replace version in defined main mantisbt plugin file
+    #
+    Replace-Version ".publishrc.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
+    #
+    # Allow manual modifications to publishrc and commit to modified list
+    #
+    Edit-File ".publishrc.json" $false ($SKIPVERSIONEDITS -eq "Y")
 }
 
 
