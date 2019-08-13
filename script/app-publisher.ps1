@@ -272,6 +272,15 @@ class CommitAnalyzer
 
 class HistoryFile
 {
+    [bool] containsValidSubject($LineText)
+    {
+        return ($LineText.Contains("Build System") -or $LineText.Contains("Chore") -or $LineText.Contains("Documentation") -or
+            $LineText.Contains("Feature") -or $LineText.Contains("Bug Fix") -or $LineText.Contains("Performance Enhancement") -or
+            $LineText.Contains("Ongoing Progress") -or $LineText.Contains("Refactoring") -or $LineText.Contains("Code Styling") -or
+            $LineText.Contains("Tests") -or $LineText.Contains("Project Structure") -or $LineText.Contains("Project Layout") -or
+            $LineText.Contains("Visual Enhancement"))
+    }
+
     [string]getVersion($in, $stringver)
     {
         return $this.getHistory("", "", 0, $stringver, $false, $in, "", "", "", "", "", "", "", @(), "")
@@ -835,7 +844,7 @@ class HistoryFile
                 $szFinalContents += $szContents
             }
             else
-            {
+            {               
                 $iIndex1 = $szContents.IndexOf("*")
                 while ($iIndex1 -ne -1)
                 {
@@ -855,16 +864,17 @@ class HistoryFile
 
                 # the history file is written with a max line char count, remove all line breaks in running text
                 # for better display in web browser (and less vertical space)
-                [Match] $match = [Regex]::Match($szContents, "[a-zA-z0-9_.,;\/|`"']<br>(&nbsp;){4}[a-zA-z0-9_.,;\/|`"']");
-                while ($match.Success) {
-                    $szContents = $szContents.Replace($match.Value, $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;", "")); #leave a space
-                    $match = $match.NextMatch()
-                }
-                $match = [Regex]::Match($szContents, "[a-zA-z0-9_\/|`"'][,.:]*(&nbsp;){0,1}<br>(&nbsp;){4}[a-zA-z0-9_\/|`"']");
+                #[Match] $match = [Regex]::Match($szContents, "[a-zA-z0-9_.,;\/|`"']<br>(&nbsp;){4}[a-zA-z0-9_.,;\/|`"']");
+                #while ($match.Success) {
+                #    $szContents = $szContents.Replace($match.Value, $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;", "")); #leave a space
+                #    $match = $match.NextMatch()
+                #}
+                [Match] $match = [Regex]::Match($szContents, "[a-zA-z0-9_\/|`"'][,.:]*(&nbsp;){0,1}<br>(&nbsp;){4,}[a-zA-z0-9_\/|`"']");
                 while ($match.Success) {
                     $szContents = $szContents.Replace($match.Value, $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;", ""));
                     $match = $match.NextMatch()
                 }
+
                 # break up &nbsp;s
                 $match = [Regex]::Match($szContents, "(&nbsp;)(\w|'|`")");
                 while ($match.Success) {
@@ -877,7 +887,9 @@ class HistoryFile
                 $match = [Regex]::Match($szContents, "\w*(?<=^|>)[1-9][0-9]{0,1}\.(&nbsp;| ).+?(?=<br>)");
                 while ($match.Success) {
                     $value = $match.Value;
-                    $szContents = $szContents.Replace($value, "<b>$value</b>");
+                    if ($this.containsValidSubject($value)) {
+                        $szContents = $szContents.Replace($value, "<b>$value</b>");
+                    }
                     $match = $match.NextMatch()
                 }
                 
@@ -894,17 +906,23 @@ class HistoryFile
                         $typeParts += $value
                         $match = $match.NextMatch()
                     }
+                    
                     $szContents = $szContents.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;<br>", "<br><br>")
                     $szContents = $szContents.Replace("<br>&nbsp;&nbsp;&nbsp;<br>", "<br><br>")
-                    $match = [Regex]::Match($szContents, "<br>(&nbsp;){2,} {1}.+?(?=<br><br><b>|$)");
-                    while ($match.Success) {
-                        $value = $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;[", "<br>[") # ticket tags
+                    $match = [Regex]::Match($szContents, "(<br>){0,1}(<br>){1}(&nbsp;){2,} {1}.+?(?=<br><br><b>|$)");
+                    while ($match.Success) 
+                    {
+                        $value = $match.Value
+                        $value = $value.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;[", "<br>[") # ticket tags
                         $value = $value.Replace("<br>&nbsp;&nbsp;&nbsp; ", "<br>")
-                        if ($value.StartsWith("<br>")) {
-                            $value = $value.Substring(4);
-                        }
-                        if ($value.EndsWith("<br>")) {
-                            $value = $value.Substring(0, $value.Length - 4)
+                        if ($this.containsValidSubject($typeParts[$msgParts.Length])) 
+                        {
+                            if ($value.StartsWith("<br>")) {
+                                $value = $value.Substring(4);
+                            }
+                            if ($value.EndsWith("<br>")) {
+                                $value = $value.Substring(0, $value.Length - 4)
+                            }
                         }
                         $msgParts += $value.Trim()
                         $match = $match.NextMatch()
@@ -917,9 +935,15 @@ class HistoryFile
                         $tickets = ""
                         $subject = $typeParts[$i]
                         $message = $msgParts[$i];
-                        if ($typeParts[$i].Contains(":")) {
-                            $subject = $typeParts[$i].Substring(0, $typeParts[$i].IndexOf(":")).Trim()
-                            $scope = $typeParts[$i].Substring($typeParts[$i].IndexOf(":") + 1).Trim()
+                        if ($this.containsValidSubject($subject)) {
+                            if ($typeParts[$i].Contains(":")) {
+                                $subject = $typeParts[$i].Substring(0, $typeParts[$i].IndexOf(":")).Trim()
+                                $scope = $typeParts[$i].Substring($typeParts[$i].IndexOf(":") + 1).Trim()
+                            }
+                        }
+                        else {
+                            $subject = "Miscellaneous"
+                            $message = $typeParts[$i] + $msgParts[$i];
                         }
                         $match = [Regex]::Match($msgParts[$i], "\[(&nbsp;| )*(closes|fixes|resolves|fix|close|refs|references|ref|reference){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]");
                         while ($match.Success) {
@@ -1716,15 +1740,21 @@ function Prepare-CProjectBuild()
             #
             # Replace version in defined rc file
             #
+            # FILEVERSION 8,7,3,0
+            # PRODUCTVERSION 7,0,0,0
+            #
             # VALUE "FileVersion", "8, 7, 3, 0"
             # VALUE "FileVersion", "10,4,1,0"
             # VALUE "ProductVersion", "7, 0, 0, 0"
             #
             Replace-Version $CPROJECTRCFILE "FileVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "FileVersion`", `"$RcVersion`""
-            Replace-Version $CPROJECTRCFILE "ProductVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "FileVersion`", `"$RcVersion`""
+            Replace-Version $CPROJECTRCFILE "ProductVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "ProductVersion`", `"$RcVersion`""
             $RcVersionCUR = $RcVersionCUR.Replace(" ", ""); # and try without spaces in the version number too
             Replace-Version $CPROJECTRCFILE "FileVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "FileVersion`", `"$RcVersion`""
-            Replace-Version $CPROJECTRCFILE "ProductVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "FileVersion`", `"$RcVersion`""
+            Replace-Version $CPROJECTRCFILE "ProductVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "ProductVersion`", `"$RcVersion`""
+            $RcVersion = $RcVersion.Replace(" ", ""); 
+            Replace-Version $CPROJECTRCFILE "FILEVERSION[ ]*$RcVersionCUR" "FILEVERSION $RcVersion"
+            Replace-Version $CPROJECTRCFILE "PRODUCTVERSION[ ]*$RcVersionCUR" "PRODUCTVERSION $RcVersion"
             #
             # Allow manual modifications to rc file and commit to modified list
             #
