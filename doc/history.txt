@@ -2203,3 +2203,53 @@ August 12nd, 2019
     
     [closes #284]
 
+
+Version 1.13.0
+August 13rd, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+
+    Add support for using version number in publishrc for base application
+    version.
+    
+    [closes #254]
+
+2.  Bug Fix
+
+    Exit if a environment variable replacement cant be made.
+    
+    [closes #247]
+
+3.  Bug Fix
+
+    Commits that are entered without a valid per-determined subject causes an
+    error when parsing the changelog for a MantisBT release.
+    
+    [fixes #236]
+
+4.  Bug Fix
+
+    Commit comments with line breaks improperly indent in the table formatted
+    MantisBT/GitHub release changelog when using history text file for parsing.
+    
+    [fixes #300]
+

@@ -910,17 +910,19 @@ class HistoryFile
                     $szContents = $szContents.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;<br>", "<br><br>")
                     $szContents = $szContents.Replace("<br>&nbsp;&nbsp;&nbsp;<br>", "<br><br>")
                     $match = [Regex]::Match($szContents, "(<br>){0,1}(<br>){1}(&nbsp;){2,} {1}.+?(?=<br><br><b>|$)");
+                    
                     while ($match.Success) 
                     {
                         $value = $match.Value
                         $value = $value.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;[", "<br>[") # ticket tags
                         $value = $value.Replace("<br>&nbsp;&nbsp;&nbsp; ", "<br>")
+
                         if ($this.containsValidSubject($typeParts[$msgParts.Length])) 
                         {
-                            if ($value.StartsWith("<br>")) {
+                            while ($value.StartsWith("<br>")) {
                                 $value = $value.Substring(4);
                             }
-                            if ($value.EndsWith("<br>")) {
+                            while ($value.EndsWith("<br>")) {
                                 $value = $value.Substring(0, $value.Length - 4)
                             }
                         }

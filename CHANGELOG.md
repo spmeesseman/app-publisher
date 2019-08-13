@@ -1,5 +1,21 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.13.0 (August 13rd, 2019)
+
+### Features
+
+- add support for using version number in publishrc for base application version.
+
+	[closes #254, #247]
+
+### Bug Fixes
+
+- Commits that are entered without a valid per-determined subject cause an error when parsing changelog.
+- Commit comments with line breaks improperly indent in changelog.
+- Exit if a environment variable replacement cant be made.
+
+	[fixes #236, #300]
+
 ## Version 1.12.0 (August 12nd, 2019)
 
 ### Features
