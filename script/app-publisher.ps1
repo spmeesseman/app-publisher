@@ -1670,7 +1670,7 @@ function Prepare-AppPublisherBuild()
             #
             # Replace version in defined main mantisbt plugin file
             #
-            Replace-Version "package.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
+            Replace-Version ".publishrc.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
             #
             # Allow manual modifications to publishrc and commit to modified list
             #
