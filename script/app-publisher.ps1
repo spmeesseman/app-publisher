@@ -1663,14 +1663,16 @@ function Prepare-DotNetBuild($AssemblyInfoLocation)
 
 function Prepare-AppPublisherBuild()
 {
-    #
-    # Replace version in defined main mantisbt plugin file
-    #
-    Replace-Version ".publishrc.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
-    #
-    # Allow manual modifications to publishrc and commit to modified list
-    #
-    Edit-File ".publishrc.json" $false ($SKIPVERSIONEDITS -eq "Y")
+    if ($APPPUBLISHERVERSION -eq $true) {
+        #
+        # Replace version in defined main mantisbt plugin file
+        #
+        Replace-Version ".publishrc.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
+        #
+        # Allow manual modifications to publishrc and commit to modified list
+        #
+        Edit-File ".publishrc.json" $false ($SKIPVERSIONEDITS -eq "Y")
+    }
 }
 
 
@@ -2968,8 +2970,10 @@ if ($options.cProjectRcFile) {
 # defined 
 #
 $CURRENTVERSION = ""
+$APPPUBLISHERVERSION = $false
 if ($options.version) {
     $CURRENTVERSION = $options.version
+    $APPPUBLISHERVERSION = $true
 }
 #
 # The deploy command(s) to run once internal deployment has been completed
