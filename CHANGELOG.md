@@ -1,5 +1,15 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.13.1 (August 13rd, 2019)
+
+### Bug Fixes
+
+- publishrc version not updated on publish run
+
+### Refactoring
+
+- do not run post build command on dry run
+
 ## Version 1.13.0 (August 13rd, 2019)
 
 ### Features
