@@ -111,6 +111,7 @@ export = async () =>
             process.exit(0);
         }
 
+        delete opts.version; // remove since publishrc.json defines a param version
         await require(".")(opts);
         return 0;
     }

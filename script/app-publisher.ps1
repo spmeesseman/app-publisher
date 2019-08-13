@@ -1578,7 +1578,7 @@ function Prepare-VersionFiles()
                     }
                 }
                 #
-                # Allow manual modifications to $VersionFile
+                # Allow manual modifications to $VersionFile and commit to modified list
                 # Edit-File will add this file to $VersionFilesEdited
                 #
                 Edit-File $VersionFile $false ($SKIPVERSIONEDITS -eq "Y")
@@ -1629,9 +1629,28 @@ function Prepare-DotNetBuild($AssemblyInfoLocation)
     Replace-Version $AssemblyInfoLocation "AssemblyVersion[ ]*[(][ ]*[`"]$SEMVERSIONCUR" "AssemblyVersion(`"$SEMVERSION"
     Replace-Version $AssemblyInfoLocation "AssemblyFileVersion[ ]*[(][ ]*[`"]$SEMVERSIONCUR" "AssemblyFileVersion(`"$SEMVERSION"
     #
-    # Allow manual modifications to assembly file
+    # Allow manual modifications to assembly file and commit to modified list
     #
     Edit-File $AssemblyInfoLocation $false  ($SKIPVERSIONEDITS -eq "Y")
+}
+
+
+function Prepare-AppPublisherBuild()
+{
+    if (![string]::IsNullOrEmpty($MANTISBTPLUGIN))
+    {
+        if (Test-Path($MANTISBTPLUGIN))
+        {
+            #
+            # Replace version in defined main mantisbt plugin file
+            #
+            Replace-Version "package.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
+            #
+            # Allow manual modifications to publishrc and commit to modified list
+            #
+            Edit-File ".publishrc.json" $false ($SKIPVERSIONEDITS -eq "Y")
+        }
+    }
 }
 
 
@@ -1647,7 +1666,7 @@ function Prepare-MantisPluginBuild()
             Replace-Version $MANTISBTPLUGIN "this->version[ ]*[=][ ]*[`"]$CURRENTVERSION" "this->version = `"$VERSION"
             Replace-Version $MANTISBTPLUGIN "this->version[ ]*[=][ ]*[']$CURRENTVERSION" "this->version = '$VERSION"
             #
-            # Allow manual modifications to assembly file
+            # Allow manual modifications to mantisbt main plugin file and commit to modified list
             #
             Edit-File $MANTISBTPLUGIN $false ($SKIPVERSIONEDITS -eq "Y")
         }
@@ -1663,7 +1682,7 @@ function Prepare-CProjectBuild()
         {
             $i = 0;
             $RcVersion = ""
-            if (!$VERSION.Contains("."))
+            if (!$VERSION.Contains(".")) #  $VERSIONSYSTEM -eq "incremental"
             {
                 for ($i = 0; $i -lt $VERSION.Length; $i++) {
                     if (($i -eq 0 -and $VERSION.Length -gt 3) -or $i -eq $VERSION.Length - 1) {
@@ -1675,11 +1694,11 @@ function Prepare-CProjectBuild()
                 }
                 $RcVersion = $RcVersion + ", 0"
             }
-            else {
+            else { #  $VERSIONSYSTEM -eq "semver"
                 $RcVersion = $VERSION.Replace(".", ", ") + ", 0"
             }
             $RcVersionCUR = ""
-            if (!$CURRENTVERSION.Contains("."))
+            if (!$CURRENTVERSION.Contains(".")) #  $VERSIONSYSTEM -eq "incremental"
             {
                 for ($i = 0; $i -lt $CURRENTVERSION.Length; $i++) {
                     if (($i -eq 0 -and $CURRENTVERSION.Length -gt 3) -or $i -eq $CURRENTVERSION.Length - 1) {
@@ -1691,7 +1710,7 @@ function Prepare-CProjectBuild()
                 }
                 $RcVersionCUR = $RcVersionCUR + ", 0"
             }
-            else {
+            else { #  $VERSIONSYSTEM -eq "semver"
                 $RcVersionCUR = $CURRENTVERSION.Replace(".", ", ") + ", 0"
             }
             #
@@ -1707,7 +1726,7 @@ function Prepare-CProjectBuild()
             Replace-Version $CPROJECTRCFILE "FileVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "FileVersion`", `"$RcVersion`""
             Replace-Version $CPROJECTRCFILE "ProductVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "FileVersion`", `"$RcVersion`""
             #
-            # Allow manual modifications to assembly file
+            # Allow manual modifications to rc file and commit to modified list
             #
             Edit-File $CPROJECTRCFILE $false ($SKIPVERSIONEDITS -eq "Y")
         }
@@ -1747,7 +1766,7 @@ function Get-MantisPluginVersion()
     if (Test-Path($MANTISBTPLUGIN))
     {
         $PluginFileContent = Get-Content -Path $MANTISBTPLUGIN -Raw
-        [Match] $match = [Regex]::Match($PluginFileContent, "this->version[ ]*=[ ]*(`"|')[0-9]+.{1}[0-9]+.{1}[0-9]+");
+        [Match] $match = [Regex]::Match($PluginFileContent, "this->version[ ]*=[ ]*(`"|')[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+");
         if ($match.Success)
         {
             $MantisVersion = $match.Value.Replace("this->version", "")
@@ -1761,6 +1780,23 @@ function Get-MantisPluginVersion()
         Log-Message "Could not retrieve version, $AssemblyInfoLocation does not exist" "red"
     }
     return $MantisVersion
+}
+
+
+function Get-AppPublisherVersion()
+{
+    $AppPublisherVersion = ""
+    Log-Message "Retrieving App-Publisher publishrc version"
+    $FileContent = Get-Content -Path ".publishrc.json" -Raw
+    [Match] $match = [Regex]::Match($FileContent, "version`"[ ]*:[ ]*`"[0-9]+[.]{0,1}[0-9]+[.]{0,1}[0-9]+[.]{0,1}[0-9]{0,}");
+    if ($match.Success)
+    {
+        $AppPublisherVersion = $match.Value.Replace("version", "")
+        $AppPublisherVersion = $MantisVersion.Replace(":", "")
+        $AppPublisherVersion = $MantisVersion.Replace(" ", "")
+        $AppPublisherVersion = $MantisVersion.Replace("`"", "")
+    }
+    return $AppPublisherVersion
 }
 
 
@@ -2902,6 +2938,14 @@ if ($options.cProjectRcFile) {
     $CPROJECTRCFILE = $options.cProjectRcFile
 }
 #
+# App Publisher publishrc can define version, set current version to version
+# defined 
+#
+$CURRENTVERSION = ""
+if ($options.version) {
+    $CURRENTVERSION = $options.version
+}
+#
 # The deploy command(s) to run once internal deployment has been completed
 #
 $DEPLOYCOMMAND = @()
@@ -3345,12 +3389,15 @@ if ($PROJECTNAME -eq "app-publisher") {
     $IsAppPublisher = $true
 }
 
+#
+# Define some local vars
+#
 $SKIPCOMMIT = "N"
-$CURRENTVERSION = ""
 $VERSION = "" 
 $COMMITS = @()
 $TDATE = ""
 $REPOSCOMMITED = @()
+$VERSIONSYSTEM = ""
 
 #
 # Define a variable to track changed files for check-in to SVN
@@ -3583,6 +3630,45 @@ if (![string]::IsNullOrEmpty($PATHTOMAINROOT))
     }
     Set-Location $PATHPREROOT
 }
+if (![string]::IsNullOrEmpty($CURRENTVERSION)) {
+    if ($CURRENTVERSION.Contains(".")) {
+        $VERSIONSYSTEM = "semver"
+    }
+    else {
+        $VERSIONSYSTEM = "incremental"
+    }
+}
+
+#
+# Check for environment vars that did not get set
+#
+$objMembers = $options.psobject.Members | where-object membertype -like 'noteproperty'
+foreach ($option in $objMembers) {
+    if ($option.Value -eq $null) {
+        continue;
+    }
+    if ($option.Value -is [system.array])
+    {
+        foreach ($val in $option.Value) {
+            if ($val -is [system.string]) {
+                if ($val.Trim().StartsWith("$`{") -and $val.Trim().EndsWith("`}")) {
+                    Log-Message "Option $($option.Name) environment value was not found/set" "red"
+                    Log-Message "   $($option.Value)" "red"
+                    exit 1
+                }
+            }
+        }
+    }
+    else {
+        if ($option.Value -is [system.string]) {
+            if ($option.Value.Trim().StartsWith("$`{") -and $option.Value.Trim().EndsWith("`}")) {
+                Log-Message "Option $($option.Name) environment value was not found/set" "red"
+                Log-Message "   $($option.Value)" "red"
+                exit 1
+            }
+        }
+    }
+}
 
 #
 # Convert any Y/N vars to upper case and check validity
@@ -3740,10 +3826,31 @@ if ($DISTRELEASE -eq "Y" -and [string]::IsNullOrEmpty($PATHTODIST)) {
 }
 
 #
+# Log publishrc options
+#
+Log-Message "Options received from .publishrc"
+$objMembers = $options.psobject.Members | where-object membertype -like 'noteproperty'
+foreach ($option in $objMembers) {
+    $logMsg = "   "
+    $logMsg += $option.Name
+    for ($i = $logMsg.Length; $i -lt 20; $i++) {
+        $logMsg += " "
+    }
+    if ($option.Value -ne $null) {
+        $logMsg += ": $($option.Value)"
+    }
+    else {
+        $logMsg += ": null"
+    }
+    Log-Message $logMsg
+}
+
+#
 # Write project specific properties
 #
-Log-Message "22Project specific script configuration:"
+Log-Message "Project specific script configuration:"
 Log-Message "   Project          : $PROJECTNAME"
+Log-Message "   Current Version  : $CURRENTVERSION"
 Log-Message "   Build cmd        : $BUILDCOMMAND"
 Log-Message "   Bugs Page        : $BUGS"
 Log-Message "   Changelog file   : $CHANGELOGFILE"
@@ -3830,7 +3937,6 @@ if ($TESTEMAILRECIP -is [system.string] -and ![string]::IsNullOrEmpty($TESTEMAIL
 #     1. Incremental (100, 101, 102)
 #     2. Semantic (major.minor.patch)
 #
-$VersionSystem = ""
 if ($CURRENTVERSION -eq "") 
 {
     Log-Message "Retrieve current version and calculate next version number"
@@ -3849,7 +3955,7 @@ if ($CURRENTVERSION -eq "")
                 # use package.json properties to retrieve current version
                 #
                 $CURRENTVERSION = & node -e "console.log(require('./package.json').version);"
-                $VersionSystem = "semver"
+                $VERSIONSYSTEM = "semver"
             } 
             else {
                 Log-Message "Npm based project found, but package.json is missing" "red"
@@ -3860,7 +3966,7 @@ if ($CURRENTVERSION -eq "")
         #    Log-Message "Semver not found.  Run 'npm install --save-dev semver'" "red"
         #    exit 129
         #}
-        $VersionSystem = "semver"
+        $VERSIONSYSTEM = "semver"
     }
     #
     # MantisBT Plugin
@@ -3876,8 +3982,8 @@ if ($CURRENTVERSION -eq "")
             Log-Message "Check you mantis plugin file for valid version syntax" "red"
             exit 130
         }
-        #$VersionSystem = "mantisbt"
-        $VersionSystem = "semver"
+        #$VERSIONSYSTEM = "mantisbt"
+        $VERSIONSYSTEM = "semver"
     } 
     #
     # Test style History file
@@ -3887,10 +3993,10 @@ if ($CURRENTVERSION -eq "")
         $CURRENTVERSION = $ClsHistoryFile.getVersion($HISTORYFILE, $VERSIONTEXT)
         if (!$CURRENTVERSION.Contains(".")) 
         {
-            $VersionSystem = "incremental"
+            $VERSIONSYSTEM = "incremental"
         }
         else {
-            $VersionSystem = "semver"
+            $VERSIONSYSTEM = "semver"
             #
             # Semantic versioning non-npm project
             #
@@ -3908,7 +4014,7 @@ if ($CURRENTVERSION -eq "")
         {
             $CURRENTVERSION = Get-AssemblyInfoVersion $AssemblyInfoLoc
             if (![string]::IsNullOrEmpty($CURRENTVERSION )) {
-                $VersionSystem = ".net"
+                $VERSIONSYSTEM = ".net"
             }
             else {
                 Log-Message "The current version cannot be determined" "red"
@@ -3928,12 +4034,15 @@ if ($CURRENTVERSION -eq "")
         }
     }
 }
+else {
+    Log-Message "Current version obtained from publishrc"
+}
 
 #
 # If version system is mantisbt or .net, then look fora global semver installation
 # to use for finding the next version number using semantic versioning module semver
 #
-if ($VersionSystem -eq ".net" -or $VersionSystem -eq "mantisbt")
+if ($VERSIONSYSTEM -eq ".net" -or $VERSIONSYSTEM -eq "mantisbt")
 {
     $Paths = ${Env::Path}.Split(";");
     foreach ($Path in $Paths) 
@@ -3942,7 +4051,7 @@ if ($VersionSystem -eq ".net" -or $VersionSystem -eq "mantisbt")
         {
             if (Test-Path([Path]::Combine($Path, "\node_modules\semver")))
             {
-                $VersionSystem = "semver";
+                $VERSIONSYSTEM = "semver";
             }
         }
     }
@@ -3969,7 +4078,7 @@ if ($CURRENTVERSION -eq "")
             exit 133
         }
     
-        $VersionSystem = "manual";
+        $VERSIONSYSTEM = "manual";
     }
     else {
         Log-Message "New version has been validated" "darkgreen"
@@ -3982,7 +4091,7 @@ if ($CURRENTVERSION -eq "")
 # Validate current version if necessary
 #
 Log-Message "Validating current version found: $CURRENTVERSION"
-if ($VersionSystem -eq "semver")
+if ($VERSIONSYSTEM -eq "semver")
 {
     if (!$IsAppPublisher) {
         $ValidationVersion = & app-publisher-semver $CURRENTVERSION
@@ -3995,9 +4104,9 @@ if ($VersionSystem -eq "semver")
         exit 132
     }
 }
-elseif ($VersionSystem -eq '.net' -or $VersionSystem -eq 'mantisbt')
+elseif ($VERSIONSYSTEM -eq '.net' -or $VERSIONSYSTEM -eq 'mantisbt')
 {
-    Log-Message "MantisBT version has no validation method - todo" "darkyellow"
+    Log-Message "MantisBT/.NET version system has no validation method - todo" "darkyellow"
     # TODO - Version should digits and two dots
     #
     if ($false) {
@@ -4005,7 +4114,7 @@ elseif ($VersionSystem -eq '.net' -or $VersionSystem -eq 'mantisbt')
         exit 134
     }
 }
-elseif ($VersionSystem -eq 'incremental')
+elseif ($VERSIONSYSTEM -eq 'incremental')
 {
     Log-Message "Incremental version has no validation method - todo" "darkyellow"
     # TODO - Version should contain all digits
@@ -4076,7 +4185,7 @@ if ($RUN -eq 1 -or $DRYRUN -eq $true)
     #
     $VersionInteractive = "N"
     #
-    if ($VersionSystem -eq "semver")
+    if ($VERSIONSYSTEM -eq "semver")
     {
         #
         # use semver to retrieve next version
@@ -4098,12 +4207,12 @@ if ($RUN -eq 1 -or $DRYRUN -eq $true)
             $VERSION = $CURRENTVERSION
         }
     }
-    elseif ($VersionSystem -eq "mantisbt" -or $VersionSystem -eq '.net')
+    elseif ($VERSIONSYSTEM -eq "mantisbt" -or $VERSIONSYSTEM -eq '.net')
     {
         $VERSION = ""
         $VersionInteractive = "Y"
     }
-    elseif ($VersionSystem -eq "incremental")
+    elseif ($VERSIONSYSTEM -eq "incremental")
     {
         #
         # Whole # incremental versioning, i.e. 100, 101, 102...
@@ -4128,12 +4237,12 @@ if ($RUN -eq 1 -or $DRYRUN -eq $true)
     {
         Log-Message "The suggested new version is $VERSION"
     }
-    elseif ($VersionSystem -ne "manual" -and $VersionInteractive -eq "N")
+    elseif ($VERSIONSYSTEM -ne "manual" -and $VersionInteractive -eq "N")
     {
         Log-Message "New version could not be determined, you must manually input the new version"
         $VersionInteractive = "Y"
     }
-    if ($VersionSystem -eq "manual" -or $INTERACTIVE -eq "Y" -or $VersionInteractive -eq "Y") 
+    if ($VERSIONSYSTEM -eq "manual" -or $INTERACTIVE -eq "Y" -or $VersionInteractive -eq "Y") 
     {
         Log-Message "[PROMPT] User input required"
         $NewVersion = read-host -prompt "Enter the version #, or C to cancel [$VERSION]"
@@ -4155,7 +4264,7 @@ if ($RUN -eq 1 -or $DRYRUN -eq $true)
     # Validate new version
     #
     Log-Message "Validating new version: $VERSION"
-    if ($VersionSystem -eq "semver")
+    if ($VERSIONSYSTEM -eq "semver")
     {
         if (!$IsAppPublisher) {
             $ValidationVersion = & app-publisher-semver $VERSION
@@ -4168,7 +4277,7 @@ if ($RUN -eq 1 -or $DRYRUN -eq $true)
             exit 133
         }
     }
-    elseif ( $VERSION.Contains(".")) # $VersionSystem -eq "mantisbt" -or $VersionSystem -eq '.net'
+    elseif ( $VERSION.Contains(".")) # $VERSIONSYSTEM -eq "mantisbt" -or $VERSIONSYSTEM -eq '.net'
     {
         #
     }
@@ -4596,31 +4705,32 @@ if ($DISTRELEASE -eq "Y")
 }
 
 #
-# Check if this is an ExtJs build.  ExtJs build will be an dist release, but it will
-# contain both package.json and app.json that will need version updated.  A node_modules
-# directory will exist, so the current version was extracted by node and and next version  
-# was calculated by semver.
+# AppPublisher publishrc version
+#
+Prepare-AppPublisherBuild
+#
+# ExtJs build
 #
 if ((Test-Path("app.json")) -and (Test-Path("package.json"))) {
     Prepare-ExtJsBuild
 }
 #
-# Check to see if its a npm managed project, update package.json if required
+# NPM managed project, update package.json if required
 #
 if ((Test-Path("package.json"))) {
     Prepare-PackageJson
 }
 #
-# Check to see if its a mantisbt plugin project, update main plugin file if required
+# Mantisbt plugin project, update main plugin file if required
 #
 if (![string]::IsNullOrEmpty($MANTISBTPLUGIN)) {
     Prepare-MantisPluginBuild
 }
 #
-# Check to see if its a c project project, update main rc file if required
+# C project, update main rc file if required
 #
 if (![string]::IsNullOrEmpty($CPROJECTRCFILE)) {
-    Prepare-CprojectBuild $VersionSystem
+    Prepare-CprojectBuild
 }
 #
 # If this is a .NET build, update assemblyinfo file
@@ -5277,14 +5387,14 @@ if ($MANTISBTRELEASE -eq "Y")
     {
         Log-Message "Dry run only, will pass 'dryrun' flag to Mantis Releases API"
         $dry_run = 1;
-        $ReleaseVersion = $CURRENTVERSION;
+        $ReleaseVersion = $CURRENTVERSION
     }
     #
     # Changelog...
     #
-    $ReleaseVersion = $VERSION;
+    $ReleaseVersion = $VERSION
     if ($DRYRUN -eq $true) {
-        $ReleaseVersion = $CURRENTVERSION;
+        $ReleaseVersion = $CURRENTVERSION
     }
     $NotesIsMarkdown = 0
     $MantisChangelog = $null
