@@ -4993,7 +4993,7 @@ if ($DISTRELEASE -eq "Y")
 #
 # Run post build scripts if specified
 #
-Run-Scripts "postBuild" $POSTBUILDCOMMAND $true $true
+Run-Scripts "postBuild" $POSTBUILDCOMMAND $false $false
 
 #
 # Restore any configured package.json values to the original values
