@@ -20,9 +20,20 @@
   - [Installation](#Installation)
   - [Commit Messages](#Commit-Messages)
   - [Usage](#Usage)
-    - [Usage - Configuration File Parameters](#Usage---Configuration-File-Parameters)
+    - [Usage - Configuration File](#Usage---Configuration-File)
     - [Usage - Example Configuration File](#Usage---Example-Configuration-File)
-  - [Determining the Next Version](#Determining-the-Next-Version)
+  - [Configuration Paremeters](#Configuration-Paremeters)
+    - [buildCommand](#buildCommand)
+    - [deployCommand](#deployCommand)
+    - [distRelease](#distRelease)
+    - [distReleasePath](#distReleasePath)
+    - [dryRun](#dryRun)
+    - [pathToDist](#pathToDist)
+    - [postBuildCommand](#postBuildCommand)
+    - [postReleaseCommand](#postReleaseCommand)
+    - [skipVersionEdits](#skipVersionEdits)
+    - [textEditor](#textEditor)
+  - [How the Next Version is Determined](#How-the-Next-Version-is-Determined)
   - [MantisBT Token](#MantisBT-Token)
   - [NPM Token](#NPM-Token)
   - [Windows Installer](#Windows-Installer)
@@ -156,7 +167,7 @@ A dry run can also be performed with the --dry-run option:
     cd project_root
     node app-publisher -p ps --no-ci --dry-run
 
-### Usage - Configuration File Parameters
+### Usage - Configuration File
 
 The .publishrc.json file can be used to define the configuration parameters, defined below.
 
@@ -280,7 +291,49 @@ An example .publishrc.json file:
         "writeLog":          "N"
     }
 
-## Determining the Next Version
+## Configuration Paremeters
+
+### buildCommand
+
+A command, or an array of comands, that are to be ran once all of the versions have been updated and changelog finalized.  This can be used to build the application, installer, etc.
+
+### deployCommand
+
+A command, or an array of comands, that are to be ran before any releases (to MantisBT, GitHub, Directory Release, NPM Release, Nuget Release, etc) are made.
+
+### distRelease
+
+Will be reanmed to **directoryRelease** in future version.  Setting this flag to **Y** will perform a "directory release" to the directory specified in the [distReleasePath](#distReleasePath) config.  All files located in the directory specified by the [pathToDist](#pathToDist) config will be copied to the destination directory.
+
+### distReleasePath
+
+TODO
+
+### dryRun
+
+A dry run can be performed to test the publish run before it is ran "live".  Note that a dry run will automatically set the [skipVersionEdits](#skipVersionEdits) flag to **N**.
+
+### pathToDist
+
+TODO
+
+### postBuildCommand
+
+A command, or an array of comands, that are to be ran once all of the builds have been made.  This can be used to clean up any temporary build files that the build scripts do not, adding additional files to be checked in to source control with the version tagging, etc.  These commands are run before any releases (to MantisBT, GitHub, Directory Release, NPM Release, Nuget Release, etc) are made.
+
+### postReleaseCommand
+
+A command, or an array of comands, that are to be ran once all of the releases (to MantisBT, GitHub, Directory Release, NPM Release, Nuget Release, etc) have been made.  These commands are ran right before the publish run has completed.
+
+### skipVersionEdits
+
+This flag can be set to **Y** to skip the display of the changed version files in the editor specified by the [textEditor](#textEditor) config.  Note that setting the [dryRun](#dryRun) flag will override this config and automatically set the value to **N**.
+
+### textEditor
+
+Specify the application to be used to open text based version files and files that need to be edited during the publish run.  Defaults to **notepad**.
+
+## How the Next Version is Determined
 
 The next version is determined depnding on the versioning system the application uses.
 
