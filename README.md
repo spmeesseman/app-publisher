@@ -293,9 +293,23 @@ An example .publishrc.json file:
 
 ## Configuration Paremeters
 
+### branch
+
+The version control branch to perform commit checks and version tagging on.  This can be left blank if specified in package.json.
+
+For Subversion, the default is **trunk**, for Git, the default is **master**.
+
+### bugs
+
+The URL of the website where bugs, issues, and feature requests should be reported.  This can be left blank if specified in package.json.
+
 ### buildCommand
 
 A command, or an array of comands, that are to be ran once all of the versions have been updated and changelog finalized.  This can be used to build the application, installer, etc.
+
+### changelogFile
+
+The path to the markdown changelog file, if it is kept.  Leaving this config blank will skip processing of marked down changelog file.
 
 ### deployCommand
 
@@ -313,6 +327,54 @@ TODO
 
 A dry run can be performed to test the publish run before it is ran "live".  Note that a dry run will automatically set the [skipVersionEdits](#skipVersionEdits) flag to **N**.
 
+### dryRunVcRevert
+
+Set this flag to **N** if you do not want the changes performed on files during a dry run to be reverted back their oiriginal content.
+
+The default value is **Y**.
+
+### emailHrefs
+
+A link, or an array of links, to display in the release notification email.  Note that the [emailNotification](#emailNotification) flag must be set or this config has no effect.
+
+The links can also specify a row label and a link label, for example:
+
+    "emailHrefs": [
+        "https://my.domin.com/svn/web/filedetails.php?repname=pja&path=%2Fapp-publisher%2Ftrunk%2FREADME.md&usemime=1|ReadMe File|Readme File - WebSVN",
+        "https://my.domin.com//projects/set_project.php?project=app-publisher&make_default=no&ref=roadmap_page.php|Project Roadmap|Roadmap - Projects Board",
+        "https://my.domin.com//projects/set_project.php?project=app-publisher&make_default=no&ref=changelog_page.php|Project Changelog|Changelog - Projects Board"
+    ]
+
+This config would be displayed in a notification email like so, where the 2nd item in each row is the actual link to the specified url:
+
+    ReadMe File            Readme File - WebSVN
+    Project Roadmap        Roadmap - Projects Board
+    Project Changelog      Changelog - Projects Board
+
+### emailNotification
+
+Set this flag to **Y** to send a release notification email when the publish run has completed.
+
+Default is **N**.
+
+### emailPort
+
+The port that the email server specified by [emailServer](#emailServer) listens on.
+
+Default is **25**.
+
+### emailRecip
+
+The email address, or an array of email addresses, that the release notification email should be sent to.  Note that the [emailNotification](#emailNotification) flag must be set or this config has no effect.
+
+### emailServer
+
+The hostname or ip address of the email server to be used to send release notification emails.  Note that the [emailNotification](#emailNotification) flag must be set or this config has no effect.
+
+### emailSender
+
+The email address, or an array of email addresses, that the release notification email should be sent from.  Note that the [emailNotification](#emailNotification) flag must be set or this config has no effect.
+
 ### pathToDist
 
 TODO
@@ -324,6 +386,10 @@ A command, or an array of comands, that are to be ran once all of the builds hav
 ### postReleaseCommand
 
 A command, or an array of comands, that are to be ran once all of the releases (to MantisBT, GitHub, Directory Release, NPM Release, Nuget Release, etc) have been made.  These commands are ran right before the publish run has completed.
+
+### projectName
+
+The name of the project.  This hould matchthe project name in version control.
 
 ### skipVersionEdits
 
