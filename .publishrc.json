@@ -1,6 +1,6 @@
 {
     "projectName":       "app-publisher",
-    "version":           "1.13.1",
+    "version": "1.13.2",
     "branch":            "trunk",
     "bugs":              "",
     "buildCommand": [
@@ -74,5 +74,21 @@
         "install\\installer-x86.nsi"
     ],
     "versionText":       "Version",
-    "writeLog":          "N"  
+    "writeLog":          "N",
+    "xRuns": [
+    {
+        "repoType":      "git",
+        "branch":        "master",
+        "repo":          "https://github.com/spmeesseman/app-publisher.git",
+        "homePage":      "https://github.com/spmeesseman/app-publisher",
+        "bugs":          "https://app1.spmeesseman.com/projects/set_project.php?project=app-publisher&make_default=no&ref=bug_report_page.php",
+        "npmRegistry":   "https://registry.npmjs.org",
+        "textEditor":    "",
+        "historyFile":   "",
+        "npmScope":      "@spmeesseman",
+        "mantisbtRelease":"N",
+        "githubRelease": "Y",
+        "githubUser":    "spmeesseman",
+        "emailNotification": "N"
+    }] 
 }

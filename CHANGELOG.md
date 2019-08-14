@@ -1,5 +1,16 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.13.2 (August 14th, 2019)
+
+### Documentation
+
+- **readme:** add initial detail section for config parameters
+
+### Bug Fixes
+
+- An ampersand in bugs page or homepage causes an error [fixes #173]
+- version is not being bumped in publishrc if using version config
+
 ## Version 1.13.1 (August 13rd, 2019)
 
 ### Bug Fixes

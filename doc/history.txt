@@ -2285,3 +2285,38 @@ August 13rd, 2019
 
     Do not run post-build commands on a dry run.
 
+
+Version 1.13.2
+August 14th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Documentation:  readme
+
+    Add initial detail section for config parameters.
+
+2.  Bug Fix
+
+    An ampersand in bugs page or homepage causes an error. [fixes #173]
+
+3.  Bug Fix
+
+    Version is not being bumped in publishrc if using version config.
+
