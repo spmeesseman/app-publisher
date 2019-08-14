@@ -73,7 +73,6 @@
     "versionFiles": [
         "install\\installer-x86.nsi"
     ],
-    "versionSystem":     "",
     "versionText":       "Version",
     "writeLog":          "N"  
 }

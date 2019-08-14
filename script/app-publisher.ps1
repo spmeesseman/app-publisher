@@ -301,7 +301,7 @@ class HistoryFile
         foreach ($msg in $CommitsList)
         {
             $msg = $msg.Trim()
-            if($null -ne $msg -and $msg -ne "" -and !$msg.ToLower().StartsWith("chore"))
+            if($null -ne $msg -and $msg -ne "" -and !$msg.ToLower().StartsWith("chore") -and !$msg.ToLower().StartsWith("progress"))
             {
                 $line = "";
                 
@@ -341,6 +341,15 @@ class HistoryFile
                     }
                 }
 
+                #
+                # Space all lines lined up with first to the right of the bullet number, ie:
+                #
+                #     1.  This is line 1
+                #
+                #         Line2 needs to be moved right 4 spaces from line beginnign to line it up with line1
+                #
+                #     2.  .......
+                #
                 $idx = $line.IndexOf("`n");
                 while ($idx -ne -1)
                 {
@@ -1909,13 +1918,25 @@ function Prepare-PackageJson()
         Log-Message "Homepage: $DefaultHomePage"
         # Set homepage 
         Log-Message "Setting homepage in package.json: $HOMEPAGE"
-        if (!$IsAppPublisher) {
-            & app-publisher-json -I -4 -f package.json -e "this.homepage='$HOMEPAGE'"
+        #
+        # A bug in npm module json where writing an ampersand throws an error, if the bugs page contains
+        # one then use powershell replace mechanism for replacement
+        #
+        if (!$HOMEPAGE.Contains("&"))
+        {
+            if (!$IsAppPublisher) {
+                & app-publisher-json -I -4 -f package.json -e "this.homepage='$HOMEPAGE'"
+            }
+            else {
+                & json -I -4 -f package.json -e "this.homepage='$HOMEPAGE'"
+            }
+            Check-ExitCode
         }
         else {
-            & json -I -4 -f package.json -e "this.homepage='$HOMEPAGE'"
+            ((Get-Content -path "package.json" -Raw) -replace "$DefaultHomePage", "$HOMEPAGE") | Set-Content -NoNewline -Path "package.json"
+            Check-PsCmdSuccess
+            [System.Threading.Thread]::Sleep(500) # removed this ps stuff to begin with because of access errors. try to sleep
         }
-        Check-ExitCode
     }
 
     if (![string]::IsNullOrEmpty($BUGS))
@@ -1932,11 +1953,23 @@ function Prepare-PackageJson()
         Log-Message "Bugs page: $DefaultBugs"
         # Set
         Log-Message "Setting bugs page in package.json: $BUGS"
-        if (!$IsAppPublisher) {
-            & app-publisher-json -I -4 -f package.json -e "this.bugs.url='$BUGS'"
+        #
+        # A bug in npm module json where writing an ampersand throws an error, if the bugs page contains
+        # one then use powershell replace mechanism for replacement
+        #
+        if (!$BUGS.Contains("&"))
+        {
+            if (!$IsAppPublisher) {
+                & app-publisher-json -I -4 -f package.json -e "this.bugs.url='$BUGS'"
+            }
+            else {
+                & json -I -4 -f package.json -e "this.bugs.url='$BUGS'"
+            }
         }
         else {
-            & json -I -4 -f package.json -e "this.bugs.url='$BUGS'"
+            ((Get-Content -path "package.json" -Raw) -replace "$DefaultBugs", "$BUGS") | Set-Content -NoNewline -Path "package.json"
+            Check-PsCmdSuccess
+            [System.Threading.Thread]::Sleep(500) # removed this ps stuff to begin with because of access errors. try to sleep
         }
         Check-ExitCode
     }
@@ -2038,7 +2071,12 @@ function Restore-PackageJson()
     if (![string]::IsNullOrEmpty($DefaultRepo))
     {
         Log-Message "Re-setting default repository in package.json: $DefaultRepo"
-        & app-publisher-json -I -4 -f package.json -e "this.repository.url='$DefaultRepo'"
+        if (!$IsAppPublisher) {
+            & app-publisher-json -I -4 -f package.json -e "this.repository.url='$DefaultRepo'"
+        }
+        else {
+            & json -I -4 -f package.json -e "this.repository.url='$DefaultRepo'"
+        }
         Check-ExitCode
     }
     #
@@ -2047,7 +2085,12 @@ function Restore-PackageJson()
     if (![string]::IsNullOrEmpty($DefaultRepoType))
     {
         Log-Message "Re-setting default repository type in package.json: $DefaultRepoType"
-        & app-publisher-json -I -4 -f package.json -e "this.repository.type='$DefaultRepoType'"
+        if (!$IsAppPublisher) {
+            & app-publisher-json -I -4 -f package.json -e "this.repository.type='$DefaultRepoType'"
+        }
+        else {
+            & json -I -4 -f package.json -e "this.repository.type='$DefaultRepoType'"
+        }
         Check-ExitCode
     }
     #
@@ -2056,8 +2099,25 @@ function Restore-PackageJson()
     if (![string]::IsNullOrEmpty($DefaultBugs))
     {
         Log-Message "Re-setting default bugs page in package.json: $DefaultBugs"
-        & app-publisher-json -I -4 -f package.json -e "this.bugs.url='$DefaultBugs'"
-        Check-ExitCode
+        #
+        # A bug in npm module json where writing an ampersand throws an error, if the bugs page contains
+        # one then use powershell replace mechanism for replacement
+        #
+        if (!$DefaultBugs.Contains("&"))
+        {
+            if (!$IsAppPublisher) {
+                & app-publisher-json -I -4 -f package.json -e "this.bugs.url='$DefaultBugs'"
+            }
+            else {
+                & json -I -4 -f package.json -e "this.bugs.url='$DefaultBugs'"
+            }
+            Check-ExitCode
+        }
+        else {
+            ((Get-Content -path "package.json" -Raw) -replace "$BUGS", "$DefaultBugs") | Set-Content -NoNewline -Path "package.json"
+            Check-PsCmdSuccess
+            [System.Threading.Thread]::Sleep(500) # removed this ps stuff to begin with because of access errors. try to sleep
+        }
     }
     #
     # Set homepage 
@@ -2065,8 +2125,25 @@ function Restore-PackageJson()
     if (![string]::IsNullOrEmpty($DefaultHomePage))
     {
         Log-Message "Re-setting default homepage in package.json: $DefaultHomePage"
-        & app-publisher-json -I -4 -f package.json -e "this.homepage='$DefaultHomePage'"
-        Check-ExitCode
+        #
+        # A bug in npm module json where writing an ampersand throws an error, if the bugs page contains
+        # one then use powershell replace mechanism for replacement
+        #
+        if (!$DefaultHomePage.Contains("&"))
+        {
+            if (!$IsAppPublisher) {
+                & app-publisher-json -I -4 -f package.json -e "this.homepage='$DefaultHomePage'"
+            }
+            else {
+                & json -I -4 -f package.json -e "this.homepage='$DefaultHomePage'"
+            }
+            Check-ExitCode
+        }
+        else {
+            ((Get-Content -path "package.json" -Raw) -replace "$HOMEPAGE", "$DefaultHomePage") | Set-Content -NoNewline -Path "package.json"
+            Check-PsCmdSuccess
+            [System.Threading.Thread]::Sleep(500) # removed this ps stuff to begin with because of access errors. try to sleep
+        }
     }
     #
     # Scope/name - package.json
@@ -2074,7 +2151,12 @@ function Restore-PackageJson()
     if (![string]::IsNullOrEmpty($NPMSCOPE) -and !$DefaultName.Contains($NPMSCOPE))
     {
         Log-Message "Re-setting default package name in package.json: $DefaultName"
-        & app-publisher-json -I -4 -f package.json -e "this.name='$DefaultName'"
+        if (!$IsAppPublisher) {
+            & app-publisher-json -I -4 -f package.json -e "this.name='$DefaultName'"
+        }
+        else {
+            & json -I -4 -f package.json -e "this.name='$DefaultName'"
+        }
         Check-ExitCode
         #
         # Scope - package-lock.json
@@ -2082,7 +2164,12 @@ function Restore-PackageJson()
         if (Test-Path("package-lock.json")) 
         {
             Log-Message "Re-scoping default package name in package-lock.json: $DefaultName"
-            & app-publisher-json -I -4 -f package-lock.json -e "this.name='$DefaultName'"
+            if (!$IsAppPublisher) {
+                & app-publisher-json -I -4 -f package-lock.json -e "this.name='$DefaultName'"
+            }
+            else {
+                & json -I -4 -f package-lock.json -e "this.name='$DefaultName'"
+            }
             Check-ExitCode
         }
     }
@@ -3915,6 +4002,7 @@ Log-Message "   Repo             : $_Repo"
 Log-Message "   RepoType         : $_RepoType"
 Log-Message "   Branch           : $BRANCH"
 Log-Message "   Skip deploy/push : $SKIPDEPLOYPUSH"
+Log-Message "   Skip version edit: $SKIPVERSIONEDITS"
 Log-Message "   Tag version      : $VCTAG"
 Log-Message "   Tag format       : $VCTAGFORMAT"
 Log-Message "   Tag prefix       : $VCTAGPREFIX"
