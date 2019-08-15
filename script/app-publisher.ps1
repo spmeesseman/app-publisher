@@ -2186,6 +2186,11 @@ function Edit-File($File, $SeekToEnd = $false, $skipEdit = $false)
         #if (Vc-IsVersioned($File, $true, $true)) {
             Vc-Changelist-Add $File
         #}
+        if ($skipEdit -and $VERSIONFILESEDITALWAYS.Contains($File)) 
+        {
+            Log-Message "Set Edit Always Version File - $File"  
+            $skipEdit = $false;
+        }
 
         if (!$skipEdit -and ![string]::IsNullOrEmpty($TEXTEDITOR))
         {
@@ -3478,6 +3483,13 @@ if ($options.versionFiles) {
     $VERSIONFILES = $options.versionFiles
 }
 #
+#
+#
+$VERSIONFILESEDITALWAYS = @()
+if ($options.versionFilesEditAlways) {
+    $VERSIONFILESEDITALWAYS = $options.versionFilesEditAlways
+}
+#
 # The text tag to use in the history file for preceding the version number.  It should 
 # be one of the following:
 #
@@ -4009,6 +4021,7 @@ Log-Message "   Tag prefix       : $VCTAGPREFIX"
 Log-Message "   Text editor      : $TEXTEDITOR"
 Log-Message "   Test email       : $TESTEMAILRECIP"
 Log-Message "   Version files    : $VERSIONFILES"
+Log-Message "   Vers.files alw.ed: $VERSIONFILESEDITALWAYS"
 Log-Message "   Version text     : $VERSIONTEXT"
 
 #
@@ -4033,6 +4046,10 @@ if ($POSTRELEASECOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($POSTR
 if ($VERSIONFILES -is [system.string] -and ![string]::IsNullOrEmpty($VERSIONFILES))
 {
     $VERSIONFILES = @($VERSIONFILES); #convert to array
+}
+if ($VERSIONFILESEDITALWAYS -is [system.string] -and ![string]::IsNullOrEmpty($VERSIONFILESEDITALWAYS))
+{
+    $VERSIONFILESEDITALWAYS = @($VERSIONFILESEDITALWAYS); #convert to array
 }
 if ($GITHUBASSETS -is [system.string] -and ![string]::IsNullOrEmpty($GITHUBASSETS))
 {

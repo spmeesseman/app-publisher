@@ -73,6 +73,7 @@
     "versionFiles": [
         "install\\installer-x86.nsi"
     ],
+    "versionFilesEditAlways": [],
     "versionText":       "Version",
     "writeLog":          "N",
     "xRuns": [
