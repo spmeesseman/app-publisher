@@ -2980,6 +2980,12 @@ Log-Message "   Version   : $APPPUBLISHERVERSION" "cyan" $true
 Log-Message "   Author    : Scott Meesseman" "cyan" $true
 
 #
+# Define some local vars that should not be reset on multiple runs past the first one
+#
+$VERSIONSYSTEM = ""
+$VERSION = ""
+
+#
 # Publish runs!
 #
 for ($RUN = 1; $RUN -le $NUMRUNS; $RUN++) {
@@ -3524,11 +3530,10 @@ if ($PROJECTNAME -eq "app-publisher") {
 # Define some local vars
 #
 $SKIPCOMMIT = "N"
-$VERSION = "" 
 $COMMITS = @()
 $TDATE = ""
 $REPOSCOMMITED = @()
-$VERSIONSYSTEM = ""
+
 
 #
 # Define a variable to track changed files for check-in to SVN
@@ -4284,7 +4289,7 @@ Log-Message "Current version has been validated" "darkgreen"
 #     3. Populate and edit history text file
 #     4. Populate and edit changelog markdown file
 #
-if ($RUN -eq 1 -or $DRYRUN -eq $true) 
+if ($RUN -eq 1) 
 {
     Log-Message "The current version is $CURRENTVERSION"
     #
@@ -4439,10 +4444,10 @@ if ($RUN -eq 1 -or $DRYRUN -eq $true)
     }
     Log-Message "New version has been validated" "darkgreen"
 }
-else 
+else
 {
-    $VERSION = $CURRENTVERSION
-    Log-Message "This is pulish run #$RUN, the current version $CURRENTVERSION is also the new version" "magenta"
+    Log-Message "The current version is $CURRENTVERSION"
+    Log-Message "This is publish run #$RUN, the previously determined version $VERSION is the new version" "magenta"
 }
 
 
@@ -4954,7 +4959,7 @@ if ($NPMRELEASE -eq "Y")
             Log-Message "   $TmpPkgFile"
             Log-Message "To:"
             Log-Message "   $DestPackedFile"
-            
+
             & cmd /c move /Y "$TmpPkgFile" "$DestPackedFile"
             Check-ExitCode
             if($LASTEXITCODE -eq 0) {
