@@ -3761,6 +3761,15 @@ if (![string]::IsNullOrEmpty($PATHTOMAINROOT))
     }
     Set-Location $PATHPREROOT
 }
+
+if ($NPMPACKDIST -eq "Y") 
+{
+    if ([string]::IsNullOrEmpty($PATHTODIST)) {
+        Log-Message "You must specify 'pathToDist' if 'npmPackDist' flag is set to Y" "red"
+        exit 1
+    }
+}
+
 if (![string]::IsNullOrEmpty($CURRENTVERSION)) {
     if ($CURRENTVERSION.Contains(".")) {
         $VERSIONSYSTEM = "semver"
@@ -4917,6 +4926,16 @@ if ($NPMRELEASE -eq "Y")
         {
             & npm pack
             Check-ExitCode
+
+            if (!(Test-Path($PATHTODIST))) 
+            {
+                Log-Message "Creating tarball file directory and adding to version control" "magenta"
+                New-Item -ItemType "directory" -Force -Path "$PATHTODIST" | Out-Null
+                Vc-Changelist-AddNew "$PATHTODIST"
+                Vc-Changelist-AddRemove "$PATHTODIST"
+                Vc-Changelist-Add "$PATHTODIST"
+            }
+
             $DestPackedFile = [Path]::Combine($PATHTODIST, "$PROJECTNAME.tgz")
             [System.Threading.Thread]::Sleep(100);
             if (![string]::IsNullOrEmpty($NPMSCOPE)) {
@@ -4937,6 +4956,8 @@ if ($NPMRELEASE -eq "Y")
             Log-Message "   $DestPackedFile"
             & cmd /c move /Y "$TmpPkgFile" "$DestPackedFile"
             Check-ExitCode
+
+            Vc-Changelist-Add "$DestPackedFile"
         }
         #
         # Publish to npm server
