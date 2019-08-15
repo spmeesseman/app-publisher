@@ -3061,11 +3061,13 @@ if ($options.cProjectRcFile) {
 # App Publisher publishrc can define version, set current version to version
 # defined 
 #
-$CURRENTVERSION = ""
-$APPPUBLISHERVERSION = $false
-if ($options.version) {
-    $CURRENTVERSION = $options.version
-    $APPPUBLISHERVERSION = $true
+if ($RUN -eq 1) {
+    $CURRENTVERSION = ""
+    $APPPUBLISHERVERSION = $false
+    if ($options.version) {
+        $CURRENTVERSION = $options.version
+        $APPPUBLISHERVERSION = $true
+    }
 }
 #
 # The deploy command(s) to run once internal deployment has been completed
