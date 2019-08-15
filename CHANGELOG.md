@@ -1,5 +1,21 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.13.3 (August 15th, 2019)
+
+### Documentation
+
+- **readme:** update config info
+
+### Features
+
+- Provide config for version files to always edit 
+
+	The following publishrc parameter has been added:
+
+	    versionFilesEditAlways
+
+	[closes # 252]
+
 ## Version 1.13.2 (August 14th, 2019)
 
 ### Documentation
