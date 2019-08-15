@@ -92,6 +92,9 @@
         "mantisbtRelease":"N",
         "githubRelease": "Y",
         "githubUser":    "spmeesseman",
-        "emailNotification": "N"
+        "emailNotification": "N",
+        "postBuildCommand": [
+            "svn revert -R ."
+        ]
     }] 
 }
