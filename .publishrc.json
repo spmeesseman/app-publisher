@@ -1,6 +1,6 @@
 {
     "projectName":       "app-publisher",
-    "version": "1.13.4",
+    "version": "1.13.5",
     "branch":            "trunk",
     "bugs":              "",
     "buildCommand": [
@@ -17,7 +17,7 @@
     "emailMode":         "",
     "emailPort":         25,
     "emailServer":       "10.0.7.50",
-    "emailRecip":        "productrelease@pjats.com",
+    "emailRecip":        "smeesseman@pjats.com",
     "emailSender":       "productbuild@pjats.com",
     "emailHrefs": [
         "https://app1.development.pjats.com/svn/web/filedetails.php?repname=pja&path=%2Fapp-publisher%2Ftrunk%2FREADME.md&usemime=1|ReadMe File|Readme File - WebSVN",

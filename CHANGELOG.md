@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.13.5 (August 15th, 2019)
+
+### Bug Fixes
+
+- the previous fix for the version being bumped back to the previous version on publish runs past the first one did not work as intended.
+
 ## Version 1.13.4 (August 15th, 2019)
 
 ### Bug Fixes
