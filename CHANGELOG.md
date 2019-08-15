@@ -1,5 +1,13 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.13.4 (August 15th, 2019)
+
+### Bug Fixes
+
+- on a failed read error for a github or mantis release when building file assets, the log shows the previously processed filename as the one that failed to be read
+- regression - version is reset to previous on any all extra runs
+- The config npmPackDist does not have its output checked in. [fixes #258]
+
 ## Version 1.13.3 (August 15th, 2019)
 
 ### Documentation
