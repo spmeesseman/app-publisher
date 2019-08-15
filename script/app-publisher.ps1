@@ -4954,10 +4954,12 @@ if ($NPMRELEASE -eq "Y")
             Log-Message "   $TmpPkgFile"
             Log-Message "To:"
             Log-Message "   $DestPackedFile"
+            
             & cmd /c move /Y "$TmpPkgFile" "$DestPackedFile"
             Check-ExitCode
-
-            Vc-Changelist-Add "$DestPackedFile"
+            if($LASTEXITCODE -eq 0) {
+                Vc-Changelist-Add "$DestPackedFile"
+            }
         }
         #
         # Publish to npm server
