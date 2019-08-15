@@ -4964,6 +4964,11 @@ if ($NPMRELEASE -eq "Y")
             Check-ExitCode
             if($LASTEXITCODE -eq 0) {
                 Vc-Changelist-Add "$DestPackedFile"
+                $TarballVersioned = Vc-IsVersioned $DestPackedFile
+                if (!$TarballVersioned) {
+                    Vc-Changelist-AddNew "$DestPackedFile"
+                    Vc-Changelist-AddRemove "$DestPackedFile"
+                }
             }
         }
         #
