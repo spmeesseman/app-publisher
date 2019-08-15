@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.13.6 (August 15th, 2019)
+
+### Bug Fixes
+
+- If the 'npmPackDist' flag is set, but the output tarball is not yet under version control, the publish run fails to add it before commiting version changes and tagging version.
+
 ## Version 1.13.5 (August 15th, 2019)
 
 ### Bug Fixes
