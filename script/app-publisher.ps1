@@ -5485,6 +5485,7 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
                         }
                     }
                     else {
+                        $AssetName = [Path]::GetFileName($Asset)
                         Log-Message "Failed to upload GitHub asset $AssetName - input file does not exist" "red"
                     }
                 }
@@ -5625,6 +5626,7 @@ if ($MANTISBTRELEASE -eq "Y")
                     }
                 }
                 else {
+                    $AssetName = [Path]::GetFileName($Asset)
                     Log-Message "Failed to build MantisBT asset $AssetName - input file does not exist" "red"
                 }
             }
