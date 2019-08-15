@@ -58,7 +58,9 @@
     "pathtoRoot":        ".",
     "pathtoMainRoot":    "",
     "pathPreRoot":       "",
-    "postBuildCommand":  "",
+    "postBuildCommand": [
+        "svn commit -m \"chore: check in installer latest release\" install\\dist\\AppPublisher_32bit.exe"
+    ],
     "postReleaseCommand":"",
     "repo":              "https://svn.development.pjats.com/pja/app-publisher/trunk",
     "repoType":          "svn",
