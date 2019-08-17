@@ -278,7 +278,7 @@ class HistoryFile
             $LineText.Contains("Feature") -or $LineText.Contains("Bug Fix") -or $LineText.Contains("Performance Enhancement") -or
             $LineText.Contains("Ongoing Progress") -or $LineText.Contains("Refactoring") -or $LineText.Contains("Code Styling") -or
             $LineText.Contains("Tests") -or $LineText.Contains("Project Structure") -or $LineText.Contains("Project Layout") -or
-            $LineText.Contains("Visual Enhancement"))
+            $LineText.Contains("Visual Enhancement") -or $LineText.StartsWith("Fix"))
     }
 
     [string]getVersion($in, $stringver)
@@ -918,8 +918,8 @@ class HistoryFile
                     
                     $szContents = $szContents.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;<br>", "<br><br>")
                     $szContents = $szContents.Replace("<br>&nbsp;&nbsp;&nbsp;<br>", "<br><br>")
-                    $match = [Regex]::Match($szContents, "(<br>){0,1}(<br>){1}(&nbsp;){2,} {1}.+?(?=<br><br><b>|$)");
-                    
+                    $match = [Regex]::Match($szContents, "(<br>){0,1}(<br>){1}(&nbsp;){2,} {1}.+?(?=<br><br>(<b>|[1-9]{0,1}.(&nbsp;| ))|$)");
+
                     while ($match.Success) 
                     {
                         $value = $match.Value
@@ -954,7 +954,13 @@ class HistoryFile
                         }
                         else {
                             $subject = "Miscellaneous"
-                            $message = $typeParts[$i] + $msgParts[$i];
+                            if ($typeParts[$i].Contains(":")) {
+                                $scope = $typeParts[$i].Substring(0, $typeParts[$i].IndexOf(":")).Trim()
+                                $message = $typeParts[$i].Substring($typeParts[$i].IndexOf(":") + 1) + $msgParts[$i];
+                            }
+                            else {
+                                $message = $typeParts[$i] + $msgParts[$i];
+                            }
                         }
                         $match = [Regex]::Match($msgParts[$i], "\[(&nbsp;| )*(closes|fixes|resolves|fix|close|refs|references|ref|reference){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]");
                         while ($match.Success) {
@@ -2300,7 +2306,7 @@ function Get-ReleaseChangelog($ChangeLogParts, $UseFaIcons = $false, $IncludeSty
             if ($UseFaIcons -eq $true)
             {
                 $ChangeLog += "<td nowrap valign=`"top`" style=`"font-weight:bold;color:#5090c1`"><b>"
-                if ($commit.subject.Contains("Bug")) {
+                if ($commit.subject.Contains("Fix")) {
                     $ChangeLog += "<i class=`"fa fa-bug`"></i> ";
                 }
                 elseif ($commit.subject.Contains("Feature")) {
