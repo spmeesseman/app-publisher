@@ -8,7 +8,7 @@
         "${CODE_HOME}\\nsis\\makensis.exe install\\installer-x86.nsi"
     ],
     "changelogFile":     "CHANGELOG.md",
-    "deployCommand":     "", 
+    "deployCommand":     "",
     "distRelease":       "N",
     "distReleasePath":   "\\\\192.168.68.120\\d$\\softwareimages",
     "distDocPath":       "",
