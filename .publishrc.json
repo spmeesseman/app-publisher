@@ -2,7 +2,7 @@
     "projectName":       "app-publisher",
     "version": "1.13.6",
     "branch":            "trunk",
-    "bugs":              "", 
+    "bugs":              "",
     "buildCommand": [ 
         "npm run build",
         "${CODE_HOME}\\nsis\\makensis.exe install\\installer-x86.nsi"
