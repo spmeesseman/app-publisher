@@ -854,11 +854,11 @@ class HistoryFile
             }
             else
             {               
-                $iIndex1 = $szContents.IndexOf("*")
+                $iIndex1 = $szContents.IndexOf("**********")
                 while ($iIndex1 -ne -1)
                 {
                     $iIndex2 = $szContents.IndexOf("<br>", $iIndex1)
-                    $iIndex1 = $szContents.IndexOf("*", $iIndex2)
+                    $iIndex1 = $szContents.IndexOf("**********", $iIndex2)
                 }
                 $szContents = $szContents.Substring($iIndex2 + 4)
                 while ($szContents.StartsWith("<br>")) {
