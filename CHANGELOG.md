@@ -1,5 +1,18 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.13.7 (August 24th, 2019)
+
+### Bug Fixes
+
+- **Changelog:** if a subject/scope is used in the commit, but the subject is not part of the pre-defined subject list, the scope part of the commit ends up incorrectly offset by one row from the subject.
+- **Releases:** An asterisk character in any commit message causes the github and/or mantisbt release to fail.
+
+	This was due to a bug in the history text file parsing.
+
+	[fixes #345]
+
+- **Changelog:** Line breaks in the history file are removed but  not replaced with a space character when parsing the history file, and adjacent words are joined as one in the release changelog.  [fixes #346]
+
 ## Version 1.13.6 (August 15th, 2019)
 
 ### Bug Fixes
