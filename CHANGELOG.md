@@ -1,5 +1,17 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 1.13.8 (August 31st, 2019)
+
+### Bug Fixes
+
+- **Releases:** The mantis/github release fails when generating the changelog if any of the numbered items in a history text file contains a space between the last digit in the number and the period character used to terminate it.  For example:
+
+	    12 .  commit text here
+
+	as opposed to correct syntax:
+
+	    12.  commit text here
+
 ## Version 1.13.7 (August 24th, 2019)
 
 ### Bug Fixes
