@@ -274,6 +274,9 @@ class HistoryFile
 {
     [bool] containsValidSubject($LineText)
     {
+        if ([string]::IsNullOrEmpty($LineText)) {
+            return $false;
+        }
         return ($LineText.Contains("Build System") -or $LineText.Contains("Chore") -or $LineText.Contains("Documentation") -or
             $LineText.Contains("Feature") -or $LineText.Contains("Bug Fix") -or $LineText.Contains("Performance Enhancement") -or
             $LineText.Contains("Ongoing Progress") -or $LineText.Contains("Refactoring") -or $LineText.Contains("Code Styling") -or
@@ -911,7 +914,7 @@ class HistoryFile
                 {
                     $typeParts = @()
                     $msgParts = @()
-                    $match = [Regex]::Match($szContents, "\w*(?<=^|>)[1-9][0-9]{0,1}\.(&nbsp;| ).+?(?=<br>|<\/font>)");
+                    $match = [Regex]::Match($szContents, "\w*(?<=^|>)[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>|<\/font>)");
                     while ($match.Success) {
                         $value = $match.Value.Replace("&nbsp;", "").Replace(".", "")
                         for ($i = 0; $i -lt 10; $i++) {
