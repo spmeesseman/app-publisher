@@ -1172,7 +1172,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     $EMAILBODY += "<img src=`"https://app1.spmeesseman.com/res/img/app/app-publisher.png`" height=`"16`">"
     $EMAILBODY += "</td><td valign=`"middle`"><font style=`"color:#0000AA;font-size:12px;font-weight:bold`">"
     $EMAILBODY += "<i>app-publisher</i></font></td></tr><tr><td valign=`"middle`" colspan=`"3`">"
-    $EMAILBODY += "<font style=`"font-size:10px;font-weight:bold`">Do not respond to this email address</font></td></tr></table>";
+    $EMAILBODY += "<font style=`"font-size:10px;font-weight:bold`">Do not respond to this email message</font></td></tr></table>";
 
     Log-Message "Sending release notification email"
     try 
