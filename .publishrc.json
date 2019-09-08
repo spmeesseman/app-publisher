@@ -4,8 +4,7 @@
     "branch":            "trunk",
     "bugs":              "",
     "buildCommand": [
-        "npm run build",
-        "${CODE_HOME}\\nsis\\makensis.exe install\\installer-x86.nsi"
+        "npm run build"
     ],
     "changelogFile":     "",
     "deployCommand":     "",
@@ -46,8 +45,7 @@
     ],
     "mantisbtAssets": [
         "install\\dist\\history.txt|History File",
-        "install\\dist\\app-publisher.tgz|NPM Tarball",
-        "install\\dist\\App-Publisher_32bit.exe|Windows Installer"
+        "install\\dist\\app-publisher.tgz|NPM Tarball"
     ],
     "npmPackDist":       "Y",
     "npmRegistry":       "https://npm.development.pjats.com",
@@ -58,9 +56,7 @@
     "pathtoRoot":        ".",
     "pathtoMainRoot":    "",
     "pathPreRoot":       "",
-    "postBuildCommand": [
-        "svn commit -m \"chore: check in installer latest release\" install\\dist\\AppPublisher_32bit.exe"
-    ],
+    "postBuildCommand":  [],
     "postReleaseCommand":"",
     "repo":              "https://svn.development.pjats.com/pja/app-publisher/trunk",
     "repoType":          "svn",
@@ -72,9 +68,7 @@
     "vcTag":             "Y",
     "vcTagPrefix":       "",
     "vcWebPath":         "https://app1.development.pjats.com/web/svn/filedetails.php%3Frepname=pja%26usemime=1%26path=",
-    "versionFiles": [
-        "install\\installer-x86.nsi"
-    ],
+    "versionFiles":      [],
     "versionFilesEditAlways": [],
     "versionText":       "Version",
     "writeLog":          "N",
@@ -87,11 +81,13 @@
         "bugs":          "https://app1.spmeesseman.com/projects/set_project.php?project=app-publisher&make_default=no&ref=bug_report_page.php",
         "npmRegistry":   "https://registry.npmjs.org",
         "textEditor":    "",
-        "historyFile":   "",
         "npmScope":      "@spmeesseman",
         "mantisbtRelease":"N",
         "githubRelease": "Y",
         "githubUser":    "spmeesseman",
+        "githubAssets": [
+            "install\\dist\\app-publisher.tgz"
+        ],
         "emailNotification": "N",
         "postBuildCommand": [
             "svn revert -R ."

@@ -2534,3 +2534,42 @@ August 31st, 2019
     
         12.  commit text here
 
+
+Version 1.13.9
+September 7th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+
+    The release changelog html is malformed if the history file section contains
+    a line break, followed by four or more spaces, followed by another line 
+    break.
+
+2.  Refactoring
+
+    Email footer app stamp should read 'Do not respond to this email message'.
+
+3.  Refactoring
+
+    Run mantisbt/github releases before version control check in, before
+    dry run changes are reverted.  Enables easier debugging while changelog
+    parser is pre-stable.
+
