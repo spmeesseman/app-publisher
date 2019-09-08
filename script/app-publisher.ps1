@@ -886,11 +886,11 @@ class HistoryFile
                     $szContents = $szContents.Replace($match.Value, $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;", "")); #leave a space
                     $match = $match.NextMatch()
                 }
-                [Match] $match = [Regex]::Match($szContents, "[a-zA-z0-9_\/|`"'][,.:]*(&nbsp;){0,1}<br>(&nbsp;){4,}[a-zA-z0-9_\/|`"']");
-                while ($match.Success) {
-                    $szContents = $szContents.Replace($match.Value, $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;", ""));
-                    $match = $match.NextMatch()
-                }
+                #[Match] $match = [Regex]::Match($szContents, "[a-zA-z0-9_\/|`"'][,.:]*(&nbsp;){0,1}<br>(&nbsp;){4,}[a-zA-z0-9_\/|`"']");
+                #while ($match.Success) {
+                #    $szContents = $szContents.Replace($match.Value, $match.Value.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;", "<br>"));
+                #    $match = $match.NextMatch()
+                #}
 
                 # break up &nbsp;s
                 $match = [Regex]::Match($szContents, "(&nbsp;)(\w|'|`")");
@@ -901,7 +901,7 @@ class HistoryFile
 
                 # Bold all numbered lines
                 #$match = [Regex]::Match($szContents, "\w*(?<!&nbsp;)[1-9][0-9]{0,1}\.(&nbsp;| ).+?(?=<br>)   \w*(?<=^|>)[1-9][0-9]{0,1}\.(&nbsp;| ).+?(?=<br>)");
-                $match = [Regex]::Match($szContents, "\w*(?<=^|>)[1-9][0-9]{0,1}\.(&nbsp;| ).+?(?=<br>)");
+                $match = [Regex]::Match($szContents, "\w*(?<=^|>)[1-9][0-9]{0,1}(&nbsp;| ){0,1}\.(&nbsp;| ).+?(?=<br>)");
                 while ($match.Success) {
                     $value = $match.Value;
                     if ($this.containsValidSubject($value)) {
@@ -926,7 +926,7 @@ class HistoryFile
                     
                     $szContents = $szContents.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;<br>", "<br><br>")
                     $szContents = $szContents.Replace("<br>&nbsp;&nbsp;&nbsp;<br>", "<br><br>")
-                    $match = [Regex]::Match($szContents, "(<br>){0,1}(<br>){1}(&nbsp;){2,} {1}.+?(?=<br><br>(<b>|[1-9]{0,1}.(&nbsp;| ))|$)");
+                    $match = [Regex]::Match($szContents, "(<br>){0,1}(<br>){1}(&nbsp;){2,} {1}.+?(?=<br>(&nbsp;| ){0,}<br>(<b>|[1-9]{0,1}.(&nbsp;| ))|$)");
 
                     while ($match.Success) 
                     {
