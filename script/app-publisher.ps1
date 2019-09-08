@@ -5154,6 +5154,324 @@ if ((Test-Path("package.json"))) {
     Restore-PackageJson
 }
 
+
+#
+# Github Release
+#
+if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y") 
+{
+    Log-Message "Creating GitHub v$VERSION release"
+
+    #
+    # Create changelog content
+    #
+    $ReleaseVersion = $VERSION;
+    #
+    $GithubChangelogParts = @()
+    if (![string]::IsNullOrEmpty($HISTORYFILE)) 
+    {
+        Log-Message "   Converting history text to github release changelog html"
+        $GithubChangelogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $ReleaseVersion, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "", @(), "")
+    }
+    elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
+    {
+        Log-Message "   Converting changelog markdown to github release changelog html"
+        $GithubChangelogParts = $ClsHistoryFile.getChangelog($PROJECTNAME, $ReleaseVersion, 1, $VERSIONTEXT, "parts", $CHANGELOGFILE, "", "", "", "", "", "", "", @(), "", $false, $IsAppPublisher)
+    }
+
+    if ($GithubChangelogParts-eq $null -or $GithubChangelogParts.Length -eq 0 -or $GithubChangelogParts[0] -eq "error") {
+        $GithubChangelogParts = $null
+    }
+    else {
+        $GithubChangelog = Get-ReleaseChangelog $GithubChangelogParts $false $false # $true
+    }
+
+    if ($GithubChangelog -ne $null -and $DRYRUN -eq $false) 
+    {
+        # Set up the request body for the 'create release' request
+        #
+        $Request = @{
+            "tag_name" = "v$VERSION"
+            "target_commitish" = "$BRANCH"
+            "name" = "v$VERSION"
+            "body" = "$GithubChangelog"
+            "draft" = $false
+            "prerelease" = $false
+        } | ConvertTo-Json
+        #
+        # Set up the request header, this will be used to both create the release and to upload
+        # any assets.  Note that for each asset, the content-type must be set appropriately
+        # according to the type of asset being uploaded
+        #
+        $Header = @{
+            "Accept" = "application/vnd.github.v3+json"
+            "mediaTypeVersion" = "v3"
+            "squirrelAcceptHeader" = "application/vnd.github.squirrel-girl-preview"
+            "symmetraAcceptHeader" = "application/vnd.github.symmetra-preview+json"
+            "Authorization" = "token ${Env:GITHUB_TOKEN}"
+            "Content-Type" = "application/json; charset=UTF-8"
+        }
+        #
+        # Enable TLS1.2
+        #
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        #
+        # Send the REST POST to create the release
+        #
+        $url = "https://api.github.com/repos/$GITHUBUSER/$PROJECTNAME/releases"
+        $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
+        Check-PsCmdSuccess
+        #
+        # Make sure an upload_url value exists on the response object to check for success
+        #
+        if ($? -eq $true -and $Response.upload_url)
+        {
+            Log-Message "Successfully created GitHub release v$VERSION" "darkgreen"
+            Log-Message "   ID         : $($Response.id)" "darkgreen"
+            Log-Message "   Tarball URL: $($Response.zipball_url)" "darkgreen"
+            Log-Message "   Zipball URL: $($Response.tarball_url)" "darkgreen"
+            #
+            # Creating the release was successful, upload assets if any were specified
+            #
+            if ($GITHUBASSETS.Length -gt 0)
+            {
+                Log-Message "Uploading GitHub assets"
+                foreach ($Asset in $GITHUBASSETS)
+                {
+                    if (Test-Path($Asset))
+                    {
+                        #
+                        # Get filename to be use as a GET parameter in url
+                        #
+                        $AssetName = [Path]::GetFileName($Asset)
+                        $Extension = [Path]::GetExtension($AssetName).ToLower()
+                        #
+                        # Set the content-type header value to the mime type of the asset
+                        #
+                        $Header["Content-Type"] = $ContentTypeMap[$Extension]
+                        #
+                        # The request to upload an asset is the raw binary file data
+                        #
+                        $Request = [System.IO.File]::ReadAllBytes($Asset)
+                        #$Request = Get-Content -Path $asset -Encoding Byte
+                        Check-PsCmdSuccess
+                        if ($? -eq $true)
+                        {
+                            #
+                            # Upload the asset via GitHub API.
+                            #
+                            $url = $Response.upload_url
+                            $url = $url.Replace("{?name,label}", "") + "?name=$AssetName"
+                            $Response2 = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
+                            Check-PsCmdSuccess
+                            #
+                            # Make sure an id value exists on the response object to check for success
+                            #
+                            if ($? -eq $true -and $Response2.id) {
+                                Log-Message "Successfully uploaded GitHub asset $AssetName" "darkgreen"
+                                Log-Message "   ID          : $($Response2.id)" "darkgreen"
+                                Log-Message "   Download URL: $($Response2.browser_download_url)" "darkgreen"
+                            }
+                            else {
+                                Log-Message "Failed to upload GitHub asset $AssetName" "red"
+                            }
+                        }
+                        else {
+                            Log-Message "Failed to upload GitHub asset $AssetName - could not read input file" "red"
+                        }
+                    }
+                    else {
+                        $AssetName = [Path]::GetFileName($Asset)
+                        Log-Message "Failed to upload GitHub asset $AssetName - input file does not exist" "red"
+                    }
+                }
+            }
+        }
+        else {
+            Log-Message "Failed to create GitHub v$VERSION release" "red"
+        }
+    }
+    else {
+        if ($GithubChangelog -ne $null) {
+            Log-Message "Dry run, skipping GitHub release"
+            Log-Message "Dry run has generated an html changelog from previous version to test functionality:"
+            Log-Message $GithubChangelog
+        }
+        else {
+            Log-Message "Failed to create GitHub v$VERSION release" "red"
+        }
+    }
+}
+
+#
+# MantisBT Release
+#
+if ($MANTISBTRELEASE -eq "Y") 
+{
+    Log-Message "Starting MantisBT release"
+    Log-Message "Creating MantisBT v$VERSION release"
+
+    $dry_run = 0;
+    $ReleaseVersion = $VERSION;
+    if ($DRYRUN -eq $true) 
+    {
+        Log-Message "Dry run only, will pass 'dryrun' flag to Mantis Releases API"
+        $dry_run = 1;
+    }
+
+    $NotesIsMarkdown = 0
+    $MantisChangelog = $null
+    $MantisChangeLogParts = @()
+    
+    if (![string]::IsNullOrEmpty($HISTORYFILE)) 
+    {
+        Log-Message "   Converting history text to mantisbt release changelog html"
+        $MantisChangeLogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $ReleaseVersion, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "", @(), "")
+    }
+    elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
+    {
+        Log-Message "   Converting changelog markdown to mantisbt release changelog html"
+        $MantisChangelogParts = $ClsHistoryFile.getChangelog($PROJECTNAME, $ReleaseVersion, 1, $VERSIONTEXT, "parts", $CHANGELOGFILE, "", "", "", "", "", "", "", @(), "", $false, $IsAppPublisher)
+    }
+
+    if ($MantisChangelogParts -eq $null -or $MantisChangelogParts.Length -eq 0 -or $MantisChangelogParts[0] -eq "error") {
+        $MantisChangelog = $null
+    }
+    else {
+        $MantisChangelog = Get-ReleaseChangelog $MantisChangeLogParts $true
+    }
+
+    if ($MantisChangelog -ne $null) 
+    {
+        #
+        # Log the changelog contents if this is a dry run
+        #
+        if ($DRYRUN -eq $true)
+        {
+            Log-Message "Dry run has generated an html changelog to test functionality:"
+            Log-Message $MantisChangelog
+        }
+
+        #
+        # Set up the request body for the 'create release' request
+        #
+        $Request = @{
+            "dryrun" = $dry_run
+            "version" = $VERSION
+            "notes" = $MantisChangelog
+            "notesismd" = $NotesIsMarkdown
+            "assets" = @()
+        }
+        #
+        # Build assets list
+        #
+        if ($MANTISBTASSETS.Length -gt 0)
+        {
+            Log-Message "Building MantisBT assets list"
+            foreach ($MbtAsset in $MANTISBTASSETS)
+            {
+                $Asset = $MbtAsset;
+                $AssetDescrip = ""
+
+                if ($MbtAsset.Contains("|"))
+                {
+                    $Asset = $MbtAsset.Split("|")[0]
+                    $AssetDescrip = $MbtAsset.Split("|")[1]
+                }
+
+                if (Test-Path($Asset))
+                {
+                    $AssetName = [Path]::GetFileName($Asset)
+                    $Extension = [Path]::GetExtension($AssetName).ToLower()
+                    #
+                    # The format to upload an asset is the base64 encoded binary file data
+                    #
+                    Log-Message "Reading file $Asset"
+                    $FileData = [System.IO.File]::ReadAllBytes($Asset)
+                    Check-PsCmdSuccess
+                    if ($? -eq $true)
+                    {
+                        # Base 64 encode file data
+                        #
+                        $FileDataBase64 = [Convert]::ToBase64String($FileData)
+                        #
+                        # Build json
+                        #
+                        $AssetData = @{
+                            "name" = $AssetName
+                            "desc" = $AssetDescrip
+                            "type" = $ContentTypeMap[$Extension]
+                            "data" = $FileDataBase64
+                        }
+                        
+                        $Request.assets += $AssetData
+                    }
+                    else {
+                        Log-Message "Partially failed to build MantisBT asset $AssetName - could not read input file" "red"
+                    }
+                }
+                else {
+                    $AssetName = [Path]::GetFileName($Asset)
+                    Log-Message "Partially failed to build MantisBT asset $AssetName - input file does not exist" "red"
+                }
+            }
+        }
+        
+        #
+        # Format request JSON
+        #
+        $Request = $Request | ConvertTo-Json
+        #
+        # Enable TLS1.2 in the case of HTTPS
+        #
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+        for ($i = 0; $i -lt $MANTISBTURL.Length; $i++)
+        {
+            #
+            # Set up the request header, this will be used to both create the release and to upload
+            # any assets.  Note that for each asset, the content-type must be set appropriately
+            # according to the type of asset being uploaded
+            #
+            $Header = @{
+                "Authorization" = $MANTISBTAPITOKEN[$i]
+                "Content-Type" = "application/json; charset=UTF-8"
+            }
+            #
+            # Send the REST POST to create the release w/ assets
+            #
+            $url = $MANTISBTURL[$i] + "/plugins/Releases/api/releases/$MANTISBTPROJECT"
+            Log-Message "Sending Add-Release REST request to $url"
+            $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
+            Check-PsCmdSuccess
+            #
+            # Check response object for success
+            #
+            if ($? -eq $true)
+            {
+                if ($Response -is [System.String])
+                {
+                    Log-Message "Partial error creating MantisBT release v$VERSION" "red"
+                    Log-Message $Response "red"
+                }
+                else {
+                    Log-Message "Successfully created MantisBT release v$VERSION" "darkgreen"
+                    Log-Message "   ID         : $($Response.id)" "darkgreen"
+                    Log-Message "   Message    : $($Response.msg)" "darkgreen"
+                    Log-Message "   URL        : $($MANTISBTURL[$i])" "darkgreen"
+                    Log-Message "   Token      : $($MANTISBTAPITOKEN[$i])" "darkgreen"
+                }
+            }
+            else {
+                Log-Message "Failed to create MantisBT v$VERSION release" "red"
+            }
+        }
+    }
+    else {
+        Log-Message "Failed to create MantisBT v$VERSION release" "red"
+    }
+}
+
 #
 # Run custom deploy script if specified
 #
@@ -5398,340 +5716,6 @@ elseif ($_RepoType -eq "git")
 
 if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") {
     set-location $PATHPREROOT
-}
-
-#
-# Github Release
-#
-if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y") 
-{
-    Log-Message "Creating GitHub v$VERSION release"
-
-    #
-    # Create changelog content
-    #
-    # If this is a dry run, use "current_version" since "version" will have been reverted by 
-    # version control already
-    #
-    $ReleaseVersion = $VERSION;
-    if ($DRYRUN -eq $true) {
-        $ReleaseVersion = $CURRENTVERSION;
-    }
-    #
-    $GithubChangelogParts = @()
-    if (![string]::IsNullOrEmpty($HISTORYFILE)) 
-    {
-        Log-Message "   Converting history text to github release changelog html"
-        $GithubChangelogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $ReleaseVersion, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "", @(), "")
-    }
-    elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
-    {
-        Log-Message "   Converting changelog markdown to github release changelog html"
-        $GithubChangelogParts = $ClsHistoryFile.getChangelog($PROJECTNAME, $ReleaseVersion, 1, $VERSIONTEXT, "parts", $CHANGELOGFILE, "", "", "", "", "", "", "", @(), "", $false, $IsAppPublisher)
-    }
-
-    if ($GithubChangelogParts-eq $null -or $GithubChangelogParts.Length -eq 0 -or $GithubChangelogParts[0] -eq "error") {
-        $GithubChangelogParts = $null
-    }
-    else {
-        $GithubChangelog = Get-ReleaseChangelog $GithubChangelogParts $false $false # $true
-    }
-
-    if ($GithubChangelog -ne $null -and $DRYRUN -eq $false) 
-    {
-        # Set up the request body for the 'create release' request
-        #
-        $Request = @{
-            "tag_name" = "v$VERSION"
-            "target_commitish" = "$BRANCH"
-            "name" = "v$VERSION"
-            "body" = "$GithubChangelog"
-            "draft" = $false
-            "prerelease" = $false
-        } | ConvertTo-Json
-        #
-        # Set up the request header, this will be used to both create the release and to upload
-        # any assets.  Note that for each asset, the content-type must be set appropriately
-        # according to the type of asset being uploaded
-        #
-        $Header = @{
-            "Accept" = "application/vnd.github.v3+json"
-            "mediaTypeVersion" = "v3"
-            "squirrelAcceptHeader" = "application/vnd.github.squirrel-girl-preview"
-            "symmetraAcceptHeader" = "application/vnd.github.symmetra-preview+json"
-            "Authorization" = "token ${Env:GITHUB_TOKEN}"
-            "Content-Type" = "application/json; charset=UTF-8"
-        }
-        #
-        # Enable TLS1.2
-        #
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-        #
-        # Send the REST POST to create the release
-        #
-        $url = "https://api.github.com/repos/$GITHUBUSER/$PROJECTNAME/releases"
-        $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
-        Check-PsCmdSuccess
-        #
-        # Make sure an upload_url value exists on the response object to check for success
-        #
-        if ($? -eq $true -and $Response.upload_url)
-        {
-            Log-Message "Successfully created GitHub release v$VERSION" "darkgreen"
-            Log-Message "   ID         : $($Response.id)" "darkgreen"
-            Log-Message "   Tarball URL: $($Response.zipball_url)" "darkgreen"
-            Log-Message "   Zipball URL: $($Response.tarball_url)" "darkgreen"
-            #
-            # Creating the release was successful, upload assets if any were specified
-            #
-            if ($GITHUBASSETS.Length -gt 0)
-            {
-                Log-Message "Uploading GitHub assets"
-                foreach ($Asset in $GITHUBASSETS)
-                {
-                    if (Test-Path($Asset))
-                    {
-                        #
-                        # Get filename to be use as a GET parameter in url
-                        #
-                        $AssetName = [Path]::GetFileName($Asset)
-                        $Extension = [Path]::GetExtension($AssetName).ToLower()
-                        #
-                        # Set the content-type header value to the mime type of the asset
-                        #
-                        $Header["Content-Type"] = $ContentTypeMap[$Extension]
-                        #
-                        # The request to upload an asset is the raw binary file data
-                        #
-                        $Request = [System.IO.File]::ReadAllBytes($Asset)
-                        #$Request = Get-Content -Path $asset -Encoding Byte
-                        Check-PsCmdSuccess
-                        if ($? -eq $true)
-                        {
-                            #
-                            # Upload the asset via GitHub API.
-                            #
-                            $url = $Response.upload_url
-                            $url = $url.Replace("{?name,label}", "") + "?name=$AssetName"
-                            $Response2 = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
-                            Check-PsCmdSuccess
-                            #
-                            # Make sure an id value exists on the response object to check for success
-                            #
-                            if ($? -eq $true -and $Response2.id) {
-                                Log-Message "Successfully uploaded GitHub asset $AssetName" "darkgreen"
-                                Log-Message "   ID          : $($Response2.id)" "darkgreen"
-                                Log-Message "   Download URL: $($Response2.browser_download_url)" "darkgreen"
-                            }
-                            else {
-                                Log-Message "Failed to upload GitHub asset $AssetName" "red"
-                            }
-                        }
-                        else {
-                            Log-Message "Failed to upload GitHub asset $AssetName - could not read input file" "red"
-                        }
-                    }
-                    else {
-                        $AssetName = [Path]::GetFileName($Asset)
-                        Log-Message "Failed to upload GitHub asset $AssetName - input file does not exist" "red"
-                    }
-                }
-            }
-        }
-        else {
-            Log-Message "Failed to create GitHub v$VERSION release" "red"
-        }
-    }
-    else {
-        if ($GithubChangelog -ne $null) {
-            Log-Message "Dry run, skipping GitHub release"
-            Log-Message "Dry run has generated an html changelog from previous version to test functionality:"
-            Log-Message $GithubChangelog
-        }
-        else {
-            Log-Message "Failed to create GitHub v$VERSION release" "red"
-        }
-    }
-}
-
-#
-# MantisBT Release
-#
-if ($MANTISBTRELEASE -eq "Y") 
-{
-    Log-Message "Starting MantisBT release"
-    Log-Message "Creating MantisBT v$VERSION release"
-
-     #
-    # If this is a dry run, use "current_version" since "version" will have been reverted by 
-    # version control already
-    #
-    $dry_run = 0;
-    $ReleaseVersion = $VERSION;
-    if ($DRYRUN -eq $true) 
-    {
-        Log-Message "Dry run only, will pass 'dryrun' flag to Mantis Releases API"
-        $dry_run = 1;
-        $ReleaseVersion = $CURRENTVERSION
-    }
-    #
-    # Changelog...
-    #
-    $ReleaseVersion = $VERSION
-    if ($DRYRUN -eq $true) {
-        $ReleaseVersion = $CURRENTVERSION
-    }
-    $NotesIsMarkdown = 0
-    $MantisChangelog = $null
-    $MantisChangeLogParts = @()
-    
-    if (![string]::IsNullOrEmpty($HISTORYFILE)) 
-    {
-        Log-Message "   Converting history text to mantisbt release changelog html"
-        $MantisChangeLogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $ReleaseVersion, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "", @(), "")
-    }
-    elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
-    {
-        Log-Message "   Converting changelog markdown to mantisbt release changelog html"
-        $MantisChangelogParts = $ClsHistoryFile.getChangelog($PROJECTNAME, $ReleaseVersion, 1, $VERSIONTEXT, "parts", $CHANGELOGFILE, "", "", "", "", "", "", "", @(), "", $false, $IsAppPublisher)
-    }
-
-    if ($MantisChangelogParts -eq $null -or $MantisChangelogParts.Length -eq 0 -or $MantisChangelogParts[0] -eq "error") {
-        $MantisChangelog = $null
-    }
-    else {
-        $MantisChangelog = Get-ReleaseChangelog $MantisChangeLogParts $true
-    }
-
-    if ($MantisChangelog -ne $null) 
-    {
-        #
-        # Log the changelog contents if this is a dry run
-        #
-        if ($DRYRUN -eq $true)
-        {
-            Log-Message "Dry run has generated an html changelog from previous version to test functionality:"
-            Log-Message $MantisChangelog
-        }
-
-        #
-        # Set up the request body for the 'create release' request
-        #
-        $Request = @{
-            "dryrun" = $dry_run
-            "version" = $VERSION
-            "notes" = $MantisChangelog
-            "notesismd" = $NotesIsMarkdown
-            "assets" = @()
-        }
-        #
-        # Build assets list
-        #
-        if ($MANTISBTASSETS.Length -gt 0)
-        {
-            Log-Message "Building MantisBT assets list"
-            foreach ($MbtAsset in $MANTISBTASSETS)
-            {
-                $Asset = $MbtAsset;
-                $AssetDescrip = ""
-
-                if ($MbtAsset.Contains("|"))
-                {
-                    $Asset = $MbtAsset.Split("|")[0]
-                    $AssetDescrip = $MbtAsset.Split("|")[1]
-                }
-
-                if (Test-Path($Asset))
-                {
-                    $AssetName = [Path]::GetFileName($Asset)
-                    $Extension = [Path]::GetExtension($AssetName).ToLower()
-                    #
-                    # The format to upload an asset is the base64 encoded binary file data
-                    #
-                    Log-Message "Reading file $Asset"
-                    $FileData = [System.IO.File]::ReadAllBytes($Asset)
-                    Check-PsCmdSuccess
-                    if ($? -eq $true)
-                    {
-                        # Base 64 encode file data
-                        #
-                        $FileDataBase64 = [Convert]::ToBase64String($FileData)
-                        #
-                        # Build json
-                        #
-                        $AssetData = @{
-                            "name" = $AssetName
-                            "desc" = $AssetDescrip
-                            "type" = $ContentTypeMap[$Extension]
-                            "data" = $FileDataBase64
-                        }
-                        
-                        $Request.assets += $AssetData
-                    }
-                    else {
-                        Log-Message "Failed to build MantisBT asset $AssetName - could not read input file" "red"
-                    }
-                }
-                else {
-                    $AssetName = [Path]::GetFileName($Asset)
-                    Log-Message "Failed to build MantisBT asset $AssetName - input file does not exist" "red"
-                }
-            }
-        }
-        
-        #
-        # Format request JSON
-        #
-        $Request = $Request | ConvertTo-Json
-        #
-        # Enable TLS1.2 in the case of HTTPS
-        #
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
-        for ($i = 0; $i -lt $MANTISBTURL.Length; $i++)
-        {
-            #
-            # Set up the request header, this will be used to both create the release and to upload
-            # any assets.  Note that for each asset, the content-type must be set appropriately
-            # according to the type of asset being uploaded
-            #
-            $Header = @{
-                "Authorization" = $MANTISBTAPITOKEN[$i]
-                "Content-Type" = "application/json; charset=UTF-8"
-            }
-            #
-            # Send the REST POST to create the release w/ assets
-            #
-            $url = $MANTISBTURL[$i] + "/plugins/Releases/api/releases/$MANTISBTPROJECT"
-            Log-Message "Sending Add-Release REST request to $url"
-            $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
-            Check-PsCmdSuccess
-            #
-            # Check response object for success
-            #
-            if ($? -eq $true)
-            {
-                if ($Response -is [System.String])
-                {
-                    Log-Message "Partial error creating MantisBT release v$VERSION" "red"
-                    Log-Message $Response "red"
-                }
-                else {
-                    Log-Message "Successfully created MantisBT release v$VERSION" "darkgreen"
-                    Log-Message "   ID         : $($Response.id)" "darkgreen"
-                    Log-Message "   Message    : $($Response.msg)" "darkgreen"
-                    Log-Message "   URL        : $($MANTISBTURL[$i])" "darkgreen"
-                    Log-Message "   Token      : $($MANTISBTAPITOKEN[$i])" "darkgreen"
-                }
-            }
-            else {
-                Log-Message "Failed to create MantisBT v$VERSION release" "red"
-            }
-        }
-    }
-    else {
-        Log-Message "Failed to create MantisBT v$VERSION release" "red"
-    }
 }
 
 #
