@@ -214,26 +214,31 @@ class CommitAnalyzer
             {
                 Log-Message "Breaking change found"
                 $ReleaseLevel = "major";
-                break;
             }
-            if ($linefmt.StartsWith("majfeat: ")) # bump major on major feature
+            elseif ($linefmt.StartsWith("majfeat: ") -or $linefmt.StartsWith("majfeat(")) # bump major on major feature
             {
                 Log-Message "Major feature found"
                 $ReleaseLevel = "major";
-                break;
             }
-            if ($linefmt.StartsWith("feat: ")) # bump minor on feature
+            elseif ($linefmt.StartsWith("featmaj: ") -or $linefmt.StartsWith("featmaj(")) # bump major on major feature
+            {
+                Log-Message "Major feature found"
+                $ReleaseLevel = "major";
+            }
+            elseif ($linefmt.StartsWith("feat:") -or $linefmt.StartsWith("feat(")) # bump minor on feature
             {
                 Log-Message "Feature found";
                 $ReleaseLevel = "minor";
+            }
+            elseif ($linefmt.StartsWith("perf:") -or $linefmt.StartsWith("perf("))
+            {
+                Log-Message "Performance enhancement found";
+                $ReleaseLevel = "minor";
+            }
+            
+            if ($ReleaseLevel -eq "major") {
                 break;
             }
-            #if ($linefmt.Contains("perf"))
-            #{
-            #    Log-Message "Performance enhancement found";
-            #    $ReleaseLevel = "minor";
-            #    break;
-            #}
         }
 
         return $ReleaseLevel;
