@@ -2612,3 +2612,46 @@ October 10th, 2019
 
     Remove windows installer build
 
+
+Version 1.13.11
+October 29th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+
+    If over 50 commits have been made since the last version tag, some commits
+    are not populated in the changelog.
+    
+    [fixes #939]
+
+2.  Bug Fix
+
+    AssemblyInfo version update for .NET applications is not working if the
+    application is using an incremental versioning system.
+    
+    [fixes #570]
+
+2.  Bug Fix
+
+    The 11th of the month incorrectly displayed in version header.
+
+    [fixes #825]
+
