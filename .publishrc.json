@@ -25,6 +25,7 @@
     ],
     "githubRelease":     "N",
     "githubAssets":      [],
+    "githubChglogEdit":  "N",
     "githubUser":        "",
     "historyFile":       "doc\\history.txt",
     "historyHdrFile":    "install\\history-hdr.txt",
@@ -37,6 +38,7 @@
         "${MANTISBT_API_TOKEN}",
         "${MANTIS_API_TOKEN}"
     ],
+    "mantisbtChglogEdit":  "N",
     "mantisbtPlugin":    "",
     "mantisbtProject":   "",
     "mantisbtUrl": [
