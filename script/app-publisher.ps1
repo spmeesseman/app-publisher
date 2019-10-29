@@ -286,7 +286,7 @@ class HistoryFile
             $LineText.Contains("Feature") -or $LineText.Contains("Bug Fix") -or $LineText.Contains("Performance Enhancement") -or
             $LineText.Contains("Ongoing Progress") -or $LineText.Contains("Refactoring") -or $LineText.Contains("Code Styling") -or
             $LineText.Contains("Tests") -or $LineText.Contains("Project Structure") -or $LineText.Contains("Project Layout") -or
-            $LineText.Contains("Visual Enhancement") -or $LineText.StartsWith("Fix"))
+            $LineText.Contains("Visual Enhancement") -or $LineText.StartsWith("Fix") -or $LineText.StartsWith("General"))
     }
 
     [string]getVersion($in, $stringver)
@@ -904,7 +904,7 @@ class HistoryFile
                     $match = $match.NextMatch()
                 }
 
-                # Bold all numbered lines
+                # Bold all numbered lines with a subject
                 #$match = [Regex]::Match($szContents, "\w*(?<!&nbsp;)[1-9][0-9]{0,1}\.(&nbsp;| ).+?(?=<br>)   \w*(?<=^|>)[1-9][0-9]{0,1}\.(&nbsp;| ).+?(?=<br>)");
                 $match = [Regex]::Match($szContents, "\w*(?<=^|>)[1-9][0-9]{0,1}(&nbsp;| ){0,1}\.(&nbsp;| ).+?(?=<br>)");
                 while ($match.Success) {
@@ -914,14 +914,20 @@ class HistoryFile
                     }
                     $match = $match.NextMatch()
                 }
-                
+
                 if ($listonly -is [system.string] -and $listonly -eq 'parts')
                 {
+                    Log-Message "   Extracting parts"
+
                     $typeParts = @()
                     $msgParts = @()
-                    $match = [Regex]::Match($szContents, "\w*(?<=^|>)[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>|<\/font>)");
+
+                    #
+                    # Process entries with a subject (sorrounded by <b></b>)
+                    #
+                    $match = [Regex]::Match($szContents, "<b>\w*(?<=^|>)[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>|<\/font>)");
                     while ($match.Success) {
-                        $value = $match.Value.Replace("&nbsp;", "").Replace(".", "")
+                        $value = $match.Value.Replace("&nbsp;", "").Replace(".", "").Replace("<b>", "").Replace("</b>", "")
                         for ($i = 0; $i -lt 10; $i++) {
                             $value = $value.Replace($i, "").Trim()
                         }
@@ -931,11 +937,11 @@ class HistoryFile
                     
                     $szContents = $szContents.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;<br>", "<br><br>")
                     $szContents = $szContents.Replace("<br>&nbsp;&nbsp;&nbsp;<br>", "<br><br>")
-                    $match = [Regex]::Match($szContents, "(<br>){0,1}(<br>){1}(&nbsp;){2,} {1}.+?(?=<br>(&nbsp;| ){0,}<br>(<b>|[1-9]{0,1}.(&nbsp;| ))|$)");
+                    $match = [Regex]::Match($szContents, "(<\/b>){1}(<br>){0,1}(<br>){1}(&nbsp;){2,}[ ]{1}.+?(?=<br>(&nbsp;| ){0,}<br>(<b>|[1-9][0-9]{0,1}\.(&nbsp;| ))|$)");
 
                     while ($match.Success) 
                     {
-                        $value = $match.Value
+                        $value = $match.Value.Replace("</b>", "")
                         $value = $value.Replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;[", "<br>[") # ticket tags
                         $value = $value.Replace("<br>&nbsp;&nbsp;&nbsp; ", "<br>")
 
@@ -947,6 +953,33 @@ class HistoryFile
                             while ($value.EndsWith("<br>")) {
                                 $value = $value.Substring(0, $value.Length - 4)
                             }
+                        }
+                        $msgParts += $value.Trim()
+                        $match = $match.NextMatch()
+                    }
+
+                    #
+                    # Non-subject entries (no <b></b> wrap)
+                    #
+                    $match = [Regex]::Match($szContents, "\w*(?<!<b>)(\b[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>[1-9]|$|<br><b>))");
+                    while ($match.Success) {
+                        $typeParts += ""
+                        $match = $match.NextMatch()
+                    }
+                    
+                    $match = [Regex]::Match($szContents, "\w*(?<!<b>)(\b[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>[1-9]|$|<br><b>))");
+
+                    while ($match.Success) 
+                    {
+                        $value = $match.Value.Replace("&nbsp;", "").Replace(".", "").Replace("<b>", "").Replace("</b>", "")
+                        for ($i = 0; $i -lt 10; $i++) {
+                            $value = $value.Replace($i, "").Trim()
+                        }
+                        while ($value.StartsWith("<br>")) {
+                            $value = $value.Substring(4);
+                        }
+                        while ($value.EndsWith("<br>")) {
+                            $value = $value.Substring(0, $value.Length - 4)
                         }
                         $msgParts += $value.Trim()
                         $match = $match.NextMatch()
@@ -970,6 +1003,9 @@ class HistoryFile
                             if ($typeParts[$i].Contains(":")) {
                                 $scope = $typeParts[$i].Substring(0, $typeParts[$i].IndexOf(":")).Trim()
                                 $message = $typeParts[$i].Substring($typeParts[$i].IndexOf(":") + 1) + $msgParts[$i];
+                            }
+                            elseif ([string]::IsNullOrEmpty($typeParts[$i])) {
+                                $message = $msgParts[$i];
                             }
                             else {
                                 $message = $typeParts[$i] + $msgParts[$i];
