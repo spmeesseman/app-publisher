@@ -2655,3 +2655,56 @@ October 29th, 2019
 
     [fixes #825]
 
+
+Version 1.13.12
+October 29th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature:  Changelog
+
+    Allow edit of auto generated changelog file before uploading mantisbt
+    release. [closes #186]
+
+2.  Bug Fix:  Changelog
+
+    If there are a mix of history file entries that contain a subject, and ones
+    that do not contains a subject line, the github/mantis changelog becomes
+    corrupted.
+    
+3.  Bug Fix:  Changelog
+
+    If there is only one entry in the history file, and it does not contain a
+    subject line, the mantis/github release fails.
+    
+    [fixes #741]
+
+4.  Bug Fix:  History File
+
+    Generated text lines sometimes extend past header max length.
+
+    [fixes #177]
+
+5.  Bug Fix
+
+    Prompt for initial version on first project release.
+
+    [fixes #323]
+
