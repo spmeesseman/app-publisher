@@ -690,8 +690,8 @@ class HistoryFile
         # Make sure user entered correct cmd line params
         #
         if (!(Test-Path $szInputFile) -or [string]::IsNullOrEmpty($szInputFile)) {
-            Log-Message "Error: No history file specified" "red"
-            exit 160;
+            Log-Message "History file does not exist" "red"
+            return $szFinalContents;
         }
 
         if ([string]::IsNullOrEmpty($stringver)) {
@@ -4278,6 +4278,10 @@ if ($CURRENTVERSION -eq "")
     elseif (![string]::IsNullOrEmpty($HISTORYFILE))
     {
         $CURRENTVERSION = $ClsHistoryFile.getVersion($HISTORYFILE, $VERSIONTEXT)
+        if ([string]::IsNullOrEmpty($CURRENTVERSION))
+        {
+            $VERSIONSYSTEM = "manual"
+        }
         if (!$CURRENTVERSION.Contains(".")) 
         {
             $VERSIONSYSTEM = "incremental"
@@ -4311,13 +4315,9 @@ if ($CURRENTVERSION -eq "")
         }
         elseif ($AssemblyInfoLoc -is [System.Array] -and $AssemblyInfoLoc.Length -gt 0) {
             Log-Message "The current version cannot be determined, multiple assemblyinfo files found" "red"
-            Log-Message "Provided the assembly info file in publishrc or on the command line" "red"
-            exit 130
         }
         else {
             Log-Message "The current version cannot be determined" "red"
-            Log-Message "Provided the current version in publishrc or on the command line" "red"
-            exit 130
         }
     }
 }
@@ -4349,29 +4349,31 @@ if ($VERSIONSYSTEM -eq ".net" -or $VERSIONSYSTEM -eq "mantisbt")
 #
 if ($CURRENTVERSION -eq "") 
 {
-    if ($INTERACTIVE) 
-    {
-        Log-Message "[PROMPT] User input required"
-        $CurVersion = read-host -prompt "Enter the current version #, or C to cancel [$CURRENTVERSION]"
-        if ($CurVersion.ToUpper() -eq "C") {
-            Log-Message "User cancelled process, exiting" "red"
-            exit 155
-        }
-        if (![string]::IsNullOrEmpty($CurVersion)) {
-            $CURRENTVERSION = $CurVersion
-        }
-        else {
-            Log-Message "Invalid current version, exiting" "red"
-            exit 133
-        }
-    
-        $VERSIONSYSTEM = "manual";
-    }
-    else {
-        Log-Message "New version has been validated" "darkgreen"
-        Log-Message "Could not determine current version, correct issue and re-run publish" "red"
-        exit 131
-    }
+    #if ($INTERACTIVE) 
+    #{
+        
+        #Log-Message "[PROMPT] User input required"
+        #$CurVersion = read-host -prompt "Enter the current version #, or C to cancel [$CURRENTVERSION]"
+        #if ($CurVersion.ToUpper() -eq "C") {
+        #    Log-Message "User cancelled process, exiting" "red"
+        #    exit 155
+        #}
+        #if (![string]::IsNullOrEmpty($CurVersion)) {
+        #    $CURRENTVERSION = $CurVersion
+        #}
+        #else {
+        #    Log-Message "Invalid current version, exiting" "red"
+        #    exit 133
+        #}
+        $CURRENTVERSION = "1.0.0"
+        $VERSION = "1.0.0"
+        $VERSIONSYSTEM = "manual"
+    #}
+    #else {
+    #    Log-Message "New version has been validated" "darkgreen"
+    #    Log-Message "Could not determine current version, correct issue and re-run publish" "red"
+    #    exit 131
+    #}
 }
 
 #
@@ -4529,6 +4531,7 @@ if ($RUN -eq 1)
         Log-Message "New version could not be determined, you must manually input the new version"
         $VersionInteractive = "Y"
     }
+
     if ($VERSIONSYSTEM -eq "manual" -or $INTERACTIVE -eq "Y" -or $VersionInteractive -eq "Y") 
     {
         Log-Message "[PROMPT] User input required"
@@ -4539,6 +4542,9 @@ if ($RUN -eq 1)
         }
         if (![string]::IsNullOrEmpty($NewVersion)) {
             $VERSION = $NewVersion
+            if ($VERSIONSYSTEM -eq "manual") {
+                $CURRENTVERSION = $VERSION + "-pre";
+            }
         }
     }
 
