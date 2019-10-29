@@ -130,7 +130,7 @@ class Vc
             # Retrieve commits since last version tag
             #
             Log-Message "Retrieving commits since last version"
-            $xml = svn log --xml --verbose --limit 50 -r ${rev}:HEAD
+            $xml = svn log --xml --verbose --limit 250 -r ${rev}:HEAD
             Log-Message "Parsing response from SVN"
 
             #
@@ -1578,10 +1578,18 @@ function Check-PsCmdSuccess($ExitOnError = $false, $ChangePath = $true)
 
 function Replace-Version($File, $Old, $New)
 {
-    Log-Message "Write new version $VERSION to $File"
-    ((Get-Content -path $File -Raw) -replace "$Old", "$New") | Set-Content -NoNewline -Path $File
+    Log-Message "Write new version $New, previously $Old, to $File"
+    $Content = Get-Content -path $File -Raw
     Check-PsCmdSuccess
-    [System.Threading.Thread]::Sleep(750)
+    $ContentNew = ((Get-Content -path $File -Raw) -replace "$Old", "$New");
+    Check-PsCmdSuccess
+    if ($Content -ne $ContentNew)
+    {
+        Set-Content -NoNewline -Path $File -Value $ContentNew
+        Check-PsCmdSuccess
+        [System.Threading.Thread]::Sleep(750)
+    }
+    return ($Content -ne $ContentNew)
 }
 
 function Run-Scripts($ScriptType, $Scripts, $ExitOnError, $RunInTestMode = $false)
@@ -1613,22 +1621,70 @@ function Prepare-VersionFiles()
     if ($VERSIONFILES.Length -gt 0)
     {
         Log-Message "Preparing version files"
+        $Incremental = $false
 
+        #
+        # Below is set to handle an assemblyinfo.cs file or other version file in semver format, but the
+        # build version type is incremental
+        #
+        $SEMVERSION = ""
+        if (!$VERSION.Contains("."))
+        {
+            $Incremental = $true
+            for ($i = 0; $i -lt $VERSION.Length; $i++) {
+                $SEMVERSION = "$SEMVERSION$($VERSION[$i])."
+            }
+            $SEMVERSION = $SEMVERSION.Substring(0, $SEMVERSION.Length - 1);
+        }
+        else {
+            $SEMVERSION = $VERSION
+        }
+        $SEMVERSIONCUR = ""
+        if (!$CURRENTVERSION.Contains("."))
+        {
+            for ($i = 0; $i -lt $CURRENTVERSION.Length; $i++) {
+                $SEMVERSIONCUR = "$SEMVERSIONCUR$($CURRENTVERSION[$i])."
+            }
+            $SEMVERSIONCUR = $SEMVERSIONCUR.Substring(0, $SEMVERSIONCUR.Length - 1);
+        }
+        else {
+            $SEMVERSIONCUR = $CURRENTVERSION
+        }
+
+        #
+        # Loop through all specified files and replace version number
+        #
         foreach ($VersionFile in $VERSIONFILES) 
         {
             if ((Test-Path($VersionFile)) -and !$VersionFilesEdited.Contains($VersionFile))
             {
                 Log-Message "Writing new version $VERSION to $VersionFile"
                 #
-                # replace version in nsi file
+                # replace version in file
                 #
-                Replace-Version $VersionFile "`"$CURRENTVERSION`"" "`"$VERSION`""
-                if ($LASTEXITCODE -ne 0)
+                $rc = Replace-Version $VersionFile "`"$CURRENTVERSION`"" "`"$VERSION`""
+                if ($rc -ne $true)
                 {
-                    Replace-Version $VersionFile "'$CURRENTVERSION'" "'$VERSION'"
-                    if ($LASTEXITCODE -ne 0)
+                    $rc = Replace-Version $VersionFile "'$CURRENTVERSION'" "'$VERSION'"
+                    if ($rc -ne $true)
                     {
-                        Replace-Version $VersionFile $CURRENTVERSION $VERSION
+                        $rc = Replace-Version $VersionFile $CURRENTVERSION $VERSION
+                    }
+                }
+                #
+                # Below handles an assemblyinfo.cs file or other version file in semver format, but the
+                # build version type is incremental
+                #
+                if ($Incremental -eq $true)
+                {
+                    $rc = Replace-Version $VersionFile "`"$SEMVERSIONCUR`"" "`"$SEMVERSION`""
+                    if ($rc -ne $true)
+                    {
+                        $rc = Replace-Version $VersionFile "'$SEMVERSIONCUR'" "'$SEMVERSION'"
+                        if ($rc -ne $true)
+                        {
+                            $rc = Replace-Version $VersionFile $SEMVERSIONCUR $SEMVERSION
+                        }
                     }
                 }
                 #
@@ -1833,7 +1889,7 @@ function Get-MantisPluginVersion()
         }
     }
     else {
-        Log-Message "Could not retrieve version, $AssemblyInfoLocation does not exist" "red"
+        Log-Message "Could not retrieve version, '$MANTISBTPLUGIN' does not exist" "red"
     }
     return $MantisVersion
 }
@@ -4481,12 +4537,19 @@ if ($TDATE -eq "") {
     $Day = $date.Day.ToString()
     $Month = get-date -format "MMMM"
     $Year = get-date -format "yyyy"
-    switch ($Day[$Day.Length - 1]) 
+    if ($Day -eq 11 -or $Day -eq 12 -or $Day -eq 13)
     {
-        "1" { $Day = "${Day}st"; break }
-        "2" { $Day = "${Day}nd"; break }
-        "3" { $Day = "${Day}rd"; break }
-        default { $Day = "${Day}th"; break }
+        $Day = "${Day}th"
+    }
+    else
+    {
+        switch ($Day[$Day.Length - 1]) 
+        {
+            "1" { $Day = "${Day}st"; break }
+            "2" { $Day = "${Day}nd"; break }
+            "3" { $Day = "${Day}rd"; break }
+            default { $Day = "${Day}th"; break }
+        }
     }
     $TDATE = "$Month $Day, $Year"
 }
