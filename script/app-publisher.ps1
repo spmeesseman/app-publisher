@@ -330,14 +330,25 @@ class HistoryFile
                     if ($msg.Length -gt $LineLen)
                     {
                         $idx = $msg.LastIndexOf(" ", $LineLen)
-                        $line += $msg.SubString(0, $idx)
+                        $PartLine = $msg.SubString(0, $idx);
+                        while ($PartLine.Length -gt $LineLen) {
+                            $idx = $msg.LastIndexOf(" ", $PartLine.Length)
+                            $PartLine = $msg.SubString(0, $idx);
+                        }
+                        $line += $PartLine.Trim()
+
                         while ($msg.Length -gt $LineLen)
                         {
                             $msg = $msg.SubString($idx)
                             $line += "`r`n";
                             if ($msg.Length -gt $LineLen) {
                                 $idx = $msg.LastIndexOf(" ", $LineLen)
-                                $line += $msg.SubString(0, $idx).Trim()
+                                $PartLine = $msg.SubString(0, $idx);
+                                while ($PartLine.Length -gt $LineLen) {
+                                    $idx = $msg.LastIndexOf(" ", $PartLine.Length)
+                                    $PartLine = $msg.SubString(0, $idx);
+                                }
+                                $line += $PartLine.Trim()
                             }
                             else {
                                 $line += $msg.Trim()
@@ -4734,11 +4745,14 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
         # Take any parenthesized scopes, remove the prenthesis and line break the message
         # that follows
         #
-        [Match] $match = [Regex]::Match($TmpCommits, "[(][a-z\- A-Z]*[)]\s*[:][ ]");
+        [Match] $match = [Regex]::Match($TmpCommits, "[(][a-z\- A-Z]*[)]\s*[:][ ]{0,}");
         while ($match.Success) {
             $NewText = $match.Value.Replace("(", "")
             $NewText = $NewText.Replace(")", "")
-            $NewText = $NewText.Replace(": ", "")
+            $NewText = $NewText.Replace(":", "").Trim()
+            if ($NewText.ToLower() -eq "ap") {
+                $NewText = "App-Publisher"
+            }
             $TmpCommits = $TmpCommits.Replace($match.Value, ":  $NewText`r`n`r`n    ")
             $match = $match.NextMatch()
         }
