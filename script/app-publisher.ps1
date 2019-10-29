@@ -3290,6 +3290,13 @@ if ($options.githubUser) {
     $GITHUBUSER = $options.githubUser
 }
 #
+# Changelog edit
+#
+$GITHUBCHGLOGEDIT = "N"
+if ($options.githubChglogEdit) {
+    $GITHUBCHGLOGEDIT = $options.githubChglogEdit
+}
+#
 #
 #
 $GITHUBASSETS = @()
@@ -3344,6 +3351,13 @@ if ($options.mantisbtPlugin) {
 $MANTISBTRELEASE = "N"
 if ($options.mantisbtRelease) {
     $MANTISBTRELEASE = $options.mantisbtRelease
+}
+#
+# Changelog edit
+#
+$MANTISBTCHGLOGEDIT = "N"
+if ($options.mantisbtChglogEdit) {
+    $MANTISBTCHGLOGEDIT = $options.mantisbtChglogEdit
 }
 #
 #
@@ -5292,6 +5306,20 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
 
     if ($GithubChangelog -ne $null -and $DRYRUN -eq $false) 
     {
+        # Allow user to edit html changelog
+        #
+        if ($GITHUBCHGLOGEDIT -eq "Y")
+        {
+            $TmpFile = "${Env:Temp}\changelog.tmp.html"
+            Set-Content -NoNewline -Path $TmpFile -Value $GithubChangelog
+            Check-PsCmdSuccess
+            [System.Threading.Thread]::Sleep(750)
+            $TextEditorProcess = Start-Process -filepath "notepad" -args $TmpFile -PassThru
+            $TextEditorProcess.WaitForInputIdle() | Out-Null
+            Wait-Process -Id $TextEditorProcess.Id | Out-Null
+            $GithubChangelog = Get-Content -path $TmpFile -Raw
+        }
+
         # Set up the request body for the 'create release' request
         #
         $Request = @{
@@ -5454,6 +5482,21 @@ if ($MANTISBTRELEASE -eq "Y")
         {
             Log-Message "Dry run has generated an html changelog to test functionality:"
             Log-Message $MantisChangelog
+        }
+
+        #
+        # Allow user to edit html changelog
+        #
+        if ($MANTISBTCHGLOGEDIT -eq "Y")
+        {
+            $TmpFile = "${Env:Temp}\changelog.tmp.html"
+            Set-Content -NoNewline -Path $TmpFile -Value $MantisChangelog
+            Check-PsCmdSuccess
+            [System.Threading.Thread]::Sleep(750)
+            $TextEditorProcess = Start-Process -filepath "notepad" -args $TmpFile -PassThru
+            $TextEditorProcess.WaitForInputIdle() | Out-Null
+            Wait-Process -Id $TextEditorProcess.Id | Out-Null
+            $MantisChangelog = Get-Content -path $TmpFile -Raw
         }
 
         #
