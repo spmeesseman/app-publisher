@@ -257,15 +257,16 @@ class CommitAnalyzer
             "feat"    { $FormattedSubject = "Features"; break }
             "feature" { $FormattedSubject = "Features"; break }
             "featmin" { $FormattedSubject = "Features"; break }
-            "minfeat" { $FormattedSubject = "Features"; break }
             "fix"     { $FormattedSubject = "Bug Fixes"; break }
+            "layout"  { $FormattedSubject = "Project Layout"; break }
+            "minfeat" { $FormattedSubject = "Features"; break }
             "perf"    { $FormattedSubject = "Performance Enhancements"; break }
             "progress"{ $FormattedSubject = "Ongoing Progress"; break }
+            "project" { $FormattedSubject = "Project Structure"; break }
             "refactor"{ $FormattedSubject = "Refactoring"; break }
             "style"   { $FormattedSubject = "Code Styling"; break }
             "test"    { $FormattedSubject = "Tests"; break }
-            "project" { $FormattedSubject = "Project Structure"; break }
-            "layout"  { $FormattedSubject = "Project Layout"; break }
+            "tweak"   { $FormattedSubject = "Refactoring"; break }
             "visual"  { $FormattedSubject = "Visual Enhancements"; break }
             default   { $FormattedSubject = $Subject; break }
         }
@@ -582,6 +583,7 @@ class HistoryFile
         {
             Log-Message "Determining changelog parts"
 
+            $TextInfo = (Get-Culture).TextInfo
             $typeParts = @()
             $msgParts = @()
 
@@ -630,8 +632,7 @@ class HistoryFile
                 while ($match.Success) {
                     $tickets = $match.Value
                     $tickets = $match.Value.Replace("[", "").Replace("]", "").Trim()
-                    $TextInfo = (Get-Culture).TextInfo
-                    $tickets = $TextInfo.ToTitleCase($tickets.Replace("&nbsp;", " "))
+                    $tickets = $TextInfo.ToTitleCase($tickets.Replace("&nbsp;", " ").ToLower())
                     $message = $message.Replace("<br><br>" + $match.Value, "")
                     $message = $message.Replace("<br>" + $match.Value, "").Trim()
                     $message = $message.Replace("&nbsp;&nbsp;&nbsp;&nbsp;" + $match.Value, "").Trim()
@@ -643,8 +644,8 @@ class HistoryFile
                     $match = $match.NextMatch()
                 }
                 $obj = @{
-                    "subject" = $subject
-                    "scope" = $scope
+                    "subject" = $TextInfo.ToTitleCase($subject.ToLower())
+                    "scope" = $TextInfo.ToTitleCase($scope.ToLower())
                     "message" = $message
                     "tickets" = $tickets
                 }
@@ -930,6 +931,7 @@ class HistoryFile
                 {
                     Log-Message "   Extracting parts"
 
+                    $TextInfo = (Get-Culture).TextInfo
                     $typeParts = @()
                     $msgParts = @()
 
@@ -1026,7 +1028,6 @@ class HistoryFile
                         while ($match.Success) {
                             $tickets = $match.Value
                             $tickets = $match.Value.Replace("[", "").Replace("]", "").Trim()
-                            $TextInfo = (Get-Culture).TextInfo
                             $tickets = $TextInfo.ToTitleCase($tickets.Replace("&nbsp;", " "))
                             $message = $message.Replace("<br><br>" + $match.Value, "")
                             $message = $message.Replace("<br>" + $match.Value, "").Trim()
@@ -1037,8 +1038,8 @@ class HistoryFile
                             $match = $match.NextMatch()
                         }
                         $obj = @{
-                            "subject" = $subject
-                            "scope" = $scope
+                            "subject" = $TextInfo.ToTitleCase($subject.ToLower())
+                            "scope" = $TextInfo.ToTitleCase($scope.ToLower())
                             "message" = $message
                             "tickets" = $tickets
                         }
@@ -4217,6 +4218,25 @@ if ($TESTEMAILRECIP -is [system.string] -and ![string]::IsNullOrEmpty($TESTEMAIL
 }
 
 #
+# Make sure execution policy is RemoteSigned
+#
+$ExecutionPolicy = Get-ExecutionPolicy
+if ($ExecutionPolicy -ne "RemoteSigned")
+{
+    Log-Message "You must set the powershell execution policy for localhost to 'RemoteSigned'" "red"
+    if (![string]::IsNullOrEmpty($ExecutionPolicy)) {
+        Log-Message "    Current policy is '$ExecutionPolicy'" "red"
+    }
+    else {
+        Log-Message "    There is no current policy set" "red"
+    }
+    Log-Message "    Open an elevated command shell using 'Run as Administrator' and execute the following commands:" "red"
+    Log-Message "        powershell" "red"
+    Log-Message "        Set-ExecutionPolicy -ExecutionPolicy RemoteSigned" "red"
+    exit 1;
+}
+
+#
 # Get the current version number
 #
 # Currently two versioning methods are supported :
@@ -4719,6 +4739,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
         $TmpCommits = $TmpCommits.Replace("refactor: ", "Refactoring`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("style: ", "Code Styling`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("test: ", "Tests`r`n`r`n    ")
+        $TmpCommits = $TmpCommits.Replace("tweak: ", "Refactoring`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("project: ", "Project Structure`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("layout: ", "Project Layout`r`n`r`n    ")
         $TmpCommits = $TmpCommits.Replace("visual: ", "Visual Enhancement`r`n`r`n    ")
@@ -4742,6 +4763,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
         $TmpCommits = $TmpCommits.Replace("refactor(", "Refactoring(")
         $TmpCommits = $TmpCommits.Replace("project(", "Project Structure(")
         $TmpCommits = $TmpCommits.Replace("test(", "Tests(")
+        $TmpCommits = $TmpCommits.Replace("tweak(", "Refactoring(")
         $TmpCommits = $TmpCommits.Replace("style(", "Code Styling(")
         $TmpCommits = $TmpCommits.Replace("layout(", "Project Layout(")
         $TmpCommits = $TmpCommits.Replace("visual(", "Visual Enhancement(")
@@ -4842,6 +4864,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE))
 
     if (($CURRENTVERSION -ne $VERSION -or $NewChangelog) -and ($RUN -eq 1 -or $DRYRUN -eq $true))
     {
+        $TextInfo = (Get-Culture).TextInfo
         $TmpCommits = ""
         $LastSection = ""
         $Sectionless = @()
@@ -4883,10 +4906,10 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE))
             }
             elseif ($idx1 -ne -1 -and $idx1 -lt $idx2) {
                 $Section = $TmpCommit.SubString(0, $idx1).TrimEnd()
-                $Scope = $TmpCommit.SubString($idx1 + 1, $TmpCommit.IndexOf(")") - $idx1 - 1).Trim()
+                $Scope = $TextInfo.ToTitleCase($TmpCommit.SubString($idx1 + 1, $TmpCommit.IndexOf(")") - $idx1 - 1).ToLower().Trim())
             }
             else {
-                $Section = $TmpCommit.SubString(0, $idx2).TrimEnd();
+                $Section = $TextInfo.ToTitleCase($TmpCommit.SubString(0, $idx2).ToLower().TrimEnd())
             }
             #
             # Ignore chores
