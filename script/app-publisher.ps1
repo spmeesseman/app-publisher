@@ -297,6 +297,7 @@ class HistoryFile
 
     [string]createSectionFromCommits($CommitsList, $LineLen)
     {
+        $TextInfo = (Get-Culture).TextInfo
         $comments = ""
         $commentNum = 1
 
@@ -312,6 +313,91 @@ class HistoryFile
             $msg = $msg.Trim()
             if($null -ne $msg -and $msg -ne "" -and !$msg.ToLower().StartsWith("chore") -and !$msg.ToLower().StartsWith("progress"))
             {
+                 #
+                # Replace commit tags with full text (non-scoped)
+                #
+                # Commit tags should be at the start of the commit message.
+                #
+                # Examples of commit tags:
+                #
+                #     feat: add internet explorer support
+                #
+                $msg = $msg.Replace("build: ", "Build System`r`n`r`n    ")
+                $msg = $msg.Replace("chore: ", "Chore`r`n`r`n    ")
+                $msg = $msg.Replace("docs: ", "Documentation`r`n`r`n    ")
+                $msg = $msg.Replace("doc: ", "Documentation`r`n`r`n    ")
+                $msg = $msg.Replace("minfeat: ", "Feature`r`n`r`n    ")
+                $msg = $msg.Replace("featmin: ", "Feature`r`n`r`n    ")
+                $msg = $msg.Replace("feat: ", "Feature`r`n`r`n    ")
+                $msg = $msg.Replace("fix: ", "Bug Fix`r`n`r`n    ")
+                $msg = $msg.Replace("perf: ", "Performance Enhancement`r`n`r`n    ")
+                $msg = $msg.Replace("progress: ", "Ongoing Progress`r`n`r`n    ")
+                $msg = $msg.Replace("refactor: ", "Refactoring`r`n`r`n    ")
+                $msg = $msg.Replace("style: ", "Code Styling`r`n`r`n    ")
+                $msg = $msg.Replace("test: ", "Tests`r`n`r`n    ")
+                $msg = $msg.Replace("tweak: ", "Refactoring`r`n`r`n    ")
+                $msg = $msg.Replace("project: ", "Project Structure`r`n`r`n    ")
+                $msg = $msg.Replace("layout: ", "Project Layout`r`n`r`n    ")
+                $msg = $msg.Replace("visual: ", "Visual Enhancement`r`n`r`n    ")
+                $msg = $msg.Replace("misc: ", "Miscellaneous`r`n`r`n    ")
+                #
+                # Replace commit tags with full text (scoped)
+                #
+                # A tag can be scoped, for example:
+                #
+                #     fix(footpedal): pressing multiple buttons at same time breaks audio player
+                #
+                $msg = $msg.Replace("build(", "Build System(")
+                $msg = $msg.Replace("chore(", "Chore(")
+                $msg = $msg.Replace("docs(", "Documentation(")
+                $msg = $msg.Replace("doc(", "Documentation(")
+                $msg = $msg.Replace("featmin(", "Feature(")
+                $msg = $msg.Replace("minfeat(", "Feature(")
+                $msg = $msg.Replace("feat(", "Feature(")
+                $msg = $msg.Replace("fix(", "Bug Fix(")
+                $msg = $msg.Replace("perf(", "Performance Enhancement(")
+                $msg = $msg.Replace("refactor(", "Refactoring(")
+                $msg = $msg.Replace("project(", "Project Structure(")
+                $msg = $msg.Replace("test(", "Tests(")
+                $msg = $msg.Replace("tweak(", "Refactoring(")
+                $msg = $msg.Replace("style(", "Code Styling(")
+                $msg = $msg.Replace("layout(", "Project Layout(")
+                $msg = $msg.Replace("visual(", "Visual Enhancement(")
+                $msg = $msg.Replace("progress(", "Ongoing Progress(")
+                $msg = $msg.Replace("misc(", "Miscellaneous(")
+                #
+                # Take any parenthesized scopes, remove the parenthesis and line break the message
+                # that follows
+                #
+                [Match] $match = [Regex]::Match($msg, "[(][a-z\- A-Z]*[)]\s*[:][ ]{0,}");
+                while ($match.Success) {
+                    $NewText = $match.Value.Replace("(", "")
+                    $NewText = $NewText.Replace(")", "")
+                    $NewText = $NewText.Replace(":", "").Trim()
+                    if ($NewText.ToLower() -eq "ap") {
+                        $NewText = "App-Publisher"
+                    }
+                    $NewText = $TextInfo.ToTitleCase($NewText.ToLower())
+                    $msg = $msg.Replace($match.Value, ":  $NewText`r`n`r`n    ")
+                    $match = $match.NextMatch()
+                }
+                #
+                # Typically when writing the commit messages lowercase is used.  Capitalize the first 
+                # letter following the commit message tag
+                #
+                [Match] $match = [Regex]::Match($msg, "[\r\n]{2}\s*[a-z]");
+                while ($match.Success) {
+                    if ($match.Value.Contains("`r`n`r`n")) { # ps regex is buggy on [\r\n]{2}
+                        $msg = $msg.Replace($match.Value, $match.Value.ToUpper())
+                    }
+                    $match = $match.NextMatch()
+                }
+
+                # capitalize first word
+                $msg1 = $msg.Substring(0, 1).ToUpper();
+                $msg2 = $msg.Substring(1);
+                $msg = "$msg1$msg2"
+
                 $line = "";
                 
                 if ($commentNum -lt 10) {
@@ -383,6 +469,24 @@ class HistoryFile
             }
         }
         
+        #
+        # Format the commit messages before adding to the hostory file
+        #
+        $comments = $comments.Replace("`n`n", "`r`n`r`n")
+       
+        #
+        # Use two new lines after new section
+        #
+        if (!$comments.EndsWith("`r`n`r`n")) {
+            $comments = $comments + "`r`n";
+        }
+
+        #
+        # Perform spell checking (currently the projectoxford has been taken down after the
+        # Microsoft deal with the facial rec api)
+        #
+        #$comments = CheckSpelling $comments $false
+
         return $comments
     }
 
@@ -632,7 +736,7 @@ class HistoryFile
                 while ($match.Success) {
                     $tickets = $match.Value
                     $tickets = $match.Value.Replace("[", "").Replace("]", "").Trim()
-                    $tickets = $TextInfo.ToTitleCase($tickets.Replace("&nbsp;", " ").ToLower())
+                    $tickets = $TextInfo.ToTitleCase($tickets.Replace("&nbsp;", " "))
                     $message = $message.Replace("<br><br>" + $match.Value, "")
                     $message = $message.Replace("<br>" + $match.Value, "").Trim()
                     $message = $message.Replace("&nbsp;&nbsp;&nbsp;&nbsp;" + $match.Value, "").Trim()
@@ -644,8 +748,8 @@ class HistoryFile
                     $match = $match.NextMatch()
                 }
                 $obj = @{
-                    "subject" = $TextInfo.ToTitleCase($subject.ToLower())
-                    "scope" = $TextInfo.ToTitleCase($scope.ToLower())
+                    "subject" = $subject
+                    "scope" = $scope
                     "message" = $message
                     "tickets" = $tickets
                 }
@@ -1038,8 +1142,8 @@ class HistoryFile
                             $match = $match.NextMatch()
                         }
                         $obj = @{
-                            "subject" = $TextInfo.ToTitleCase($subject.ToLower())
-                            "scope" = $TextInfo.ToTitleCase($scope.ToLower())
+                            "subject" = $subject
+                            "scope" = $scope
                             "message" = $message
                             "tickets" = $tickets
                         }
@@ -4692,6 +4796,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
         if ($IsNewHistoryFile) {
             $HistoryFileTitle = "$PROJECTNAME History"
             Add-Content -NoNewline -Path $HISTORYFILE -Value "$HistoryFileTitle`r`n"
+            [System.Threading.Thread]::Sleep(100)
         }
 
         #
@@ -4711,101 +4816,9 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
         else {   
             Log-Message "History header template not found" "darkyellow"
             Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n"  
-        }                                                      
+        }                                                   
         Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n"
-        #
-        # Format the commit messages before adding to the hostory file
-        #
-        $TmpCommits = $TmpCommits.Replace("`n`n", "`r`n`r`n")
-        #
-        # Replace commit tags with full text (non-scoped)
-        #
-        # Commit tags should be at the start of the commit message.
-        #
-        # Examples of commit tags:
-        #
-        #     feat: add internet explorer support
-        #
-        $TmpCommits = $TmpCommits.Replace("build: ", "Build System`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("chore: ", "Chore`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("docs: ", "Documentation`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("doc: ", "Documentation`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("minfeat: ", "Feature`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("featmin: ", "Feature`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("feat: ", "Feature`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("fix: ", "Bug Fix`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("perf: ", "Performance Enhancement`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("progress: ", "Ongoing Progress`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("refactor: ", "Refactoring`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("style: ", "Code Styling`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("test: ", "Tests`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("tweak: ", "Refactoring`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("project: ", "Project Structure`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("layout: ", "Project Layout`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("visual: ", "Visual Enhancement`r`n`r`n    ")
-        $TmpCommits = $TmpCommits.Replace("misc: ", "Miscellaneous`r`n`r`n    ")
-        #
-        # Replace commit tags with full text (scoped)
-        #
-        # A tag can be scoped, for example:
-        #
-        #     fix(footpedal): pressing multiple buttons at same time breaks audio player
-        #
-        $TmpCommits = $TmpCommits.Replace("build(", "Build System(")
-        $TmpCommits = $TmpCommits.Replace("chore(", "Chore(")
-        $TmpCommits = $TmpCommits.Replace("docs(", "Documentation(")
-        $TmpCommits = $TmpCommits.Replace("doc(", "Documentation(")
-        $TmpCommits = $TmpCommits.Replace("featmin(", "Feature(")
-        $TmpCommits = $TmpCommits.Replace("minfeat(", "Feature(")
-        $TmpCommits = $TmpCommits.Replace("feat(", "Feature(")
-        $TmpCommits = $TmpCommits.Replace("fix(", "Bug Fix(")
-        $TmpCommits = $TmpCommits.Replace("perf(", "Performance Enhancement(")
-        $TmpCommits = $TmpCommits.Replace("refactor(", "Refactoring(")
-        $TmpCommits = $TmpCommits.Replace("project(", "Project Structure(")
-        $TmpCommits = $TmpCommits.Replace("test(", "Tests(")
-        $TmpCommits = $TmpCommits.Replace("tweak(", "Refactoring(")
-        $TmpCommits = $TmpCommits.Replace("style(", "Code Styling(")
-        $TmpCommits = $TmpCommits.Replace("layout(", "Project Layout(")
-        $TmpCommits = $TmpCommits.Replace("visual(", "Visual Enhancement(")
-        $TmpCommits = $TmpCommits.Replace("progress(", "Ongoing Progress(")
-        $TmpCommits = $TmpCommits.Replace("misc(", "Miscellaneous(")
-        #
-        # Take any parenthesized scopes, remove the prenthesis and line break the message
-        # that follows
-        #
-        [Match] $match = [Regex]::Match($TmpCommits, "[(][a-z\- A-Z]*[)]\s*[:][ ]{0,}");
-        while ($match.Success) {
-            $NewText = $match.Value.Replace("(", "")
-            $NewText = $NewText.Replace(")", "")
-            $NewText = $NewText.Replace(":", "").Trim()
-            if ($NewText.ToLower() -eq "ap") {
-                $NewText = "App-Publisher"
-            }
-            $TmpCommits = $TmpCommits.Replace($match.Value, ":  $NewText`r`n`r`n    ")
-            $match = $match.NextMatch()
-        }
-        #
-        # Typically when writing the commit messages lowercase is used.  Capitalize the first 
-        # letter following the commit message tag
-        #
-        [Match] $match = [Regex]::Match($TmpCommits, "[\r\n]{2}\s*[a-z]");
-        while ($match.Success) {
-            if ($match.Value.Contains("`r`n`r`n")) { # ps regex is buggy on [\r\n]{2}
-                $TmpCommits = $TmpCommits.Replace($match.Value, $match.Value.ToUpper())
-            }
-            $match = $match.NextMatch()
-        }
-        #
-        # Use two new lines after new section
-        #
-        if (!$TmpCommits.EndsWith("`r`n`r`n")) {
-            $TmpCommits = $TmpCommits + "`r`n";
-        }
-        #
-        # Perform spell checking (currently the projectoxford has been taken down after the
-        # Microsoft deal with the facial rec api)
-        #
-        #$TmpCommits = CheckSpelling $TmpCommits $false
+
         #
         # Write the formatted commits text to $HISTORYFILE
         # Formatted commits are also contained in the temp text file $Env:TEMP\history.txt
