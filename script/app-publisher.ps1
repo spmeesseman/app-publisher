@@ -404,24 +404,40 @@ class HistoryFile
                 while ($match.Success) 
                 {
                     $NewText = $match.Value.ToLower();
-                    if ($NewText.Contains("fix")) {
-                        $NewText = "fixes"
+                    if ($NewText.Contains("fixed ")) {
+                        $NewText = $NewText.Replace("fixed ", "fixes ")
                     }
-                    elseif ($NewText.Contains("close")) {
-                        $NewText = "closes"
+                    elseif ($NewText.Contains("fix ")) {
+                        $NewText = $NewText.Replace("fix ", "fixes ")
                     }
-                    elseif ($NewText.Contains("resolve")) {
-                        $NewText = "resolves"
+                    elseif ($NewText.Contains("closed ")) {
+                        $NewText = $NewText.Replace("closed ", "closes ")
                     }
-                    elseif ($NewText.Contains("ref")) {
-                        $NewText = "references"
+                    elseif ($NewText.Contains("close ")) {
+                        $NewText = $NewText.Replace("close ", "closes ")
                     }
-                    elseif ($NewText.Contains("bug")) {
-                        $NewText = "bug"
+                    elseif ($NewText.Contains("resolved ")) {
+                        $NewText = $NewText.Replace("resolved ", "resolves ")
                     }
-                    elseif ($NewText.Contains("issue")) {
-                        $NewText = "issue"
+                    elseif ($NewText.Contains("resolve ")) {
+                        $NewText = $NewText.Replace("resolve ", "resolves ")
                     }
+                    elseif ($NewText.Contains("reference ")) {
+                        $NewText = $NewText.Replace("reference ", "references ")
+                    }
+                    elseif ($NewText.Contains("refs ")) {
+                        $NewText = $NewText.Replace("refs ", "references ")
+                    }
+                    elseif ($NewText.Contains("ref ")) {
+                        $NewText = $NewText.Replace("ref ", "reference ")
+                    }
+                    elseif ($NewText.Contains("bugs ")) {
+                        $NewText = "bug "
+                    }
+                    elseif ($NewText.Contains("issues ")) {
+                        $NewText = "issue "
+                    }
+                    $NewText = $NewText.ToLower().Replace("refs", "references").Replace("fixed", "fixes").Replace("closed", "closes").Replace("close", "closes")
                     $NewText = $TextInfo.ToTitleCase($NewText).Trim()
                     $msg = $msg.Replace($match.Value, "`r`n`r`n$NewText")
                     $msg = $msg.Replace("`n`n`r`n`r`n", "`r`n`r`n")
