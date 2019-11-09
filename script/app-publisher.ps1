@@ -225,10 +225,38 @@ class CommitAnalyzer
                 Log-Message "Major feature found"
                 $ReleaseLevel = "major";
             }
+            elseif ($linefmt.StartsWith("featmin:") -or $linefmt.StartsWith("featmin(")) # bump patch on minor feature
+            {
+                Log-Message "Minor feature found";
+                if ($ReleaseLevel -ne "minor") {
+                    $ReleaseLevel = "patch";
+                }
+            }
+            elseif ($linefmt.StartsWith("minfeat:") -or $linefmt.StartsWith("minfeat(")) # bump patch on minor feature
+            {
+                Log-Message "Minor feature found";
+                if ($ReleaseLevel -ne "minor") {
+                    $ReleaseLevel = "patch";
+                }
+            }
             elseif ($linefmt.StartsWith("feat:") -or $linefmt.StartsWith("feat(")) # bump minor on feature
             {
                 Log-Message "Feature found";
                 $ReleaseLevel = "minor";
+            }
+            elseif ($linefmt.StartsWith("perfmin:") -or $linefmt.StartsWith("perfmin("))
+            {
+                Log-Message "Minor performance enhancement found";
+                if ($ReleaseLevel -ne "minor") {
+                    $ReleaseLevel = "patch";
+                }
+            }
+            elseif ($linefmt.StartsWith("minperf:") -or $linefmt.StartsWith("minperf("))
+            {
+                Log-Message "Minor performance enhancement found";
+                if ($ReleaseLevel -ne "minor") {
+                    $ReleaseLevel = "patch";
+                }
             }
             elseif ($linefmt.StartsWith("perf:") -or $linefmt.StartsWith("perf("))
             {
@@ -261,6 +289,8 @@ class CommitAnalyzer
             "layout"  { $FormattedSubject = "Project Layout"; break }
             "minfeat" { $FormattedSubject = "Features"; break }
             "perf"    { $FormattedSubject = "Performance Enhancements"; break }
+            "perfmin" { $FormattedSubject = "Performance Enhancements"; break }
+            "minperf" { $FormattedSubject = "Performance Enhancements"; break }
             "progress"{ $FormattedSubject = "Ongoing Progress"; break }
             "project" { $FormattedSubject = "Project Structure"; break }
             "refactor"{ $FormattedSubject = "Refactoring"; break }
@@ -335,6 +365,8 @@ class HistoryFile
                 $msg = $msg.Replace("feat: ", "Feature`r`n`r`n    ")
                 $msg = $msg.Replace("fix: ", "Bug Fix`r`n`r`n    ")
                 $msg = $msg.Replace("perf: ", "Performance Enhancement`r`n`r`n    ")
+                $msg = $msg.Replace("perfmin: ", "Performance Enhancement`r`n`r`n    ")
+                $msg = $msg.Replace("minperf: ", "Performance Enhancement`r`n`r`n    ")
                 $msg = $msg.Replace("progress: ", "Ongoing Progress`r`n`r`n    ")
                 $msg = $msg.Replace("refactor: ", "Refactoring`r`n`r`n    ")
                 $msg = $msg.Replace("style: ", "Code Styling`r`n`r`n    ")
@@ -360,6 +392,8 @@ class HistoryFile
                 $msg = $msg.Replace("feat(", "Feature(")
                 $msg = $msg.Replace("fix(", "Bug Fix(")
                 $msg = $msg.Replace("perf(", "Performance Enhancement(")
+                $msg = $msg.Replace("perfmin(", "Performance Enhancement(")
+                $msg = $msg.Replace("minperf(", "Performance Enhancement(")
                 $msg = $msg.Replace("refactor(", "Refactoring(")
                 $msg = $msg.Replace("project(", "Project Structure(")
                 $msg = $msg.Replace("test(", "Tests(")
