@@ -2708,3 +2708,59 @@ October 29th, 2019
 
     [fixes #323]
 
+
+Version 1.13.13
+November 8th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature:  Changelog
+    
+    Auto capitalize subject and scope when creating history and changelog
+    entries.
+    
+    [Closes #1029]
+
+2.  Feature:  Changelog
+    
+    Capitalize commit ticket tag, i.e. 'fixes', 'closes', 'references', etc.
+
+3.  Bug Fix:  Changelog
+    
+    The first line is always short of the maximum line length in each of the
+    formatted history entries.
+    
+    [Fixes #1030]
+
+4.  Bug Fix:  General
+    
+    Check execution policy when publish is ran, ensure that it is set to
+    'remotesigned', output descriptive error message if not set and describe
+    how to set.
+    
+    [Fixes #1028]
+
+5.  Bug Fix
+    
+    The history header randomly fails to be written to the history file when the
+    new section is auto generated and opened for editing.
+    
+    [Fixes #994]
+

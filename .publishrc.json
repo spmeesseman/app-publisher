@@ -1,6 +1,6 @@
 {
     "projectName":       "app-publisher",
-    "version": "1.13.12",
+    "version": "1.13.13",
     "branch":            "trunk",
     "bugs":              "",
     "buildCommand": [
