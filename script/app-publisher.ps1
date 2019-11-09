@@ -401,9 +401,29 @@ class HistoryFile
                 # their own line
                 #
                 $match = [Regex]::Match($msg, "\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]", [Text.RegularExpressions.RegexOptions]::IgnoreCase);
-                while ($match.Success) {
-                    $NewText = $match.Value;
-                    $NewText = $TextInfo.ToTitleCase($NewText.ToLower()).Trim()
+                while ($match.Success) 
+                {
+                    $NewText = $match.Value.ToLower();
+                    if ($NewText.Contains("fix")) {
+                        $NewText = "fixes"
+                    }
+                    elseif ($NewText.Contains("close")) {
+                        $NewText = "closes"
+                    }
+                    elseif ($NewText.Contains("resolve")) {
+                        $NewText = "resolves"
+                    }
+                    elseif ($NewText.Contains("ref")) {
+                        $NewText = "references"
+                    }
+                    elseif ($NewText.Contains("bug")) {
+                        $NewText = "bug"
+                    }
+                    elseif ($NewText.Contains("issue")) {
+                        $NewText = "issue"
+                    }
+                    $NewText = $NewText.ToLower().Replace("refs", "references").Replace("fixed", "fixes").Replace("closed", "closes").Replace("close", "closes")
+                    $NewText = $TextInfo.ToTitleCase($NewText).Trim()
                     $msg = $msg.Replace($match.Value, "`r`n`r`n$NewText")
                     $msg = $msg.Replace("`n`n`r`n`r`n", "`r`n`r`n")
                     $msg = $msg.Replace("`n`r`n`r`n", "`r`n`r`n")
