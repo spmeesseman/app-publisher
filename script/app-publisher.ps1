@@ -422,7 +422,6 @@ class HistoryFile
                     elseif ($NewText.Contains("issue")) {
                         $NewText = "issue"
                     }
-                    $NewText = $NewText.ToLower().Replace("refs", "references").Replace("fixed", "fixes").Replace("closed", "closes").Replace("close", "closes")
                     $NewText = $TextInfo.ToTitleCase($NewText).Trim()
                     $msg = $msg.Replace($match.Value, "`r`n`r`n$NewText")
                     $msg = $msg.Replace("`n`n`r`n`r`n", "`r`n`r`n")
