@@ -392,7 +392,6 @@ class HistoryFile
                 $match = [Regex]::Match($msg, "\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]", [Text.RegularExpressions.RegexOptions]::IgnoreCase);
                 while ($match.Success) {
                     $NewText = $match.Value;
-                    write-host($NewText)
                     $NewText = $TextInfo.ToTitleCase($NewText.ToLower()).Trim()
                     $msg = $msg.Replace($match.Value, "`r`n`r`n$NewText")
                     $msg = $msg.Replace("`n`n`r`n`r`n", "`r`n`r`n")
@@ -461,7 +460,12 @@ class HistoryFile
                         }
                     }
                     else {
-                        $line +=  $msg.Trim();
+                        if ($msg.StartsWith("  ")) {
+                            $line += $msg.TrimEnd();
+                        }
+                        else {
+                            $line += $msg.Trim();
+                        }
                     }
                 }
 
