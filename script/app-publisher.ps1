@@ -301,6 +301,10 @@ class HistoryFile
         $comments = ""
         $commentNum = 1
 
+        # Line length is specified length minus the 4 space chars added to each line (space chars or
+        # the numbers lined i.e. '1.  xxxxxxx')
+        $LineLen = $LineLen - 3
+
         if ($CommitsList -eq $null -or $CommitsList.Length -eq 0) {
             return $comments
         }
@@ -378,26 +382,21 @@ class HistoryFile
                         $NewText = "App-Publisher"
                     }
                     $NewText = $TextInfo.ToTitleCase($NewText.ToLower())
-                    $msg = $msg.Replace($match.Value, ":  $NewText`r`n`r`n    ")
+                    $msg = $msg.Replace($match.Value, ":  $NewText`r`n`r`n")
                     $match = $match.NextMatch()
                 }
                 #
                 # Take ticket# tags and put them on separate line at bottom of message, skip tags already on 
                 # their own line
                 #
-                $match = [Regex]::Match($msg, "(?<!(^))\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]", [Text.RegularExpressions.RegexOptions]::IgnoreCase);
+                $match = [Regex]::Match($msg, "\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]", [Text.RegularExpressions.RegexOptions]::IgnoreCase);
                 while ($match.Success) {
                     $NewText = $match.Value;
+                    write-host($NewText)
                     $NewText = $TextInfo.ToTitleCase($NewText.ToLower()).Trim()
-                    $msg = $msg.Replace($match.Value, "`r`n`r`n    $NewText")
-                    $match = $match.NextMatch()
-                }
-                # now ones that jst need 1 extra line break
-                $match = [Regex]::Match($msg, "(?<!(\.\n\n))(?<=(^))\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]", [Text.RegularExpressions.RegexOptions]::IgnoreCase);
-                while ($match.Success) {
-                    $NewText = $match.Value;
-                    $NewText = $TextInfo.ToTitleCase($NewText.ToLower()).Trim()
-                    $msg = $msg.Replace($match.Value, "`r`n    $NewText")
+                    $msg = $msg.Replace($match.Value, "`r`n`r`n$NewText")
+                    $msg = $msg.Replace("`n`n`r`n`r`n", "`r`n`r`n")
+                    $msg = $msg.Replace("`n`r`n`r`n", "`r`n`r`n")
                     $match = $match.NextMatch()
                 }
                 #
