@@ -373,7 +373,7 @@ class HistoryFile
                 # Take any parenthesized scopes, remove the parenthesis and line break the message
                 # that follows
                 #
-                [Match] $match = [Regex]::Match($msg, "[(][a-z\- A-Z]*[)]\s*[:][ ]{0,}");
+                [Match] $match = [Regex]::Match($msg, "[(][a-z\- ]*[)]\s*[:][ ]{0,}") # all lower case
                 while ($match.Success) {
                     $NewText = $match.Value.Replace("(", "")
                     $NewText = $NewText.Replace(")", "")
@@ -381,7 +381,18 @@ class HistoryFile
                     if ($NewText.ToLower() -eq "ap") {
                         $NewText = "App-Publisher"
                     }
-                    $NewText = $TextInfo.ToTitleCase($NewText.ToLower())
+                    $NewText = $TextInfo.ToTitleCase($NewText.ToLower()) # title case
+                    $msg = $msg.Replace($match.Value, ":  $NewText`r`n`r`n")
+                    $match = $match.NextMatch()
+                }
+                [Match] $match = [Regex]::Match($msg, "[(][a-z\- A-Z]*[)]\s*[:][ ]{0,}") # all thats left (all caps or user formatted)
+                while ($match.Success) {
+                    $NewText = $match.Value.Replace("(", "")
+                    $NewText = $NewText.Replace(")", "")
+                    $NewText = $NewText.Replace(":", "").Trim()
+                    if ($NewText.ToLower() -eq "ap") {
+                        $NewText = "App-Publisher"
+                    }
                     $msg = $msg.Replace($match.Value, ":  $NewText`r`n`r`n")
                     $match = $match.NextMatch()
                 }
