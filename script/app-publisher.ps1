@@ -4805,28 +4805,20 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
         #
         # Add lines 'version', 'date', then the header content
         #
-        Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n"                        #
-        Add-Content -NoNewline -Path $HISTORYFILE -Value "$VERSIONTEXT $VERSION`r`n"   # Version x.y.z
-        Add-Content -NoNewline -Path $HISTORYFILE -Value "$TDATE`r`n"                  # May 9, 2019
-        if (Test-Path($HISTORYHDRFILE)) 
-        {
-            $HISTORYHDRFILE = Get-Content $HISTORYHDRFILE -Raw 
-            Add-Content -NoNewline -Path $HISTORYFILE -Value $HISTORYHDRFILE
-        }
-        else {   
-            Log-Message "History header template not found" "darkyellow"
-            Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n"  
-        }                                                   
-        Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n"
-
-        #
         # Write the formatted commits text to $HISTORYFILE
         # Formatted commits are also contained in the temp text file $Env:TEMP\history.txt
         # Replace all newline pairs with cr/nl pairs as SVN will have sent commit comments back
         # with newlines only
         #
-        [System.Threading.Thread]::Sleep(500);
-        Add-Content $HISTORYFILE $TmpCommits -NoNewline 
+        if (Test-Path($HISTORYHDRFILE)) 
+        {
+            $HistoryHeader= Get-Content $HISTORYHDRFILE -Raw
+            Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n$VERSIONTEXT $VERSION`r`n$TDATE`r`n$HistoryHeader`r`n$TmpCommits"
+        }
+        else {   
+            Log-Message "History header template not found" "darkyellow"
+            Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n$VERSIONTEXT $VERSION`r`n$TDATE`r`n`r`n`r`n$TmpCommits"  
+        }
     }
     else {
         Log-Message "Version match, not touching history file" "darkyellow"
