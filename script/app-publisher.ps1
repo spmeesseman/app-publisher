@@ -384,7 +384,7 @@ class HistoryFile
                 #
                 # Take ticket# tags and put them on separate line at bottom of message
                 #
-                $match = [Regex]::Match($msg, "(?<!(^[ ]{4}))\[(&nbsp;| )*(closes|fixes|resolves|fix|close|refs|references|ref|reference){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]");
+                $match = [Regex]::Match($msg, "(?<!(^[ ]{4}))\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]", [Text.RegularExpressions.RegexOptions]::IgnoreCase);
                 while ($match.Success) {
                     $NewText = $match.Value;
                     $NewText = $TextInfo.ToTitleCase($NewText.ToLower()).Trim()
@@ -742,7 +742,7 @@ class HistoryFile
                     $scope = $msgParts[$i].Substring(0, $msgParts[$i].IndexOf(":")).Replace("**", "").Trim()
                     $message = $msgParts[$i].Substring($msgParts[$i].IndexOf(":") + 1).Replace("**", "").Trim()
                 }
-                $match = [Regex]::Match($msgParts[$i], "\[(&nbsp;| )*(closes|fixes|resolves|fix|close|refs|references|ref|reference){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]");
+                $match = [Regex]::Match($msgParts[$i], "\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]", [Text.RegularExpressions.RegexOptions]::IgnoreCase);
                 while ($match.Success) {
                     $tickets = $match.Value
                     $tickets = $match.Value.Replace("[", "").Replace("]", "").Trim()
@@ -1137,8 +1137,9 @@ class HistoryFile
                             else {
                                 $message = $typeParts[$i] + $msgParts[$i];
                             }
-                        }
-                        $match = [Regex]::Match($msgParts[$i], "\[(&nbsp;| )*(closes|fixes|resolves|fix|close|refs|references|ref|reference){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]");
+                        }                                               
+                        $match = [Regex]::Match($msgParts[$i], "\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]", [Text.RegularExpressions.RegexOptions]::IgnoreCase);
+                        #$match = [Regex]::Match($msgParts[$i], "\[(&nbsp;| )*(?:bugs?|issues?|refs?|references?|reports|fixe?d?s?|closed?s?|resolved?s?)+\s*:?\s+(?:#(?:\d+)[,\.\s]*)+]");
                         while ($match.Success) {
                             $tickets = $match.Value
                             $tickets = $match.Value.Replace("[", "").Replace("]", "").Trim()
