@@ -382,13 +382,22 @@ class HistoryFile
                     $match = $match.NextMatch()
                 }
                 #
-                # Take ticket# tags and put them on separate line at bottom of message
+                # Take ticket# tags and put them on separate line at bottom of message, skip tags already on 
+                # their own line
                 #
-                $match = [Regex]::Match($msg, "(?<!(^[ ]{4}))\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]", [Text.RegularExpressions.RegexOptions]::IgnoreCase);
+                $match = [Regex]::Match($msg, "(?<!(^))\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]", [Text.RegularExpressions.RegexOptions]::IgnoreCase);
                 while ($match.Success) {
                     $NewText = $match.Value;
                     $NewText = $TextInfo.ToTitleCase($NewText.ToLower()).Trim()
                     $msg = $msg.Replace($match.Value, "`r`n`r`n    $NewText")
+                    $match = $match.NextMatch()
+                }
+                # now ones that jst need 1 extra line break
+                $match = [Regex]::Match($msg, "(?<!(\.\n\n))(?<=(^))\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]", [Text.RegularExpressions.RegexOptions]::IgnoreCase);
+                while ($match.Success) {
+                    $NewText = $match.Value;
+                    $NewText = $TextInfo.ToTitleCase($NewText.ToLower()).Trim()
+                    $msg = $msg.Replace($match.Value, "`r`n    $NewText")
                     $match = $match.NextMatch()
                 }
                 #
