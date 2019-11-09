@@ -382,10 +382,20 @@ class HistoryFile
                     $match = $match.NextMatch()
                 }
                 #
+                # Take ticket# tags and put them on separate line at bottom of message
+                #
+                $match = [Regex]::Match($msg, "(?<!(^[ ]{4}))\[(&nbsp;| )*(closes|fixes|resolves|fix|close|refs|references|ref|reference){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]");
+                while ($match.Success) {
+                    $NewText = $match.Value;
+                    $NewText = $TextInfo.ToTitleCase($NewText.ToLower()).Trim()
+                    $msg = $msg.Replace($match.Value, "`r`n`r`n    $NewText")
+                    $match = $match.NextMatch()
+                }
+                #
                 # Typically when writing the commit messages lowercase is used.  Capitalize the first 
                 # letter following the commit message tag
                 #
-                [Match] $match = [Regex]::Match($msg, "[\r\n]{2}\s*[a-z]");
+                $match = [Regex]::Match($msg, "[\r\n]{2}\s*[a-z]");
                 while ($match.Success) {
                     if ($match.Value.Contains("`r`n`r`n")) { # ps regex is buggy on [\r\n]{2}
                         $msg = $msg.Replace($match.Value, $match.Value.ToUpper())
