@@ -524,15 +524,16 @@ class HistoryFile
                     #
                     # If this message line is longer than $LineLen, break it up
                     #
-                    $l = $LineLen;
-                    if ($i -eq 0) {
-                        $l = $l - 4;
-                    }
+                    #$l = $LineLen;
+                    #if ($i -eq 0) {
+                    #    $l = $l - 4;
+                    #}
+                    $l = $LineLen - 4;
                     if ($msg.Length -gt $l)
                     {
                         $idx = $msg.LastIndexOf(" ", $l)
                         $PartLine = $msg.SubString(0, $idx).Trim()
-                        while ($PartLine.Length -gt $LineLen) {
+                        while ($PartLine.Length -gt $l) {
                             $idx = $msg.LastIndexOf(" ", $PartLine.Length - 1)
                             $PartLine = $msg.SubString(0, $idx).Trim()
                         }
@@ -540,7 +541,7 @@ class HistoryFile
                         #
                         # Keep going until we've broken the whole message line down...
                         #
-                        $l = $LineLen;
+                        #$l = $LineLen;
                         while ($msg.Length -gt $l)
                         {
                             $msg = $msg.SubString($idx)
