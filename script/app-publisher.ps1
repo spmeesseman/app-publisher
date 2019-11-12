@@ -512,15 +512,15 @@ class HistoryFile
                 # Format the messages to the maximum line length for each line, breaking up lines longer 
                 # than $LineLen
                 #
-                $msgs = $msg.Split("`n");
-                for ($i = 0; $i -lt $msgs.Length; $i++)
+                $lines = $msg.Split("`n");
+                for ($i = 0; $i -lt $lines.Length; $i++)
                 {
                     $indented = ""
                     
                     if ($i -gt 0) {
                         $line += "`r`n"
                     }
-                    $msg = $msgs[$i];
+                    $msg = $lines[$i];
                     #
                     # If this message line is longer than $LineLen, break it up
                     #
@@ -540,6 +540,7 @@ class HistoryFile
                         #
                         # Keep going until we've broken the whole message line down...
                         #
+                        $l = $LineLen;
                         while ($msg.Length -gt $l)
                         {
                             $msg = $msg.SubString($idx)
