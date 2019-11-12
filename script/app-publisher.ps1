@@ -331,10 +331,6 @@ class HistoryFile
         $comments = ""
         $commentNum = 1
 
-        # Line length is specified length minus the 4 space chars added to each line (space chars or
-        # the numbers lined i.e. '1.  xxxxxxx')
-        $LineLen = $LineLen - 4
-
         if ($CommitsList -eq $null -or $CommitsList.Length -eq 0) {
             return $comments
         }
@@ -490,13 +486,21 @@ class HistoryFile
                     $match = $match.NextMatch()
                 }
 
-                # capitalize first word
+                #
+                # Capitalize first word
+                #
                 $msg1 = $msg.Substring(0, 1).ToUpper();
                 $msg2 = $msg.Substring(1);
                 $msg = "$msg1$msg2"
 
+                #
+                # Initialize new line broken entry
+                #
                 $line = "";
                 
+                #
+                # Order the entries in an ordered list, 1., 2., 3., etc...
+                #
                 if ($commentNum -lt 10) {
                     $line = "$commentNum.  "
                 }
@@ -504,6 +508,10 @@ class HistoryFile
                     $line = "$commentNum. "
                 }
 
+                #
+                # Format the messages to the maximum line length for each line, breaking up lines longer 
+                # than $LineLen
+                #
                 $msgs = $msg.Split("`n");
                 for ($i = 0; $i -lt $msgs.Length; $i++)
                 {
@@ -511,28 +519,40 @@ class HistoryFile
                         $line += "`r`n"
                     }
                     $msg = $msgs[$i];
-                    if ($msg.Length -gt $LineLen)
+                    #
+                    # If this message line is longer than $LineLen, break it up
+                    #
+                    $l = $LineLen;
+                    if ($i -eq 0) {
+                        $l = $l - 4;
+                    }
+                    if ($msg.Length -gt $l)
                     {
-                        $idx = $msg.LastIndexOf(" ", $LineLen)
+                        $idx = $msg.LastIndexOf(" ", $l)
                         $PartLine = $msg.SubString(0, $idx).Trim()
                         while ($PartLine.Length -gt $LineLen) {
-                            $idx = $msg.LastIndexOf(" ", $PartLine.Length)
+                            $idx = $msg.LastIndexOf(" ", $PartLine.Length - 1)
                             $PartLine = $msg.SubString(0, $idx).Trim()
                         }
                         $line += $PartLine
-
-                        while ($msg.Length -gt $LineLen)
+                        #
+                        # Keep going until we've broken the whole message line down...
+                        #
+                        while ($msg.Length -gt $l)
                         {
                             $msg = $msg.SubString($idx)
                             $line += "`r`n";
-                            if ($msg.Length -gt $LineLen) {
-                                $idx = $msg.LastIndexOf(" ", $LineLen)
+                            if ($msg.Length -gt $l) {
+                                $idx = $msg.LastIndexOf(" ", $l)
                                 $PartLine = $msg.SubString(0, $idx);
-                                while ($PartLine.Length -gt $LineLen) {
-                                    $idx = $msg.LastIndexOf(" ", $PartLine.Length)
+                                while ($PartLine.Length -gt $l) {
+                                    $idx = $msg.LastIndexOf(" ", $PartLine.Length - 1)
                                     $PartLine = $msg.SubString(0, $idx);
                                 }
-                                if ($PartLine.StartsWith("  ")) {
+                                #
+                                # Don't trim the leading spaces of a purposely indented line
+                                #
+                                if ($PartLine.StartsWith("   ")) {
                                     $line += $PartLine.TrimEnd();
                                 }
                                 else {
@@ -540,17 +560,23 @@ class HistoryFile
                                 }
                             }
                             else {
-                                if ($PartLine.StartsWith("  ")) {
-                                    $line += $PartLine.TrimEnd();
+                                 #
+                                # Don't trim the leading spaces of a purposely indented line
+                                #
+                                if ($msg.StartsWith("   ")) {
+                                    $line += $msg.TrimEnd();
                                 }
                                 else {
-                                    $line += $PartLine.Trim();
+                                    $line += $msg.Trim();
                                 }
                             }
                         }
                     }
                     else {
-                        if ($msg.StartsWith("  ")) {
+                        #
+                        # Don't trim the leading spaces of a purposely indented line
+                        #
+                        if ($msg.StartsWith("   ")) {
                             $line += $msg.TrimEnd();
                         }
                         else {
