@@ -1,6 +1,6 @@
 {
     "projectName":       "app-publisher",
-    "version": "1.13.15",
+    "version": "1.13.16",
     "branch":            "trunk",
     "bugs":              "",
     "buildCommand": [
@@ -73,26 +73,5 @@
     "versionFiles":      [],
     "versionFilesEditAlways": [],
     "versionText":       "Version",
-    "writeLog":          "N",
-    "xRuns": [
-    {
-        "repoType":      "git",
-        "branch":        "master",
-        "repo":          "https://github.com/spmeesseman/app-publisher.git",
-        "homePage":      "https://github.com/spmeesseman/app-publisher",
-        "bugs":          "https://app1.spmeesseman.com/projects/set_project.php?project=app-publisher&make_default=no&ref=bug_report_page.php",
-        "npmRegistry":   "https://registry.npmjs.org",
-        "textEditor":    "",
-        "npmScope":      "@spmeesseman",
-        "mantisbtRelease":"N",
-        "githubRelease": "Y",
-        "githubUser":    "spmeesseman",
-        "githubAssets": [
-            "install\\dist\\app-publisher.tgz"
-        ],
-        "emailNotification": "N",
-        "postBuildCommand": [
-            "svn revert -R ."
-        ]
-    }] 
+    "writeLog":          "N"
 }

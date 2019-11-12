@@ -333,7 +333,7 @@ class HistoryFile
 
         # Line length is specified length minus the 4 space chars added to each line (space chars or
         # the numbers lined i.e. '1.  xxxxxxx')
-        $LineLen = $LineLen - 3
+        $LineLen = $LineLen - 4
 
         if ($CommitsList -eq $null -or $CommitsList.Length -eq 0) {
             return $comments
@@ -514,12 +514,12 @@ class HistoryFile
                     if ($msg.Length -gt $LineLen)
                     {
                         $idx = $msg.LastIndexOf(" ", $LineLen)
-                        $PartLine = $msg.SubString(0, $idx);
+                        $PartLine = $msg.SubString(0, $idx).Trim()
                         while ($PartLine.Length -gt $LineLen) {
                             $idx = $msg.LastIndexOf(" ", $PartLine.Length)
-                            $PartLine = $msg.SubString(0, $idx);
+                            $PartLine = $msg.SubString(0, $idx).Trim()
                         }
-                        $line += $PartLine.Trim()
+                        $line += $PartLine
 
                         while ($msg.Length -gt $LineLen)
                         {
@@ -532,10 +532,20 @@ class HistoryFile
                                     $idx = $msg.LastIndexOf(" ", $PartLine.Length)
                                     $PartLine = $msg.SubString(0, $idx);
                                 }
-                                $line += $PartLine.Trim()
+                                if ($PartLine.StartsWith("  ")) {
+                                    $line += $PartLine.TrimEnd();
+                                }
+                                else {
+                                    $line += $PartLine.Trim();
+                                }
                             }
                             else {
-                                $line += $msg.Trim()
+                                if ($PartLine.StartsWith("  ")) {
+                                    $line += $PartLine.TrimEnd();
+                                }
+                                else {
+                                    $line += $PartLine.Trim();
+                                }
                             }
                         }
                     }

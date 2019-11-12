@@ -2824,3 +2824,60 @@ November 9th, 2019
     
     [Fixes #1034]
 
+
+Version 1.13.16
+November 11th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix:  Changelog
+    
+    Commit messages that contain indented text on a new line are having the
+    indentation spaces removed when the history file entries are created.
+
+2.  Bug Fix:  Changelog
+    
+    Scope tags that are entered all upper case in the commit message are being
+    title cased when the history file entries are created.
+    
+    Title casing will now be done on the scope tag only when it is all lower
+    case.
+
+3.  Bug Fix:  Changelog
+    
+    Ticket tags that are on a separate line in the commit message, but not
+    separated by at least two line breaks from the last alpha character in the
+    message, are being padded with extra line breaks when the history file
+    entries are created.
+    
+    [References #1034]
+
+4.  Refactoring:  Changelog
+    
+    Shorthand ticket tags should be expanded or set to a single value within the
+    set for better continuity when creating the history file entries.  For
+    example, 'fix', 'fixes' and 'fixed' will all be formatted as 'Fixes'.
+
+5.  Refactoring:  Versioning
+    
+    Allow new 'perfmin' and 'minperf' subject tags to be performance enhancement
+    entries in the history file with only a patch level version bump as opposed
+    to the minor version bump given to 'perf'.
+
