@@ -565,7 +565,8 @@ class HistoryFile
                                 }
                             }
                             else {
-                                 #
+                                $indented = ""
+                                #
                                 # Don't trim the leading spaces of a purposely indented line
                                 #
                                 if ($msg.StartsWith("   ")) {
@@ -578,6 +579,7 @@ class HistoryFile
                         }
                     }
                     else {
+                        $indented = ""
                         #
                         # Don't trim the leading spaces of a purposely indented line
                         #
