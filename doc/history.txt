@@ -2881,3 +2881,41 @@ November 11th, 2019
     entries in the history file with only a patch level version bump as opposed
     to the minor version bump given to 'perf'.
 
+
+Version 1.13.17
+November 12th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix:  Changelog
+    
+    Perform indentation on broken lines.
+    
+    If a commit message contains indented text, and the text is longer than the
+    maximum line length, pre-pad each of the broken lines with the same indentation
+    size used.
+    
+    [Fixes #1054]
+
+2.  Bug Fix
+    
+    Line lengths are still not broken up correctly when creating the history
+    file entries.   Can still be 1-2 characters off.
+
