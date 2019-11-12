@@ -555,7 +555,7 @@ class HistoryFile
                                 # Don't trim the leading spaces of a purposely indented line
                                 #
                                 if ($PartLine.StartsWith("   ")) {
-                                    for ($j = 0; $j < $PartLine.Length; $j++) {
+                                    for ($j = 0; $j -lt $PartLine.Length; $j++) {
                                         $indented += " "
                                     }
                                     $line += $PartLine.TrimEnd();
@@ -582,6 +582,7 @@ class HistoryFile
                         # Don't trim the leading spaces of a purposely indented line
                         #
                         if ($msg.StartsWith("   ")) {
+                            $indented = $true
                             $line += $msg.TrimEnd();
                         }
                         else {
