@@ -515,6 +515,8 @@ class HistoryFile
                 $msgs = $msg.Split("`n");
                 for ($i = 0; $i -lt $msgs.Length; $i++)
                 {
+                    $indented = ""
+                    
                     if ($i -gt 0) {
                         $line += "`r`n"
                     }
@@ -544,15 +546,18 @@ class HistoryFile
                             $line += "`r`n";
                             if ($msg.Length -gt $l) {
                                 $idx = $msg.LastIndexOf(" ", $l)
-                                $PartLine = $msg.SubString(0, $idx);
+                                $PartLine = $indented + $msg.SubString(0, $idx - $indented.Length);
                                 while ($PartLine.Length -gt $l) {
                                     $idx = $msg.LastIndexOf(" ", $PartLine.Length - 1)
-                                    $PartLine = $msg.SubString(0, $idx);
+                                    $PartLine = $indented + $msg.SubString(0, $idx - $indented.Length);
                                 }
                                 #
                                 # Don't trim the leading spaces of a purposely indented line
                                 #
                                 if ($PartLine.StartsWith("   ")) {
+                                    for ($j = 0; $j < $PartLine.Length; $j++) {
+                                        $indented += " "
+                                    }
                                     $line += $PartLine.TrimEnd();
                                 }
                                 else {
