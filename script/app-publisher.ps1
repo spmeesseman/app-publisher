@@ -430,7 +430,7 @@ class HistoryFile
                 # Take ticket# tags and put them on separate line at bottom of message, skip tags already on 
                 # their own line
                 #
-                $match = [Regex]::Match($msg, "\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]", [Text.RegularExpressions.RegexOptions]::IgnoreCase);
+                $match = [Regex]::Match($msg, "[ ]{0,1}\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]", [Text.RegularExpressions.RegexOptions]::IgnoreCase);
                 while ($match.Success) 
                 {
                     $NewText = $match.Value.ToLower();
