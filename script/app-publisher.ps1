@@ -474,7 +474,7 @@ class HistoryFile
                     $match = $match.NextMatch()
                 }
                 #
-                # Typically when writing the commit messages lowercase is used.  Capitalize the first 
+                # Typically when writing the commit messages all lowercase is used.  Capitalize the first 
                 # letter following the commit message tag
                 #
                 $match = [Regex]::Match($msg, "[\r\n]{2}\s*[a-z]");
@@ -542,6 +542,8 @@ class HistoryFile
                         #
                         if ($PartLine.StartsWith("   ")) 
                         {
+                            $isListSPace = ""
+
                             # Record the number of spaces in the indentation to apply to any broken lines
                             #
                             for ($j = 0; $j -lt $PartLine.Length; $j++) 
@@ -549,7 +551,16 @@ class HistoryFile
                                 if ($PartLine[$j] -eq " ") {
                                     $indented += " "
                                 }
-                                else {
+                                else {    # unordered list?
+                                    if ($PartLine[$j] -eq "*") {
+                                        $indented +=  "  "
+                                    }
+                                    else { # numbered list?
+                                        $match = [Regex]::Match($PartLine.Substring($j,2), "[1-9](\.|\))");
+                                        is ($match.Success) {
+                                            $indented +=  "   "
+                                        }
+                                    }
                                     break;
                                 }
                             }
@@ -564,7 +575,7 @@ class HistoryFile
                         #
                         while ($msgPart.Length -gt $l)
                         {
-                            $msgPart = $msgPart.SubString($idx + 1)
+                            $msgPart = $msgPart.SubString($idx + 1) # use 'idx+1' since char at idx is always a space char
                             $line += "`r`n";
                             if ($msgPart.Length -gt $l) 
                             {
