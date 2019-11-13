@@ -2922,3 +2922,52 @@ November 12th, 2019
     
     [References #177]
 
+
+Version 1.13.18
+November 12th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix:  Changelog
+    
+    When applying indentation to broken indented lines, take into consideration
+    if the indentation is an unordered (using asterisk markers) or an ordered
+    list.  Line up subsequent broken lines underneath the first word of the
+    indented text, as opposed to lining up underneath the list number or marker.
+
+2.  Bug Fix:  Changelog
+    
+    Entries that are only one line are being indented an extra 4 spaces since
+    Version 1.13.16.
+
+3.  Bug Fix:  Changelog
+    
+    If a space character is accidentally entered in a commit message preceding a
+    line broken ticket number tag, unnecessary line breaks are added before the
+    tag.
+    
+    This fix allows just one space character before a line broken ticket number
+    tag.
+
+4.  Bug Fix:  Changelog
+    
+    The functionality to perform indentation on broken lines that was added in
+    the previous releases does not cut lines a maximum length in some cases.
+
