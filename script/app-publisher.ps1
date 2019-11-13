@@ -467,7 +467,6 @@ class HistoryFile
                     elseif ($NewText.Contains("issues ")) {
                         $NewText = "issue "
                     }
-                    $NewText = $NewText.ToLower().Replace("refs", "references").Replace("fixed", "fixes").Replace("closed", "closes").Replace("close", "closes")
                     $NewText = $TextInfo.ToTitleCase($NewText).Trim()
                     $msg = $msg.Replace($match.Value, "`r`n`r`n$NewText")
                     $msg = $msg.Replace("`n`n`r`n`r`n", "`r`n`r`n")
@@ -512,71 +511,87 @@ class HistoryFile
                 # Format the messages to the maximum line length for each line, breaking up lines longer 
                 # than $LineLen
                 #
-                $lines = $msg.Split("`n");
-                for ($i = 0; $i -lt $lines.Length; $i++)
+                $msgLines = $msg.Split("`n");
+                for ($i = 0; $i -lt $msgLines.Length; $i++)
                 {
                     $indented = ""
                     
                     if ($i -gt 0) {
                         $line += "`r`n"
                     }
-                    $msg = $lines[$i];
+
+                    $msgPart = $msgLines[$i];
+
                     #
-                    # If this message line is longer than $LineLen, break it up
+                    # If this message line is longer than $LineLen - 4, break it up
+                    # (allow 4 spaces or numbered item 1.  , 2.  , etc)
                     #
-                    #$l = $LineLen;
-                    #if ($i -eq 0) {
-                    #    $l = $l - 4;
-                    #}
                     $l = $LineLen - 4;
-                    if ($msg.Length -gt $l)
+                    if ($msgPart.Length -gt $l)
                     {
-                        $idx = $msg.LastIndexOf(" ", $l)
-                        $PartLine = $msg.SubString(0, $idx).Trim()
-                        while ($PartLine.Length -gt $l) {
-                            $idx = $msg.LastIndexOf(" ", $PartLine.Length - 1)
-                            $PartLine = $msg.SubString(0, $idx).Trim()
+                        $idx = $msgPart.LastIndexOf(" ", $l)
+                        $PartLine = $msgPart.SubString(0, $idx)
+                        while ($PartLine.Length -gt $l) 
+                        {
+                            $idx = $msgPart.LastIndexOf(" ", $PartLine.Length - 1)
+                            $PartLine = $msgPart.SubString(0, $idx).Trim()
                         }
-                        $line += $PartLine
+
+                        #
+                        # Check indentation, don't trim the leading spaces of a purposely indented line
+                        #
+                        if ($PartLine.StartsWith("   ")) 
+                        {
+                            # Record the number of spaces in the indentation to apply to any broken lines
+                            #
+                            for ($j = 0; $j -lt $PartLine.Length; $j++) 
+                            {
+                                if ($PartLine[$j] -eq " ") {
+                                    $indented += " "
+                                }
+                                else {
+                                    break;
+                                }
+                            }
+                            $line += $PartLine.TrimEnd();
+                        }
+                        else {
+                            $line += $PartLine.Trim();
+                        }
+
                         #
                         # Keep going until we've broken the whole message line down...
                         #
-                        #$l = $LineLen;
-                        while ($msg.Length -gt $l)
+                        while ($msgPart.Length -gt $l)
                         {
-                            $msg = $msg.SubString($idx)
+                            $msgPart = $msgPart.SubString($idx + 1)
                             $line += "`r`n";
-                            if ($msg.Length -gt $l) {
-                                $idx = $msg.LastIndexOf(" ", $l)
-                                $PartLine = $indented + $msg.SubString(0, $idx - $indented.Length);
-                                while ($PartLine.Length -gt $l) {
-                                    $idx = $msg.LastIndexOf(" ", $PartLine.Length - 1)
-                                    $PartLine = $indented + $msg.SubString(0, $idx - $indented.Length);
+                            if ($msgPart.Length -gt $l) 
+                            {
+                                $idx = $msgPart.LastIndexOf(" ", $l - $indented.Length)
+                                $PartLine =$msgPart.SubString(0, $idx);
+                                while ($PartLine.Length -gt $l) 
+                                {
+                                    $idx = $msgPart.LastIndexOf(" ", $PartLine.Length - 1)
+                                    $PartLine = $msgPart.SubString(0, $idx);
                                 }
                                 #
                                 # Don't trim the leading spaces of a purposely indented line
                                 #
-                                if ($PartLine.StartsWith("   ")) {
-                                    for ($j = 0; $j -lt $PartLine.Length; $j++) {
-                                        $indented += " "
-                                    }
-                                    $line += $PartLine.TrimEnd();
+                                if ($indented -ne "") 
+                                {
+                                    $line += ($indented + $PartLine.Trim());
                                 }
                                 else {
                                     $line += $PartLine.Trim();
                                 }
                             }
                             else {
-                                $indented = ""
                                 #
                                 # Don't trim the leading spaces of a purposely indented line
                                 #
-                                if ($msg.StartsWith("   ")) {
-                                    $line += $msg.TrimEnd();
-                                }
-                                else {
-                                    $line += $msg.Trim();
-                                }
+                                $line += ($indented + $msgPart.Trim());
+                                $indented = ""
                             }
                         }
                     }
@@ -585,12 +600,12 @@ class HistoryFile
                         #
                         # Don't trim the leading spaces of a purposely indented line
                         #
-                        if ($msg.StartsWith("   ")) {
+                        if ($msgPart.StartsWith("   ")) {
                             $indented = $true
-                            $line += $msg.TrimEnd();
+                            $line += $msgPart.TrimEnd();
                         }
                         else {
-                            $line += $msg.Trim();
+                            $line += $msgPart.Trim();
                         }
                     }
                 }
