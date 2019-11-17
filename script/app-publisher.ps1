@@ -3429,6 +3429,50 @@ if ($RUN -gt 1)
 Log-Message "   Run #     : $RUN of $NUMRUNS" "cyan" $true
 Log-Message "   Directory : $CWD" "cyan" $true
 Log-Message "----------------------------------------------------------------" "darkblue" $true
+
+#
+# Merge republish
+#
+if ($options.republish -and $options.republish.psobject.Properties.Length -gt 0)
+{
+    #
+    # Set everything to OFF and then apply the republish config
+    #
+    if ($options.distRelease) {
+        $options.distRelease = "N"
+    }
+    if ($options.emailNotification) {
+        $options.emailNotification = "N"
+    }
+    if ($options.githubRelease) {
+        $options.githubRelease = "N"
+    }
+    if ($options.mantisbtRelease) {
+        $options.mantisbtRelease = "N"
+    }
+    if ($options.npmRelease) {
+        $options.npmRelease = "N"
+    }
+    if ($options.nugetRelease) {
+        $options.nugetRelease = "N"
+    }
+    if ($options.buildCommand) {
+        $options.buildCommand = @()
+    }
+    if ($options.deployCommand) {
+        $options.deployCommand = @()
+    }
+    if ($options.postBuildCommand) {
+        $options.postBuildCommand = @()
+    }
+    if ($options.postReleaseCommand) {
+        $options.postReleaseCommand = @()
+    }
+    $options.republish.psobject.Properties | ForEach-Object {
+        $options | Add-Member -MemberType $_.MemberType -Name $_.Name -Value $_.Value -Force
+    }
+}
+
 #
 # Name of the project.  This must macth throughout the build files and the SVN project name
 #
@@ -3811,10 +3855,21 @@ if ($options.repoType) {
     $REPOTYPE = $options.repoType
 }
 #
+#
+#
+$REPUBLISH = @{}
+if ($options.republish) {
+    $REPUBLISH = $options.republish
+}
+#
+#
+#
 $BUGS = ""
 if ($options.bugs) {
     $BUGS = $options.bugs
 }
+#
+#
 #
 $HOMEPAGE = ""
 if ($options.homePage) {
@@ -4367,23 +4422,30 @@ if (![string]::IsNullOrEmpty($SKIPVERSIONEDITS)) {
 }
 
 #
-# Get execution policy, this needs to be equlat  to 'RemoteSigned'
-#
-$ExecPolicy = Get-ExecutionPolicy
-if ($ExecPolicy -ne "RemoteSigned")
-{
-    Log-Message "The powershell execution policy must be set to 'RemoteSigned'" "red"
-    Log-Message "Run the following command in a powershell with elevated priveleges:" "red"
-    Log-Message "   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine" "red"
-    exit 90
-}
-
-#
 # Check dist release path for dist release
 #
 if ($DISTRELEASE -eq "Y" -and [string]::IsNullOrEmpty($PATHTODIST)) {
     Log-Message "pathToDist must be specified for dist release" "red"
     exit 1
+}
+
+#
+# Make sure execution policy is RemoteSigned
+#
+$ExecutionPolicy = Get-ExecutionPolicy
+if ($ExecutionPolicy -ne "RemoteSigned")
+{
+    Log-Message "You must set the powershell execution policy for localhost to 'RemoteSigned'" "red"
+    if (![string]::IsNullOrEmpty($ExecutionPolicy)) {
+        Log-Message "    Current policy is '$ExecutionPolicy'" "red"
+    }
+    else {
+        Log-Message "    There is no current policy set" "red"
+    }
+    Log-Message "    Open an elevated command shell using 'Run as Administrator' and execute the following commands:" "red"
+    Log-Message "        powershell" "red"
+    Log-Message "        Set-ExecutionPolicy -ExecutionPolicy RemoteSigned" "red"
+    exit 1;
 }
 
 #
@@ -4494,25 +4556,6 @@ if ($EMAILRECIP -is [system.string] -and ![string]::IsNullOrEmpty($EMAILRECIP))
 if ($TESTEMAILRECIP -is [system.string] -and ![string]::IsNullOrEmpty($TESTEMAILRECIP))
 {
     $TESTEMAILRECIP = @($TESTEMAILRECIP); #convert to array
-}
-
-#
-# Make sure execution policy is RemoteSigned
-#
-$ExecutionPolicy = Get-ExecutionPolicy
-if ($ExecutionPolicy -ne "RemoteSigned")
-{
-    Log-Message "You must set the powershell execution policy for localhost to 'RemoteSigned'" "red"
-    if (![string]::IsNullOrEmpty($ExecutionPolicy)) {
-        Log-Message "    Current policy is '$ExecutionPolicy'" "red"
-    }
-    else {
-        Log-Message "    There is no current policy set" "red"
-    }
-    Log-Message "    Open an elevated command shell using 'Run as Administrator' and execute the following commands:" "red"
-    Log-Message "        powershell" "red"
-    Log-Message "        Set-ExecutionPolicy -ExecutionPolicy RemoteSigned" "red"
-    exit 1;
 }
 
 #
@@ -4726,7 +4769,7 @@ Log-Message "Current version has been validated" "darkgreen"
 #     3. Populate and edit history text file
 #     4. Populate and edit changelog markdown file
 #
-if ($RUN -eq 1) 
+if ($RUN -eq 1 -and $REPUBLISH.psobject.Properties.Length -eq 0)
 {
     Log-Message "The current version is $CURRENTVERSION"
     #
@@ -4888,7 +4931,15 @@ if ($RUN -eq 1)
 else
 {
     Log-Message "The current version is $CURRENTVERSION"
-    Log-Message "This is publish run #$RUN, the previously determined version $VERSION is the new version" "magenta"
+    if ($REPUBLISH.psobject.Properties.Length -eq 0)
+    {
+        Log-Message "This is publish run #$RUN, the previously determined version $VERSION is the new version" "magenta"
+    }
+    else 
+    {
+        $VERSION = $CURRENTVERSION
+        Log-Message "This is a re-publish run, setting version to $CURRENTVERSION" "magenta"
+    }
 }
 
 
@@ -4930,7 +4981,7 @@ Log-Message "Date                : $TDATE"
 #
 # Process $HISTORYFILE
 #
-if (![string]::IsNullOrEmpty($HISTORYFILE))
+if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.psobject.Properties.Length -eq 0)
 {
     #
     # If history file doesnt exist, create one with the project name as a title
@@ -5012,7 +5063,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE))
 #
 # Process $CHANGELOGFILE
 #
-if (![string]::IsNullOrEmpty($CHANGELOGFILE))
+if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.psobject.Properties.Length -eq 0)
 {
     #
     # If changelog markdown file doesnt exist, create one with the project name as a title
@@ -5210,53 +5261,57 @@ if ($DISTRELEASE -eq "Y")
     }
 }
 
-#
-# AppPublisher publishrc version
-#
-Prepare-AppPublisherBuild
-#
-# ExtJs build
-#
-if ((Test-Path("app.json")) -and (Test-Path("package.json"))) {
-    Prepare-ExtJsBuild
-}
-#
-# NPM managed project, update package.json if required
-#
-if ((Test-Path("package.json"))) {
-    Prepare-PackageJson
-}
-#
-# Mantisbt plugin project, update main plugin file if required
-#
-if (![string]::IsNullOrEmpty($MANTISBTPLUGIN)) {
-    Prepare-MantisPluginBuild
-}
-#
-# C project, update main rc file if required
-#
-if (![string]::IsNullOrEmpty($CPROJECTRCFILE)) {
-    Prepare-CprojectBuild
-}
-#
-# If this is a .NET build, update assemblyinfo file
-# Search root dir and one level deep.  If the assembly file is located deeper than 1 dir
-# from the root dir, it should be specified using the versionFiles arry of .publishrc
-#
-$AssemblyInfoLoc = Get-ChildItem -Name -Recurse -Depth 1 -Filter "assemblyinfo.cs" -File -Path . -ErrorAction SilentlyContinue
-if ($AssemblyInfoLoc -is [system.string] -and ![string]::IsNullOrEmpty($AssemblyInfoLoc))
+if ($RUN -eq 1 -and $REPUBLISH.psobject.Properties.Length -eq 0)
 {
-    Prepare-DotNetBuild $AssemblyInfoLoc
-}
-elseif ($AssemblyInfoLoc -is [System.Array] -and $AssemblyInfoLoc.Length -gt 0) {
-    foreach ($AssemblyInfoLocFile in $AssemblyInfoLoc) {
-        Prepare-DotNetBuild $AssemblyInfoLocFile
+    #
+    # AppPublisher publishrc version
+    #
+    Prepare-AppPublisherBuild
+    #
+    # ExtJs build
+    #
+    if ((Test-Path("app.json")) -and (Test-Path("package.json"))) {
+        Prepare-ExtJsBuild
     }
+    #
+    # NPM managed project, update package.json if required
+    #
+    if ((Test-Path("package.json"))) {
+        Prepare-PackageJson
+    }
+    #
+    # Mantisbt plugin project, update main plugin file if required
+    #
+    if (![string]::IsNullOrEmpty($MANTISBTPLUGIN)) {
+        Prepare-MantisPluginBuild
+    }
+    #
+    # C project, update main rc file if required
+    #
+    if (![string]::IsNullOrEmpty($CPROJECTRCFILE)) {
+        Prepare-CprojectBuild
+    }
+    #
+    # If this is a .NET build, update assemblyinfo file
+    # Search root dir and one level deep.  If the assembly file is located deeper than 1 dir
+    # from the root dir, it should be specified using the versionFiles arry of .publishrc
+    #
+    $AssemblyInfoLoc = Get-ChildItem -Name -Recurse -Depth 1 -Filter "assemblyinfo.cs" -File -Path . -ErrorAction SilentlyContinue
+    if ($AssemblyInfoLoc -is [system.string] -and ![string]::IsNullOrEmpty($AssemblyInfoLoc))
+    {
+        Prepare-DotNetBuild $AssemblyInfoLoc
+    }
+    elseif ($AssemblyInfoLoc -is [System.Array] -and $AssemblyInfoLoc.Length -gt 0) {
+        foreach ($AssemblyInfoLocFile in $AssemblyInfoLoc) {
+            Prepare-DotNetBuild $AssemblyInfoLocFile
+        }
+    }
+    #
+    # Version bump specified files in publishrc config 'versionFiles'
+    #
+    Prepare-VersionFiles
 }
-#
-# Version bump specified files in publishrc config 'versionFiles'
-#
-Prepare-VersionFiles
+
 #
 # Run custom build scipts if specified
 #
