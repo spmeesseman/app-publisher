@@ -6064,8 +6064,17 @@ elseif ($_RepoType -eq "git")
                 {
                     #
                     # Call git tag to create 'tag', then push to remote with push --tags
+                    # If a Github release was made, then the tag was created on release, remove that tag and re-tag
                     #
-                    & git tag -a $TagLocation -m "$TagMessage"
+                    if ($GITHUBRELEASE -ne "Y") {
+                        & git tag -a $TagLocation -m "$TagMessage"
+                    }
+                    else {
+                        Log-Message "Re-tagging after release"
+                        & git push origin :refs/tags/$TagLocation
+                        Check-ExitCode $false
+                        & git tag -fa $TagLocation -m "$TagMessage"
+                    }
                     Check-ExitCode $false
                     & git push --tags
                     Check-ExitCode $false
