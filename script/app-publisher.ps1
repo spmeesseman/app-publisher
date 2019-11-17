@@ -3433,7 +3433,7 @@ Log-Message "----------------------------------------------------------------" "
 #
 # Merge republish
 #
-if ($options.republish -and $options.republish.psobject.Properties.Length -gt 0)
+if ($options.republish -and $options.republish.Count -gt 0)
 {
     #
     # Set everything to OFF and then apply the republish config
@@ -4769,7 +4769,8 @@ Log-Message "Current version has been validated" "darkgreen"
 #     3. Populate and edit history text file
 #     4. Populate and edit changelog markdown file
 #
-if ($RUN -eq 1 -and $REPUBLISH.psobject.Properties.Length -eq 0)
+
+if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
 {
     Log-Message "The current version is $CURRENTVERSION"
     #
@@ -4931,7 +4932,7 @@ if ($RUN -eq 1 -and $REPUBLISH.psobject.Properties.Length -eq 0)
 else
 {
     Log-Message "The current version is $CURRENTVERSION"
-    if ($REPUBLISH.psobject.Properties.Length -eq 0)
+    if ($REPUBLISH.Count -eq 0)
     {
         Log-Message "This is publish run #$RUN, the previously determined version $VERSION is the new version" "magenta"
     }
@@ -4981,7 +4982,7 @@ Log-Message "Date                : $TDATE"
 #
 # Process $HISTORYFILE
 #
-if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.psobject.Properties.Length -eq 0)
+if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0)
 {
     #
     # If history file doesnt exist, create one with the project name as a title
@@ -5063,7 +5064,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.psobject.Properties.L
 #
 # Process $CHANGELOGFILE
 #
-if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.psobject.Properties.Length -eq 0)
+if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0)
 {
     #
     # If changelog markdown file doesnt exist, create one with the project name as a title
@@ -5261,7 +5262,7 @@ if ($DISTRELEASE -eq "Y")
     }
 }
 
-if ($RUN -eq 1 -and $REPUBLISH.psobject.Properties.Length -eq 0)
+if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
 {
     #
     # AppPublisher publishrc version
