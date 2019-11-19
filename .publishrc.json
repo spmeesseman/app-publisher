@@ -1,6 +1,6 @@
 {
     "projectName":       "app-publisher",
-    "version": "1.13.18",
+    "version": "1.14.0",
     "branch":            "trunk",
     "bugs":              "",
     "buildCommand": [
@@ -62,7 +62,6 @@
     "postReleaseCommand":"",
     "repo":              "https://svn.development.pjats.com/pja/app-publisher/trunk",
     "repoType":          "svn",
-    "republish":         {},
     "skipCommit":        "N",
     "skipDeployPush":    "N",
     "skipVersionEdits":  "Y",
