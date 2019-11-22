@@ -5913,9 +5913,7 @@ else {
 # Send release notification email
 #
 if ($EMAILNOTIFICATION -eq "Y") {
-    if (![string]::IsNullOrEmpty($TargetNetLocation) -or ![string]::IsNullOrEmpty($NpmLocation) -or ![string]::IsNullOrEmpty($NugetLocation) ) {
-        Send-Notification "$TargetNetLocation" "$NpmLocation" "$NugetLocation"
-    }
+    Send-Notification "$TargetNetLocation" "$NpmLocation" "$NugetLocation"
 }
 
 #
