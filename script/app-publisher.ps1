@@ -5555,6 +5555,8 @@ if ((Test-Path("package.json"))) {
 #
 # Github Release
 #
+$GithubReleaseId = "";
+
 if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y") 
 {
     Log-Message "Creating GitHub v$VERSION release"
@@ -5606,7 +5608,7 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
             "target_commitish" = "$BRANCH"
             "name" = "v$VERSION"
             "body" = "$GithubChangelog"
-            "draft" = $false
+            "draft" = $true
             "prerelease" = $false
         } | ConvertTo-Json
         #
@@ -5637,6 +5639,8 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
         #
         if ($? -eq $true -and $Response.upload_url)
         {
+            $GithubReleaseId = $Response.id;
+
             Log-Message "Successfully created GitHub release v$VERSION" "darkgreen"
             Log-Message "   ID         : $($Response.id)" "darkgreen"
             Log-Message "   Tarball URL: $($Response.zipball_url)" "darkgreen"
@@ -6129,9 +6133,49 @@ elseif ($_RepoType -eq "git")
                         Check-ExitCode $false
                         & git tag -fa $TagLocation -m "$TagMessage"
                     }
+
                     Check-ExitCode $false
                     & git push --tags
                     Check-ExitCode $false
+
+                    if ($GITHUBRELEASE -eq "Y" -and ![string]::IsNullOrEmpty($GithubReleaseId))
+                    {
+                        Log-Message "Marking release as published"
+                        #
+                        # Mark release published
+                        # Set up the request body for the 'create release' request
+                        #
+                        $Request = @{
+                            "draft" = $false
+                        } | ConvertTo-Json
+                        #
+                        # Set up the request header
+                        #
+                        $Header = @{
+                            "Accept" = "application/vnd.github.v3+json"
+                            "mediaTypeVersion" = "v3"
+                            "squirrelAcceptHeader" = "application/vnd.github.squirrel-girl-preview"
+                            "symmetraAcceptHeader" = "application/vnd.github.symmetra-preview+json"
+                            "Authorization" = "token ${Env:GITHUB_TOKEN}"
+                            "Content-Type" = "application/json; charset=UTF-8"
+                        }
+                        #
+                        # Send the REST POST to publish the release
+                        #
+                        $url = "https://api.github.com/repos/$GITHUBUSER/$PROJECTNAME/releases/" + $GithubReleaseId;
+                        $Response = Invoke-RestMethod $url -UseBasicParsing -Method PATCH -Body $Request -Headers $Header
+                        Check-PsCmdSuccess
+                        #
+                        # Make sure an upload_url value exists on the response object to check for success
+                        #
+                        if ($? -eq $true -and $Response.upload_url)
+                        {
+                            Log-Message "Successfully patched/published GitHub release v$VERSION" "darkgreen"
+                        }
+                        else {
+                            Log-Message "Failed to publish/patch GitHub v$VERSION release" "red"
+                        }
+                    }
                 }
                 else {
                     Log-Message "Dry run, skipping create version tag" "magenta"
