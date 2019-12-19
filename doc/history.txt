@@ -3051,3 +3051,42 @@ November 22nd, 2019
     
     [Fixes #1142]
 
+
+Version 1.14.2
+December 19th, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix:  General
+    
+    The history file is not populated if a commit contains an indented numbered
+    list.  The following script error is seen:
+    
+        Cannot execute command 'is', no such command or program can be found.
+    
+    [Fixes #1292]
+
+2.  Bug Fix:  Releases
+    
+    Github release is created successfully but as of v1.14 it is showing as a
+    draft on Github, must manually publish.
+
+    [Fixes #1256]
+
