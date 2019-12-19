@@ -557,7 +557,7 @@ class HistoryFile
                                     }
                                     else { # numbered list?
                                         $match = [Regex]::Match($PartLine.Substring($j,2), "[1-9](\.|\))");
-                                        is ($match.Success) {
+                                        if ($match.Success) {
                                             $indented +=  "   "
                                         }
                                     }
