@@ -192,7 +192,9 @@ class Vc
 
 class CommitAnalyzer
 {
-    [string]get($Commits, $CommitMap = $null) 
+    [object]$CommitMap = $null
+
+    [string]get($Commits) 
     {
         $ReleaseLevel = "patch";
         #
@@ -269,9 +271,12 @@ class CommitAnalyzer
             }
         }
 
-        if ($CommitMap)
+        if ($this.CommitMap -and $ReleaseLevel -ne "major")
         {
-            $CommitMap.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
+            $this.CommitMap.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
+                if ($ReleaseLevel -eq "major") {
+                    return;
+                }
                 Log-Message ("Processing custom commit message map property '" + $_.Name + "'")
                 if ($linefmt.StartsWith($_.Name + ":") -or $linefmt.StartsWith($_.Name + "("))
                 {
@@ -282,11 +287,13 @@ class CommitAnalyzer
                         {
                             Log-Message ("Found '" + $_.Value.versionBump + "' custom version bump")
                             $ReleaseLevel = $_.Value.versionBump
-                            if ($_.Value.versionBump -eq "patch" -and $ReleaseLevel -ne "minor") {
-                                $ReleaseLevel = "patch";
+                            if ($_.Value.versionBump -eq "patch") {
+                                if ($ReleaseLevel -ne "minor" -and $ReleaseLevel -ne "major") {
+                                    $ReleaseLevel = "patch";
+                                }
                             }
-                            if ($ReleaseLevel -eq "major") {
-                                break;
+                            else {
+                                $ReleaseLevel = $_.Value.versionBump;
                             }
                         }
                         else {
@@ -301,7 +308,7 @@ class CommitAnalyzer
         return $ReleaseLevel;
     }
 
-    [string] getFormatted($Subject, $CommitMap = $null)
+    [string] getFormatted($Subject)
     {
         $FormattedSubject = $Subject.ToLower();
 
@@ -330,9 +337,9 @@ class CommitAnalyzer
             default   { $FormattedSubject = $Subject; break }
         }
 
-        if ($CommitMap)
+        if ($this.CommitMap)
         {
-            $CommitMap.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
+            $this.CommitMap.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
                 Log-Message ("Processing custom commit message map property '" + $_.Name + "'")
                 if ($Subject -eq $_.Name)
                 {
@@ -348,7 +355,9 @@ class CommitAnalyzer
 
 class HistoryFile
 {
-    [bool] containsValidSubject($LineText, $CommitMap = $null)
+    [object]$CommitMap = $null
+
+    [bool] containsValidSubject($LineText)
     {
         $valid = $false;
 
@@ -362,14 +371,13 @@ class HistoryFile
             $LineText.Contains("Tests") -or $LineText.Contains("Project Structure") -or $LineText.Contains("Project Layout") -or
             $LineText.Contains("Visual Enhancement") -or $LineText.StartsWith("Fix") -or $LineText.StartsWith("General"))
 
-        if (!$valid -and $CommitMap)
+        if (!$valid -and $this.CommitMap)
         {
-            $CommitMap.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
+            $this.CommitMap.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
                 Log-Message ("Processing custom commit message map property '" + $_.Name + "'")
                 if ($LineText.Contains($_.Value.formatText))
                 {
                     $valid = $true;
-                    break;
                 }
             }
         }
@@ -382,7 +390,7 @@ class HistoryFile
         return $this.getHistory("", "", 0, $stringver, $false, $in, "", "", "", "", "", "", "", @(), "")
     }
 
-    [string]createSectionFromCommits($CommitsList, $LineLen, $CommitMap = $null)
+    [string]createSectionFromCommits($CommitsList, $LineLen)
     {
         $TextInfo = (Get-Culture).TextInfo
         $comments = ""
@@ -398,7 +406,22 @@ class HistoryFile
         foreach ($msg in $CommitsList)
         {
             $msg = $msg.Trim()
-            if($null -ne $msg -and $msg -ne "" -and !$msg.ToLower().StartsWith("chore") -and !$msg.ToLower().StartsWith("progress"))
+            $customIgnoreFound = $false
+
+            if ($this.CommitMap)
+            {
+                $this.CommitMap.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
+                    if (!$msg.ToLower().StartsWith($_.Name ) -and !$_.Value.include) {
+                        $customIgnoreFound = $true
+                    }
+                }
+            }
+
+            if ($customIgnoreFound) {
+                continue;
+            }
+
+            if ($null -ne $msg -and $msg -ne "" -and !$msg.ToLower().StartsWith("chore") -and !$msg.ToLower().StartsWith("progress"))
             {
                  #
                 # Replace commit tags with full text (non-scoped)
@@ -457,9 +480,9 @@ class HistoryFile
                 $msg = $msg.Replace("progress(", "Ongoing Progress(")
                 $msg = $msg.Replace("misc(", "Miscellaneous(")
 
-                if ($CommitMap)
+                if ($this.CommitMap)
                 {
-                    $CommitMap.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
+                    $this.CommitMap.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
                         $msg = $msg.Replace($_.Name + ": ", $_.Value.formatText + "`r`n`r`n")
                         $msg = $msg.Replace($_.Name + "(", $_.Value.formatText + "(")
                     }
@@ -469,7 +492,7 @@ class HistoryFile
                 # Take any parenthesized scopes, remove the parenthesis and line break the message
                 # that follows
                 #
-                [Match] $match = [Regex]::Match($msg, "[(][a-z\- ]*[)]\s*[:][ ]{0,}") # all lower case
+                [Match] $match = [Regex]::Match($msg, "[(][a-z0-9\- ]*[)]\s*[:][ ]{0,}") # all lower case, or numbers
                 while ($match.Success) {
                     $NewText = $match.Value.Replace("(", "")
                     $NewText = $NewText.Replace(")", "")
@@ -1156,7 +1179,7 @@ class HistoryFile
             $numdashes = 0
             for ($numdashes = 0; $numdashes -lt $iNumberOfDashesInVersionLine; $numdashes++) {
                 if ($szContents[$iIndex2 + $numdashes] -ne '-') {
-                    break;
+                    break
                 }
             }
             #
@@ -2794,13 +2817,12 @@ function Get-ReleaseChangelog($ChangeLogParts, $UseFaIcons = $false, $IncludeSty
                     if ($COMMITMSGMAP)
                     {
                         $COMMITMSGMAP.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
-                            if ($commit.subject.Contains($_.Value.formatText) -and $_.Value.iconCls)
+                            if (!$iconSet -and $commit.subject.Contains($_.Value.formatText) -and $_.Value.iconCls)
                             {
                                 $ChangeLog += "<i class=`"fa "
                                 $ChangeLog += $_.Value.iconCls
                                 $ChangeLog += "`"></i> ";
                                 $iconSet = $true;
-                                break;
                             }
                         }
                     }
@@ -3585,13 +3607,14 @@ if ($options.changelogFile) {
     $CHANGELOGFILE = $options.changelogFile
 }
 #
-#
+# Commit message mapping
 #
 $COMMITMSGMAP = $null
 if ($options.commitMsgMap) {
     $COMMITMSGMAP = $options.commitMsgMap
+    $ClsCommitAnalyzer.CommitMap = $COMMITMSGMAP
+    $ClsHistoryFile.CommitMap = $COMMITMSGMAP
 }
-
 #
 #
 #
@@ -5234,10 +5257,21 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0)
                 $Section = $TextInfo.ToTitleCase($TmpCommit.SubString(0, $idx2).ToLower().TrimEnd())
             }
             #
-            # Ignore chores
+            # Ignore chores, progress, and custom specified psubjects to ignore
             #
-            if ($Section.ToLower() -eq "chore") {
-                continue;
+            if ($Section.ToLower() -eq "chore" -or $Section.ToLower() -eq "progress") {
+                continue
+            }
+            $doContinue = $false;
+            if ($COMMITMSGMAP) {
+                $COMMITMSGMAP.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
+                    if (!$Section.ToLower() -eq $_.Name -and !$_.Value.include) {
+                        $doContinue = $true;
+                    }
+                }
+            }
+            if ($doContinue) {
+                continue
             }
             $TmpCommit = $TmpCommit.SubString($idx2 + 1).Trim()
             #
