@@ -192,7 +192,7 @@ class Vc
 
 class CommitAnalyzer
 {
-    [string]get($Commits) 
+    [string]get($Commits, $CommitMap = $null) 
     {
         $ReleaseLevel = "patch";
         #
@@ -269,10 +269,39 @@ class CommitAnalyzer
             }
         }
 
+        if ($CommitMap)
+        {
+            $CommitMap.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
+                Log-Message ("Processing custom commit message map property '" + $_.Name + "'")
+                if ($linefmt.StartsWith($_.Name + ":") -or $linefmt.StartsWith($_.Name + "("))
+                {
+                    Log-Message ($_.Value.formatText + " found")
+                    if ($_.Value.versionBump -ne "none" -and $_.Value.include -ne $false)
+                    {
+                        if ($_.Value.versionBump -eq 'patch' -or $_.Value.versionBump -eq 'minor' -or $_.Value.versionBump -eq 'major')
+                        {
+                            Log-Message ("Found '" + $_.Value.versionBump + "' custom version bump")
+                            $ReleaseLevel = $_.Value.versionBump
+                            if ($_.Value.versionBump -eq "patch" -and $ReleaseLevel -ne "minor") {
+                                $ReleaseLevel = "patch";
+                            }
+                            if ($ReleaseLevel -eq "major") {
+                                break;
+                            }
+                        }
+                        else {
+                            Log-Message ("Found '" + $_.Value.versionBump + "' custom version bump", "red")
+                            Log-Message "Invalid custom version bump", "red"
+                        }
+                    }
+                }
+            }
+        }
+
         return $ReleaseLevel;
     }
 
-    [string] getFormatted($Subject)
+    [string] getFormatted($Subject, $CommitMap = $null)
     {
         $FormattedSubject = $Subject.ToLower();
 
@@ -301,6 +330,17 @@ class CommitAnalyzer
             default   { $FormattedSubject = $Subject; break }
         }
 
+        if ($CommitMap)
+        {
+            $CommitMap.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
+                Log-Message ("Processing custom commit message map property '" + $_.Name + "'")
+                if ($Subject -eq $_.Name)
+                {
+                    $FormattedSubject = $_.Value.formatText
+                }
+            }
+        }
+
         return $FormattedSubject
     }
 }
@@ -308,16 +348,33 @@ class CommitAnalyzer
 
 class HistoryFile
 {
-    [bool] containsValidSubject($LineText)
+    [bool] containsValidSubject($LineText, $CommitMap = $null)
     {
+        $valid = $false;
+
         if ([string]::IsNullOrEmpty($LineText)) {
-            return $false;
+            return $valid;
         }
-        return ($LineText.Contains("Build System") -or $LineText.Contains("Chore") -or $LineText.Contains("Documentation") -or
+
+        $valid = ($LineText.Contains("Build System") -or $LineText.Contains("Chore") -or $LineText.Contains("Documentation") -or
             $LineText.Contains("Feature") -or $LineText.Contains("Bug Fix") -or $LineText.Contains("Performance Enhancement") -or
             $LineText.Contains("Ongoing Progress") -or $LineText.Contains("Refactoring") -or $LineText.Contains("Code Styling") -or
             $LineText.Contains("Tests") -or $LineText.Contains("Project Structure") -or $LineText.Contains("Project Layout") -or
             $LineText.Contains("Visual Enhancement") -or $LineText.StartsWith("Fix") -or $LineText.StartsWith("General"))
+
+        if (!$valid -and $CommitMap)
+        {
+            $CommitMap.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
+                Log-Message ("Processing custom commit message map property '" + $_.Name + "'")
+                if ($LineText.Contains($_.Value.formatText))
+                {
+                    $valid = $true;
+                    break;
+                }
+            }
+        }
+
+        return $valid;
     }
 
     [string]getVersion($in, $stringver)
@@ -325,7 +382,7 @@ class HistoryFile
         return $this.getHistory("", "", 0, $stringver, $false, $in, "", "", "", "", "", "", "", @(), "")
     }
 
-    [string]createSectionFromCommits($CommitsList, $LineLen)
+    [string]createSectionFromCommits($CommitsList, $LineLen, $CommitMap = $null)
     {
         $TextInfo = (Get-Culture).TextInfo
         $comments = ""
@@ -399,6 +456,15 @@ class HistoryFile
                 $msg = $msg.Replace("visual(", "Visual Enhancement(")
                 $msg = $msg.Replace("progress(", "Ongoing Progress(")
                 $msg = $msg.Replace("misc(", "Miscellaneous(")
+
+                if ($CommitMap)
+                {
+                    $CommitMap.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
+                        $msg = $msg.Replace($_.Name + ": ", $_.Value.formatText + "`r`n`r`n")
+                        $msg = $msg.Replace($_.Name + "(", $_.Value.formatText + "(")
+                    }
+                }
+
                 #
                 # Take any parenthesized scopes, remove the parenthesis and line break the message
                 # that follows
@@ -2724,7 +2790,23 @@ function Get-ReleaseChangelog($ChangeLogParts, $UseFaIcons = $false, $IncludeSty
                     $ChangeLog += "<i class=`"fa fa-cog`"></i> ";
                 }
                 else {
-                    $ChangeLog += "<i class=`"fa fa-asterisk`"></i> ";
+                    $iconSet = $false;
+                    if ($COMMITMSGMAP)
+                    {
+                        $COMMITMSGMAP.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
+                            if ($commit.subject.Contains($_.Value.formatText) -and $_.Value.iconCls)
+                            {
+                                $ChangeLog += "<i class=`"fa "
+                                $ChangeLog += $_.Value.iconCls
+                                $ChangeLog += "`"></i> ";
+                                $iconSet = $true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!$iconSet) {
+                        $ChangeLog += "<i class=`"fa fa-asterisk`"></i> ";
+                    }
                 }
                 $ChangeLog += "</td><td nowrap valign=`"top`" style=`"font-weight:bold;padding-left:3px`">"
             }
@@ -3502,6 +3584,14 @@ $CHANGELOGFILE = ""
 if ($options.changelogFile) {
     $CHANGELOGFILE = $options.changelogFile
 }
+#
+#
+#
+$COMMITMSGMAP = $null
+if ($options.commitMsgMap) {
+    $COMMITMSGMAP = $options.commitMsgMap
+}
+
 #
 #
 #

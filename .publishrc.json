@@ -7,6 +7,14 @@
         "npm run build"
     ],
     "changelogFile":     "",
+    "commitMsgMap": {
+        "internal": {
+            "versionBump": "patch",
+            "formatText": "Internal Change",
+            "include": true,
+            "iconCls": "fa-building"
+        }
+    },
     "deployCommand":     "",
     "distRelease":       "N",
     "distReleasePath":   "\\\\192.168.68.120\\d$\\softwareimages",
