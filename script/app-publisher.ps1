@@ -407,11 +407,11 @@ class HistoryFile
         {
             $msg = $msg.Trim()
             $customIgnoreFound = $false
-
+            
             if ($this.CommitMap)
             {
                 $this.CommitMap.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
-                    if (!$msg.ToLower().StartsWith($_.Name ) -and !$_.Value.include) {
+                    if ($msg.ToLower().StartsWith($_.Name ) -and !$_.Value.include) {
                         $customIgnoreFound = $true
                     }
                 }

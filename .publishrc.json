@@ -11,12 +11,12 @@
         "internal": {
             "versionBump": "patch",
             "formatText": "Internal Change",
-            "include": true,
+            "include": false,
             "iconCls": "fa-building"
         }
     },
     "deployCommand":     "",
-    "distRelease":       "N",
+    "distRelease":       "N", 
     "distReleasePath":   "\\\\192.168.68.120\\d$\\softwareimages",
     "distDocPath":       "",
     "dryRunVcRevert":    "Y",
