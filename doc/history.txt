@@ -3090,3 +3090,57 @@ December 19th, 2019
 
     [Fixes #1256]
 
+
+Version 1.15.0
+December 22nd, 2019
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+    
+    Add support for an application defined commit map property in
+    .publishrc.json.
+    
+    Ths functionality is achieved with the following new property:
+    
+        commitMsgMap
+    
+    This property should be an object which defines each commit subject mapping.
+    Each commit subject mapping is also an object that can define the following
+    propertiies:
+    
+        formatText
+        iconCls
+        include
+        versionBump
+    
+    For example:
+    
+        "commitMsgMap": {
+            "internal": {
+                "versionBump": "patch",
+                "formatText": "Internal Change",
+                "include": true,
+                "iconCls": "fa-building"
+            }
+        }
+    
+    [Closes #286]
+
