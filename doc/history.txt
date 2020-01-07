@@ -3144,3 +3144,44 @@ December 22nd, 2019
     
     [Closes #286]
 
+
+Version 1.15.1
+January 7th, 2020
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix:  General
+    
+    Release fails if the history file contains no asterisk line.
+    
+    Most PJ projects contain a line of 75+ asterisks in the history file
+    separating the date/version from the changelog entries.
+    
+    Add support for history files that only contain a dashed line to separate
+    the date/version from the changelog entries.
+    
+    [Fixes #1378]
+
+2.  Bug Fix:  MantisBT Release
+    
+    Release fails to upload if project name contains spaces.
+    
+    [Fixes #1380]
+
