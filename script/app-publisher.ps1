@@ -5759,9 +5759,13 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
         #
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         #
+        # Encode url parts
+        #
+        $encPrjName = $PROJECTNAME.Replace(" ", "%20")
+        #
         # Send the REST POST to create the release
         #
-        $url = "https://api.github.com/repos/$GITHUBUSER/$PROJECTNAME/releases"
+        $url = "https://api.github.com/repos/$GITHUBUSER/$encPrjName/releases"
         $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
         Check-PsCmdSuccess
         #
@@ -5998,9 +6002,13 @@ if ($MANTISBTRELEASE -eq "Y")
                 "Content-Type" = "application/json; charset=UTF-8"
             }
             #
+            # Encode url part
+            #
+            $encPrjName = $MANTISBTPROJECT.Replace(" ", "%20")
+            #
             # Send the REST POST to create the release w/ assets
             #
-            $url = $MANTISBTURL[$i] + "/plugins/Releases/api/releases/$MANTISBTPROJECT"
+            $url = $MANTISBTURL[$i] + "/plugins/Releases/api/releases/$encPrjName"
             Log-Message "Sending Add-Release REST request to $url"
             $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
             Check-PsCmdSuccess
