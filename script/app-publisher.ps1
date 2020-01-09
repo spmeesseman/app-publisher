@@ -5642,7 +5642,7 @@ if ($DISTRELEASE -eq "Y")
             # Copy all files in 'dist' directory that start with $PROJECTNAME, and the history file
             #
             Log-Message "Deploying files to $TargetNetLocation"
-            Copy-Item "$PATHTODIST\*" -Destination "$TargetNetLocation" | Out-Null
+            Copy-Item "$PATHTODIST\*" -Destination "$TargetNetLocation" -Recurse | Out-Null
             Check-PsCmdSuccess
             #
             # DOC
