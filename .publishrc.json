@@ -1,6 +1,6 @@
 {
     "projectName":       "app-publisher",
-    "version": "1.15.1",
+    "version": "1.16.0",
     "branch":            "trunk",
     "bugs":              "",
     "buildCommand": [
@@ -72,7 +72,7 @@
     "repoType":          "svn",
     "skipCommit":        "N",
     "skipDeployPush":    "N",
-    "skipVersionEdits":  "N",
+    "skipVersionEdits":  "Y",
     "testEmailRecip":    "smeesseman@pjats.com",
     "textEditor":        "notepad",
     "vcTag":             "Y",
