@@ -11,7 +11,7 @@
 [![MantisBT version current](https://app1.development.pjats.com/projects/plugins/ApiExtend/api/versionbadge/app-publisher/current)](https://app1.development.pjats.com/projects/set_project.php?project=app-publisher&make_default=no&ref=plugin.php?page=Releases/releases)
 [![MantisBT version next](https://app1.development.pjats.com/projects/plugins/ApiExtend/api/versionbadge/app-publisher/next)](https://app1.development.pjats.com/projects/set_project.php?project=app-publisher&make_default=no&ref=plugin.php?page=Releases/releases)
 
-[![app-publisher-cmdline](res/readme/cmdline.png)
+[![app-publisher-cmdline-banner](res/readme/cmdline-banner.png)](res/readme/cmdline-banner.png)
 
 ## Table of Contents
 
@@ -491,3 +491,5 @@ For a dry run, run the following command:
 For a production release, run the following command:
 
     app-publisher -p ps --no-ci
+
+[![app-publisher-cmdline](res/readme/cmdline.png)](res/cmdline-banner.png)
