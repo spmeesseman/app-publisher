@@ -11,32 +11,45 @@
 [![MantisBT version current](https://app1.development.pjats.com/projects/plugins/ApiExtend/api/versionbadge/app-publisher/current)](https://app1.development.pjats.com/projects/set_project.php?project=app-publisher&make_default=no&ref=plugin.php?page=Releases/releases)
 [![MantisBT version next](https://app1.development.pjats.com/projects/plugins/ApiExtend/api/versionbadge/app-publisher/next)](https://app1.development.pjats.com/projects/set_project.php?project=app-publisher&make_default=no&ref=plugin.php?page=Releases/releases)
 
+[![app-publisher-cmdline](res/readme/cmdline.png)
+
 ## Table of Contents
 
-- [App Publisher - Release Automation](#App-Publisher---Release-Automation)
-  - [Table of Contents](#Table-of-Contents)
-  - [Description](#Description)
-  - [Requirements](#Requirements)
-  - [Installation](#Installation)
-  - [Commit Messages](#Commit-Messages)
-  - [Usage](#Usage)
-    - [Usage - Configuration File](#Usage---Configuration-File)
-    - [Usage - Example Configuration File](#Usage---Example-Configuration-File)
-  - [Configuration Paremeters](#Configuration-Paremeters)
-    - [buildCommand](#buildCommand)
-    - [deployCommand](#deployCommand)
-    - [distRelease](#distRelease)
-    - [distReleasePath](#distReleasePath)
-    - [dryRun](#dryRun)
-    - [pathToDist](#pathToDist)
-    - [postBuildCommand](#postBuildCommand)
-    - [postReleaseCommand](#postReleaseCommand)
-    - [skipVersionEdits](#skipVersionEdits)
-    - [textEditor](#textEditor)
-  - [How the Next Version is Determined](#How-the-Next-Version-is-Determined)
-  - [MantisBT Token](#MantisBT-Token)
-  - [NPM Token](#NPM-Token)
-  - [Windows Installer](#Windows-Installer)
+- [App Publisher - Release Automation](#app-publisher---release-automation)
+  - [Table of Contents](#table-of-contents)
+  - [Description](#description)
+  - [Requirements](#requirements)
+  - [Installation](#installation)
+  - [Commit Messages](#commit-messages)
+  - [Usage](#usage)
+    - [Usage - Configuration File](#usage---configuration-file)
+    - [Usage - Example Configuration File](#usage---example-configuration-file)
+  - [Configuration Parameters](#configuration-parameters)
+    - [branch](#branch)
+    - [bugs](#bugs)
+    - [buildCommand](#buildcommand)
+    - [changelogFile](#changelogfile)
+    - [deployCommand](#deploycommand)
+    - [distRelease](#distrelease)
+    - [distReleasePath](#distreleasepath)
+    - [dryRun](#dryrun)
+    - [dryRunVcRevert](#dryrunvcrevert)
+    - [emailHrefs](#emailhrefs)
+    - [emailNotification](#emailnotification)
+    - [emailPort](#emailport)
+    - [emailRecip](#emailrecip)
+    - [emailServer](#emailserver)
+    - [emailSender](#emailsender)
+    - [pathToDist](#pathtodist)
+    - [postBuildCommand](#postbuildcommand)
+    - [postReleaseCommand](#postreleasecommand)
+    - [projectName](#projectname)
+    - [skipVersionEdits](#skipversionedits)
+    - [textEditor](#texteditor)
+  - [How the Next Version is Determined](#how-the-next-version-is-determined)
+  - [MantisBT Token](#mantisbt-token)
+  - [NPM Token](#npm-token)
+  - [Running Outside of the Code Package Environment](#running-outside-of-the-code-package-environment)
 
 ## Description
 
@@ -291,7 +304,7 @@ An example .publishrc.json file:
         "writeLog":          "N"
     }
 
-## Configuration Paremeters
+## Configuration Parameters
 
 ### branch
 
@@ -442,12 +455,39 @@ To create an npm user if you dont have one, run the following command and follow
 
     $ npm adduser --registry=npm.development.pjats.com --scope=@perryjohnson
 
-Locate the file c:/Users/username/.npmrc (on Windows 10), copy the created token for npm.development.pjats.com from within the file to the environment variable PJ_NPM_TOKEN
+After a period of time, the session token created with this command will expire.  When the token expires, run the login command:
+
+    $ npm login --registry=npm.development.pjats.com --scope=@perryjohnson
 
 For more details, see the [Internal NPM Registry](https://app1.development.pjats.com/doc/developernotes.md#Internal-NPM-Registry) section of the Perry Johnson Developer Notes document.
 
-## Windows Installer
+## Running Outside of the Code Package Environment
 
-App Publisher can be installed globally using `npm install -g app-publisher` or a Windows Installer (as of 5/14/19 WIndows Installer support has been removed).
+To run App-Publisher, nodejs and npm are required.  These are by default installed with the *Code Package* installer.
 
-[Download the Windows Installer](file://///192.168.68.120/d$/softwareimages/app-publisher/1.2.1/app-publisher.exe)
+To use App-Publisher without the *Code Package* environment, install NodeJS using the following steps:
+
+1. [Download NodeJS](https://github.com/spmeesseman/code-package/blob/master/src/nodejs/nodejs.zip?raw=true)
+2. Unzip the zipball to a directory on your hard drive, for example `c:\nodejs`
+3. Add the unzipped directory's location to the SYSTEM PATH.
+
+The download link for NodeJS above installs the version of NodeJS and NPM included with the *Code Package* install and is a simple zip based folder install.  To download the latest version or a Windows installer, visit the NodeJS website.
+
+With NodeJS and NPM installed, open a command line terminal and install App-Publisher globally using the command:
+
+    $ npm install -g @perryjohnson/app-publisher`
+
+Note that to install the package with the above command, you must login to the registry first as described in the [previous section](#npm-token).
+
+To use App-Publisher, open a command line and navigate to the project directory containing the .publishrc.json file.
+
+To see the list of available command line options, run the following command:
+
+    app-publisher -h
+
+For a dry run, run the following command:
+
+    app-publisher -p ps --no-ci --dry-run
+For a production release, run the following command:
+
+    app-publisher -p ps --no-ci
