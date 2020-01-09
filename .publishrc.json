@@ -72,7 +72,7 @@
     "repoType":          "svn",
     "skipCommit":        "N",
     "skipDeployPush":    "N",
-    "skipVersionEdits":  "Y",
+    "skipVersionEdits":  "N",
     "testEmailRecip":    "smeesseman@pjats.com",
     "textEditor":        "notepad",
     "vcTag":             "Y",
@@ -80,6 +80,7 @@
     "vcWebPath":         "https://app1.development.pjats.com/web/svn/filedetails.php%3Frepname=pja%26usemime=1%26path=",
     "versionFiles":      [],
     "versionFilesEditAlways": [],
+    "versionReplaceTags":     [],
     "versionText":       "Version",
     "writeLog":          "N"
 }

@@ -2080,17 +2080,35 @@ function Prepare-VersionFiles()
         {
             if ((Test-Path($VersionFile)) -and !$VersionFilesEdited.Contains($VersionFile))
             {
-                Log-Message "Writing new version $VERSION to $VersionFile"
-                #
                 # replace version in file
                 #
-                $rc = Replace-Version $VersionFile "`"$CURRENTVERSION`"" "`"$VERSION`""
+                $rc = $false
+                Log-Message "Writing new version $VERSION to $VersionFile"
+                if ($VERSIONREPLACETAGS.Length -gt 0)
+                {
+                    foreach ($ReplaceTag in $VERSIONREPLACETAGS) 
+                    {
+                        $rc = Replace-Version $VersionFile "$ReplaceTag$CURRENTVERSION" "$ReplaceTag$VERSION"
+                        if ($rc -eq $true) {
+                            break;
+                        }
+                    }
+                }
                 if ($rc -ne $true)
                 {
-                    $rc = Replace-Version $VersionFile "'$CURRENTVERSION'" "'$VERSION'"
+                    $rc = Replace-Version $VersionFile "`"$CURRENTVERSION`"" "`"$VERSION`""
                     if ($rc -ne $true)
                     {
-                        $rc = Replace-Version $VersionFile $CURRENTVERSION $VERSION
+                        $rc = Replace-Version $VersionFile "'$CURRENTVERSION'" "'$VERSION'"
+                        if ($rc -ne $true)
+                        {
+                            $rc = Replace-Version $VersionFile $CURRENTVERSION $VERSION
+                            if ($rc -ne $true)
+                            {
+                                # TODO
+                                # Error!
+                            }
+                        }
                     }
                 }
                 #
@@ -4088,6 +4106,13 @@ if ($options.versionFilesEditAlways) {
     $VERSIONFILESEDITALWAYS = $options.versionFilesEditAlways
 }
 #
+#
+#
+$VERSIONREPLACETAGS = @()
+if ($options.versionReplaceTags) {
+    $VERSIONREPLACETAGS = $options.versionReplaceTags
+}
+#
 # The text tag to use in the history file for preceding the version number.  It should 
 # be one of the following:
 #
@@ -4635,6 +4660,7 @@ Log-Message "   Text editor      : $TEXTEDITOR"
 Log-Message "   Test email       : $TESTEMAILRECIP"
 Log-Message "   Version files    : $VERSIONFILES"
 Log-Message "   Vers.files alw.ed: $VERSIONFILESEDITALWAYS"
+Log-Message "   Vers.replace tags: $VERSIONREPLACETAGS"
 Log-Message "   Version text     : $VERSIONTEXT"
 
 #
@@ -4663,6 +4689,10 @@ if ($VERSIONFILES -is [system.string] -and ![string]::IsNullOrEmpty($VERSIONFILE
 if ($VERSIONFILESEDITALWAYS -is [system.string] -and ![string]::IsNullOrEmpty($VERSIONFILESEDITALWAYS))
 {
     $VERSIONFILESEDITALWAYS = @($VERSIONFILESEDITALWAYS); #convert to array
+}
+if ($VERSIONREPLACETAGS -is [system.string] -and ![string]::IsNullOrEmpty($VERSIONREPLACETAGS))
+{
+    $VERSIONREPLACETAGS = @($VERSIONREPLACETAGS); #convert to array
 }
 if ($GITHUBASSETS -is [system.string] -and ![string]::IsNullOrEmpty($GITHUBASSETS))
 {
