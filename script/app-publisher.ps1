@@ -3604,6 +3604,36 @@ if ($options.republish -and $options.republish.Count -gt 0)
     if ($options.postReleaseCommand) {
         $options.postReleaseCommand = @()
     }
+    if ($options.preCommitCommand) {
+        $options.preCommitCommand = @()
+    }
+    if ($options.postCommitCommand) {
+        $options.postCommitCommand = @()
+    }
+    if ($options.mantisReleasePreCommand) {
+        $options.mantisReleasePreCommand = @()
+    }
+    if ($options.mantisReleasePostCommand) {
+        $options.mantisReleasePostCommand = @()
+    }
+    if ($options.npmReleasePreCommand) {
+        $options.npmReleasePreCommand = @()
+    }
+    if ($options.npmReleasePostCommand) {
+        $options.npmReleasePostCommand = @()
+    }
+    if ($options.githubReleasePreCommand) {
+        $options.githubReleasePreCommand = @()
+    }
+    if ($options.githubReleasePostCommand) {
+        $options.githubReleasePostCommand = @()
+    }
+    if ($options.distReleasePreCommand) {
+        $options.distReleasePreCommand = @()
+    }
+    if ($options.distReleasePostCommand) {
+        $options.distReleasePostCommand = @()
+    }
     $options.republish.psobject.Properties | ForEach-Object {
         $options | Add-Member -MemberType $_.MemberType -Name $_.Name -Value $_.Value -Force
     }
@@ -3979,6 +4009,76 @@ if ($options.pathPreRoot) {
 $POSTBUILDCOMMAND = @()
 if ($options.postBuildCommand) {
     $POSTBUILDCOMMAND = $options.postBuildCommand
+}
+#
+# The build command(s) to before changes are committed to version control
+#
+$PRECOMMITCOMMAND = @()
+if ($options.preCommitCommand) {
+    $PRECOMMITCOMMAND = $options.preCommitCommand
+}
+#
+# The build command(s) to after changes are committed to version control
+#
+$POSTCOMMITCOMMAND = @()
+if ($options.postCommitCommand) {
+    $POSTCOMMITCOMMAND = $options.postCommitCommand
+}
+#
+# The build command(s) to before a dist release is made
+#
+$DISTRELEASEPRECOMMAND = @()
+if ($options.distReleasePreCommand) {
+    $DISTRELEASEPRECOMMAND = $options.distReleasePreCommand
+}
+#
+# The build command(s) to after a dist release is made
+#
+$DISTRELEASEPOSTCOMMAND = @()
+if ($options.distReleasePostCommand) {
+    $DISTRELEASEPOSTCOMMAND = $options.distReleasePostCommand
+}
+#
+# The build command(s) to before a mantis release is made
+#
+$MANTISRELEASEPRECOMMAND = @()
+if ($options.mantisReleasePreCommand) {
+    $MANTISRELEASEPRECOMMAND = $options.mantisReleasePreCommand
+}
+#
+# The build command(s) to after a mantis release is made
+#
+$MANTISRELEASEPOSTCOMMAND = @()
+if ($options.mantisReleasePostCommand) {
+    $MANTISRELEASEPOSTCOMMAND = $options.mantisReleasePostCommand
+}
+#
+# The build command(s) to before a npm release is made
+#
+$NPMRELEASEPRECOMMAND = @()
+if ($options.npmReleasePreCommand) {
+    $NPMRELEASEPRECOMMAND = $options.npmReleasePreCommand
+}
+#
+# The build command(s) to after a npm release is made
+#
+$NPMRELEASEPOSTCOMMAND = @()
+if ($options.npmReleasePostCommand) {
+    $NPMRELEASEPOSTCOMMAND = $options.npmReleasePostCommand
+}
+#
+# The build command(s) to before a Github release is made
+#
+$GITHUBRELEASEPRECOMMAND = @()
+if ($options.githubReleasePreCommand) {
+    $GITHUBRELEASEPRECOMMAND = $options.githubReleasePreCommand
+}
+#
+# The build command(s) to after a Github release is made
+#
+$GITHUBRELEASEPOSTCOMMAND = @()
+if ($options.githubReleasePostCommand) {
+    $GITHUBRELEASEPOSTCOMMAND = $options.githubReleasePostCommand
 }
 #
 # The build command(s) to after the internal builds have been completed
@@ -4658,7 +4758,17 @@ Log-Message "   NPM release      : $NPMRELEASE"
 Log-Message "   NPM registry     : $NPMREGISTRY"
 Log-Message "   NPM scope        : $NPMSCOPE"
 Log-Message "   Nuget release    : $NUGETRELEASE"
+Log-Message "   Pre Commit cmd   : $PRECOMMITCOMMAND"
+Log-Message "   Pre Dist cmd     : $DISTRELEASEPRECOMMAND"
+Log-Message "   Pre Github cmd   : $GITHUBRELEASEPRECOMMAND"
+Log-Message "   Pre Mantis cmd   : $MANTISRELEASEPRECOMMAND"
+Log-Message "   Pre Npm cmd      : $NPMRELEASEPRECOMMAND"
 Log-Message "   Post Build cmd   : $POSTBUILDCOMMAND"
+Log-Message "   Post Commit cmd  : $POSTCOMMITCOMMAND"
+Log-Message "   Post Dist cmd    : $DISTRELEASEPOSTCOMMAND"
+Log-Message "   Post Github cmd  : $GITHUBRELEASEPOSTCOMMAND"
+Log-Message "   Post Mantis cmd  : $MANTISRELEASEPOSTCOMMAND"
+Log-Message "   Post Npm cmd     : $NPMRELEASEPOSTCOMMAND"
 Log-Message "   Post Release cmd : $POSTRELEASECOMMAND"
 Log-Message "   Path to root     : $PATHTOROOT"
 Log-Message "   Path to main root: $PATHTOMAINROOT"
@@ -4697,6 +4807,46 @@ if ($POSTBUILDCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($POSTBUI
 if ($POSTRELEASECOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($POSTRELEASECOMMAND))
 {
     $POSTRELEASECOMMAND = @($POSTRELEASECOMMAND); #convert to array
+}
+if ($POSTCOMMITCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($POSTCOMMITCOMMAND))
+{
+    $POSTCOMMITCOMMAND = @($POSTCOMMITCOMMAND); #convert to array
+}
+if ($PRECOMMITCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($PRECOMMITCOMMAND))
+{
+    $PRECOMMITCOMMAND = @($PRECOMMITCOMMAND); #convert to array
+}
+if ($DISTRELEASEPRECOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($DISTRELEASEPRECOMMAND))
+{
+    $DISTRELEASEPRECOMMAND = @($DISTRELEASEPRECOMMAND); #convert to array
+}
+if ($DISTRELEASEPOSTCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($DISTRELEASEPOSTCOMMAND))
+{
+    $DISTRELEASEPOSTCOMMAND = @($DISTRELEASEPOSTCOMMAND); #convert to array
+}
+if ($GITHUBRELEASEPRECOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($GITHUBRELEASEPRECOMMAND))
+{
+    $GITHUBRELEASEPRECOMMAND = @($GITHUBRELEASEPRECOMMAND); #convert to array
+}
+if ($GITHUBRELEASEPOSTCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($GITHUBRELEASEPOSTCOMMAND))
+{
+    $GITHUBRELEASEPOSTCOMMAND = @($GITHUBRELEASEPOSTCOMMAND); #convert to array
+}
+if ($MANTISRELEASEPRECOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($MANTISRELEASEPRECOMMAND))
+{
+    $MANTISRELEASEPRECOMMAND = @($MANTISRELEASEPRECOMMAND); #convert to array
+}
+if ($MANTISRELEASEPOSTCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($MANTISRELEASEPOSTCOMMAND))
+{
+    $MANTISRELEASEPOSTCOMMAND = @($MANTISRELEASEPOSTCOMMAND); #convert to array
+}
+if ($NPMRELEASEPRECOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($NPMRELEASEPRECOMMAND))
+{
+    $NPMRELEASEPRECOMMAND = @($NPMRELEASEPRECOMMAND); #convert to array
+}
+if ($NPMRELEASEPOSTCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($NPMRELEASEPOSTCOMMAND))
+{
+    $NPMRELEASEPOSTCOMMAND = @($NPMRELEASEPOSTCOMMAND); #convert to array
 }
 if ($VERSIONFILES -is [system.string] -and ![string]::IsNullOrEmpty($VERSIONFILES))
 {
@@ -5512,6 +5662,12 @@ $NugetLocation = ""
 if ($NPMRELEASE -eq "Y") 
 {
     Log-Message "Starting NPM release"
+    
+    #
+    # Run pre npm-release scripts if specified
+    #
+    Run-Scripts "preNpmRelease" $NPMRELEASEPRECOMMAND $false $false
+
     if (Test-Path("package.json"))
     {
         $PublishFailed = $false;
@@ -5600,6 +5756,11 @@ if ($NPMRELEASE -eq "Y")
     else {
         Log-Message "Could not find package.json" "darkyellow"
     }
+    
+    #
+    # Run pre npm-release scripts if specified
+    #
+    Run-Scripts "postNpmRelease" $NPMRELEASEPOSTCOMMAND $false $false
 }
 
 #
@@ -5617,6 +5778,12 @@ if ($NUGETRELEASE -eq "Y")
 if ($DISTRELEASE -eq "Y") 
 {
     Log-Message "Starting Distribution release"
+
+    #
+    # Run pre distribution-release scripts if specified
+    #
+    Run-Scripts "preDistRelease" $DISTRELEASEPRECOMMAND $false $false
+
     #
     # Copy history file to dist directory
     #
@@ -5717,6 +5884,11 @@ if ($DISTRELEASE -eq "Y")
     else {
         Log-Message "Skipped network release push (user specified)" "magenta"
     }
+
+    #
+    # Run pre distribution-release scripts if specified
+    #
+    Run-Scripts "postDistRelease" $DISTRELEASEPOSTCOMMAND $false $false
 }
 
 #
@@ -5740,6 +5912,11 @@ $GithubReleaseId = "";
 if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y") 
 {
     Log-Message "Creating GitHub v$VERSION release"
+
+    #
+    # Run pre msntis-release scripts if specified
+    #
+    Run-Scripts "preGithubRelease" $GITHUBRELEASEPRECOMMAND $false $false
 
     #
     # Create changelog content
@@ -5900,6 +6077,11 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
             Log-Message "Failed to create GitHub v$VERSION release" "red"
         }
     }
+
+    #
+    # Run pre msntis-release scripts if specified
+    #
+    Run-Scripts "postGithubRelease" $GITHUBRELEASEPOSTCOMMAND $false $false
 }
 
 #
@@ -5909,6 +6091,11 @@ if ($MANTISBTRELEASE -eq "Y")
 {
     Log-Message "Starting MantisBT release"
     Log-Message "Creating MantisBT v$VERSION release"
+
+    #
+    # Run pre msntis-release scripts if specified
+    #
+    Run-Scripts "preMantisRelease" $MANTISRELEASEPRECOMMAND $false $false
 
     $dry_run = 0;
     $ReleaseVersion = $VERSION;
@@ -6088,6 +6275,11 @@ if ($MANTISBTRELEASE -eq "Y")
     else {
         Log-Message "Failed to create MantisBT v$VERSION release" "red"
     }
+
+    #
+    # Run pre msntis-release scripts if specified
+    #
+    Run-Scripts "postMantisRelease" $MANTISRELEASEPOSTCOMMAND $false $false
 }
 
 #
@@ -6107,6 +6299,11 @@ else {
 if ($EMAILNOTIFICATION -eq "Y") {
     Send-Notification "$TargetNetLocation" "$NpmLocation" "$NugetLocation"
 }
+
+#
+# Run pre commit scripts if specified
+#
+Run-Scripts "preCommit" $PRECOMMITCOMMAND $false $false
 
 #
 # Change dircetory to svn/git root that contains the .svn/.git folder to isse SVN commands,
@@ -6382,6 +6579,11 @@ elseif ($_RepoType -eq "git")
 if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") {
     set-location $PATHPREROOT
 }
+
+#
+# Run pre commit scripts if specified
+#
+Run-Scripts "postCommit" $POSTCOMMITCOMMAND $false $false
 
 #
 # Run post build scripts if specified
