@@ -2704,7 +2704,15 @@ function Edit-File($File, $SeekToEnd = $false, $skipEdit = $false)
         if ($skipEdit -and $VERSIONFILESEDITALWAYS.Contains($File)) 
         {
             Log-Message "Set Edit Always Version File - $File"  
-            $skipEdit = $false;
+            $skipEdit = $false
+        }
+
+        #
+        # publishrc can specify a file should be scrolled to bottom
+        #
+        if ($VERSIONFILESSCROLLDOWN.Contains($File))
+        {
+            $SeekToEnd = $true
         }
 
         if (!$skipEdit -and ![string]::IsNullOrEmpty($TEXTEDITOR))
@@ -2779,7 +2787,7 @@ function Edit-File($File, $SeekToEnd = $false, $skipEdit = $false)
             #
             # If specified, send CTRL+{END} key combination to notepad process to place cursor at end
             # of the file being edited.  Useful for large files (i.e. changelog/history).
-            #
+            #$SeekToEnd
             if ($SeekToEnd -eq $true) {
                 $WSShell.sendkeys("^{END}");
             }
@@ -4108,6 +4116,13 @@ if ($options.versionFilesEditAlways) {
 #
 #
 #
+$VERSIONFILESSCROLLDOWN = @()
+if ($options.versionFilesScrollDown) {
+    $VERSIONFILESSCROLLDOWN = $options.versionFilesScrollDown
+}
+#
+#
+#
 $VERSIONREPLACETAGS = @()
 if ($options.versionReplaceTags) {
     $VERSIONREPLACETAGS = $options.versionReplaceTags
@@ -4660,6 +4675,7 @@ Log-Message "   Text editor      : $TEXTEDITOR"
 Log-Message "   Test email       : $TESTEMAILRECIP"
 Log-Message "   Version files    : $VERSIONFILES"
 Log-Message "   Vers.files alw.ed: $VERSIONFILESEDITALWAYS"
+Log-Message "   Vers.files scroll: $VERSIONFILESSCROLLDOWN"
 Log-Message "   Vers.replace tags: $VERSIONREPLACETAGS"
 Log-Message "   Version text     : $VERSIONTEXT"
 
@@ -4689,6 +4705,10 @@ if ($VERSIONFILES -is [system.string] -and ![string]::IsNullOrEmpty($VERSIONFILE
 if ($VERSIONFILESEDITALWAYS -is [system.string] -and ![string]::IsNullOrEmpty($VERSIONFILESEDITALWAYS))
 {
     $VERSIONFILESEDITALWAYS = @($VERSIONFILESEDITALWAYS); #convert to array
+}
+if ($VERSIONFILESSCROLLDOWN-is [system.string] -and ![string]::IsNullOrEmpty($VERSIONFILESSCROLLDOWN))
+{
+    $VERSIONFILESSCROLLDOWN = @($VERSIONFILESSCROLLDOWN); #convert to array
 }
 if ($VERSIONREPLACETAGS -is [system.string] -and ![string]::IsNullOrEmpty($VERSIONREPLACETAGS))
 {
