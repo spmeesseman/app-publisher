@@ -77,6 +77,8 @@
         "build": "npx tsc -p ./",
         "app-publish-ps": "npx ./build/bin/app-publisher.js -p ps --no-ci",
         "app-publish-ps-dry": "npx ./build/bin/app-publisher.js -p ps --no-ci --dry-run",
+        "app-publish-ps-email-only": "npx ./build/bin/app-publisher.js -p ps --email-only",
+        "app-publish-ps-republish": "npx ./build/bin/app-publisher.js -p ps --republish",
         "app-publish-node": "npx ./build/bin/app-publisher.js --no-ci",
         "app-publish-node-dry": "npx ./build/bin/app-publisher.js --no-ci --dry-run"
     },
