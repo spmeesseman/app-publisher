@@ -26,6 +26,14 @@ export = async () =>
         }
     );
     parser.addArgument(
+        "--email-only",
+        {
+            dest: "emailOnly",
+            action: "storeTrue",
+            help: "Run the publisher to re-send the latest notification email."
+        }
+    );
+    parser.addArgument(
         [ "-h", "--help" ],
         {
             help: "Display help and exit.",
@@ -54,6 +62,14 @@ export = async () =>
             dest: "readConfig",
             action: "storeTrue",
             help: "Display the contents of the configuration file end exit."
+        }
+    );
+    parser.addArgument(
+        "--republish",
+        {
+            dest: "republish",
+            action: "storeTrue",
+            help: "Re-publish the current/latest version."
         }
     );
     parser.addArgument(
