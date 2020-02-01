@@ -3309,3 +3309,61 @@ January 11th, 2020
     
     [Closes #1413]
 
+
+Version 1.18.0
+January 31st, 2020
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature:  CLI
+    
+    Add command line options for running the publisher in 'republish' mode.
+    
+    The following command line option has been added to achieve this
+    functionality:
+
+        --republish
+    
+    [Closes #1599]
+
+2.  Feature:  Email Notification
+    
+    Add support for re-sending the release notification email for the
+    current/latest version.
+    
+    This should be a mode where the only task performed is re-sending the exact
+    email notification that was sent on the current version's initial release.
+    
+    The following command line option has been added to activate this mode:
+    
+        --email-only
+    
+    The following .publishrc variable (set to true or 'Y') has been added to
+    activate this mode:
+    
+        emailOnly
+    
+    [Closes #1598]
+
+3.  Fix:  Email Notification
+
+    When the release notification email is sent in 'publish' mode, the log does
+    not show the success stamp like it does when in 'dry run' mode.
+
