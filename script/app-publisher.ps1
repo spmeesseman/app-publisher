@@ -1624,6 +1624,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
                 else {
                     Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $EMAILRECIP -Subject $Subject -Body $EMAILBODY -Port $EMAILPORT
                 }
+                Check-PsCmdSuccess
             }
             else {
                 if ($TESTEMAILRECIP.Length -gt 0) 
@@ -3747,6 +3748,13 @@ if ($options.dryRunVcRevert) {
 #
 # NOTIFICATION EMAIL CONFIG OPTIONS
 #
+$EMAILONLY = $false
+if ($options.emailOnly) {
+    $EMAILONLY = $options.emailOnly
+}
+if ($EMAILONLY -eq "Y") {
+    $EMAILONLY = $true
+}
 $EMAILNOTIFICATION = "Y"
 if ($options.emailNotification) {
     $EMAILNOTIFICATION = $options.emailNotification
@@ -5092,161 +5100,170 @@ Log-Message "Current version has been validated" "darkgreen"
 if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
 {
     Log-Message "The current version is $CURRENTVERSION"
-    #
-    # Get commit messages since last version
-    #
-    # The previous version tag in the form 'vX.X.X' must exist in svn/projectroot/tags in
-    # order to successfully obtain the latest commit messages.  If it does not exist, the
-    # most current tag will be used
-    #
-    $COMMITS = $ClsVc.getCommits($_RepoType, $_Repo, $CURRENTVERSION, $VCTAGPREFIX)
-    #
-    # Check to ensure we got commits since last version.  If not, prompt user whether or
-    # not to proceed, since technically the first time this script is used, we don't know
-    # how to retrieve the latest commits
-    #
-    if ($COMMITS -eq $null -or $COMMITS.Length -eq 0) 
-    {
-        Log-Message "Commits since the last version or the version tag could not be found"
-        Log-Message "[PROMPT] User input required"
-        $Proceed = read-host -prompt "Proceed anyway? Y[N]"
-        if ($Proceed.ToUpper() -ne "Y") {
-            Log-Message "User cancelled, exiting" "red"
-            exit 155
-        }
-    }
 
-    #
-    # Calculate next version number
-    #
-    # If this is an NPM project, we use node to determine the current version in package.json
-    # For all other project types, we parse the history file for the current version.
-    #
-    # Currently projects are versioned in one of two ways:
-    #
-    #     1. Legacy incremental whole number version (100, 101, 102)
-    #     2. Semantically versioned (major.minor.patch)
-    #
-    # If this is a semantically versioned project (whether the version was obtained via node or 
-    # history file parsing), we will use semver to calculate the next version if possible.  If 
-    # semver is not available, prompt user for next version number.
-    #
-    # If this is a legacy incremental versioned project, the verison obtained in the history will be
-    # incremented by +1.
-    #
-    $VersionInteractive = "N"
-    #
-    if ($VERSIONSYSTEM -eq "semver")
+    if (!$EMAILONLY)
     {
         #
-        # use semver to retrieve next version
-        # Analyze the commits to determine major, minor, patch release
+        # Get commit messages since last version
         #
-        $RELEASELEVEL = $ClsCommitAnalyzer.get($COMMITS)
+        # The previous version tag in the form 'vX.X.X' must exist in svn/projectroot/tags in
+        # order to successfully obtain the latest commit messages.  If it does not exist, the
+        # most current tag will be used
         #
-        # Get next version
+        $COMMITS = $ClsVc.getCommits($_RepoType, $_Repo, $CURRENTVERSION, $VCTAGPREFIX)
         #
-        if ($RUN -eq 1 -or $DRYRUN -eq $true) {
-            if (!$IsAppPublisher) {
-                $VERSION = & app-publisher-semver -i $RELEASELEVEL $CURRENTVERSION
+        # Check to ensure we got commits since last version.  If not, prompt user whether or
+        # not to proceed, since technically the first time this script is used, we don't know
+        # how to retrieve the latest commits
+        #
+        if ($COMMITS -eq $null -or $COMMITS.Length -eq 0) 
+        {
+            Log-Message "Commits since the last version or the version tag could not be found"
+            Log-Message "[PROMPT] User input required"
+            $Proceed = read-host -prompt "Proceed anyway? Y[N]"
+            if ($Proceed.ToUpper() -ne "Y") {
+                Log-Message "User cancelled, exiting" "red"
+                exit 155
+            }
+        }
+
+        #
+        # Calculate next version number
+        #
+        # If this is an NPM project, we use node to determine the current version in package.json
+        # For all other project types, we parse the history file for the current version.
+        #
+        # Currently projects are versioned in one of two ways:
+        #
+        #     1. Legacy incremental whole number version (100, 101, 102)
+        #     2. Semantically versioned (major.minor.patch)
+        #
+        # If this is a semantically versioned project (whether the version was obtained via node or 
+        # history file parsing), we will use semver to calculate the next version if possible.  If 
+        # semver is not available, prompt user for next version number.
+        #
+        # If this is a legacy incremental versioned project, the verison obtained in the history will be
+        # incremented by +1.
+        #
+        $VersionInteractive = "N"
+        #
+        if ($VERSIONSYSTEM -eq "semver")
+        {
+            #
+            # use semver to retrieve next version
+            # Analyze the commits to determine major, minor, patch release
+            #
+            $RELEASELEVEL = $ClsCommitAnalyzer.get($COMMITS)
+            #
+            # Get next version
+            #
+            if ($RUN -eq 1 -or $DRYRUN -eq $true) {
+                if (!$IsAppPublisher) {
+                    $VERSION = & app-publisher-semver -i $RELEASELEVEL $CURRENTVERSION
+                }
+                else {
+                    $VERSION = & semver -i $RELEASELEVEL $CURRENTVERSION
+                }
             }
             else {
-                $VERSION = & semver -i $RELEASELEVEL $CURRENTVERSION
+                $VERSION = $CURRENTVERSION
             }
         }
-        else {
-            $VERSION = $CURRENTVERSION
+        elseif ($VERSIONSYSTEM -eq "mantisbt" -or $VERSIONSYSTEM -eq '.net')
+        {
+            $VERSION = ""
+            $VersionInteractive = "Y"
         }
-    }
-    elseif ($VERSIONSYSTEM -eq "mantisbt" -or $VERSIONSYSTEM -eq '.net')
-    {
-        $VERSION = ""
-        $VersionInteractive = "Y"
-    }
-    elseif ($VERSIONSYSTEM -eq "incremental")
-    {
+        elseif ($VERSIONSYSTEM -eq "incremental")
+        {
+            #
+            # Whole # incremental versioning, i.e. 100, 101, 102...
+            #
+            Log-Message "Using legacy incremental versioning"
+            if ($RUN -eq 1 -or $DRYRUN -eq $true) {
+                try {
+                    $VERSION = ([System.Int32]::Parse($CURRENTVERSION) + 1).ToString()
+                }
+                catch {
+                    $VERSION = ""
+                }
+            }
+            else {
+                $VERSION = $CURRENTVERSION
+            }
+        }
         #
-        # Whole # incremental versioning, i.e. 100, 101, 102...
+        # If version could not be found or version system is 'manual', then prompt for version 
         #
-        Log-Message "Using legacy incremental versioning"
-        if ($RUN -eq 1 -or $DRYRUN -eq $true) {
-            try {
-                $VERSION = ([System.Int32]::Parse($CURRENTVERSION) + 1).ToString()
-            }
-            catch {
-                $VERSION = ""
-            }
+        if (![string]::IsNullOrEmpty($VERSION)) 
+        {
+            Log-Message "The suggested new version is $VERSION"
         }
-        else {
-            $VERSION = $CURRENTVERSION
+        elseif ($VERSIONSYSTEM -ne "manual" -and $VersionInteractive -eq "N")
+        {
+            Log-Message "New version could not be determined, you must manually input the new version"
+            $VersionInteractive = "Y"
         }
-    }
-    #
-    # If version could not be found or version system is 'manual', then prompt for version 
-    #
-    if (![string]::IsNullOrEmpty($VERSION)) 
-    {
-        Log-Message "The suggested new version is $VERSION"
-    }
-    elseif ($VERSIONSYSTEM -ne "manual" -and $VersionInteractive -eq "N")
-    {
-        Log-Message "New version could not be determined, you must manually input the new version"
-        $VersionInteractive = "Y"
-    }
 
-    if ($VERSIONSYSTEM -eq "manual" -or $INTERACTIVE -eq "Y" -or $VersionInteractive -eq "Y") 
-    {
-        Log-Message "[PROMPT] User input required"
-        $NewVersion = read-host -prompt "Enter the version #, or C to cancel [$VERSION]"
-        if ($NewVersion.ToUpper() -eq "C") {
-            Log-Message "User cancelled process, exiting" "red"
-            exit 155
-        }
-        if (![string]::IsNullOrEmpty($NewVersion)) {
-            $VERSION = $NewVersion
-            if ($VERSIONSYSTEM -eq "manual") {
-                $CURRENTVERSION = $VERSION + "-pre";
+        if ($VERSIONSYSTEM -eq "manual" -or $INTERACTIVE -eq "Y" -or $VersionInteractive -eq "Y") 
+        {
+            Log-Message "[PROMPT] User input required"
+            $NewVersion = read-host -prompt "Enter the version #, or C to cancel [$VERSION]"
+            if ($NewVersion.ToUpper() -eq "C") {
+                Log-Message "User cancelled process, exiting" "red"
+                exit 155
+            }
+            if (![string]::IsNullOrEmpty($NewVersion)) {
+                $VERSION = $NewVersion
+                if ($VERSIONSYSTEM -eq "manual") {
+                    $CURRENTVERSION = $VERSION + "-pre";
+                }
             }
         }
-    }
 
-    if ([string]::IsNullOrEmpty($VERSION)) {
-        Log-Message "Invalid version for release, exiting" "red"
-        exit 133
-    }
-
-    #
-    # Validate new version
-    #
-    Log-Message "Validating new version: $VERSION"
-    if ($VERSIONSYSTEM -eq "semver")
-    {
-        if (!$IsAppPublisher) {
-            $ValidationVersion = & app-publisher-semver $VERSION
-        }
-        else {
-            $ValidationVersion = & semver $VERSION
-        }
-        if ([string]::IsNullOrEmpty($ValidationVersion)) {
-            Log-Message "The new semantic version ($VERSION) is invalid" "red"
+        if ([string]::IsNullOrEmpty($VERSION)) {
+            Log-Message "Invalid version for release, exiting" "red"
             exit 133
         }
-    }
-    elseif ( $VERSION.Contains(".")) # $VERSIONSYSTEM -eq "mantisbt" -or $VERSIONSYSTEM -eq '.net'
-    {
+
         #
-    }
-    else # incremental versioning
-    {
+        # Validate new version
         #
-        # TODO - Version should contain all digits
-        #
-        if ($false) {
-            Log-Message "The new incremental version ($VERSION) is invalid" "red"
-            exit 134
+        Log-Message "Validating new version: $VERSION"
+        if ($VERSIONSYSTEM -eq "semver")
+        {
+            if (!$IsAppPublisher) {
+                $ValidationVersion = & app-publisher-semver $VERSION
+            }
+            else {
+                $ValidationVersion = & semver $VERSION
+            }
+            if ([string]::IsNullOrEmpty($ValidationVersion)) {
+                Log-Message "The new semantic version ($VERSION) is invalid" "red"
+                exit 133
+            }
         }
+        elseif ( $VERSION.Contains(".")) # $VERSIONSYSTEM -eq "mantisbt" -or $VERSIONSYSTEM -eq '.net'
+        {
+            #
+        }
+        else # incremental versioning
+        {
+            #
+            # TODO - Version should contain all digits
+            #
+            if ($false) {
+                Log-Message "The new incremental version ($VERSION) is invalid" "red"
+                exit 134
+            }
+        }
+        Log-Message "New version has been validated" "darkgreen"
     }
-    Log-Message "New version has been validated" "darkgreen"
+    else  # $EMAILONLY
+    { 
+        Log-Message "EMail only - Set version to $CURRENTVERSION"
+        $VERSION = $CURRENTVERSION
+    }
 }
 else
 {
@@ -5301,7 +5318,7 @@ Log-Message "Date                : $TDATE"
 #
 # Process $HISTORYFILE
 #
-if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0)
+if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and !$EMAILONLY)
 {
     #
     # If history file doesnt exist, create one with the project name as a title
@@ -5383,7 +5400,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0)
 #
 # Process $CHANGELOGFILE
 #
-if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0)
+if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and !$EMAILONLY)
 {
     #
     # If changelog markdown file doesnt exist, create one with the project name as a title
@@ -5566,7 +5583,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0)
 }
 
 $DistIsVersioned = $false
-if ($DISTRELEASE -eq "Y")
+if ($DISTRELEASE -eq "Y" -and !$EMAILONLY)
 {
     $DistDirCreated = $false
     #
@@ -5592,7 +5609,7 @@ if ($DISTRELEASE -eq "Y")
     }
 }
 
-if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
+if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and !$EMAILONLY)
 {
     #
     # AppPublisher publishrc version
@@ -5646,7 +5663,9 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
 #
 # Run custom build scipts if specified
 #
-Run-Scripts "build" $BUILDCOMMAND $true $true
+if (!$EMAILONLY) {
+    Run-Scripts "build" $BUILDCOMMAND $true $true
+}
 
 #
 # Store location paths depending on publish types, these will be used to set links to
@@ -5659,7 +5678,7 @@ $NugetLocation = ""
 #
 # NPM Release
 #
-if ($NPMRELEASE -eq "Y") 
+if ($NPMRELEASE -eq "Y" -and !$EMAILONLY) 
 {
     Log-Message "Starting NPM release"
     
@@ -5762,6 +5781,18 @@ if ($NPMRELEASE -eq "Y")
     #
     Run-Scripts "postNpmRelease" $NPMRELEASEPOSTCOMMAND $false $false
 }
+elseif ($NPMRELEASE -eq "Y" -and $EMAILONLY)
+{
+    if (![string]::IsNullOrEmpty($NPMSCOPE)) {
+        $NpmLocation = "$NPMREGISTRY/-/web/detail/$NPMSCOPE/$PROJECTNAME"
+    }
+    elseif (![string]::IsNullOrEmpty($DefaultScope)) {
+        $NpmLocation = "$NPMREGISTRY/-/web/detail/$DefaultScope/$PROJECTNAME"
+    }
+    else {
+        $NpmLocation = "$NPMREGISTRY/-/web/detail/$PROJECTNAME"
+    }
+}
 
 #
 # TODO - Nuget Release / .NET
@@ -5775,7 +5806,7 @@ if ($NUGETRELEASE -eq "Y")
 #
 # Network Release
 #
-if ($DISTRELEASE -eq "Y") 
+if ($DISTRELEASE -eq "Y" -and !$EMAILONLY) 
 {
     Log-Message "Starting Distribution release"
 
@@ -5890,16 +5921,23 @@ if ($DISTRELEASE -eq "Y")
     #
     Run-Scripts "postDistRelease" $DISTRELEASEPOSTCOMMAND $false $false
 }
+elseif ($DISTRELEASE -eq "Y" -and $EMAILONLY) 
+{
+    $TargetNetLocation = [Path]::Combine($DISTRELEASEPATH, $PROJECTNAME, $VERSION)
+    $TargetDocLocation = [Path]::Combine($DISTDOCPATH, $PROJECTNAME, $VERSION)
+}
 
 #
 # Run post build scripts if specified
 #
-Run-Scripts "postBuild" $POSTBUILDCOMMAND $false $false
+if (!$EMAILONLY) {
+    Run-Scripts "postBuild" $POSTBUILDCOMMAND $false $false
+}
 
 #
 # Restore any configured package.json values to the original values
 #
-if ((Test-Path("package.json"))) {
+if ((Test-Path("package.json")) -and !$EMAILONLY) {
     Restore-PackageJson
 }
 
@@ -5909,7 +5947,7 @@ if ((Test-Path("package.json"))) {
 #
 $GithubReleaseId = "";
 
-if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y") 
+if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y" -and !$EMAILONLY) 
 {
     Log-Message "Creating GitHub v$VERSION release"
 
@@ -6087,7 +6125,7 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y")
 #
 # MantisBT Release
 #
-if ($MANTISBTRELEASE -eq "Y") 
+if ($MANTISBTRELEASE -eq "Y" -and !$EMAILONLY) 
 {
     Log-Message "Starting MantisBT release"
     Log-Message "Creating MantisBT v$VERSION release"
@@ -6285,316 +6323,328 @@ if ($MANTISBTRELEASE -eq "Y")
 #
 # Run custom deploy script if specified
 #
-if ($SKIPDEPLOYPUSH -ne "Y" -and $DRYRUN -eq $false)
+if (!$EMAILONLY)
 {
-    Run-Scripts "deploy" $DEPLOYCOMMAND $false $false
-}
-else {
-    Log-Message "Skipped running custom deploy script" "magenta"
+    if ($SKIPDEPLOYPUSH -ne "Y" -and $DRYRUN -eq $false)
+    {
+        Run-Scripts "deploy" $DEPLOYCOMMAND $false $false
+    }
+    else {
+        Log-Message "Skipped running custom deploy script" "magenta"
+    }
 }
 
 #
 # Send release notification email
 #
-if ($EMAILNOTIFICATION -eq "Y") {
+if ($EMAILNOTIFICATION -eq "Y" -or $EMAILONLY) {
     Send-Notification "$TargetNetLocation" "$NpmLocation" "$NugetLocation"
 }
 
 #
 # Run pre commit scripts if specified
 #
-Run-Scripts "preCommit" $PRECOMMITCOMMAND $false $false
-
-#
-# Change dircetory to svn/git root that contains the .svn/.git folder to isse SVN commands,
-# all paths in the changelist will be relative to this root
-#
-if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") {
-    set-location $PATHTOMAINROOT
+if (!$EMAILONLY) {
+    Run-Scripts "preCommit" $PRECOMMITCOMMAND $false $false
 }
 
-if ($_RepoType -eq "svn")
+if (!$EMAILONLY)
 {
-    if (Test-Path(".svn"))
+    #
+    # Change dircetory to svn/git root that contains the .svn/.git folder to isse SVN commands,
+    # all paths in the changelist will be relative to this root
+    #
+    if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") {
+        set-location $PATHTOMAINROOT
+    }
+
+    if ($_RepoType -eq "svn")
     {
-        #$VCCHANGELIST = $VCCHANGELIST.Trim()
-        #
-        # Check version changes in to SVN if there's any touched files
-        #
-        if ($VCCHANGELIST -ne "") 
+        if (Test-Path(".svn"))
         {
-            if ($DRYRUN -eq $false) 
+            #$VCCHANGELIST = $VCCHANGELIST.Trim()
+            #
+            # Check version changes in to SVN if there's any touched files
+            #
+            if ($VCCHANGELIST -ne "") 
             {
-                if ($SKIPCOMMIT -ne "Y")
-                {
-                    # SVN add
-                    #
-                    if ($VCCHANGELISTADD -ne "")
-                    {
-                        Log-Message "Adding unversioned touched files to GIT version control"
-                        Log-Message "   $VCCHANGELISTADD"
-                        Invoke-Expression -Command "svn add $VCCHANGELISTADD"
-                        Check-ExitCode $false
-                    }
-                    Log-Message "Committing touched files to SVN version control"
-                    Log-Message "   $VCCHANGELIST"
-                    #
-                    # SVN commit
-                    #
-                    Invoke-Expression -Command "svn commit $VCCHANGELIST -m `"chore(release): $VERSION [skip ci]`""
-                    Check-ExitCode $false
-                }
-                elseif (![string]::IsNullOrEmpty($VCCHANGELISTMLT)) 
-                {
-                    Log-Message "Committing touched multi-publish files to SVN version control"
-                    Log-Message "   $VCCHANGELISTMLT"
-                    #
-                    # SVN commit
-                    #
-                    Invoke-Expression -Command "svn commit $VCCHANGELISTMLT -m `"chore(release-mlt): $VERSION [skip ci]`""
-                    Check-ExitCode $false
-                }
-                else {
-                    Log-Message "Skipping touched file SVN commit, user specified" "darkyellow"
-                }
-            }
-            else 
-            {
-                if ($DRYRUNVCREVERT -eq "Y") {
-                    Log-Message "Dry run, reverting changes" "magenta"
-                    Vc-Revert
-                }
-                if ($DRYRUN -eq $true) {
-                    Log-Message "   Dry run, skipping touched file SVN commit" "magenta"
-                }
-            }
-        }
-
-        #
-        # Create version tag
-        #
-        if ($VCTAG -eq "Y")
-        {
-            $TagLocation = $_Repo.Replace("trunk", "tags")
-            if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($VCTAGPREFIX))
-            {
-
-                Log-Message "Skipping version tag, 'vcTagPrefix' must be set for subprojects" "darkyellow"
-                Log-Message "The project must be tagged manually using the following command:" "magenta"
-                Log-Message "   svn copy `"$_Repo`" `"$TagLocation/prefix-v$VERSION`" -m `"chore(release): tag v$VERSION [skip ci]`"" "magenta"
-            }
-            else 
-            {
-                $TagMessage = ""
-                if ([string]::IsNullOrEmpty($VCTAGPREFIX) -or $VCTAGPREFIX -eq ".") 
-                {
-                    $TagLocation = "$TagLocation/v$VERSION"
-                    $TagMessage = "chore(release): tag version $VERSION [skip ci]"
-                }
-                else {
-                    $TagLocation = "$TagLocation/$VCTAGPREFIX-v$VERSION"
-                    $TagMessage = "chore(release): tag $VCTAGPREFIX version $VERSION [skip ci]"
-                }
-                Log-Message "Tagging SVN version at $TagLocation"
                 if ($DRYRUN -eq $false) 
                 {
-                    #
-                    # Call svn copy to create 'tag'
-                    #
-                    & svn copy "$_Repo" "$TagLocation" -m "$TagMessage"
-                    Check-ExitCode $false
-                }
-                else {
-                    Log-Message "Dry run, skipping create version tag" "magenta"
-                }
-            }
-        }
-        else {
-            Log-Message "Skipping version tag, user specified" "darkyellow"
-        }
-    }
-    else {
-        Log-Message "Could not find .svn folder, skipping commit and version tag" "red"
-    }
-}
-
-#
-# GIT
-#
-elseif ($_RepoType -eq "git")
-{
-    if (Test-Path(".git"))
-    {
-        #$VCCHANGELIST = $VCCHANGELIST.Trim()
-        #
-        # Check version changes in to SVN if there's any touched files
-        #
-        if ($VCCHANGELIST -ne "") 
-        {
-            if ($DRYRUN -eq $false) 
-            {
-                if ($SKIPCOMMIT -ne "Y")
-                {
-                    # GIT add
-                    #
-                    if ($VCCHANGELISTADD -ne "")
+                    if ($SKIPCOMMIT -ne "Y")
                     {
-                        Log-Message "Adding unversioned touched files to GIT version control"
-                        Log-Message "   $VCCHANGELISTADD"
-                        Invoke-Expression -Command "git add -- $VCCHANGELISTADD"
+                        # SVN add
+                        #
+                        if ($VCCHANGELISTADD -ne "")
+                        {
+                            Log-Message "Adding unversioned touched files to GIT version control"
+                            Log-Message "   $VCCHANGELISTADD"
+                            Invoke-Expression -Command "svn add $VCCHANGELISTADD"
+                            Check-ExitCode $false
+                        }
+                        Log-Message "Committing touched files to SVN version control"
+                        Log-Message "   $VCCHANGELIST"
+                        #
+                        # SVN commit
+                        #
+                        Invoke-Expression -Command "svn commit $VCCHANGELIST -m `"chore(release): $VERSION [skip ci]`""
                         Check-ExitCode $false
                     }
-                    #
-                    # GIT commit and GIT push
-                    #
-                    Log-Message "Committing touched files to GIT version control"
-                    Log-Message "   $VCCHANGELIST"
-                    Invoke-Expression -Command "git commit --quiet -m `"chore(release): $VERSION [skip ci]`" -- $VCCHANGELIST"
-                    Check-ExitCode $false
-                    Invoke-Expression -Command "git push origin master:master"
-                    Check-ExitCode $false
-                }
-                elseif (![string]::IsNullOrEmpty($VCCHANGELISTMLT))
-                {
-                    Log-Message "Committing touched multi-publish files to SVN version control"
-                    Log-Message "   $VCCHANGELISTMLT"
-                    #
-                    # GIT commit
-                    #
-                    Invoke-Expression -Command "git commit --quiet -m `"chore(release-mlt): $VERSION [skip ci]`" -- $VCCHANGELISTMLT"
-                    Check-ExitCode $false
-                    Invoke-Expression -Command "git push origin master:master"
-                    Check-ExitCode $false
-                }
-                else {
-                    Log-Message "Skipping touched file GIT commit, user specified" "darkyellow"
-                }
-            }
-            else 
-            {
-                if ($DRYRUNVCREVERT -eq "Y") {
-                    Log-Message "Dry run, reverting changes" "magenta"
-                    Vc-Revert
-                }
-                if ($DRYRUN -eq $true) {
-                    Log-Message "Dry run, skipping touched file GIT commit" "magenta"
-                }
-            }
-        }
-
-        #
-        # Create version tag
-        #
-        if ($VCTAG -eq "Y")
-        {
-            if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($VCTAGPREFIX))
-            {
-                Log-Message "Skipping version tag, 'vcTagPrefix' must be set for subprojects" "darkyellow"
-                Log-Message "The project must be tagged manually using the following command:" "magenta"
-                Log-Message "   git tag -a prefix-v$VERSION -m `"chore(release): tag v$VERSION [skip ci]`"" "magenta"
-            }
-            else 
-            {
-                $TagLocation = "v$VERSION"
-                $TagMessage = "chore(release): tag version $VERSION [skip ci]"
-                if (![string]::IsNullOrEmpty($VCTAGPREFIX) -and $VCTAGPREFIX -ne ".") 
-                {
-                    $TagLocation = "${VCTAGPREFIX}-v$VERSION"
-                    $TagMessage = "chore(release): tag $VCTAGPREFIX version $VERSION [skip ci]"
-                }
-                Log-Message "Tagging GIT version $TagLocation"
-                if ($DRYRUN -eq $false) 
-                {
-                    #
-                    # Call git tag to create 'tag', then push to remote with push --tags
-                    # If a Github release was made, then the tag was created on release, remove that tag and re-tag
-                    #
-                    if ($GITHUBRELEASE -ne "Y") {
-                        & git tag -a $TagLocation -m "$TagMessage"
+                    elseif (![string]::IsNullOrEmpty($VCCHANGELISTMLT)) 
+                    {
+                        Log-Message "Committing touched multi-publish files to SVN version control"
+                        Log-Message "   $VCCHANGELISTMLT"
+                        #
+                        # SVN commit
+                        #
+                        Invoke-Expression -Command "svn commit $VCCHANGELISTMLT -m `"chore(release-mlt): $VERSION [skip ci]`""
+                        Check-ExitCode $false
                     }
                     else {
-                        Log-Message "Re-tagging after release"
-                        & git push origin :refs/tags/$TagLocation
-                        Check-ExitCode $false
-                        & git tag -fa $TagLocation -m "$TagMessage"
+                        Log-Message "Skipping touched file SVN commit, user specified" "darkyellow"
                     }
+                }
+                else 
+                {
+                    if ($DRYRUNVCREVERT -eq "Y") {
+                        Log-Message "Dry run, reverting changes" "magenta"
+                        Vc-Revert
+                    }
+                    if ($DRYRUN -eq $true) {
+                        Log-Message "   Dry run, skipping touched file SVN commit" "magenta"
+                    }
+                }
+            }
 
-                    Check-ExitCode $false
-                    & git push --tags
-                    Check-ExitCode $false
+            #
+            # Create version tag
+            #
+            if ($VCTAG -eq "Y")
+            {
+                $TagLocation = $_Repo.Replace("trunk", "tags")
+                if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($VCTAGPREFIX))
+                {
 
-                    if ($GITHUBRELEASE -eq "Y" -and ![string]::IsNullOrEmpty($GithubReleaseId))
+                    Log-Message "Skipping version tag, 'vcTagPrefix' must be set for subprojects" "darkyellow"
+                    Log-Message "The project must be tagged manually using the following command:" "magenta"
+                    Log-Message "   svn copy `"$_Repo`" `"$TagLocation/prefix-v$VERSION`" -m `"chore(release): tag v$VERSION [skip ci]`"" "magenta"
+                }
+                else 
+                {
+                    $TagMessage = ""
+                    if ([string]::IsNullOrEmpty($VCTAGPREFIX) -or $VCTAGPREFIX -eq ".") 
                     {
-                        Log-Message "Marking release as published"
+                        $TagLocation = "$TagLocation/v$VERSION"
+                        $TagMessage = "chore(release): tag version $VERSION [skip ci]"
+                    }
+                    else {
+                        $TagLocation = "$TagLocation/$VCTAGPREFIX-v$VERSION"
+                        $TagMessage = "chore(release): tag $VCTAGPREFIX version $VERSION [skip ci]"
+                    }
+                    Log-Message "Tagging SVN version at $TagLocation"
+                    if ($DRYRUN -eq $false) 
+                    {
                         #
-                        # Mark release published
-                        # Set up the request body for the 'create release' request
+                        # Call svn copy to create 'tag'
                         #
-                        $Request = @{
-                            "draft" = $false
-                        } | ConvertTo-Json
-                        #
-                        # Set up the request header
-                        #
-                        $Header = @{
-                            "Accept" = "application/vnd.github.v3+json"
-                            "mediaTypeVersion" = "v3"
-                            "squirrelAcceptHeader" = "application/vnd.github.squirrel-girl-preview"
-                            "symmetraAcceptHeader" = "application/vnd.github.symmetra-preview+json"
-                            "Authorization" = "token ${Env:GITHUB_TOKEN}"
-                            "Content-Type" = "application/json; charset=UTF-8"
-                        }
-                        #
-                        # Send the REST POST to publish the release
-                        #
-                        $url = "https://api.github.com/repos/$GITHUBUSER/$PROJECTNAME/releases/" + $GithubReleaseId;
-                        $Response = Invoke-RestMethod $url -UseBasicParsing -Method PATCH -Body $Request -Headers $Header
-                        Check-PsCmdSuccess
-                        #
-                        # Make sure an upload_url value exists on the response object to check for success
-                        #
-                        if ($? -eq $true -and $Response.upload_url)
-                        {
-                            Log-Message "Successfully patched/published GitHub release v$VERSION" "darkgreen"
-                        }
-                        else {
-                            Log-Message "Failed to publish/patch GitHub v$VERSION release" "red"
-                        }
+                        & svn copy "$_Repo" "$TagLocation" -m "$TagMessage"
+                        Check-ExitCode $false
+                    }
+                    else {
+                        Log-Message "Dry run, skipping create version tag" "magenta"
                     }
                 }
-                else {
-                    Log-Message "Dry run, skipping create version tag" "magenta"
-                }
+            }
+            else {
+                Log-Message "Skipping version tag, user specified" "darkyellow"
             }
         }
         else {
-            Log-Message "Skipping version tag, user specified" "darkyellow"
+            Log-Message "Could not find .svn folder, skipping commit and version tag" "red"
         }
     }
-    else {
-        Log-Message "Could not find .git folder, skipping commit and version tag" "red"
+
+    #
+    # GIT
+    #
+    elseif ($_RepoType -eq "git")
+    {
+        if (Test-Path(".git"))
+        {
+            #$VCCHANGELIST = $VCCHANGELIST.Trim()
+            #
+            # Check version changes in to SVN if there's any touched files
+            #
+            if ($VCCHANGELIST -ne "") 
+            {
+                if ($DRYRUN -eq $false) 
+                {
+                    if ($SKIPCOMMIT -ne "Y")
+                    {
+                        # GIT add
+                        #
+                        if ($VCCHANGELISTADD -ne "")
+                        {
+                            Log-Message "Adding unversioned touched files to GIT version control"
+                            Log-Message "   $VCCHANGELISTADD"
+                            Invoke-Expression -Command "git add -- $VCCHANGELISTADD"
+                            Check-ExitCode $false
+                        }
+                        #
+                        # GIT commit and GIT push
+                        #
+                        Log-Message "Committing touched files to GIT version control"
+                        Log-Message "   $VCCHANGELIST"
+                        Invoke-Expression -Command "git commit --quiet -m `"chore(release): $VERSION [skip ci]`" -- $VCCHANGELIST"
+                        Check-ExitCode $false
+                        Invoke-Expression -Command "git push origin master:master"
+                        Check-ExitCode $false
+                    }
+                    elseif (![string]::IsNullOrEmpty($VCCHANGELISTMLT))
+                    {
+                        Log-Message "Committing touched multi-publish files to SVN version control"
+                        Log-Message "   $VCCHANGELISTMLT"
+                        #
+                        # GIT commit
+                        #
+                        Invoke-Expression -Command "git commit --quiet -m `"chore(release-mlt): $VERSION [skip ci]`" -- $VCCHANGELISTMLT"
+                        Check-ExitCode $false
+                        Invoke-Expression -Command "git push origin master:master"
+                        Check-ExitCode $false
+                    }
+                    else {
+                        Log-Message "Skipping touched file GIT commit, user specified" "darkyellow"
+                    }
+                }
+                else 
+                {
+                    if ($DRYRUNVCREVERT -eq "Y") {
+                        Log-Message "Dry run, reverting changes" "magenta"
+                        Vc-Revert
+                    }
+                    if ($DRYRUN -eq $true) {
+                        Log-Message "Dry run, skipping touched file GIT commit" "magenta"
+                    }
+                }
+            }
+
+            #
+            # Create version tag
+            #
+            if ($VCTAG -eq "Y")
+            {
+                if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($VCTAGPREFIX))
+                {
+                    Log-Message "Skipping version tag, 'vcTagPrefix' must be set for subprojects" "darkyellow"
+                    Log-Message "The project must be tagged manually using the following command:" "magenta"
+                    Log-Message "   git tag -a prefix-v$VERSION -m `"chore(release): tag v$VERSION [skip ci]`"" "magenta"
+                }
+                else 
+                {
+                    $TagLocation = "v$VERSION"
+                    $TagMessage = "chore(release): tag version $VERSION [skip ci]"
+                    if (![string]::IsNullOrEmpty($VCTAGPREFIX) -and $VCTAGPREFIX -ne ".") 
+                    {
+                        $TagLocation = "${VCTAGPREFIX}-v$VERSION"
+                        $TagMessage = "chore(release): tag $VCTAGPREFIX version $VERSION [skip ci]"
+                    }
+                    Log-Message "Tagging GIT version $TagLocation"
+                    if ($DRYRUN -eq $false) 
+                    {
+                        #
+                        # Call git tag to create 'tag', then push to remote with push --tags
+                        # If a Github release was made, then the tag was created on release, remove that tag and re-tag
+                        #
+                        if ($GITHUBRELEASE -ne "Y") {
+                            & git tag -a $TagLocation -m "$TagMessage"
+                        }
+                        else {
+                            Log-Message "Re-tagging after release"
+                            & git push origin :refs/tags/$TagLocation
+                            Check-ExitCode $false
+                            & git tag -fa $TagLocation -m "$TagMessage"
+                        }
+
+                        Check-ExitCode $false
+                        & git push --tags
+                        Check-ExitCode $false
+
+                        if ($GITHUBRELEASE -eq "Y" -and ![string]::IsNullOrEmpty($GithubReleaseId))
+                        {
+                            Log-Message "Marking release as published"
+                            #
+                            # Mark release published
+                            # Set up the request body for the 'create release' request
+                            #
+                            $Request = @{
+                                "draft" = $false
+                            } | ConvertTo-Json
+                            #
+                            # Set up the request header
+                            #
+                            $Header = @{
+                                "Accept" = "application/vnd.github.v3+json"
+                                "mediaTypeVersion" = "v3"
+                                "squirrelAcceptHeader" = "application/vnd.github.squirrel-girl-preview"
+                                "symmetraAcceptHeader" = "application/vnd.github.symmetra-preview+json"
+                                "Authorization" = "token ${Env:GITHUB_TOKEN}"
+                                "Content-Type" = "application/json; charset=UTF-8"
+                            }
+                            #
+                            # Send the REST POST to publish the release
+                            #
+                            $url = "https://api.github.com/repos/$GITHUBUSER/$PROJECTNAME/releases/" + $GithubReleaseId;
+                            $Response = Invoke-RestMethod $url -UseBasicParsing -Method PATCH -Body $Request -Headers $Header
+                            Check-PsCmdSuccess
+                            #
+                            # Make sure an upload_url value exists on the response object to check for success
+                            #
+                            if ($? -eq $true -and $Response.upload_url)
+                            {
+                                Log-Message "Successfully patched/published GitHub release v$VERSION" "darkgreen"
+                            }
+                            else {
+                                Log-Message "Failed to publish/patch GitHub v$VERSION release" "red"
+                            }
+                        }
+                    }
+                    else {
+                        Log-Message "Dry run, skipping create version tag" "magenta"
+                    }
+                }
+            }
+            else {
+                Log-Message "Skipping version tag, user specified" "darkyellow"
+            }
+        }
+        else {
+            Log-Message "Could not find .git folder, skipping commit and version tag" "red"
+        }
+    }
+
+    if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") {
+        set-location $PATHPREROOT
+    }
+
+    #
+    # Run pre commit scripts if specified
+    #
+    Run-Scripts "postCommit" $POSTCOMMITCOMMAND $false $false
+
+    #
+    # Run post build scripts if specified
+    #
+    Run-Scripts "postRelease" $POSTRELEASECOMMAND $false $false
+
+    if ($DRYRUN -eq $true) {
+        Log-Message "Dry run completed"
+        if ($DRYRUNVCREVERT -ne "Y") {
+            Log-Message "   You should manually revert any auto-touched files via SCM" "magenta"
+        }
     }
 }
-
-if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and $PATHTOMAINROOT -ne ".") {
-    set-location $PATHPREROOT
-}
-
-#
-# Run pre commit scripts if specified
-#
-Run-Scripts "postCommit" $POSTCOMMITCOMMAND $false $false
-
-#
-# Run post build scripts if specified
-#
-Run-Scripts "postRelease" $POSTRELEASECOMMAND $false $false
-
-if ($DRYRUN -eq $true) {
-    Log-Message "Dry run completed"
-    if ($DRYRUNVCREVERT -ne "Y") {
-        Log-Message "   You should manually revert any auto-touched files via SCM" "magenta"
-    }
+else  # $EMAILONLY
+{
+    Log-Message "Notification 'email only' run completed"
 }
 
 Log-Message "Completed"
