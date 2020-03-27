@@ -3367,3 +3367,35 @@ January 31st, 2020
     When the release notification email is sent in 'publish' mode, the log does
     not show the success stamp like it does when in 'dry run' mode.
 
+
+Version 1.19.0
+March 26th, 2020
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature:  Documentation Release
+    
+    Add support for specifying a local docs directory in the publishrc config
+    file to use for the documentation upload source directory.  Currently it is
+    hard coded to look for a directory called "doc", "docs", or "documentation"
+    at the project root.
+    
+    [Closes #1858]
+
