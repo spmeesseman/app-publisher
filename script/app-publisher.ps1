@@ -3716,6 +3716,11 @@ $DISTDOCPATH = ""
 if ($options.distDocPath) {
     $DISTDOCPATH = $options.distDocPath
 }
+##
+$DISTDOCPATHSRC = ""
+if ($options.distDocPathSrc) {
+    $DISTDOCPATHSRC = $options.distDocPathSrc
+}
 #
 $DISTRELEASEPATH = ""
 if ($options.distReleasePath) {
@@ -5876,35 +5881,38 @@ if ($DISTRELEASE -eq "Y" -and !$EMAILONLY)
                 # Copy all pdf files in 'dist' and 'doc' and 'documentation' directories
                 #
                 Log-Message "Deploying pdf documentation to $TargetDocLocation"
-                if (Test-Path("documentation")) {
-                    Copy-Item "documentation\*.pdf" -Destination "$TargetDocLocation" | Out-Null
-                    Check-PsCmdSuccess
-                }
-                if (Test-Path("doc")) {
-                    Copy-Item "doc\*.pdf" -Destination "$TargetDocLocation" | Out-Null
-                    Check-PsCmdSuccess
-                }
-                if (Test-Path("docs")) {
-                    Copy-Item "doc\*.pdf" -Destination "$TargetDocLocation" | Out-Null
-                    Check-PsCmdSuccess
-                }
-                if (Test-Path("$PATHTODIST")) {
-                    Copy-Item "$PATHTODIST\*.pdf" -Destination "$TargetDocLocation" | Out-Null
-                    Check-PsCmdSuccess
-                }
-                if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) {
-                    if (Test-Path("$PATHTOMAINROOT\doc")) {
-                        Copy-Item "$PATHTOMAINROOT\doc\*.pdf" -Destination "$TargetDocLocation" | Out-Null
-                        Check-PsCmdSuccess
+                $DocDirSrc = $DISTDOCPATHSRC
+                if ([string]::IsNullOrEmpty($DocDirSrc)) 
+                {
+                    if (Test-Path("documentation")) {
+                        $DocDirSrc = "documentation"
                     }
-                    if (Test-Path("$PATHTOMAINROOT\docs")) {
-                        Copy-Item "$PATHTOMAINROOT\docs\*.pdf" -Destination "$TargetDocLocation" | Out-Null
-                        Check-PsCmdSuccess
+                    elseif (Test-Path("doc")) {
+                        $DocDirSrc = "doc"
                     }
-                    if (Test-Path("$PATHTOMAINROOT\documentation")) {
-                        Copy-Item "$PATHTOMAINROOT\documentation\*.pdf" -Destination "$TargetDocLocation" | Out-Null
-                        Check-PsCmdSuccess
+                    elseif (Test-Path("docs")) {
+                        $DocDirSrc = "docs"
                     }
+                    elseif (![string]::IsNullOrEmpty($PATHTOMAINROOT))
+                    {
+                        if (Test-Path("$PATHTOMAINROOT\doc")) {
+                            $DocDirSrc = "$PATHTOMAINROOT\doc"
+                        }
+                        if (Test-Path("$PATHTOMAINROOT\docs")) {
+                            $DocDirSrc = "$PATHTOMAINROOT\docs"
+                        }
+                        if (Test-Path("$PATHTOMAINROOT\documentation")) {
+                            $DocDirSrc = "$PATHTOMAINROOT\documentation"
+                        }
+                    }
+                }
+                if (![string]::IsNullOrEmpty($DocDirSrc)) 
+                {
+                    Copy-Item "$DocDirSrc\*.pdf" -Destination "$TargetDocLocation" | Out-Null
+                    Check-PsCmdSuccess
+                }
+                else {
+                    Log-Message "Skipping documentation network push, doc direcory not found" "darkyellow"
                 }
             }
         }
