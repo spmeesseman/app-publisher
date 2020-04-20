@@ -1999,12 +1999,18 @@ function Check-PsCmdSuccess($ExitOnError = $false, $ChangePath = $true)
     }
 }
 
-function Replace-Version($File, $Old, $New)
+function Replace-Version($File, $Old, $New, $CaseSensitive = $false)
 {
     Log-Message "Write new version $New, previously $Old, to $File"
     $Content = Get-Content -path $File -Raw
     Check-PsCmdSuccess
-    $ContentNew = ((Get-Content -path $File -Raw) -replace "$Old", "$New");
+    $ContentNew = ""
+    if ($CaseSensitive -eq $false) {
+        $ContentNew = ((Get-Content -path $File -Raw) -replace "$Old", "$New");
+    }
+    else {
+        $ContentNew = ((Get-Content -path $File -Raw) -creplace "$Old", "$New");
+    }
     Check-PsCmdSuccess
     if ($Content -ne $ContentNew)
     {
@@ -2143,7 +2149,8 @@ function Prepare-ExtJsBuild()
     #
     # Replace version in app.json
     #
-    Replace-Version "app.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
+    Replace-Version "app.json" "appVersion`"[ ]*:[ ]*[`"]$CURRENTVERSION" "appVersion`": `"$VERSION" $true
+    Replace-Version "app.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION" $true
     #
     # Allow manual modifications to app.json
     #
