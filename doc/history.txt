@@ -3399,3 +3399,42 @@ March 26th, 2020
     
     [Closes #1858]
 
+
+Version 1.19.1
+April 20th, 2020
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+    
+    During automatic version replacement in files that contain the version
+    number, any custom defined version property that uses an upper case
+    character is being lower cased.
+    
+    [Fixes #1913]
+
+2.  Bug Fix
+    
+    Unbroken lines in a commit comment that are  longer than the defined
+    historyLineLen property in .publishrc are breaking the release process
+    when building the new history file secton.
+    
+    [Fixes #1936]
+
