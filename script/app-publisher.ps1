@@ -666,7 +666,7 @@ class HistoryFile
                         {
                             $msgPart = $msgPart.SubString($idx + 1) # use 'idx+1' since char at idx is always a space char
                             $line += "`r`n";
-                            if ($msgPart.Length -gt $l) 
+                            if ($msgPart.Length -gt $l -and $msgPart.LastIndexOf(" ") -ne -1) 
                             {
                                 $idx = $msgPart.LastIndexOf(" ", $l - $indented.Length)
                                 $PartLine =$msgPart.SubString(0, $idx);
