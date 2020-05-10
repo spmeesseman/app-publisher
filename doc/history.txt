@@ -3438,3 +3438,32 @@ April 20th, 2020
     
     [Fixes #1936]
 
+
+Version 1.19.2
+May 10th, 2020
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix:  Changelog
+    
+    When there is a period character in a commit scope, the formatted subject
+    line in the changelog/history file for that commit is not being broken apart
+    and formatted correctly.
+
