@@ -492,7 +492,7 @@ class HistoryFile
                 # Take any parenthesized scopes, remove the parenthesis and line break the message
                 # that follows
                 #
-                [Match] $match = [Regex]::Match($msg, "[(][a-z0-9\- _.]*[)]\s*[:][ ]{0,}") # all lower case, or numbers
+                [Match] $match = [Regex]::Match($msg, "[(][a-z0-9\- ]*[)]\s*[:][ ]{0,}") # subject - all lower case, or numbers
                 while ($match.Success) {
                     $NewText = $match.Value.Replace("(", "")
                     $NewText = $NewText.Replace(")", "")
@@ -504,7 +504,7 @@ class HistoryFile
                     $msg = $msg.Replace($match.Value, ":  $NewText`r`n`r`n")
                     $match = $match.NextMatch()
                 }
-                [Match] $match = [Regex]::Match($msg, "[(][a-z\- A-Z]*[)]\s*[:][ ]{0,}") # all thats left (all caps or user formatted)
+                [Match] $match = [Regex]::Match($msg, "[(][a-z\- _.A-Z]*[)]\s*[:][ ]{0,}") # scope - all thats left (all caps or user formatted)
                 while ($match.Success) {
                     $NewText = $match.Value.Replace("(", "")
                     $NewText = $NewText.Replace(")", "")
@@ -5887,7 +5887,6 @@ if ($DISTRELEASE -eq "Y" -and !$EMAILONLY)
                 #
                 # Copy all pdf files in 'dist' and 'doc' and 'documentation' directories
                 #
-                Log-Message "Deploying pdf documentation to $TargetDocLocation"
                 $DocDirSrc = $DISTDOCPATHSRC
                 if ([string]::IsNullOrEmpty($DocDirSrc)) 
                 {
@@ -5915,8 +5914,12 @@ if ($DISTRELEASE -eq "Y" -and !$EMAILONLY)
                 }
                 if (![string]::IsNullOrEmpty($DocDirSrc)) 
                 {
+                    Log-Message "Deploying pdf documentation to $TargetDocLocation"
                     Copy-Item "$DocDirSrc\*.pdf" -Destination "$TargetDocLocation" | Out-Null
                     Check-PsCmdSuccess
+                    #Log-Message "Deploying txt documentation to $TargetDocLocation"
+                    #Copy-Item "$DocDirSrc\*.txt" -Destination "$TargetDocLocation" | Out-Null
+                    #Check-PsCmdSuccess
                 }
                 else {
                     Log-Message "Skipping documentation network push, doc direcory not found" "darkyellow"
