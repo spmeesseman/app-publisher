@@ -3467,3 +3467,34 @@ May 10th, 2020
     line in the changelog/history file for that commit is not being broken apart
     and formatted correctly.
 
+
+Version 1.19.3
+May 10th, 2020
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix:  Changelog
+    
+    The fix in the previous version was applied to the incorrect parsing regex.
+
+    Original issue:  When there is a period character in a commit scope, the
+    formatted subject line in the changelog/history file for that commit is not
+    being broken apart and formatted correctly.
+
