@@ -492,7 +492,7 @@ class HistoryFile
                 # Take any parenthesized scopes, remove the parenthesis and line break the message
                 # that follows
                 #
-                [Match] $match = [Regex]::Match($msg, "[(][a-z0-9\- ]*[)]\s*[:][ ]{0,}") # all lower case, or numbers
+                [Match] $match = [Regex]::Match($msg, "[(][a-z0-9\- _.]*[)]\s*[:][ ]{0,}") # all lower case, or numbers
                 while ($match.Success) {
                     $NewText = $match.Value.Replace("(", "")
                     $NewText = $NewText.Replace(")", "")
