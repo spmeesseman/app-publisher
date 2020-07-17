@@ -39,7 +39,7 @@
         "hook-std": "^2.0.0",
         "json": "^9.0.6",
         "jsonc-parser": "^2.1.0",
-        "lodash": "^4.17.15",
+        "lodash": "^4.17.19",
         "marked": "^0.7.0",
         "marked-terminal": "^3.2.0",
         "minimatch": "^3.0.4",
