@@ -5675,8 +5675,7 @@ if ($DISTRELEASE -eq "Y" -and !$EMAILONLY)
             $DistIsVersioned = Vc-IsVersioned $_.FullName $true $true
             if (!$DistIsVersioned) 
             {
-                Vc-Changelist-Add $_.FullName
-                Vc-Changelist-AddMulti $_.FullName
+                Vc-Changelist-AddRemove $_.FullName
             }
         }
     }
