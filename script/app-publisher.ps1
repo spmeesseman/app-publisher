@@ -3739,6 +3739,13 @@ if ($options.distRelease) {
     $DISTRELEASE = $options.distRelease
 }
 #
+# distAddAllToVC
+#
+$DISTADDALLTOVC = "N"
+if ($options.distAddAllToVC) {
+    $DISTADDALLTOVC = $options.distAddAllToVC
+}
+#
 $DISTDOCPATH = ""
 if ($options.distDocPath) {
     $DISTDOCPATH = $options.distDocPath
@@ -5657,6 +5664,21 @@ if ($DISTRELEASE -eq "Y" -and !$EMAILONLY)
     {
         Vc-Changelist-Add "$PATHTODIST"
         Vc-Changelist-AddMulti "$PATHTODIST"
+    }
+    #
+    # Check DIST dir for unversioned files, add them if needed
+    #
+    if ($DISTADDALLTOVC -eq "Y")
+    {
+        Get-ChildItem "$PATHTODIST" -Filter *.* | Foreach-Object
+        {
+            $DistIsVersioned = Vc-IsVersioned $_.FullName $true $true
+            if (!$DistIsVersioned) 
+            {
+                Vc-Changelist-Add $_.FullName
+                Vc-Changelist-AddMulti $_.FullName
+            }
+        }
     }
 }
 

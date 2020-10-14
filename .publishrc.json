@@ -17,6 +17,7 @@
     },
     "deployCommand":     "",
     "distRelease":       "N", 
+    "distAddAllToVC":    "N",
     "distReleasePath":   "\\\\192.168.68.120\\d$\\softwareimages",
     "distReleasePreCommand": [],
     "distReleasePostCommand": [],
