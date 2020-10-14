@@ -181,11 +181,31 @@ class Vc
         #
         # Sort comments array
         #
-        if ($comments.Length -gt 0) {
+        $retComments = @()
+        if ($comments.Length -gt 0)
+        {
             $comments = $comments | Sort-Object -Unique
+            #
+            # Re-sort comments array and put 'build' comments last
+            #
+            $toAddAtEnd = @();
+            foreach ($comment in $comments)
+            {
+                if ($comment.IndexOf("build:") -ne -1 -or $comment.IndexOf("build(") -ne -1)
+                {
+                    $toAddAtEnd += $comment;
+                }
+                else {
+                    $retComments += $comment;
+                }
+            }
+            foreach ($comment in $toAddAtEnd)
+            {
+                $retComments += $comment
+            }
         }
 
-        return $comments
+        return $retComments
     }
 }
 
@@ -333,7 +353,7 @@ class CommitAnalyzer
             "style"   { $FormattedSubject = "Code Styling"; break }
             "test"    { $FormattedSubject = "Tests"; break }
             "tweak"   { $FormattedSubject = "Refactoring"; break }
-            "visual"  { $FormattedSubject = "Visual Enhancements"; break }
+            "visual"  { $FormattedSubject = "Visuals"; break }
             default   { $FormattedSubject = $Subject; break }
         }
 
@@ -366,10 +386,10 @@ class HistoryFile
         }
 
         $valid = ($LineText.Contains("Build System") -or $LineText.Contains("Chore") -or $LineText.Contains("Documentation") -or
-            $LineText.Contains("Feature") -or $LineText.Contains("Bug Fix") -or $LineText.Contains("Performance Enhancement") -or
+            $LineText.Contains("Feature") -or $LineText.Contains("Bug Fix") -or $LineText.Contains("Performance") -or
             $LineText.Contains("Ongoing Progress") -or $LineText.Contains("Refactoring") -or $LineText.Contains("Code Styling") -or
             $LineText.Contains("Tests") -or $LineText.Contains("Project Structure") -or $LineText.Contains("Project Layout") -or
-            $LineText.Contains("Visual Enhancement") -or $LineText.StartsWith("Fix") -or $LineText.StartsWith("General"))
+            $LineText.Contains("Visual") -or $LineText.StartsWith("Fix") -or $LineText.StartsWith("General"))
 
         if (!$valid -and $this.CommitMap)
         {
@@ -396,7 +416,7 @@ class HistoryFile
         $comments = ""
         $commentNum = 1
 
-        if ($CommitsList -eq $null -or $CommitsList.Length -eq 0) {
+        if ($null -eq $CommitsList -or $CommitsList.Length -eq 0) {
             return $comments
         }
 
@@ -440,9 +460,9 @@ class HistoryFile
                 $msg = $msg.Replace("featmin: ", "Feature`r`n`r`n")
                 $msg = $msg.Replace("feat: ", "Feature`r`n`r`n")
                 $msg = $msg.Replace("fix: ", "Bug Fix`r`n`r`n")
-                $msg = $msg.Replace("perf: ", "Performance Enhancement`r`n`r`n")
-                $msg = $msg.Replace("perfmin: ", "Performance Enhancement`r`n`r`n")
-                $msg = $msg.Replace("minperf: ", "Performance Enhancement`r`n`r`n")
+                $msg = $msg.Replace("perf: ", "Performance`r`n`r`n")
+                $msg = $msg.Replace("perfmin: ", "Performance`r`n`r`n")
+                $msg = $msg.Replace("minperf: ", "Performance`r`n`r`n")
                 $msg = $msg.Replace("progress: ", "Ongoing Progress`r`n`r`n")
                 $msg = $msg.Replace("refactor: ", "Refactoring`r`n`r`n")
                 $msg = $msg.Replace("style: ", "Code Styling`r`n`r`n")
@@ -450,7 +470,7 @@ class HistoryFile
                 $msg = $msg.Replace("tweak: ", "Refactoring`r`n`r`n")
                 $msg = $msg.Replace("project: ", "Project Structure`r`n`r`n")
                 $msg = $msg.Replace("layout: ", "Project Layout`r`n`r`n")
-                $msg = $msg.Replace("visual: ", "Visual Enhancement`r`n`r`n")
+                $msg = $msg.Replace("visual: ", "Visual`r`n`r`n")
                 $msg = $msg.Replace("misc: ", "Miscellaneous`r`n`r`n")
                 #
                 # Replace commit tags with full text (scoped)
@@ -467,16 +487,16 @@ class HistoryFile
                 $msg = $msg.Replace("minfeat(", "Feature(")
                 $msg = $msg.Replace("feat(", "Feature(")
                 $msg = $msg.Replace("fix(", "Bug Fix(")
-                $msg = $msg.Replace("perf(", "Performance Enhancement(")
-                $msg = $msg.Replace("perfmin(", "Performance Enhancement(")
-                $msg = $msg.Replace("minperf(", "Performance Enhancement(")
+                $msg = $msg.Replace("perf(", "Performance(")
+                $msg = $msg.Replace("perfmin(", "Performance(")
+                $msg = $msg.Replace("minperf(", "Performance(")
                 $msg = $msg.Replace("refactor(", "Refactoring(")
                 $msg = $msg.Replace("project(", "Project Structure(")
                 $msg = $msg.Replace("test(", "Tests(")
                 $msg = $msg.Replace("tweak(", "Refactoring(")
                 $msg = $msg.Replace("style(", "Code Styling(")
                 $msg = $msg.Replace("layout(", "Project Layout(")
-                $msg = $msg.Replace("visual(", "Visual Enhancement(")
+                $msg = $msg.Replace("visual(", "Visual(")
                 $msg = $msg.Replace("progress(", "Ongoing Progress(")
                 $msg = $msg.Replace("misc(", "Miscellaneous(")
 
@@ -2777,14 +2797,14 @@ function Edit-File($File, $SeekToEnd = $false, $skipEdit = $false)
             {
                 $CodeProcess = Get-Process "Code" | Where-Object {$_.mainWindowTitle}
                 #[System.Threading.Thread]::Sleep(500);
-                if ($CodeProcess -ne $null) {
+                if ($null -ne $CodeProcess) {
                     $Tmp = $WSShell.AppActivate($CodeProcess.Id)
                 } 
                 #[System.Threading.Thread]::Sleep(500);
                 $WSShell.sendkeys("");
                 $Tmp = $WSShell.AppActivate($TextEditorProcess.Id)
                 $WSShell.sendkeys("");
-                if ($CodeProcess -ne $null) {
+                if ($null -ne $CodeProcess) {
                     $Tmp = $WSShell.AppActivate($CodeProcess.Id)
                 } 
                 $Tmp = $WSShell.AppActivate($TextEditorProcess.Id)
@@ -5128,7 +5148,7 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
         # not to proceed, since technically the first time this script is used, we don't know
         # how to retrieve the latest commits
         #
-        if ($COMMITS -eq $null -or $COMMITS.Length -eq 0) 
+        if ($null -eq $COMMITS -or $COMMITS.Length -eq 0) 
         {
             Log-Message "Commits since the last version or the version tag could not be found"
             Log-Message "[PROMPT] User input required"
@@ -5336,6 +5356,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and !$EM
     # If history file doesnt exist, create one with the project name as a title
     #
     $IsNewHistoryFile = $false;
+    $IsNewHistoryFileHasContent = $false;
     $HistoryPath = Split-Path "$HISTORYFILE"
     if ($HistoryPath -ne "" -and !(Test-Path($HistoryPath))) 
     {
@@ -5353,12 +5374,30 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and !$EM
         Vc-Changelist-AddNew "$HISTORYFILE"
         $IsNewHistoryFile = $true;
     }
+    else 
+    {   #
+        # If the history file already existed, but had no entries, we need to still set the 'new' flag
+        #
+        $szContents = Get-Content $HISTORYFILE | Out-String
+        if ($szContents.IndexOf($VERSIONTEXT) -eq -1)
+        {
+            $IsNewHistoryFile = $true;
+            $IsNewHistoryFileHasContent = $true;
+        }
+    }
     if (!(Test-Path($HISTORYFILE))) 
     {
         Log-Message "Could not create history file, exiting" "red"
         exit 140;
     }
-
+    if (($CURRENTVERSION -eq "1.0.0" -or $CURRENTVERSION -eq "0.0.1") -and $IsNewHistoryFile)
+    {
+        Log-Message "It appears this is the first release, resetting version"
+        Log-Message "   Reset to Version    : $CURRENTVERSION"
+    }
+    #
+    # Add the 'Version X' line, date, and commit content
+    # 
     if (($CURRENTVERSION -ne $VERSION -or $IsNewHistoryFile) -and ($RUN -eq 1 -or $DRYRUN -eq $true))
     {
         $TmpCommits = $ClsHistoryFile.createSectionFromCommits($COMMITS, $HISTORYLINELEN)
@@ -5368,10 +5407,10 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and !$EM
         #
         # New file
         #
-        if ($IsNewHistoryFile) {
+        if ($IsNewHistoryFile -and !$IsNewHistoryFileHasContent) {
             $HistoryFileTitle = "$PROJECTNAME History"
             Add-Content -NoNewline -Path $HISTORYFILE -Value "$HistoryFileTitle`r`n"
-            [System.Threading.Thread]::Sleep(100)
+            [System.Threading.Thread]::Sleep(120)
         }
 
         #
@@ -5387,7 +5426,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and !$EM
         #
         if (Test-Path($HISTORYHDRFILE)) 
         {
-            $HistoryHeader= Get-Content $HISTORYHDRFILE -Raw
+            $HistoryHeader = Get-Content $HISTORYHDRFILE -Raw
             Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n$VERSIONTEXT $VERSION`r`n$TDATE`r`n$HistoryHeader`r`n$TmpCommits"
         }
         else {   
