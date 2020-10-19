@@ -3498,3 +3498,57 @@ May 10th, 2020
     formatted subject line in the changelog/history file for that commit is not
     being broken apart and formatted correctly.
 
+
+Version 1.19.4
+October 18th, 2020
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+    
+    Unversioned (new) 'dist' files not being added to version control.  Add new
+    publishrc config property:
+    
+        distAddAllVc
+    
+    Setting this property to "Y" will cause any unversioned files found in the
+    'Dist' directory after running the build commands to be added to version
+    control.
+    
+    [Fixes #2024]
+
+2.  Refactoring
+    
+    Place 'build' commit comments at the end of the generated changelog/history
+    file.
+    
+3.  Bug Fix
+    
+    If a history file already exists when aking a first release, using the
+    'interactive' version input mechanism causes the history file to not be
+    written with the appropriate version header information.
+    
+4.  Bug Fix
+    
+    Detect a first release and do not increment the version that was read in
+    from the version file (package.json/history.txt/.publishrc.json).
+    
+    [Fixes #1896]
+
