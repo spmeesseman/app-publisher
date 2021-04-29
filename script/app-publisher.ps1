@@ -2105,17 +2105,24 @@ function Prepare-VersionFiles()
         #
         foreach ($VersionFile in $VERSIONFILES) 
         {
-            if ((Test-Path($VersionFile)) -and !$VersionFilesEdited.Contains($VersionFile))
+            $vFile = $VersionFile;
+    
+            $vFile = $vFile.Replace("`${NEWVERSION}", $VERSION);
+            $vFile = $vFile.Replace("`${VERSION}", $VERSION);
+            $vFile = $vFile.Replace("`${CURRENTVERSION}", $CURRENTVERSION);
+            $vFile = $vFile.Replace("`${LASTVERSION}", $CURRENTVERSION);
+
+            if ((Test-Path($vFile)) -and !$VersionFilesEdited.Contains($vFile))
             {
                 # replace version in file
                 #
                 $rc = $false
-                Log-Message "Writing new version $VERSION to $VersionFile"
+                Log-Message "Writing new version $VERSION to $vFile"
                 if ($VERSIONREPLACETAGS.Length -gt 0)
                 {
                     foreach ($ReplaceTag in $VERSIONREPLACETAGS) 
                     {
-                        $rc = Replace-Version $VersionFile "$ReplaceTag$CURRENTVERSION" "$ReplaceTag$VERSION"
+                        $rc = Replace-Version $vFile "$ReplaceTag$CURRENTVERSION" "$ReplaceTag$VERSION"
                         if ($rc -eq $true) {
                             break;
                         }
@@ -2123,13 +2130,13 @@ function Prepare-VersionFiles()
                 }
                 if ($rc -ne $true)
                 {
-                    $rc = Replace-Version $VersionFile "`"$CURRENTVERSION`"" "`"$VERSION`""
+                    $rc = Replace-Version $vFile "`"$CURRENTVERSION`"" "`"$VERSION`""
                     if ($rc -ne $true)
                     {
-                        $rc = Replace-Version $VersionFile "'$CURRENTVERSION'" "'$VERSION'"
+                        $rc = Replace-Version $vFile "'$CURRENTVERSION'" "'$VERSION'"
                         if ($rc -ne $true)
                         {
-                            $rc = Replace-Version $VersionFile $CURRENTVERSION $VERSION
+                            $rc = Replace-Version $vFile $CURRENTVERSION $VERSION
                             if ($rc -ne $true)
                             {
                                 # TODO
@@ -2144,10 +2151,10 @@ function Prepare-VersionFiles()
                 #
                 if ($Incremental -eq $true)
                 {
-                    $rc = Replace-Version $VersionFile "`"$SEMVERSIONCUR`"" "`"$SEMVERSION`""
+                    $rc = Replace-Version $vFile "`"$SEMVERSIONCUR`"" "`"$SEMVERSION`""
                     if ($rc -ne $true)
                     {
-                        $rc = Replace-Version $VersionFile "'$SEMVERSIONCUR'" "'$SEMVERSION'"
+                        $rc = Replace-Version $vFile "'$SEMVERSIONCUR'" "'$SEMVERSION'"
                         if ($rc -ne $true)
                         {
                             $rc = Replace-Version $VersionFile $SEMVERSIONCUR $SEMVERSION
@@ -2155,10 +2162,10 @@ function Prepare-VersionFiles()
                     }
                 }
                 #
-                # Allow manual modifications to $VersionFile and commit to modified list
+                # Allow manual modifications to $vFile and commit to modified list
                 # Edit-File will add this file to $VersionFilesEdited
                 #
-                Edit-File $VersionFile $false ($SKIPVERSIONEDITS -eq "Y") $VERSION $CURRENTVERSION
+                Edit-File $vFile $false ($SKIPVERSIONEDITS -eq "Y") $VERSION $CURRENTVERSION
             }
         }
     }
@@ -2720,42 +2727,36 @@ function Restore-PackageJson()
 
 $FirstEditFileDone = $false
 
-function Edit-File($File, $SeekToEnd = $false, $skipEdit = $false, $nextVersion = $null, $currentVersion = $null)
+function Edit-File($editFile, $SeekToEnd = $false, $skipEdit = $false)
 {
-    $nFile = $File;
-    
-    if ($null -ne $nextVersion) {
-        $nFile.Replace("`${NEWVERSION}", $nextVersion);
-        $nFile.Replace("`${VERSION}", $nextVersion);
-    }
-    if ($null -ne $currentVersion) {
-        $nFile.Replace("`${CURRENTVERSION}", $currentVersion);
-    }
+    $nFile = $editFile;
 
-    if (![string]::IsNullOrEmpty($File) -and (Test-Path($File)) -and !$VersionFilesEdited.Contains($File))
+    Log-Message "edit file $nFile" "cyan" $true
+
+    if (![string]::IsNullOrEmpty($nFile) -and (Test-Path($nFile)) -and !$VersionFilesEdited.Contains($nFile))
     {
-        $script:VersionFilesEdited += $File
+        $script:VersionFilesEdited += $nFile
         
-        #if (Vc-IsVersioned($File, $true, $true)) {
-            Vc-Changelist-Add $File
+        #if (Vc-IsVersioned($nFile, $true, $true)) {
+            Vc-Changelist-Add $nFile
         #}
-        if ($skipEdit -and $VERSIONFILESEDITALWAYS.Contains($File)) 
+        if ($skipEdit -and $VERSIONFILESEDITALWAYS.Contains($nFile)) 
         {
-            Log-Message "Set Edit Always Version File - $File"  
+            Log-Message "Set Edit Always Version File - $nFile"  
             $skipEdit = $false
         }
 
         #
         # publishrc can specify a file should be scrolled to bottom
         #
-        if ($VERSIONFILESSCROLLDOWN.Contains($File))
+        if ($VERSIONFILESSCROLLDOWN.Contains($nFile))
         {
             $SeekToEnd = $true
         }
 
         if (!$skipEdit -and ![string]::IsNullOrEmpty($TEXTEDITOR))
         {
-            Log-Message "Edit $File"
+            Log-Message "Edit $nFile"
             #
             # Create scripting shell for process activation and sendkeys
             #
@@ -2763,7 +2764,7 @@ function Edit-File($File, $SeekToEnd = $false, $skipEdit = $false, $nextVersion 
             #
             # Start Notepad process ro edit specified file
             #
-            $TextEditorProcess = Start-Process -filepath $TEXTEDITOR -args $File -PassThru
+            $TextEditorProcess = Start-Process -filepath $TEXTEDITOR -args $nFile -PassThru
             #
             # Wait until Notepad has finished loading and is ready
             #
@@ -3636,6 +3637,9 @@ if ($options.republish -and $options.republish.Count -gt 0)
     if ($options.deployCommand) {
         $options.deployCommand = @()
     }
+    if ($options.preBuildCommand) {
+        $options.preBuildCommand = @()
+    }
     if ($options.postBuildCommand) {
         $options.postBuildCommand = @()
     }
@@ -4066,6 +4070,13 @@ if ($options.pathPreRoot) {
 $POSTBUILDCOMMAND = @()
 if ($options.postBuildCommand) {
     $POSTBUILDCOMMAND = $options.postBuildCommand
+}
+#
+# The build command(s) to after the internal builds have been completed
+#
+$PREBUILDCOMMAND = @()
+if ($options.preBuildCommand) {
+    $PREBUILDCOMMAND = $options.preBuildCommand
 }
 #
 # The build command(s) to before changes are committed to version control
@@ -4815,6 +4826,7 @@ Log-Message "   NPM release      : $NPMRELEASE"
 Log-Message "   NPM registry     : $NPMREGISTRY"
 Log-Message "   NPM scope        : $NPMSCOPE"
 Log-Message "   Nuget release    : $NUGETRELEASE"
+Log-Message "   Pre Build cmd    : $PREBUILDCOMMAND"
 Log-Message "   Pre Commit cmd   : $PRECOMMITCOMMAND"
 Log-Message "   Pre Dist cmd     : $DISTRELEASEPRECOMMAND"
 Log-Message "   Pre Github cmd   : $GITHUBRELEASEPRECOMMAND"
@@ -4860,6 +4872,10 @@ if ($BUILDCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($BUILDCOMMAN
 if ($POSTBUILDCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($POSTBUILDCOMMAND))
 {
     $POSTBUILDCOMMAND = @($POSTBUILDCOMMAND); #convert to array
+}
+if ($PREBUILDCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($PREBUILDCOMMAND))
+{
+    $PREBUILDCOMMAND = @($PREBUILDCOMMAND); #convert to array
 }
 if ($POSTRELEASECOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($POSTRELEASECOMMAND))
 {
@@ -5462,7 +5478,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and !$EM
     #
     # Allow manual modifications to history file
     #
-    Edit-File $CURRENTVERSION $HISTORYFILE $true $false
+    Edit-File $HISTORYFILE $true $false
 }
 
 #
@@ -5675,6 +5691,13 @@ if ($DISTRELEASE -eq "Y" -and !$EMAILONLY)
         Vc-Changelist-Add "$PATHTODIST"
         Vc-Changelist-AddMulti "$PATHTODIST"
     }
+}
+
+#
+# Run pre build scripts if specified, before version file edits
+#
+if (!$EMAILONLY) {
+    Run-Scripts "preBuild" $PREBUILDCOMMAND $true $true
 }
 
 if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and !$EMAILONLY)
@@ -5993,13 +6016,14 @@ if ($DISTRELEASE -eq "Y" -and !$EMAILONLY)
     #
     # Check DIST dir for unversioned files, add them if needed
     #
-    if ($DistIsVersioned == "Y" -and $DISTADDALLTOVC -eq "Y")
-    {
-        Get-ChildItem "$PATHTODIST" -Filter *.* | Foreach-Object
-        {
+    if ($DISTADDALLTOVC -eq "Y")
+    {Log-Message "1" "magenta"
+        Get-ChildItem "$PATHTODIST" -Filter *.* | Foreach-Object {  # Bracket must stay same line as ForEach-Object
             $DistIsVersioned = Vc-IsVersioned $_.FullName
+            Log-Message $_.FullName "magenta"
             if (!$DistIsVersioned) 
             {
+                Log-Message "2" "magenta"
                 Log-Message "Adding unversioned DIST/$($_.Name) to vc addition list" "magenta"
                 # Vc-Changelist-AddNew "$PATHTODIST\$_.Name"
                 # Vc-Changelist-AddRemove "$PATHTODIST\$_.Name"
