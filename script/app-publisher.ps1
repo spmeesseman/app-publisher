@@ -2158,7 +2158,7 @@ function Prepare-VersionFiles()
                 # Allow manual modifications to $VersionFile and commit to modified list
                 # Edit-File will add this file to $VersionFilesEdited
                 #
-                Edit-File $VersionFile $false ($SKIPVERSIONEDITS -eq "Y")
+                Edit-File $VersionFile $false ($SKIPVERSIONEDITS -eq "Y") $VERSION $CURRENTVERSION
             }
         }
     }
@@ -2720,8 +2720,18 @@ function Restore-PackageJson()
 
 $FirstEditFileDone = $false
 
-function Edit-File($File, $SeekToEnd = $false, $skipEdit = $false)
+function Edit-File($File, $SeekToEnd = $false, $skipEdit = $false, $nextVersion = $null, $currentVersion = $null)
 {
+    $nFile = $File;
+    
+    if ($null -ne $nextVersion) {
+        $nFile.Replace("`${NEWVERSION}", $nextVersion);
+        $nFile.Replace("`${VERSION}", $nextVersion);
+    }
+    if ($null -ne $currentVersion) {
+        $nFile.Replace("`${CURRENTVERSION}", $currentVersion);
+    }
+
     if (![string]::IsNullOrEmpty($File) -and (Test-Path($File)) -and !$VersionFilesEdited.Contains($File))
     {
         $script:VersionFilesEdited += $File
@@ -5452,7 +5462,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and !$EM
     #
     # Allow manual modifications to history file
     #
-    Edit-File $HISTORYFILE $true $false
+    Edit-File $CURRENTVERSION $HISTORYFILE $true $false
 }
 
 #
