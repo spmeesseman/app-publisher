@@ -5990,8 +5990,11 @@ if ($DISTRELEASE -eq "Y" -and !$EMAILONLY)
             $DistIsVersioned = Vc-IsVersioned $_.FullName
             if (!$DistIsVersioned) 
             {
-                Log-Message "Adding unversioned DIST/$_.Name to versioned list"
-                Vc-Changelist-AddRemove "$PATHTODIST\$_.Name"
+                Log-Message "Adding unversioned DIST/$($_.Name) to vc addition list" "magenta"
+                # Vc-Changelist-AddNew "$PATHTODIST\$_.Name"
+                # Vc-Changelist-AddRemove "$PATHTODIST\$_.Name"
+                Vc-Changelist-AddNew $_.FullName
+                Vc-Changelist-AddRemove $_.FullName
             }
         }
     }
