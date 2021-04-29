@@ -5665,20 +5665,6 @@ if ($DISTRELEASE -eq "Y" -and !$EMAILONLY)
         Vc-Changelist-Add "$PATHTODIST"
         Vc-Changelist-AddMulti "$PATHTODIST"
     }
-    #
-    # Check DIST dir for unversioned files, add them if needed
-    #
-    if ($DISTADDALLTOVC -eq "Y")
-    {
-        Get-ChildItem "$PATHTODIST" -Filter *.* | Foreach-Object
-        {
-            $DistIsVersioned = Vc-IsVersioned $_.FullName $true $true
-            if (!$DistIsVersioned) 
-            {
-                Vc-Changelist-AddRemove $_.FullName
-            }
-        }
-    }
 }
 
 if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and !$EMAILONLY)
@@ -5886,7 +5872,7 @@ if ($DISTRELEASE -eq "Y" -and !$EMAILONLY)
     # Run pre distribution-release scripts if specified
     #
     Run-Scripts "preDistRelease" $DISTRELEASEPRECOMMAND $false $false
-
+    
     #
     # Copy history file to dist directory
     #
@@ -5993,6 +5979,36 @@ if ($DISTRELEASE -eq "Y" -and !$EMAILONLY)
     else {
         Log-Message "Skipped network release push (user specified)" "magenta"
     }
+
+    #
+    # Check DIST dir for unversioned files, add them if needed
+    #
+    if ($DistIsVersioned == "Y" -and $DISTADDALLTOVC -eq "Y")
+    {
+        Get-ChildItem "$PATHTODIST" -Filter *.* | Foreach-Object
+        {
+            $DistIsVersioned = Vc-IsVersioned $_.FullName
+            if (!$DistIsVersioned) 
+            {
+                Vc-Changelist-AddRemove $_.FullName
+            }
+        }
+    }
+
+    #
+    # If there are any files in DIST that are not versioned, add them to VC
+    #
+    # Get-ChildItem $PathToDistDir -Filter *.* | 
+    # Foreach-Object
+    # {
+    #     $distFile = [Path]::Combine($PathToDistDir, $_.Name)
+    #     $isVersioned = Vc-IsVersioned $distFile $true $true
+    #     if (!$isVersioned)
+    #     {
+    #         Log-Message " - Adding unversioned $_.Name to versioned list"
+    #         Vc-Changelist-AddNew $distFile
+    #     }
+    # }
 
     #
     # Run pre distribution-release scripts if specified
