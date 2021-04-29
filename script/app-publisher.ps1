@@ -5990,25 +5990,11 @@ if ($DISTRELEASE -eq "Y" -and !$EMAILONLY)
             $DistIsVersioned = Vc-IsVersioned $_.FullName
             if (!$DistIsVersioned) 
             {
-                Vc-Changelist-AddRemove $_.FullName
+                Log-Message "Adding unversioned DIST/$_.Name to versioned list"
+                Vc-Changelist-AddRemove "$PATHTODIST\$_.Name"
             }
         }
     }
-
-    #
-    # If there are any files in DIST that are not versioned, add them to VC
-    #
-    # Get-ChildItem $PathToDistDir -Filter *.* | 
-    # Foreach-Object
-    # {
-    #     $distFile = [Path]::Combine($PathToDistDir, $_.Name)
-    #     $isVersioned = Vc-IsVersioned $distFile $true $true
-    #     if (!$isVersioned)
-    #     {
-    #         Log-Message " - Adding unversioned $_.Name to versioned list"
-    #         Vc-Changelist-AddNew $distFile
-    #     }
-    # }
 
     #
     # Run pre distribution-release scripts if specified
