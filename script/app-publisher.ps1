@@ -1765,7 +1765,7 @@ function Vc-Changelist-AddRemove($VcFile)
     }
     if (!$script:VCCHANGELISTRMV.Contains($VcFile)) {
         Log-Message "Adding $VcFile to failure/testrun vc removelist"
-        $script:VCCHANGELISTRMV = "$script:VCCHANGELISTRMV `"$VcFile`""
+        $script:VCCHANGELISTRMV = "$script:VCCHANGELISTRMV|`"$VcFile`""
     }
 }
 
@@ -1776,7 +1776,7 @@ function Vc-Changelist-Add($VcFile)
     }
     if (!$script:VCCHANGELIST.Contains($VcFile)) {
         Log-Message "Adding $VcFile to vc changelist"
-        $script:VCCHANGELIST = "$script:VCCHANGELIST `"$VcFile`""
+        $script:VCCHANGELIST = "$script:VCCHANGELIST|`"$VcFile`""
     }
 }
 
@@ -1787,7 +1787,7 @@ function Vc-Changelist-AddMulti($VcFile)
     }
     if (!$script:VCCHANGELISTMLT.Contains($VcFile)) {
         Log-Message "Adding $VcFile to multi-publish vc changelist"
-        $script:VCCHANGELISTMLT = "$script:VCCHANGELISTMLT `"$VcFile`""
+        $script:VCCHANGELISTMLT = "$script:VCCHANGELISTMLT|`"$VcFile`""
     }
 }
 
@@ -1798,7 +1798,7 @@ function Vc-Changelist-AddNew($VcFile, $isFullPath = $false)
     }
     if (!$script:VCCHANGELISTADD.Contains($VcFile)) {
         Log-Message "Adding $VcFile to vc 'add' changelist"
-        $script:VCCHANGELISTADD = "$script:VCCHANGELISTADD `"$VcFile`""
+        $script:VCCHANGELISTADD = "$script:VCCHANGELISTADD|`"$VcFile`""
     }
 }
 
@@ -1869,13 +1869,10 @@ function Vc-Revert($ChangePath = $false)
         }
 
         $VcRevertList = ""
-        $VcRevertListParts = $VCCHANGELISTRMV.Trim().Split(' ')
+        $VcRevertListParts = $VCCHANGELISTRMV.Trim().Split('|')
 
         for ($i = 0; $i -lt $VcRevertListParts.Length; $i++)
         {
-            Log-Message "22" "cyan"
-            Log-Message $VcRevertListParts "cyan"
-            
             $VcRevertFile = $VcRevertListParts[$i].Replace("`"", "")
             if ($VcRevertFile -eq "") {
                 continue;
@@ -1889,7 +1886,7 @@ function Vc-Revert($ChangePath = $false)
         }
 
         $VcRevertList = ""
-        $VcRevertListParts = $VCCHANGELISTADD.Trim().Split(' ')
+        $VcRevertListParts = $VCCHANGELISTADD.Trim().Split('|')
 
         for ($i = 0; $i -lt $VcRevertListParts.Length; $i++)
         {
@@ -1906,7 +1903,7 @@ function Vc-Revert($ChangePath = $false)
         }
 
         $VcRevertList = ""
-        $VcRevertListParts = $VCCHANGELIST.Trim().Split(' ')
+        $VcRevertListParts = $VCCHANGELIST.Trim().Split('|')
 
         if ($_RepoType -eq "svn")
         {
@@ -2160,7 +2157,7 @@ function Prepare-VersionFiles()
                         $rc = Replace-Version $vFile "'$SEMVERSIONCUR'" "'$SEMVERSION'"
                         if ($rc -ne $true)
                         {
-                            $rc = Replace-Version $$vFile $SEMVERSIONCUR $SEMVERSION
+                            $rc = Replace-Version $vFile $SEMVERSIONCUR $SEMVERSION
                         }
                     }
                 }
