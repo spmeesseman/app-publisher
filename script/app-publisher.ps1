@@ -1791,9 +1791,9 @@ function Vc-Changelist-AddMulti($VcFile)
     }
 }
 
-function Vc-Changelist-AddNew($VcFile)
+function Vc-Changelist-AddNew($VcFile, $isFullPath = $false)
 {
-    if ($PATHPREROOT -ne "" -and $PATHPREROOT -ne $null) {
+    if ($PATHPREROOT -ne "" -and $PATHPREROOT -ne $null -and $isFullPath -eq $false) {
         $VcFile = Join-Path -Path "$PATHPREROOT" -ChildPath "$VcFile"
     }
     if (!$script:VCCHANGELISTADD.Contains($VcFile)) {
@@ -1873,6 +1873,9 @@ function Vc-Revert($ChangePath = $false)
 
         for ($i = 0; $i -lt $VcRevertListParts.Length; $i++)
         {
+            Log-Message "22" "cyan"
+            Log-Message $VcRevertListParts "cyan"
+            
             $VcRevertFile = $VcRevertListParts[$i].Replace("`"", "")
             if ($VcRevertFile -eq "") {
                 continue;
@@ -2157,7 +2160,7 @@ function Prepare-VersionFiles()
                         $rc = Replace-Version $vFile "'$SEMVERSIONCUR'" "'$SEMVERSION'"
                         if ($rc -ne $true)
                         {
-                            $rc = Replace-Version $VersionFile $SEMVERSIONCUR $SEMVERSION
+                            $rc = Replace-Version $$vFile $SEMVERSIONCUR $SEMVERSION
                         }
                     }
                 }
@@ -6017,18 +6020,18 @@ if ($DISTRELEASE -eq "Y" -and !$EMAILONLY)
     # Check DIST dir for unversioned files, add them if needed
     #
     if ($DISTADDALLTOVC -eq "Y")
-    {Log-Message "1" "magenta"
-        Get-ChildItem "$PATHTODIST" -Filter *.* | Foreach-Object {  # Bracket must stay same line as ForEach-Object
+    {
+        Get-ChildItem "$PATHTODIST" -Recurse -Filter *.* | Foreach-Object {  # Bracket must stay same line as ForEach-Object
             $DistIsVersioned = Vc-IsVersioned $_.FullName
             Log-Message $_.FullName "magenta"
             if (!$DistIsVersioned) 
             {
-                Log-Message "2" "magenta"
-                Log-Message "Adding unversioned DIST/$($_.Name) to vc addition list" "magenta"
+                $fullName = $_.FullName.Replace("`${VERSION}", $VERSION).Replace("`${NEWVERSION}", $VERSION).Replace("`${CURRENTVERSION}", $CURRENTVERSION).Replace("`${LASTVERSION}", $CURRENTVERSION);
+                Log-Message "Adding unversioned $($_.Name) to vc addition list" "magenta"
                 # Vc-Changelist-AddNew "$PATHTODIST\$_.Name"
                 # Vc-Changelist-AddRemove "$PATHTODIST\$_.Name"
-                Vc-Changelist-AddNew $_.FullName
-                Vc-Changelist-AddRemove $_.FullName
+                Vc-Changelist-AddNew $fullName $true
+                Vc-Changelist-AddRemove $fullName $true
             }
         }
     }
