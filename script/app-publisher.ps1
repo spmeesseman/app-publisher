@@ -6493,27 +6493,30 @@ if (!$EMAILONLY)
                         #
                         if ($VCCHANGELISTADD -ne "")
                         {
+                            $cl = $VCCHANGELISTADD.Replace("|", " ");
                             Log-Message "Adding unversioned touched files to GIT version control"
-                            Log-Message "   $VCCHANGELISTADD"
-                            Invoke-Expression -Command "svn add $VCCHANGELISTADD"
+                            Log-Message "   $cl"
+                            Invoke-Expression -Command "svn add $cl"
                             Check-ExitCode $false
                         }
+                        $cl = $VCCHANGELIST.Replace("|", " ");
                         Log-Message "Committing touched files to SVN version control"
-                        Log-Message "   $VCCHANGELIST"
+                        Log-Message "   $cl"
                         #
                         # SVN commit
                         #
-                        Invoke-Expression -Command "svn commit $VCCHANGELIST -m `"chore(release): $VERSION [skip ci]`""
+                        Invoke-Expression -Command "svn commit $cl -m `"chore(release): $VERSION [skip ci]`""
                         Check-ExitCode $false
                     }
                     elseif (![string]::IsNullOrEmpty($VCCHANGELISTMLT)) 
                     {
+                        $cl = $VCCHANGELISTMLT.Replace("|", " ");
                         Log-Message "Committing touched multi-publish files to SVN version control"
-                        Log-Message "   $VCCHANGELISTMLT"
+                        Log-Message "   $cl"
                         #
                         # SVN commit
                         #
-                        Invoke-Expression -Command "svn commit $VCCHANGELISTMLT -m `"chore(release-mlt): $VERSION [skip ci]`""
+                        Invoke-Expression -Command "svn commit $cl -m `"chore(release-mlt): $VERSION [skip ci]`""
                         Check-ExitCode $false
                     }
                     else {
@@ -6601,29 +6604,32 @@ if (!$EMAILONLY)
                         #
                         if ($VCCHANGELISTADD -ne "")
                         {
+                            $cl = $VCCHANGELISTADD.Replace("|", " ");
                             Log-Message "Adding unversioned touched files to GIT version control"
-                            Log-Message "   $VCCHANGELISTADD"
-                            Invoke-Expression -Command "git add -- $VCCHANGELISTADD"
+                            Log-Message "   $cl"
+                            Invoke-Expression -Command "git add -- $cl"
                             Check-ExitCode $false
                         }
                         #
                         # GIT commit and GIT push
                         #
                         Log-Message "Committing touched files to GIT version control"
-                        Log-Message "   $VCCHANGELIST"
-                        Invoke-Expression -Command "git commit --quiet -m `"chore(release): $VERSION [skip ci]`" -- $VCCHANGELIST"
+                        $cl = $VCCHANGELIST.Replace("|", " ");
+                        Log-Message "   $cl"
+                        Invoke-Expression -Command "git commit --quiet -m `"chore(release): $VERSION [skip ci]`" -- $cl"
                         Check-ExitCode $false
                         Invoke-Expression -Command "git push origin master:master"
                         Check-ExitCode $false
                     }
                     elseif (![string]::IsNullOrEmpty($VCCHANGELISTMLT))
                     {
+                        $cl = $VCCHANGELISTMLT.Replace("|", " ");
                         Log-Message "Committing touched multi-publish files to SVN version control"
-                        Log-Message "   $VCCHANGELISTMLT"
+                        Log-Message "   $cl"
                         #
                         # GIT commit
                         #
-                        Invoke-Expression -Command "git commit --quiet -m `"chore(release-mlt): $VERSION [skip ci]`" -- $VCCHANGELISTMLT"
+                        Invoke-Expression -Command "git commit --quiet -m `"chore(release-mlt): $VERSION [skip ci]`" -- $cl"
                         Check-ExitCode $false
                         Invoke-Expression -Command "git push origin master:master"
                         Check-ExitCode $false
