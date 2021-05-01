@@ -3552,3 +3552,50 @@ October 18th, 2020
     
     [Fixes #1896]
 
+
+Version 1.20.0
+April 30th, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+    
+    Add filename variable replacement to use in 'versionFiles' configuration
+    values.
+
+    The following two variables have been added, and will be replaced with the
+    appropriate version # when the publishing process opens/modifies the named
+    file:
+    
+        ${NEWVERSION}
+        ${CURRENTVERSION}
+    
+    Example usage in .publishrc.json:
+    
+        "versionFiles": [
+            "src\\Install.sql",
+            "src\\update\\v${NEWVERSION}.sql"
+        ]
+
+2.  Bug Fix
+    
+    Unversioned files in the defined distribution folder are not added to
+    version control when setting the 'distAddAllVc' configuration value to 'Y'.
+
