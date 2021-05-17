@@ -61,7 +61,7 @@ if ($options.appPublisherVersion) {
 
 class Vc
 {
-    [array]getCommits($RepoType, $Repo, $CurrentVersion, $TagPrefix)
+    [array]getCommits($RepoType, $Repo, $Branch, $CurrentVersion, $TagPrefix)
     {
         $comments = @()
         Log-Message "Getting commits made since prior release/version"
@@ -82,7 +82,7 @@ class Vc
             #
             # Issue SVN log command
             #
-            $TagLocation = $Repo.Replace("trunk", "tags");
+            $TagLocation = $Repo.Replace($Branch, "tags");
             $xml = svn log --xml "$TagLocation" --verbose --limit 50
             if ($LASTEXITCODE -ne 0) {
                 Log-Message "No commits found or no version tag exists" "red"
@@ -4526,7 +4526,7 @@ if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($PATHTOM
 
 #
 # Ensure version control directory exists
-# $_Repo is either git or svn
+# $_RepoType is either git or svn
 #
 if ([string]::IsNullOrEmpty($PATHPREROOT) -and !(Test-Path(".$_RepoType")))
 {
@@ -5175,7 +5175,7 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
         # order to successfully obtain the latest commit messages.  If it does not exist, the
         # most current tag will be used
         #
-        $COMMITS = $ClsVc.getCommits($_RepoType, $_Repo, $CURRENTVERSION, $VCTAGPREFIX)
+        $COMMITS = $ClsVc.getCommits($_RepoType, $_Repo, $BRANCH, $CURRENTVERSION, $VCTAGPREFIX)
         #
         # Check to ensure we got commits since last version.  If not, prompt user whether or
         # not to proceed, since technically the first time this script is used, we don't know
