@@ -4965,7 +4965,8 @@ if ($CURRENTVERSION -eq "")
     #
     # If node_modules dir exists, use package.json to obtain cur version
     #
-    if (Test-Path("node_modules"))
+    if (Test-Path("package.json"))
+    #if (Test-Path("node_modules"))
     {
         #if (Test-Path("node_modules\semver"))
         #{
