@@ -3628,3 +3628,33 @@ May 19th, 2021
     version control command to check for the latest comits since the previous
     release.
 
+
+Version 1.20.2
+May 23rd, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+    
+    The current version is not read from package.json if the node_modules
+    directory doesn't exist, and falls back to parsing the history file. If
+    the history file deosnt exist (e.g. for an initial release), an error
+    occurs.
+
