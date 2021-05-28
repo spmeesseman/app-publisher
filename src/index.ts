@@ -89,16 +89,30 @@ async function run(context, plugins)
     }
     else
     {
-        // When running on CI, set the commits author and commiter info and prevent the `git` CLI to prompt for username/password. See #703.
-        Object.assign(env, {
-            GIT_AUTHOR_NAME: COMMIT_NAME,
-            GIT_AUTHOR_EMAIL: COMMIT_EMAIL,
-            GIT_COMMITTER_NAME: COMMIT_NAME,
-            GIT_COMMITTER_EMAIL: COMMIT_EMAIL,
-            ...env,
-            GIT_ASKPASS: "echo",
-            GIT_TERMINAL_PROMPT: 0
-        });
+        if (options.repoType === "git")
+        {
+            Object.assign(env, {
+                GIT_AUTHOR_NAME: COMMIT_NAME,
+                GIT_AUTHOR_EMAIL: COMMIT_EMAIL,
+                GIT_COMMITTER_NAME: COMMIT_NAME,
+                GIT_COMMITTER_EMAIL: COMMIT_EMAIL,
+                ...env,
+                GIT_ASKPASS: "echo",
+                GIT_TERMINAL_PROMPT: 0
+            });
+        }
+        else // default SVN
+        {
+            Object.assign(env, {
+                SVN_AUTHOR_NAME: COMMIT_NAME,
+                SVN_AUTHOR_EMAIL: COMMIT_EMAIL,
+                SVN_COMMITTER_NAME: COMMIT_NAME,
+                SVN_COMMITTER_EMAIL: COMMIT_EMAIL,
+                ...env,
+                SVN_ASKPASS: "echo",
+                SVN_TERMINAL_PROMPT: 0
+            });
+        }
     }
     
     if (isCi && isPr && !options.noCi)
