@@ -100,7 +100,7 @@ async function run(context, plugins)
             GIT_TERMINAL_PROMPT: 0
         });
     }
-    logger.log(ciBranch);
+    
     if (isCi && isPr && !options.noCi)
     {
         logger.error("This run was triggered by a pull request and therefore a new version won't be published.");
