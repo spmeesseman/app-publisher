@@ -107,10 +107,15 @@ async function run(context, plugins)
         return false;
     }
 
+    const runTxt = !options.dryRun ? "run" : "test run";
+    if (!options.branch) {
+        options.branch = ciBranch;
+    }
+
     if (isCi && ciBranch !== options.branch)
     {
         logger.error(
-            `This test run was triggered on the branch ${ciBranch}, while app-publisher is configured to only publish from ${
+            `This ${runTxt} was triggered on the branch ${ciBranch}, while app-publisher is configured to publish from ${
             options.branch
             }, therefore a new version won’t be published.`
         );
@@ -119,14 +124,14 @@ async function run(context, plugins)
     else if (ciBranch !== options.branch)
     {
         logger.warn(
-            `This test run was triggered on the branch ${ciBranch}, while app-publisher is configured to only publish from ${
+            `This ${runTxt} was triggered on the branch ${ciBranch}, while app-publisher is configured to publish from ${
             options.branch
             }, continuing due to non-ci environment.`
         );
     }
 
     logger[options.dryRun ? "warn" : "success"](
-        `Run automated release from branch ${ciBranch}${options.dryRun ? " in dry-run mode" : ""}`
+        `Run automated release from branch ${options.branch}${options.dryRun ? " in dry-run mode" : ""}`
     );
 
     let rc = false;
@@ -136,7 +141,6 @@ async function run(context, plugins)
             `The NodeJS version of app-publisher has not been completed as of yet.  Run with '-ps' option.`
         );
         return false;
-
         // await runNodeScript(context, plugins);
     }
     else if (options.profile === "ps")
@@ -145,6 +149,7 @@ async function run(context, plugins)
     }
 }
 
+/*
 async function runNodeScript(context: any, plugins: any)
 {
     const { cwd, env, options, logger } = context;
@@ -251,7 +256,7 @@ async function runNodeScript(context: any, plugins: any)
 
     return pick(context, ["lastRelease", "commits", "nextRelease", "releases"]);
 }
-
+*/
 
 async function runPowershellScript(options: any, logger: any)
 {
