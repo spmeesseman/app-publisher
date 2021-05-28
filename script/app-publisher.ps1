@@ -3910,13 +3910,7 @@ if ($options.historyHref) {
     $HISTORYHREF = $options.historyHref
 }
 #
-# Interactive (prompts for version after extracting what we think should be the next 
-# version)
-#
-$INTERACTIVE = "N"
-if ($options.interactive) {
-    $INTERACTIVE = $options.interactive
-}
+# Text Editor preference
 #
 $TEXTEDITOR = ""
 if ($options.textEditor) {
@@ -4168,6 +4162,21 @@ $POSTRELEASECOMMAND = @()
 if ($options.postReleaseCommand) {
     $POSTRELEASECOMMAND = $options.postReleaseCommand
 }
+#
+# Prompt for version after extracting what we think should be the next version
+# This was the 'interactive' property prior to v 1.21.
+#
+$PROMPTVERSION = "N"
+if ($options.prompt) {
+    $PROMPTVERSION = $options.prompt
+}
+elseif ($options.promptVersion) {
+    $PROMPTVERSION = $options.promptVersion
+}
+elseif ($options.interactive) { # for backwards
+    $PROMPTVERSION = $options.interactive
+}
+#
 #
 #
 #
@@ -4751,10 +4760,10 @@ if (![string]::IsNullOrEmpty($WRITELOG)) {
         exit 1
     }
 }
-if (![string]::IsNullOrEmpty($INTERACTIVE)) {
-    $INTERACTIVE = $INTERACTIVE.ToUpper()
-    if ($INTERACTIVE -ne "Y" -and $INTERACTIVE -ne "N") {
-        Log-Message "Invalid value specified for interactive, accepted values are y/n/Y/N" "red"
+if (![string]::IsNullOrEmpty($PROMPTVERSION)) {
+    $PROMPTVERSION = $PROMPTVERSION.ToUpper()
+    if ($PROMPTVERSION -ne "Y" -and $PROMPTVERSION -ne "N") {
+        Log-Message "Invalid value specified for promptVersion, accepted values are y/n/Y/N" "red"
         exit 1
     }
 }
@@ -4847,7 +4856,6 @@ Log-Message "   History file     : $HISTORYFILE"
 Log-Message "   History file line: $HISTORYLINELEN"
 Log-Message "   History hdr file : $HISTORYHDRFILE"
 Log-Message "   Home page        : $HOMEPAGE"
-Log-Message "   Interactive      : $INTERACTIVE"
 Log-Message "   MantisBT plugin  : $MANTISBTPLUGIN"
 Log-Message "   MantisBT release : $MANTISBTRELEASE"
 Log-Message "   MantisBT project : $MANTISBTPROJECT"
@@ -4874,6 +4882,7 @@ Log-Message "   Pre Github cmd   : $GITHUBRELEASEPRECOMMAND"
 Log-Message "   Pre Mantis cmd   : $MANTISRELEASEPRECOMMAND"
 Log-Message "   Pre Npm cmd      : $NPMRELEASEPRECOMMAND"
 Log-Message "   Project name     : $PROJECTNAME"
+Log-Message "   Prompt version   : $PROMPTVERSION"
 Log-Message "   Repo             : $_Repo"
 Log-Message "   RepoType         : $_RepoType"
 Log-Message "   Single task mode : $SINGLETASKMODE"
@@ -5116,7 +5125,7 @@ if ($VERSIONSYSTEM -eq ".net" -or $VERSIONSYSTEM -eq "mantisbt")
 #
 if ($CURRENTVERSION -eq "") 
 {
-    #if ($INTERACTIVE) 
+    #if ($PROMPTVERSION) 
     #{
         
         #Log-Message "[PROMPT] User input required"
@@ -5303,7 +5312,7 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
             $VersionInteractive = "Y"
         }
 
-        if ($VERSIONSYSTEM -eq "manual" -or $INTERACTIVE -eq "Y" -or $VersionInteractive -eq "Y") 
+        if ($VERSIONSYSTEM -eq "manual" -or $PROMPTVERSION -eq "Y" -or $VersionInteractive -eq "Y") 
         {
             Log-Message "[PROMPT] User input required"
             $NewVersion = read-host -prompt "Enter the version #, or C to cancel [$VERSION]"

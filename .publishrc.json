@@ -45,7 +45,6 @@
     "historyLineLen":    80,
     "historyHref":       "<a href=\"https://app1.development.pjats.com/svn/web/filedetails.php?repname=pja&path=%2Fapp-publisher%2Ftrunk%2Fdoc%2Fhistory.txt&usemime=1\">History File - WebSVN</a>",
     "homePage":          "",
-    "interactive":       "N",
     "mantisbtRelease":   "Y",
     "mantisbtApiToken": [
         "${MANTISBT_API_TOKEN}",
@@ -79,6 +78,7 @@
     "preCommitCommand":  [],
     "postCommitCommand": [],
     "postReleaseCommand":"",
+    "promptVersion":     "N",
     "repo":              "https://svn.development.pjats.com/pja/app-publisher/trunk",
     "repoType":          "svn",
     "skipCommit":        "N",
