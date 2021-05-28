@@ -80,6 +80,7 @@
         "publish-ps-email_only": "npx ./build/bin/app-publisher.js -p ps --no-ci --email-only",
         "publish-ps-changelog_only": "npx ./build/bin/app-publisher.js -p ps --no-ci --changelog-only",
         "publish-ps-republish": "npx ./build/bin/app-publisher.js -p ps --republish",
+        "publish-ps-help": "npx ./build/bin/app-publisher.js -p ps --help",
         "publish-node-full": "npx ./build/bin/app-publisher.js --no-ci",
         "publish-node-dry_run": "npx ./build/bin/app-publisher.js --no-ci --dry-run"
     },

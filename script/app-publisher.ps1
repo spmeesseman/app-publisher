@@ -2156,7 +2156,7 @@ function Prepare-VersionFiles()
                 # Allow manual modifications to $vFile and commit to modified list
                 # Edit-File will add this file to $VersionFilesEdited
                 #
-                Edit-File $vFile $false ($SKIPVERSIONEDITS -eq "Y") $VERSION $CURRENTVERSION
+                Edit-File $vFile $false ($SKIPVERSIONEDITS -eq "Y")
             }
         }
     }
@@ -2718,7 +2718,7 @@ function Restore-PackageJson()
 
 $FirstEditFileDone = $false
 
-function Edit-File($editFile, $SeekToEnd = $false, $skipEdit = $false)
+function Edit-File($editFile, $SeekToEnd = $false, $skipEdit = $false, $async = $false)
 {
     $nFile = $editFile;
 
@@ -2824,8 +2824,10 @@ function Edit-File($editFile, $SeekToEnd = $false, $skipEdit = $false)
             #
             # Wait for the notepad process to be closed by the user
             #
-            Wait-Process -Id $TextEditorProcess.Id | Out-Null
-            Check-PsCmdSuccess
+            if ($async -ne $true) {
+                Wait-Process -Id $TextEditorProcess.Id | Out-Null
+                Check-PsCmdSuccess
+            }
         }
     }
 }
@@ -3715,7 +3717,7 @@ if ($options.changelogFile) {
 # Changelog file only
 #
 $CHANGELOGONLY = $false
-if ($options.emailOnly) {
+if ($options.changeLogOnly) {
     $CHANGELOGONLY = $options.changeLogOnly
 }
 if ($CHANGELOGONLY -eq "Y") {
@@ -5413,40 +5415,63 @@ Log-Message "Date                : $TDATE"
 #
 if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$EMAILONLY -or $CHANGELOGONLY))
 {
+    $histFile = $HISTORYFILE
+    if ($CHANGELOGONLY)
+    {
+        $histFile = "${Env:Temp}\history.$VERSION.txt"
+        if (Test-Path($histFile))
+        {
+            Remove-Item -Force -Path "$histFile" | Out-Null
+        }
+    }
     #
     # If history file doesnt exist, create one with the project name as a title
     #
     $IsNewHistoryFile = $false;
     $IsNewHistoryFileHasContent = $false;
-    $HistoryPath = Split-Path "$HISTORYFILE"
+    $HistoryPath = Split-Path "$histFile"
     if ($HistoryPath -ne "" -and !(Test-Path($HistoryPath))) 
     {
         Log-Message "Creating history file directory and adding to version control" "magenta"
         New-Item -ItemType "directory" -Force -Path "$HistoryPath" | Out-Null
-        Vc-Changelist-AddNew "$HistoryPath"
-        Vc-Changelist-AddRemove "$HistoryPath"
-        Vc-Changelist-Add "$HistoryPath"
+        if (!$CHANGELOGONLY)
+        {
+            Vc-Changelist-AddNew "$HistoryPath"
+            Vc-Changelist-AddRemove "$HistoryPath"
+            Vc-Changelist-Add "$HistoryPath"
+        }
     }
-    if (!(Test-Path($HISTORYFILE))) 
+
+    if (!(Test-Path($histFile))) 
     {
         Log-Message "Creating new history file and adding to version control" "magenta"
-        New-Item -ItemType "file" -Force -Path "$HISTORYFILE" -Value "$PROJECTNAME`r`n`r`n" | Out-Null
-        Vc-Changelist-AddRemove "$HISTORYFILE"
-        Vc-Changelist-AddNew "$HISTORYFILE"
+        if (!$CHANGELOGONLY)
+        {
+            New-Item -ItemType "file" -Force -Path "$histFile" -Value "$PROJECTNAME`r`n`r`n" | Out-Null
+        }
+        else
+        {
+            New-Item -ItemType "file" -Force -Path "$histFile" -Value "`r`n" | Out-Null
+        }
         $IsNewHistoryFile = $true;
+        if (!$CHANGELOGONLY)
+        {
+            Vc-Changelist-AddRemove "$histFile"
+            Vc-Changelist-AddNew "$histFile"
+        }
     }
     else 
     {   #
         # If the history file already existed, but had no entries, we need to still set the 'new' flag
         #
-        $szContents = Get-Content $HISTORYFILE | Out-String
+        $szContents = Get-Content $histFile | Out-String
         if ($szContents.IndexOf($VERSIONTEXT) -eq -1)
         {
             $IsNewHistoryFile = $true;
             $IsNewHistoryFileHasContent = $true;
         }
     }
-    if (!(Test-Path($HISTORYFILE))) 
+    if (!(Test-Path($histFile))) 
     {
         Log-Message "Could not create history file, exiting" "red"
         exit 140;
@@ -5470,7 +5495,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$E
         #
         if ($IsNewHistoryFile -and !$IsNewHistoryFileHasContent) {
             $HistoryFileTitle = "$PROJECTNAME History"
-            Add-Content -NoNewline -Path $HISTORYFILE -Value "$HistoryFileTitle`r`n"
+            Add-Content -NoNewline -Path $histFile -Value "$HistoryFileTitle`r`n"
             [System.Threading.Thread]::Sleep(120)
         }
 
@@ -5480,7 +5505,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$E
         #
         # Add lines 'version', 'date', then the header content
         #
-        # Write the formatted commits text to $HISTORYFILE
+        # Write the formatted commits text to $histFile
         # Formatted commits are also contained in the temp text file $Env:TEMP\history.txt
         # Replace all newline pairs with cr/nl pairs as SVN will have sent commit comments back
         # with newlines only
@@ -5488,25 +5513,31 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$E
         if (Test-Path($HISTORYHDRFILE)) 
         {
             $HistoryHeader = Get-Content $HISTORYHDRFILE -Raw
-            Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n$VERSIONTEXT $VERSION`r`n$TDATE`r`n$HistoryHeader`r`n$TmpCommits"
+            Add-Content -NoNewline -Path $histFile -Value "`r`n$VERSIONTEXT $VERSION`r`n$TDATE`r`n$HistoryHeader`r`n$TmpCommits"
         }
         else {   
             Log-Message "History header template not found" "darkyellow"
-            Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n$VERSIONTEXT $VERSION`r`n$TDATE`r`n`r`n`r`n$TmpCommits"  
+            Add-Content -NoNewline -Path $histFile -Value "`r`n$VERSIONTEXT $VERSION`r`n$TDATE`r`n`r`n`r`n$TmpCommits"  
         }
     }
     else {
         Log-Message "Version match, not touching history file" "darkyellow"
     }
     #
-    # Add to changelist for scm check in.  This would be the first file modified so just
-    # set changelist equal to history file
-    #
-    Vc-Changelist-Add $HISTORYFILE
-    #
     # Allow manual modifications to history file
     #
-    Edit-File $HISTORYFILE $true $false
+    if (!$CHANGELOGONLY)
+    {   
+        Edit-File $histFile $true $false
+        #
+        # Add to changelist for scm check in.  This would be the first file modified so just
+        # set changelist equal to history file
+        #
+        Vc-Changelist-Add $histFile
+    }
+    else {
+        Edit-File $histFile $true $false $true
+    }
 }
 
 #
@@ -5514,28 +5545,40 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$E
 #
 if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!$EMAILONLY -or $CHANGELOGONLY))
 {
+    $clFile = $CHANGELOGFILE
+    if ($CHANGELOGONLY)
+    {
+        $clFile = "${Env:Temp}\history.$VERSION.txt"
+        Remove-Item -Force -Path "$histFile" | Out-Null
+    }
     #
     # If changelog markdown file doesnt exist, create one with the project name as a title
     #
     $NewChangelog = $false
-    $ChangeLogPath = Split-Path "$CHANGELOGFILE"
+    $ChangeLogPath = Split-Path "$clFile"
     if ($ChangeLogPath -ne "" -and !(Test-Path($ChangeLogPath))) 
     {
         Log-Message "Creating changelog file directory and adding to version control" "magenta"
         New-Item -ItemType "directory" -Path "$ChangeLogPath" | Out-Null
-        Vc-Changelist-AddNew "$ChangeLogPath"
-        Vc-Changelist-AddRemove "$ChangeLogPath"
-        Vc-Changelist-Add "$ChangeLogPath"
+        if (!$CHANGELOGONLY)
+        {
+            Vc-Changelist-AddNew "$ChangeLogPath"
+            Vc-Changelist-AddRemove "$ChangeLogPath"
+            Vc-Changelist-Add "$ChangeLogPath"
+        }
     }
-    if (!(Test-Path($CHANGELOGFILE))) 
+    if (!(Test-Path($clFile))) 
     {
         Log-Message "Creating new changelog file and adding to version control" "magenta"
-        New-Item -ItemType "file" -Path "$CHANGELOGFILE" -Value "$ChangeLogTitle`r`n`r`n" | Out-Null
-        Vc-Changelist-AddRemove $CHANGELOGFILE
-        Vc-Changelist-AddNew $CHANGELOGFILE
+        New-Item -ItemType "file" -Path "$clFile" -Value "$ChangeLogTitle`r`n`r`n" | Out-Null
         $NewChangelog = $true
+        if (!$CHANGELOGONLY)
+        {
+            Vc-Changelist-AddRemove $clFile
+            Vc-Changelist-AddNew $clFile
+        }
     }
-    if (!(Test-Path($CHANGELOGFILE))) 
+    if (!(Test-Path($clFile))) 
     {
         Vc-Revert $true
         Log-Message "Could not create changelog file, exiting" "red"
@@ -5665,11 +5708,11 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
         #
         #$TmpCommits = CheckSpelling $TmpCommits $false
         #
-        # Write the formatted commits text to the top of $CHANGELOGFILE, but underneath the
+        # Write the formatted commits text to the top of $clFile, but underneath the
         # changelog title
         #
         $TmpCommits = $TmpCommits.Trim();
-        $ChangeLogContents = Get-Content $CHANGELOGFILE | Out-String
+        $ChangeLogContents = Get-Content $clFile | Out-String
         $ChangeLogContents = $ChangeLogContents.Replace("$ChangeLogTitle", "").Trim();
         $ChangeLogFinal = "$ChangeLogTitle`r`n`r`n"
         if (![string]::IsNullOrEmpty($TmpCommits)) {
@@ -5678,7 +5721,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
         if (![string]::IsNullOrEmpty($ChangeLogContents)) {
             $ChangeLogFinal = "$ChangeLogFinal$ChangeLogContents`r`n"
         }
-        Set-Content $CHANGELOGFILE $ChangeLogFinal
+        Set-Content $clFile $ChangeLogFinal
     }
     else {
         Log-Message "Version match, not touching changelog file" "darkyellow"
@@ -5686,12 +5729,21 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
     #
     # Allow manual modifications to changelog file
     #
-    Edit-File $CHANGELOGFILE $false $false
-    #
-    # Add to changelist for svn check in.  This would be the first file modified so just
-    # set changelist equal to history file
-    #
-    Vc-Changelist-Add $CHANGELOGFILE
+    if (!$CHANGELOGONLY)
+    {
+        Edit-File $clFile $true $false
+        #
+        # Add to changelist for svn check in.  This would be the first file modified so just
+        # set changelist equal to history file
+        #
+        Vc-Changelist-Add $clFile
+    }
+    else {
+        #
+        # TODO - Cut just the version from the content
+        #
+        Edit-File $clFile $true $false $true
+    }
 }
 
 $DistIsVersioned = $false
