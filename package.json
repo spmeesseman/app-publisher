@@ -29,7 +29,7 @@
         "conventional-changelog-spm": "^1.2.3",
         "cosmiconfig": "^5.2.1",
         "debug": "^4.1.1",
-        "env-ci": "^3.2.2",
+        "env-ci": "3.2.2",
         "execa": "^1.0.0",
         "figures": "^3.0.0",
         "get-stream": "^5.1.0",
@@ -74,7 +74,8 @@
         "semver"
     ],
     "scripts": {
-        "build": "npx tsc -p ./",
+        "build": "npm run prepare-env-ci && npx tsc -p ./",
+        "prepare-env-ci": "cmd /c copy /Y .\\src\\lib\\env-ci\\index.js  .\\node_modules\\env-ci && cmd /c copy /Y .\\src\\lib\\env-ci\\lib\\svn.js .\\node_modules\\env-ci\\lib && cmd /c copy /Y .\\src\\lib\\env-ci\\services\\svn.js .\\node_modules\\env-ci\\services",
         "publish-ps-full": "npx ./build/bin/app-publisher.js -p ps --no-ci",
         "publish-ps-dry_run": "npx ./build/bin/app-publisher.js -p ps --no-ci --dry-run",
         "publish-ps-email_only": "npx ./build/bin/app-publisher.js -p ps --no-ci --email-only",

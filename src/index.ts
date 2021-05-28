@@ -49,7 +49,7 @@ async function run(context, plugins)
         return true;
     }
 
-    const { isCi, branch: ciBranch, isPr } = envCi({ env, cwd });
+    let { isCi, branch: ciBranch, isPr } = envCi({ env, cwd });
 
     if (options.prcOpts)
     {
@@ -81,7 +81,7 @@ async function run(context, plugins)
             }
         }
     }
-
+    
     if (!isCi && !options.dryRun && !options.noCi)
     {
         logger.error("This run was not triggered in a known CI environment, use --no-ci flag for local publish.");
@@ -100,7 +100,7 @@ async function run(context, plugins)
             GIT_TERMINAL_PROMPT: 0
         });
     }
-
+    logger.log(ciBranch);
     if (isCi && isPr && !options.noCi)
     {
         logger.error("This run was triggered by a pull request and therefore a new version won't be published.");
