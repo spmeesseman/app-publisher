@@ -51,6 +51,37 @@ async function run(context, plugins)
 
     const { isCi, branch: ciBranch, isPr } = envCi({ env, cwd });
 
+    if (options.prcOpts)
+    {
+        for (var o in options.prcOpts)
+        {
+            var opt = options.prcOpts[o];
+            if (opt)
+            {
+                if (opt.includes("="))
+                {
+                    var kvp = opt.split("=");
+                    if (kvp.length === 2)
+                    {
+                        options[kvp[0]] = kvp[1];
+                        logger.log(`Override publishrc:  ${kvp[0]} = ${kvp[1]}`);
+                    }
+                    else {
+                        logger.warn(`Invalid override option specified:  ${opt}`);
+                        logger.warn("   Must  be in the form:  -o name=value");
+                    }
+                }
+                else {
+                    logger.warn(`Invalid override option specified:  ${opt}`);
+                    logger.warn("   Must  be in the form:  -o name=value");
+                }
+            }
+            else {
+                logger.warn("Invalid override option specified:  empty");
+            }
+        }
+    }
+
     if (!isCi && !options.dryRun && !options.noCi)
     {
         logger.error("This run was not triggered in a known CI environment, use --no-ci flag for local publish.");

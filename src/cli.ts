@@ -57,6 +57,15 @@ export = async () =>
         }
     );
     parser.addArgument(
+        [ "-o", "--opt", "--option" ],
+        {
+            dest: "prcOpts",
+            action: "append",
+            default: [],
+            help: "Specify options that override the .publishrc file (Ex.: -o branch=v2.0 -o prompt=Y)"
+        }
+    );
+    parser.addArgument(
         [ "-p", "--profile" ],
         {
             help: "The publish profile to use.",
@@ -78,14 +87,6 @@ export = async () =>
             dest: "republish",
             action: "storeTrue",
             help: "Re-publish the current/latest version."
-        }
-    );
-    parser.addArgument(
-        "--verbose",
-        {
-            dest: "debug",
-            action: "storeTrue",
-            help: "Increase logging verbosity."
         }
     );
     parser.addArgument(
