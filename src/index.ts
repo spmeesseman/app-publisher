@@ -129,19 +129,19 @@ async function run(context, plugins)
         `Run automated release from branch ${ciBranch}${options.dryRun ? " in dry-run mode" : ""}`
     );
 
+    let rc = false;
     if (!options.profile || options.profile === "node")
     {
-        await runNodeScript(context, plugins).then((code) =>
-        {
-            // console.log(code);
-        });
+        logger.error(
+            `The NodeJS version of app-publisher has not been completed as of yet.  Run with '-ps' option.`
+        );
+        return false;
+
+        // await runNodeScript(context, plugins);
     }
     else if (options.profile === "ps")
     {
-        await runPowershellScript(options, logger).then((code) =>
-        {
-            // console.log(code);
-        });
+        await runPowershellScript(options, logger);
     }
 }
 
@@ -170,7 +170,7 @@ async function runNodeScript(context: any, plugins: any)
                         options.branch
                         } is behind the remote one, therefore a new version won't be published.`
                     );
-                    return false;
+                    return;
                 }
 
                 throw error;
@@ -301,7 +301,7 @@ async function runPowershellScript(options: any, logger: any)
 
     if (!ps1Script) {
         logger.error("Could not find powershell script app-publisher.ps1");
-        return false;
+        return;
     }
 
     //
@@ -355,7 +355,7 @@ async function runPowershellScript(options: any, logger: any)
             logger.success("Successfully published release");
         }
         else {
-            logger.error("Failed to publish release");
+            logger.error(`Failed to publish release - return code '${iCode}'`)
         }
         process.exit(iCode);
     });
