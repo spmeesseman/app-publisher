@@ -75,12 +75,13 @@
     ],
     "scripts": {
         "build": "npx tsc -p ./",
-        "app-publish-ps": "npx ./build/bin/app-publisher.js -p ps --no-ci",
-        "app-publish-ps-dry": "npx ./build/bin/app-publisher.js -p ps --no-ci --dry-run",
-        "app-publish-ps-email-only": "npx ./build/bin/app-publisher.js -p ps --email-only",
-        "app-publish-ps-republish": "npx ./build/bin/app-publisher.js -p ps --republish",
-        "app-publish-node": "npx ./build/bin/app-publisher.js --no-ci",
-        "app-publish-node-dry": "npx ./build/bin/app-publisher.js --no-ci --dry-run"
+        "publish-ps-full": "npx ./build/bin/app-publisher.js -p ps --no-ci",
+        "publish-ps-dry_run": "npx ./build/bin/app-publisher.js -p ps --no-ci --dry-run",
+        "publish-ps-email_only": "npx ./build/bin/app-publisher.js -p ps --no-ci --email-only",
+        "publish-ps-changelog_only": "npx ./build/bin/app-publisher.js -p ps --no-ci --changelog-only",
+        "publish-ps-republish": "npx ./build/bin/app-publisher.js -p ps --republish",
+        "publish-node-full": "npx ./build/bin/app-publisher.js --no-ci",
+        "publish-node-dry_run": "npx ./build/bin/app-publisher.js --no-ci --dry-run"
     },
     "main": "./build/bin/app-publisher.js",
     "bin": {

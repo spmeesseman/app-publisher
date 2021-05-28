@@ -2,15 +2,6 @@ using namespace System
 using namespace System.IO
 using namespace System.Text.RegularExpressions
 
-#*********************************************************************************************#
-
-#####  ##   ##  ###      #     ###  #   #  #####    #####    #    #####    #     ##   ##  #####
-#      # # # #  #  #     #      #   ##  #  #        #   #   # #   #   #   # #    # # # #  #
-#      #  #  #  #   #    #      #   # # #  ####     #####  #####  ####   #####   #  #  #  #####
-#      #     #  #  #     #      #   #  ##  #        #      #   #  #  #   #   #   #     #      #
-#####  #     #  ###      ####  ###  #   #  #####    #      #   #  #   #  #   #   #     #  #####
-
-#*********************************************************************************************#
 #
 # Command line args are for future semantic-release chain.  Currently, the below variables 
 # are $in this script.
@@ -3681,6 +3672,16 @@ if ($options.republish -and $options.republish.Count -gt 0)
     }
 }
 
+#*********************************************************************************************#
+
+#####  ##   ##  ###      #     ###  #   #  #####    #####    #    #####    #     ##   ##  #####
+#      # # # #  #  #     #      #   ##  #  #        #   #   # #   #   #   # #    # # # #  #
+#      #  #  #  #   #    #      #   # # #  ####     #####  #####  ####   #####   #  #  #  #####
+#      #     #  #  #     #      #   #  ##  #        #      #   #  #  #   #   #   #     #      #
+#####  #     #  ###      ####  ###  #   #  #####    #      #   #  #   #  #   #   #     #  #####
+
+#*********************************************************************************************#
+
 #
 # Name of the project.  This must macth throughout the build files and the SVN project name
 #
@@ -3709,6 +3710,16 @@ if ($options.buildCommand) {
 $CHANGELOGFILE = ""
 if ($options.changelogFile) {
     $CHANGELOGFILE = $options.changelogFile
+}
+#
+# Changelog file only
+#
+$CHANGELOGONLY = $false
+if ($options.emailOnly) {
+    $CHANGELOGONLY = $options.changeLogOnly
+}
+if ($CHANGELOGONLY -eq "Y") {
+    $CHANGELOGONLY = $true
 }
 #
 # Commit message mapping
@@ -4366,6 +4377,22 @@ if ($VCFILES.Length -gt 0)
         }
     }
 }
+
+#
+# SIngle task mode flag to skip most of the functionality in the publisher chain except for
+# the particular task that is going to be ran.
+#
+$SINGLETASKMODE = $CHANGELOGONLY -or $EMAILONLY
+
+#********************************************************************************************************************#
+
+#####  #   #  ###      #####  ##   ##  ###      #     ###  #   #  #####    #####    #    #####    #     ##   ##  #####
+#      ##  #  #  #     #      # # # #  #  #     #      #   ##  #  #        #   #   # #   #   #   # #    # # # #  #
+####   # # #  #   #    #      #  #  #  #   #    #      #   # # #  ####     #####  #####  ####   #####   #  #  #  #####
+#      #  ##  #  #     #      #     #  #  #     #      #   #  ##  #        #      #   #  #  #   #   #   #     #      #
+#####  #   #  ###      #####  #     #  ###      ####  ###  #   #  #####    #      #   #  #   #  #   #   #     #  #####
+
+#********************************************************************************************************************#
 
 #
 # A flag to set if the build commands are run, which technically could happen up
@@ -5325,9 +5352,9 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
         }
         Log-Message "New version has been validated" "darkgreen"
     }
-    else  # $EMAILONLY
+    else
     { 
-        Log-Message "EMail only - Set version to $CURRENTVERSION"
+        Log-Message "Single task mode (Email) - Set version to $CURRENTVERSION"
         $VERSION = $CURRENTVERSION
     }
 }
@@ -5384,7 +5411,7 @@ Log-Message "Date                : $TDATE"
 #
 # Process $HISTORYFILE
 #
-if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and !$EMAILONLY)
+if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$EMAILONLY -or $CHANGELOGONLY))
 {
     #
     # If history file doesnt exist, create one with the project name as a title
@@ -5485,7 +5512,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and !$EM
 #
 # Process $CHANGELOGFILE
 #
-if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and !$EMAILONLY)
+if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!$EMAILONLY -or $CHANGELOGONLY))
 {
     #
     # If changelog markdown file doesnt exist, create one with the project name as a title
@@ -5668,7 +5695,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and !$
 }
 
 $DistIsVersioned = $false
-if ($DISTRELEASE -eq "Y" -and !$EMAILONLY)
+if ($DISTRELEASE -eq "Y" -and !$SINGLETASKMODE)
 {
     $DistDirCreated = $false
     #
@@ -5697,11 +5724,11 @@ if ($DISTRELEASE -eq "Y" -and !$EMAILONLY)
 #
 # Run pre build scripts if specified, before version file edits
 #
-if (!$EMAILONLY) {
+if (!$SINGLETASKMODE) {
     Run-Scripts "preBuild" $PREBUILDCOMMAND $true $true
 }
 
-if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and !$EMAILONLY)
+if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and !$SINGLETASKMODE)
 {
     #
     # AppPublisher publishrc version
@@ -5755,7 +5782,7 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and !$EMAILONLY)
 #
 # Run custom build scipts if specified
 #
-if (!$EMAILONLY) {
+if (!$SINGLETASKMODE) {
     Run-Scripts "build" $BUILDCOMMAND $true $true
 }
 
@@ -5770,7 +5797,7 @@ $NugetLocation = ""
 #
 # NPM Release
 #
-if ($NPMRELEASE -eq "Y" -and !$EMAILONLY) 
+if ($NPMRELEASE -eq "Y" -and !$SINGLETASKMODE) 
 {
     Log-Message "Starting NPM release"
     
@@ -5873,7 +5900,7 @@ if ($NPMRELEASE -eq "Y" -and !$EMAILONLY)
     #
     Run-Scripts "postNpmRelease" $NPMRELEASEPOSTCOMMAND $false $false
 }
-elseif ($NPMRELEASE -eq "Y" -and $EMAILONLY)
+elseif ($NPMRELEASE -eq "Y" -and $SINGLETASKMODE)
 {
     if (![string]::IsNullOrEmpty($NPMSCOPE)) {
         $NpmLocation = "$NPMREGISTRY/-/web/detail/$NPMSCOPE/$PROJECTNAME"
@@ -5898,7 +5925,7 @@ if ($NUGETRELEASE -eq "Y")
 #
 # Network Release
 #
-if ($DISTRELEASE -eq "Y" -and !$EMAILONLY) 
+if ($DISTRELEASE -eq "Y" -and !$SINGLETASKMODE) 
 {
     Log-Message "Starting Distribution release"
 
@@ -6048,14 +6075,14 @@ elseif ($DISTRELEASE -eq "Y" -and $EMAILONLY)
 #
 # Run post build scripts if specified
 #
-if (!$EMAILONLY) {
+if (!$SINGLETASKMODE) {
     Run-Scripts "postBuild" $POSTBUILDCOMMAND $false $false
 }
 
 #
 # Restore any configured package.json values to the original values
 #
-if ((Test-Path("package.json")) -and !$EMAILONLY) {
+if ((Test-Path("package.json")) -and !$SINGLETASKMODE) {
     Restore-PackageJson
 }
 
@@ -6065,7 +6092,7 @@ if ((Test-Path("package.json")) -and !$EMAILONLY) {
 #
 $GithubReleaseId = "";
 
-if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y" -and !$EMAILONLY) 
+if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y" -and !$SINGLETASKMODE) 
 {
     Log-Message "Creating GitHub v$VERSION release"
 
@@ -6243,7 +6270,7 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y" -and !$EMAILONLY)
 #
 # MantisBT Release
 #
-if ($MANTISBTRELEASE -eq "Y" -and !$EMAILONLY) 
+if ($MANTISBTRELEASE -eq "Y" -and !$SINGLETASKMODE) 
 {
     Log-Message "Starting MantisBT release"
     Log-Message "Creating MantisBT v$VERSION release"
@@ -6441,7 +6468,7 @@ if ($MANTISBTRELEASE -eq "Y" -and !$EMAILONLY)
 #
 # Run custom deploy script if specified
 #
-if (!$EMAILONLY)
+if (!$SINGLETASKMODE)
 {
     if ($SKIPDEPLOYPUSH -ne "Y" -and $DRYRUN -eq $false)
     {
@@ -6455,18 +6482,18 @@ if (!$EMAILONLY)
 #
 # Send release notification email
 #
-if ($EMAILNOTIFICATION -eq "Y" -or $EMAILONLY) {
+if (!$CHANGELOGONLY -and ($EMAILNOTIFICATION -eq "Y" -or $EMAILONLY)) {
     Send-Notification "$TargetNetLocation" "$NpmLocation" "$NugetLocation"
 }
 
 #
 # Run pre commit scripts if specified
 #
-if (!$EMAILONLY) {
+if (!$SINGLETASKMODE) {
     Run-Scripts "preCommit" $PRECOMMITCOMMAND $false $false
 }
 
-if (!$EMAILONLY)
+if (!$SINGLETASKMODE)
 {
     #
     # Change dircetory to svn/git root that contains the .svn/.git folder to isse SVN commands,
@@ -6766,9 +6793,9 @@ if (!$EMAILONLY)
         }
     }
 }
-else  # $EMAILONLY
+else  # SINGLETASKMODE
 {
-    Log-Message "Notification 'email only' run completed"
+    Log-Message "Single task mode run completed"
 }
 
 Log-Message "Completed"

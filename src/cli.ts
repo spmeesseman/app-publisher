@@ -18,7 +18,15 @@ export = async () =>
         prog: "app-publisher"
     });
     parser.addArgument(
-        "--dry-run",
+        [ "-c", "--changelog-only" ],
+        {
+            dest: "changeLogOnly",
+            action: "storeTrue",
+            help: "Run the publisher to export the next version's current changelog."
+        }
+    );
+    parser.addArgument(
+        [ "-d", "--dry-run" ],
         {
             dest: "dryRun",
             action: "storeTrue",
@@ -26,7 +34,7 @@ export = async () =>
         }
     );
     parser.addArgument(
-        "--email-only",
+        [ "-e", "--email-only" ],
         {
             dest: "emailOnly",
             action: "storeTrue",
@@ -45,7 +53,7 @@ export = async () =>
         {
             dest: "noCi",
             action: "storeTrue",
-            help: "Run the publisher chain in dry/test mode and exit."
+            help: "Run the publisher chain in a local, non-CI environment."
         }
     );
     parser.addArgument(
@@ -57,7 +65,7 @@ export = async () =>
         }
     );
     parser.addArgument(
-        "--read-config",
+        [ "-rc", "--read-config" ],
         {
             dest: "readConfig",
             action: "storeTrue",
@@ -65,7 +73,7 @@ export = async () =>
         }
     );
     parser.addArgument(
-        "--republish",
+        [ "-r", "--republish" ],
         {
             dest: "republish",
             action: "storeTrue",
@@ -81,7 +89,7 @@ export = async () =>
         }
     );
     parser.addArgument(
-        "--version",
+        [ "-v", "--version" ],
         {
             help: "Display version and exit.",
             action: "storeTrue"
