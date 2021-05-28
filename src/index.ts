@@ -115,23 +115,22 @@ async function run(context, plugins)
     if (isCi && ciBranch !== options.branch)
     {
         logger.error(
-            `This ${runTxt} was triggered on the branch ${ciBranch}, while app-publisher is configured to publish from ${
-            options.branch
-            }, therefore a new version won’t be published.`
+            `This ${runTxt} was triggered on the branch '${ciBranch}', but is configured to publish from '${options.branch}'`
         );
+        logger.error("   A new version won’t be published");
         return false;
     }
     else if (ciBranch !== options.branch)
     {
         logger.warn(
-            `This ${runTxt} was triggered on the branch ${ciBranch}, while app-publisher is configured to publish from ${
-            options.branch
-            }, continuing due to non-ci environment.`
+            `This ${runTxt} was triggered on the branch '${ciBranch}', but is configured to publish from '${options.branch}'`
+        );
+        logger.warn("   Continuing due to non-ci environment"
         );
     }
 
     logger[options.dryRun ? "warn" : "success"](
-        `Run automated release from branch ${options.branch}${options.dryRun ? " in dry-run mode" : ""}`
+        `Run automated release from branch '${options.branch}'${options.dryRun ? " in dry-run mode" : ""}`
     );
 
     let rc = false;
