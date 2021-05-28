@@ -417,6 +417,8 @@ class HistoryFile
         foreach ($msg in $CommitsList)
         {
             $msg = $msg.Trim()
+            $msgLwr = $msg.ToLower()
+
             $customIgnoreFound = $false
             
             if ($this.CommitMap)
@@ -432,7 +434,8 @@ class HistoryFile
                 continue;
             }
 
-            if ($null -ne $msg -and $msg -ne "" -and !$msg.ToLower().StartsWith("chore") -and !$msg.ToLower().StartsWith("progress"))
+            if ($null -ne $msg -and $msg -ne "" -and !$msgLwr.StartsWith("chore") -and 
+                !$msgLwr.StartsWith("progress") -and !$msgLwr.StartsWith("style") -and !$msgLwr.StartsWith("project"))
             {
                  #
                 # Replace commit tags with full text (non-scoped)
@@ -5649,7 +5652,8 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
             #
             # Ignore chores, progress, and custom specified psubjects to ignore
             #
-            if ($Section.ToLower() -eq "chore" -or $Section.ToLower() -eq "progress") {
+            if ($Section.ToLower() -eq "chore" -or $Section.ToLower() -eq "progress" -or 
+                $Section.ToLower() -eq "project" -or $Section.ToLower() -eq "style") {
                 continue
             }
             $doContinue = $false;
