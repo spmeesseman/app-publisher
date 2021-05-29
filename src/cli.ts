@@ -16,7 +16,7 @@ export = async () =>
     const RawTextHelpFormatter = argparse.RawTextHelpFormatter;
     const parser = new ArgumentParser({
         addHelp: false,
-        description: "App Publisher - Automated Releases for the PJ Development Environment",
+        description: "App Publisher - CI Tool for Multi-Releases",
         prog: "app-publisher",
         formatterClass: RawTextHelpFormatter // so we can use linebreaks in the help txt
     });
@@ -27,6 +27,14 @@ export = async () =>
             dest: "changeLogOnly",
             action: "storeTrue",
             help: "Export the next release's current changelog."
+        }
+    );
+    parser.addArgument(
+        [ "-cfg", "--config" ],
+        {
+            dest: "readConfig",
+            action: "storeTrue",
+            help: "Display the contents of the configuration file."
         }
     );
     parser.addArgument(
@@ -87,22 +95,6 @@ export = async () =>
                   "    app-publisher -o promptVersion=Y\n" +
                   "    app-publisher -o branch=v2.0 -o promptVersion=N\n" +
                   "    app-publisher -o emailNotification=N -o skipVersionEdits=Y"
-        }
-    );
-    parser.addArgument(
-        [ "-p", "--profile" ],
-        {
-            help: "The code-behind profile to use.",
-            choices: [ "node", "ps" ],
-            defaultValue: "node"
-        }
-    );
-    parser.addArgument(
-        [ "-rc", "--read-config" ],
-        {
-            dest: "readConfig",
-            action: "storeTrue",
-            help: "Display the contents of the configuration file."
         }
     );
     parser.addArgument(
@@ -652,7 +644,7 @@ const publishRcOpts =
     npmRegistry: [
         true,
         "string",
-        "",
+        "https://registry.npmjs.org",
         "The URL of the NPM registry to use for making an NPM release.",
         "Ignored if npmRelease = N."
     ],

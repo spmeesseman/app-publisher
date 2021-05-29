@@ -35,9 +35,9 @@ async function run(context, plugins)
     const { cwd, env, options, logger } = context;
 
     //
-    // If user specified '--read-config', then just display config and exit
+    // If user specified 'cfg' or '--config', then just display config and exit
     //
-    if (options.readConfig)
+    if (options.config)
     {
         const title = `
 ----------------------------------------------------------------------------
@@ -129,23 +129,17 @@ async function run(context, plugins)
         );
     }
 
-    logger[options.dryRun ? "warn" : "success"](
+    logger[options.dryRun ? "warn" : "log"](
         `Run automated release from branch '${options.branch}'${options.dryRun ? " in dry-run mode" : ""}`
     );
 
-    let rc = false;
-    if (!options.profile || options.profile === "node")
-    {
-        logger.error(
-            `The NodeJS version of app-publisher has not been completed as of yet.  Run with '-ps' option.`
-        );
-        return false;
-        // await runNodeScript(context, plugins);
-    }
-    else if (options.profile === "ps")
-    {
+    //if (!options.emailOnly)
+    //{
+    //    // await runNodeScript(context, plugins);
+    //}
+    //else {
         await runPowershellScript(options, logger);
-    }
+    //}
 }
 
 /*
