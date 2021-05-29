@@ -1,6 +1,6 @@
 {
     "name": "@perryjohnson/app-publisher",
-    "version": "1.20.2",
+    "version": "1.21.0",
     "displayName": "App Publisher",
     "description": "App Publisher",
     "license": "MIT",
@@ -75,15 +75,17 @@
     ],
     "scripts": {
         "build": "npm run prepare-env-ci && npx tsc -p ./",
+        "help": "npx ./build/bin/app-publisher.js --help",
+        "help_detailed": "npx ./build/bin/app-publisher.js --help-detailed",
+        "version": "npx ./build/bin/app-publisher.js --version",
         "prepare-env-ci": "cmd /c copy /Y .\\src\\lib\\env-ci\\index.js  .\\node_modules\\env-ci && cmd /c copy /Y .\\src\\lib\\env-ci\\lib\\svn.js .\\node_modules\\env-ci\\lib && cmd /c copy /Y .\\src\\lib\\env-ci\\services\\svn.js .\\node_modules\\env-ci\\services",
-        "publish-ps-full": "npx ./build/bin/app-publisher.js -p ps --no-ci",
-        "publish-ps-dry_run": "npx ./build/bin/app-publisher.js -p ps --no-ci --dry-run",
-        "publish-ps-email_only": "npx ./build/bin/app-publisher.js -p ps --no-ci --email-only",
-        "publish-ps-changelog_only": "npx ./build/bin/app-publisher.js -p ps --no-ci --changelog-only",
-        "publish-ps-republish": "npx ./build/bin/app-publisher.js -p ps --republish",
-        "publish-ps-help": "npx ./build/bin/app-publisher.js -p ps --help",
-        "publish-node-full": "npx ./build/bin/app-publisher.js --no-ci",
-        "publish-node-dry_run": "npx ./build/bin/app-publisher.js --no-ci --dry-run"
+        "ps-full": "npx ./build/bin/app-publisher.js -p ps --no-ci",
+        "ps-dry_run": "npx ./build/bin/app-publisher.js -p ps --no-ci --dry-run",
+        "ps-email_only": "npx ./build/bin/app-publisher.js -p ps --no-ci --email-only",
+        "ps-changelog_only": "npx ./build/bin/app-publisher.js -p ps --no-ci --changelog-only",
+        "ps-republish": "npx ./build/bin/app-publisher.js -p ps --republish",
+        "node-full": "npx ./build/bin/app-publisher.js --no-ci",
+        "node-dry_run": "npx ./build/bin/app-publisher.js --no-ci --dry-run"
     },
     "main": "./build/bin/app-publisher.js",
     "bin": {

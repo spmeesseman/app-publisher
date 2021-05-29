@@ -3658,3 +3658,79 @@ May 23rd, 2021
     the history file deosnt exist (e.g. for an initial release), an error
     occurs.
 
+
+Version 1.21.0
+May 28th, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+    
+    Add initial Subversion support to CI environment detection.
+
+2.  Feature
+    
+    Add new command line option as a single task mode option:
+    
+        -c  ,  --changelog-only
+    
+    Specifying this option will open the current changelog for the next version
+    in the editor specified in .publishrc.json (Notepad by default), and exit.
+
+3.  Feature
+    
+    Add new command line option for specifying supported publishrc properties:
+
+        -o  ,  --option
+
+    For example:
+    
+        npx app-publisher -o branch=v2.0.0 --no-ci --changelog-only
+    
+    Options specified on the command line in this manner will override the
+    corresponding property values set in the .publishrc.json.
+
+4.  Bug Fix
+    
+    Commits tagged with a subject of 'project' or 'style' should not be included
+    in the changelog.
+
+5.  Refactoring
+    
+    Improve the log output in different CI / Non-CI publishing scenarios.
+
+6.  Refactoring
+    
+    The option following publishrc property:
+
+        interactive
+
+    Has been renamed to:
+
+        promptVersion
+
+    The old option 'interactive' will remain backward compatible and continue to
+    work as it has.
+
+7.  Refactoring
+    
+    When a publish run fails, print the error code to the console in addition to
+    the error message.
+
