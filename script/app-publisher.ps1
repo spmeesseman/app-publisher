@@ -73,7 +73,7 @@ class Vc
             #
             # Issue SVN log command
             #
-            $TagLocation = $Repo.Replace($Branch, "tags");
+            $TagLocation = $Repo.Replace("trunk", "tags").Replace("branches/" + $Branch, "tags");
             $xml = svn log --xml "$TagLocation" --verbose --limit 50
             if ($LASTEXITCODE -ne 0) {
                 Log-Message "No commits found or no version tag exists" "red"
@@ -121,7 +121,11 @@ class Vc
             # Retrieve commits since last version tag
             #
             Log-Message "Retrieving commits since last version"
-            $xml = svn log --xml --verbose --limit 250 -r ${rev}:HEAD
+            $xml = svn log --xml "$Repo" --verbose --limit 250 -r ${rev}:HEAD
+            if ($LASTEXITCODE -ne 0) {
+                Log-Message "Failed to retrieve commits" "red"
+                return $comments
+            }
             Log-Message "Parsing response from SVN"
 
             #
@@ -133,7 +137,24 @@ class Vc
             }
             catch {
                 Log-Message "No commits found or no version tag exists" "red"
-                return $comments
+                $Proceed = read-host -prompt "Do you want to get all commits on this branch? Y[N]"
+                if ($Proceed.ToUpper() -eq "Y") {
+                    $xml = svn log --xml "$Repo" --verbose --limit 250
+                    if ($LASTEXITCODE -ne 0) {
+                        Log-Message "No commits found or no version tag exists" "red"
+                        return $comments
+                    }
+                    try {
+                        $xdoc = [Xml]$xml
+                    }
+                    catch {
+                        Log-Message "No commits found" "red"
+                        return $comments
+                    }
+                }
+                else {
+                    return $comments
+                }
             }
             #
             # Parse the commit messages
@@ -4180,13 +4201,14 @@ elseif ($options.interactive) { # for backwards
     $PROMPTVERSION = $options.interactive
 }
 #
-#
-#
+# Repository url
 #
 $REPO = ""
 if ($options.repo) {
     $REPO = $options.repo
 }
+#
+# Repository type - svn or git
 #
 $REPOTYPE = ""
 if ($options.repoType) {
@@ -4355,7 +4377,6 @@ if ($PROJECTNAME -eq "app-publisher") {
 $SKIPCOMMIT = "N"
 $COMMITS = @()
 $TDATE = ""
-$REPOSCOMMITED = @()
 
 
 #
@@ -4432,13 +4453,6 @@ if ([string]::IsNullOrEmpty($NPMREGISTRY)) {
 }
 
 #
-# Set a default Nuget registry if necessary
-#
-if ([string]::IsNullOrEmpty($NPMREGISTRY)) {
-    $NPMREGISTRY = "https://registry.nuget.org"
-}
-
-#
 # Set up log file
 #
 if ($WRITELOG -eq "Y") 
@@ -4508,10 +4522,43 @@ if ([string]::IsNullOrEmpty($BRANCH))
         Log-Message "Setting branch name to default 'master'" "darkyellow"
         $BRANCH = "master"
     }
-    elseif ($_RepoType -eq "svn") 
+    else # if ($_RepoType -eq "svn") 
     {
         Log-Message "Setting branch name to default 'trunk'" "darkyellow"
         $BRANCH = "trunk"
+    }
+}
+
+#
+# SVN repo path
+#
+if ($_RepoType -eq "svn")
+{
+    if ($BRANCH -eq "trunk")
+    {
+        if ($_Repo.IndexOf("trunk") -eq -1)
+        {
+            if ($_Repo.IndexOf("branches/") -ne -1)
+            {
+                $_Repo = $_Repo.Substring(0, $_Repo.IndexOf("branches/")) + "trunk";
+            }
+            else {
+                $_Repo = ($_Repo + "/" + $BRANCH).Replace("//", "/");
+            }
+        }
+    }
+    else
+    {
+        if ($_Repo.IndexOf("branches/") -eq -1)
+        {
+            if ($_Repo.IndexOf("trunk") -ne -1)
+            {
+                $_Repo = $_Repo.Replace("trunk", "branches/" + $BRANCH);
+            }
+            else {
+                $_Repo = ($_Repo + "/branches/" + $BRANCH).Replace("//", "/");
+            }
+        }
     }
 }
 
@@ -5315,7 +5362,7 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
             $VersionInteractive = "Y"
         }
 
-        if ($VERSIONSYSTEM -eq "manual" -or $PROMPTVERSION -eq "Y" -or $VersionInteractive -eq "Y") 
+        if (($VERSIONSYSTEM -eq "manual" -or $PROMPTVERSION -eq "Y" -or $VersionInteractive -eq "Y") -and !$CHANGELOGONLY) 
         {
             Log-Message "[PROMPT] User input required"
             $NewVersion = read-host -prompt "Enter the version #, or C to cancel [$VERSION]"
@@ -6636,7 +6683,7 @@ if (!$SINGLETASKMODE)
             #
             if ($VCTAG -eq "Y")
             {
-                $TagLocation = $_Repo.Replace("trunk", "tags")
+                $TagLocation = $_Repo.Replace("trunk", "tags").Replace("branches/" + $BRANCH, "tags")
                 if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($VCTAGPREFIX))
                 {
 
