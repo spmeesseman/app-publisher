@@ -5273,7 +5273,7 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
         # not to proceed, since technically the first time this script is used, we don't know
         # how to retrieve the latest commits
         #
-        if ($null -eq $COMMITS -or $COMMITS.Length -eq 0) 
+        if (($null -eq $COMMITS -or $COMMITS.Length -eq 0)) 
         {
             Log-Message "Commits since the last version or the version tag could not be found"
             Log-Message "[PROMPT] User input required"
