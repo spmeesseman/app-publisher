@@ -4046,7 +4046,7 @@ if ($options.pathToMainRoot) {
 #
 # Path to DIST should be relative to PATHTOROOT
 #
-$PATHTODIST = ""
+$PATHTODIST = "install\\dist"
 if ($options.pathToDist) {
     $PATHTODIST = $options.pathToDist
 }
@@ -4218,7 +4218,7 @@ if ($options.homePage) {
 # from home office where two datacenters cannot be reached at the same time, in this
 # case the installer files are manually copied)
 #
-$SKIPDEPLOYPUSH = "Y"
+$SKIPDEPLOYPUSH = "N"
 if ($options.skipDeployPush) {
     $SKIPDEPLOYPUSH = $options.skipDeployPush
 }
@@ -4446,9 +4446,9 @@ if ($WRITELOG -eq "Y")
     # Determine current date  
     $CurrentDate = Get-Date -format "yyyyMMddHHmmss";
     # Define log file name
-    $LogFileName = "${env:LOCALAPPDATA}\Perry Johnson & Associates\app-publisher\log\app-publisher-$CurrentDate.log";
+    $LogFileName = "${env:LOCALAPPDATA}\app-publisher\log\app-publisher-$CurrentDate.log";
     # Create the log directory
-    New-Item -ItemType directory -Force -Path "${env:LOCALAPPDATA}\Perry Johnson & Associates\app-publisher\log" | Out-Null;
+    New-Item -ItemType directory -Force -Path "${env:LOCALAPPDATA}\app-publisher\log" | Out-Null;
 }
 
 #

@@ -51,33 +51,19 @@ async function run(context, plugins)
 
     let { isCi, branch: ciBranch, isPr } = envCi({ env, cwd });
 
-    if (options.prcOpts)
+    if (options.option)
     {
-        for (var o in options.prcOpts)
+        for (var o in options.option)
         {
-            var opt = options.prcOpts[o];
-            if (opt)
+            var opt = options.option[o];
+            if (opt && opt.includes("="))
             {
-                if (opt.includes("="))
+                var kvp = opt.split("=");
+                if (kvp.length === 2)
                 {
-                    var kvp = opt.split("=");
-                    if (kvp.length === 2)
-                    {
-                        options[kvp[0]] = kvp[1];
-                        logger.log(`Override publishrc:  ${kvp[0]} = ${kvp[1]}`);
-                    }
-                    else {
-                        logger.warn(`Invalid override option specified:  ${opt}`);
-                        logger.warn("   Must  be in the form:  -o name=value");
-                    }
+                    options[kvp[0]] = kvp[1];
+                    logger.log(`Override publishrc:  ${kvp[0]} = ${kvp[1]}`);
                 }
-                else {
-                    logger.warn(`Invalid override option specified:  ${opt}`);
-                    logger.warn("   Must  be in the form:  -o name=value");
-                }
-            }
-            else {
-                logger.warn("Invalid override option specified:  empty");
             }
         }
     }
