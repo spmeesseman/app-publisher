@@ -6418,14 +6418,14 @@ if ($MANTISBTRELEASE -eq "Y" -and !$SINGLETASKMODE)
         $MantisChangelogParts = $ClsHistoryFile.getChangelog($PROJECTNAME, $ReleaseVersion, 1, $VERSIONTEXT, "parts", $CHANGELOGFILE, "", "", "", "", "", "", "", @(), "", $false, $IsAppPublisher)
     }
 
-    if ($MantisChangelogParts -eq $null -or $MantisChangelogParts.Length -eq 0 -or $MantisChangelogParts[0] -eq "error") {
+    if ($null -eq $MantisChangelogParts -or $MantisChangelogParts.Length -eq 0 -or $MantisChangelogParts[0] -eq "error") {
         $MantisChangelog = $null
     }
     else {
         $MantisChangelog = Get-ReleaseChangelog $MantisChangeLogParts $true
     }
 
-    if ($MantisChangelog -ne $null) 
+    if ($null -ne $MantisChangelog) 
     {
         #
         # Log the changelog contents if this is a dry run
