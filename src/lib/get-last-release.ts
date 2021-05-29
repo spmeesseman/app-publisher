@@ -36,7 +36,7 @@ async function getLastRelease({ cwd, env, options: { tagFormat, repoType }, logg
     //
     const tagRegexp = `^${escapeRegExp(template(tagFormat)({ version: " " })).replace(" ", "(.+)")}`;
 
-    const tags = (await getTags({ cwd, env }))
+    const tags = (await getTags({ cwd, env }, repoType))
         .map(tag => ({ tag: tag, version: (tag.match(tagRegexp) || new Array(2))[1] }))
         .filter(
             tag => tag.version && semver.valid(semver.clean(tag.version)) && !semver.prerelease(semver.clean(tag.version))

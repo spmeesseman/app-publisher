@@ -28,12 +28,22 @@ export async function getTagHead(tagName: any, execaOpts: { cwd: any; env: any; 
  * @return {Array<String>} List of git tags.
  * @throws {Error} If the `git` command fails.
  */
-export async function getTags(execaOpts: any, repoType = "git")
+export async function getTags(execaOpts: any, repoType = "svn")
 {
-    return (await execa.stdout("git", ["tag"], execaOpts))
-        .split("\n")
-        .map((tag: { trim: () => void; }) => tag.trim())
-        .filter(Boolean);
+    if (repoType === "git")
+    {
+        return (await execa.stdout("git", ["tag"], execaOpts))
+            .split("\n")
+            .map((tag: { trim: () => void; }) => tag.trim())
+            .filter(Boolean);
+    }
+    else
+    {
+        return (await execa.stdout("svn", ["info"], execaOpts))
+            .split("\n")
+            .map((tag: { trim: () => void; }) => tag.trim())
+            .filter(Boolean);
+    }
 }
 
 /**

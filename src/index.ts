@@ -20,6 +20,7 @@ import getCommits = require("./lib/get-commits");
 import getNextVersion = require("./lib/get-next-version");
 import getLastRelease = require("./lib/get-last-release");
 import { extractErrors } from "./lib/utils";
+import { sendEmail } from "./lib/email";
 import getGitAuthUrl = require("./lib/get-git-auth-url");
 import getLogger = require("./lib/get-logger");
 import { fetch, verifyAuth, isBranchUpToDate, getHead, tag, push } from "./lib/repo";
@@ -133,13 +134,15 @@ async function run(context, plugins)
         `Run automated release from branch '${options.branch}'${options.dryRun ? " in dry-run mode" : ""}`
     );
 
-    //if (!options.emailOnly)
-    //{
-    //    // await runNodeScript(context, plugins);
-    //}
-    //else {
+    if (options.emailOnly)
+    {
+        // await sendEmail(logger);
         await runPowershellScript(options, logger);
-    //}
+        // await runNodeScript(context, plugins);
+    }
+    else {
+        await runPowershellScript(options, logger);
+    }
 }
 
 /*
