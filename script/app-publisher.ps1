@@ -4969,7 +4969,7 @@ Log-Message "   Vers.replace tags: $VERSIONREPLACETAGS"
 Log-Message "   Version text     : $VERSIONTEXT"
 
 #
-# If this is a CI environment, then skip all edits
+# If this is a CI environment, then skip all interaction / edits
 #
 if (!$options.noCi)
 {
