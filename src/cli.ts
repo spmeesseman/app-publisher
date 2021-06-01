@@ -26,7 +26,16 @@ export = async () =>
         {
             dest: "changeLogOnly",
             action: "storeTrue",
-            help: "Export the next release's current changelog."
+            help: "Export the next release's current changelog and view using the editor\n" +
+                  "specified in the .publishrc file."
+        }
+    );
+    parser.addArgument(
+        [ "-cf", "--changelog-only-file" ],
+        {
+            dest: "changeLogOnlyFile",
+            action: "option",
+            help: "Export the next release's current changelog to the specified file."
         }
     );
     parser.addArgument(

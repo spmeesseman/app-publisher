@@ -3741,11 +3741,20 @@ if ($options.changelogFile) {
 # Changelog file only
 #
 $CHANGELOGONLY = $false
+$CHANGELOGONLYFILE = ""
 if ($options.changeLogOnly) {
     $CHANGELOGONLY = $options.changeLogOnly
 }
 if ($CHANGELOGONLY -eq "Y") {
     $CHANGELOGONLY = $true
+}
+if ($options.changeLogOnlyFile -is [system.string])
+{
+    if (![string]::IsNullOrEmpty($options.changeLogOnlyFile))
+    {
+        $CHANGELOGONLY = $true
+        $CHANGELOGONLYFILE = $options.changeLogOnlyFile
+    }
 }
 #
 # Commit message mapping
@@ -4911,6 +4920,7 @@ Log-Message "   Build cmd        : $BUILDCOMMAND"
 Log-Message "   Bugs Page        : $BUGS"
 Log-Message "   Changelog file   : $CHANGELOGFILE"
 Log-Message "   Changelog only   : $CHANGELOGONLY"
+Log-Message "   Chglog only file : $CHANGELOGONLYFILE"
 Log-Message "   C Project Rc File: $CPROJECTRCFILE"
 Log-Message "   Deploy cmd       : $DEPLOYCOMMAND"
 Log-Message "   Dist release     : $DISTRELEASE"
@@ -5514,7 +5524,13 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$E
     $histFile = $HISTORYFILE
     if ($CHANGELOGONLY)
     {
-        $histFile = "${Env:Temp}\history.$VERSION.txt"
+        if ([string]::IsNullOrEmpty($CHANGELOGONLYFILE))
+        {
+            $histFile = "${Env:Temp}\history.$VERSION.txt"
+        }
+        else {
+            $histFile = $CHANGELOGONLYFILE
+        }
         if (Test-Path($histFile))
         {
             Remove-Item -Force -Path "$histFile" | Out-Null
@@ -5644,8 +5660,17 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
     $clFile = $CHANGELOGFILE
     if ($CHANGELOGONLY)
     {
-        $clFile = "${Env:Temp}\history.$VERSION.txt"
-        Remove-Item -Force -Path "$histFile" | Out-Null
+        if ([string]::IsNullOrEmpty($CHANGELOGONLYFILE))
+        {
+            $clFile = "${Env:Temp}\changelog.$VERSION.txt"
+        }
+        else {
+            $clFile = $CHANGELOGONLYFILE
+        }
+        if (Test-Path($clFile))
+        {
+            Remove-Item -Force -Path "$clFile" | Out-Null
+        }
     }
     #
     # If changelog markdown file doesnt exist, create one with the project name as a title
