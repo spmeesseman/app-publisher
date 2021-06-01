@@ -82,6 +82,7 @@
     "repo":              "https://svn.development.pjats.com/pja/app-publisher/trunk",
     "repoType":          "svn",
     "skipCommit":        "N",
+    "skipChangeLogEdits":"Y",
     "skipDeployPush":    "N",
     "skipVersionEdits":  "Y",
     "testEmailRecip":    "smeesseman@pjats.com",
