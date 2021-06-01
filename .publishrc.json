@@ -1,6 +1,6 @@
 {
     "projectName":       "app-publisher",
-    "version": "1.21.0",
+    "version": "1.22.0",
     "branch":            "trunk",
     "bugs":              "",
     "buildCommand": [
@@ -82,7 +82,7 @@
     "repo":              "https://svn.development.pjats.com/pja/app-publisher/trunk",
     "repoType":          "svn",
     "skipCommit":        "N",
-    "skipChangeLogEdits":"Y",
+    "skipChangeLogEdits":"N",
     "skipDeployPush":    "N",
     "skipVersionEdits":  "Y",
     "testEmailRecip":    "smeesseman@pjats.com",

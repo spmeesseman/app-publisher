@@ -3734,3 +3734,63 @@ May 28th, 2021
     When a publish run fails, print the error code to the console in addition to
     the error message.
 
+
+Version 1.22.0
+June 1st, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Documentation:  Readme
+    
+    Testing ci
+
+2.  Feature
+    
+    Add new publisrc property to skip changelog/history file edits:
+    
+        skipChangeLogEdits
+    
+    Setting this flag to "Y" will skip editing of the changelog/history file,
+    and it will be used as output by the parser without intervention.
+    
+    Refactoring
+    
+    When run in a CI environment, all interaction properties should be
+    automatically disabled regardless of what is secified in the publishrc file:
+    
+        promptVersion
+        skipChangeLogEdits
+        skipVersionEdits
+        versionFilesEditAlways
+
+3.  Bug Fix
+    
+    When specifying a branch name, the commits since the last tag found are
+    still being read from the trunk when creating the changelog / history file.
+
+4.  Refactoring
+    
+    Add initial detailed help option, include the supported publishrc
+    properties.
+    
+    Detailed help can be displayed with the command line options:
+    
+        -h2  ,  --help-detailed
+
