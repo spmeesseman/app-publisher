@@ -15,6 +15,7 @@
             "iconCls": "fa-building"
         }
     },
+    "cProjectRcFile":    "",
     "deployCommand":     "",
     "distRelease":       "N", 
     "distAddAllToVC":    "N",

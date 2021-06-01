@@ -106,6 +106,18 @@ export = async () =>
         }
     );
     parser.addArgument(
+        [ "-tv", "--touch-versions" ],
+        {
+            dest: "touchVersions",
+            action: "storeTrue",
+            help: "Update version numbers either semantically or incrementally.\n" +
+                  "Versioned files are by default AssemblyInfo.cs, package.json, and\n" +
+                  "app.json.\n" +
+                  "Additional versioned files are specified in the .publishrc file\n" +
+                  "using the 'versionFiles' and cProjectRcFile' properties."
+        }
+    );
+    parser.addArgument(
         [ "-v", "--version" ],
         {
             help: "Display the current app-publisher version.",
@@ -297,7 +309,7 @@ function displayPublishRcHelp()
 const publishRcOpts =
 {
     branch: [
-        //false,                    // Required
+        //false,                  // Required
         true,                     // Can specify on command line
         "string",                 // Value type
         "trunk",                  // Default value
@@ -343,6 +355,13 @@ const publishRcOpts =
         "            \"iconCls\": \"fa-building\"", 
         "        }", 
         "    }"
+    ],
+
+    cProjectRcFile: [
+        true,
+        "string",
+        "",
+        "The RC file name in a C Make project."
     ],
 
     deployCommand: [
@@ -823,6 +842,15 @@ const publishRcOpts =
         "",
         "    1. git",
         "    2. svn"
+    ],
+
+    skipChangeLogEdits: [
+        true,
+        "flag",
+        "N",
+        "Skip manual editing of the changelog file(s).\n" +
+        "Note the changelog used for a release will be that of which is output by the\n" +
+        "internal commit parser."
     ],
 
     skipCommit: [

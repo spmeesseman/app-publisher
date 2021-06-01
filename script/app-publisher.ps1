@@ -4424,7 +4424,7 @@ if ($VCFILES.Length -gt 0)
 # SIngle task mode flag to skip most of the functionality in the publisher chain except for
 # the particular task that is going to be ran.
 #
-$SINGLETASKMODE = $CHANGELOGONLY -or $EMAILONLY
+$SINGLETASKMODE = $CHANGELOGONLY -or $EMAILONLY -or $options.touchVersions
 
 #********************************************************************************************************************#
 
@@ -5471,7 +5471,6 @@ else
     }
 }
 
-
 #
 # Get formatted date in the form:
 #
@@ -5510,7 +5509,7 @@ Log-Message "Date                : $TDATE"
 #
 # Process $HISTORYFILE
 #
-if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$EMAILONLY -or $CHANGELOGONLY))
+if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$EMAILONLY -or $CHANGELOGONLY) -and !$options.touchVersions)
 {
     $histFile = $HISTORYFILE
     if ($CHANGELOGONLY)
@@ -5640,7 +5639,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$E
 #
 # Process $CHANGELOGFILE
 #
-if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!$EMAILONLY -or $CHANGELOGONLY))
+if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!$EMAILONLY -or $CHANGELOGONLY -and !$options.touchVersions))
 {
     $clFile = $CHANGELOGFILE
     if ($CHANGELOGONLY)
@@ -5878,7 +5877,7 @@ if (!$SINGLETASKMODE) {
     Run-Scripts "preBuild" $PREBUILDCOMMAND $true $true
 }
 
-if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and !$SINGLETASKMODE)
+if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and (!$SINGLETASKMODE -or $options.touchVersions))
 {
     #
     # AppPublisher publishrc version
@@ -6066,7 +6065,7 @@ elseif ($NPMRELEASE -eq "Y" -and $SINGLETASKMODE)
 #
 # TODO - Nuget Release / .NET
 #
-if ($NUGETRELEASE -eq "Y") 
+if ($NUGETRELEASE -eq "Y" -and !$SINGLETASKMODE) 
 {
     Log-Message "Starting Nuget release"
     Log-Message "Nuget release not yet supported" "darkyellow"
@@ -6232,10 +6231,9 @@ if (!$SINGLETASKMODE) {
 #
 # Restore any configured package.json values to the original values
 #
-if ((Test-Path("package.json")) -and !$SINGLETASKMODE) {
+if ((Test-Path("package.json")) -and (!$SINGLETASKMODE -or $options.touchVersions)) {
     Restore-PackageJson
 }
-
 
 #
 # Github Release
@@ -6632,7 +6630,7 @@ if (!$SINGLETASKMODE)
 #
 # Send release notification email
 #
-if (!$CHANGELOGONLY -and ($EMAILNOTIFICATION -eq "Y" -or $EMAILONLY)) {
+if (!$CHANGELOGONLY -and !$options.touchVersions -and ($EMAILNOTIFICATION -eq "Y" -or $EMAILONLY)) {
     Send-Notification "$TargetNetLocation" "$NpmLocation" "$NugetLocation"
 }
 
