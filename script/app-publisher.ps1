@@ -4236,6 +4236,13 @@ if ($options.homePage) {
     $HOMEPAGE = $options.homePage
 }
 #
+# Skip changelog edits (ci)
+#
+$SKIPCHANGELOGEDITS = "N"
+if ($options.skipChangeLogEdits) {
+    $SKIPCHANGELOGEDITS = $options.skipChangeLogEdits
+}
+#
 # Skip uploading dist files to dist release folder (primarily used for releasing
 # from home office where two datacenters cannot be reached at the same time, in this
 # case the installer files are manually copied)
@@ -4824,6 +4831,17 @@ if (![string]::IsNullOrEmpty($VCTAG)) {
         exit 1
     }
 }
+if (![string]::IsNullOrEmpty($SKIPCHANGELOGEDITS)) {
+    $SKIPCHANGELOGEDITS = $SKIPCHANGELOGEDITS.ToUpper()
+    if ($SKIPCHANGELOGEDITS -ne "Y" -and $SKIPCHANGELOGEDITS -ne "N") {
+        Log-Message "Invalid value specified for skipChangeLogEdits, accepted values are y/n/Y/N" "red"
+        exit 1
+    }
+    if ($DRYRUN -eq $true) {
+        $SKIPCHANGELOGEDITS = "N"
+        Log-Message "Overriding skipChangeLogEdits on dry run, auto set to 'N'" "darkyellow"
+    }
+}
 if (![string]::IsNullOrEmpty($SKIPVERSIONEDITS)) {
     $SKIPVERSIONEDITS = $SKIPVERSIONEDITS.ToUpper()
     if ($SKIPVERSIONEDITS -ne "Y" -and $SKIPVERSIONEDITS -ne "N") {
@@ -4936,6 +4954,7 @@ Log-Message "   Prompt version   : $PROMPTVERSION"
 Log-Message "   Repo             : $_Repo"
 Log-Message "   RepoType         : $_RepoType"
 Log-Message "   Single task mode : $SINGLETASKMODE"
+Log-Message "   Skip chglog edit : $SKIPCHANGELOGEDITS"
 Log-Message "   Skip deploy/push : $SKIPDEPLOYPUSH"
 Log-Message "   Skip version edit: $SKIPVERSIONEDITS"
 Log-Message "   Tag version      : $VCTAG"
@@ -4948,6 +4967,22 @@ Log-Message "   Vers.files alw.ed: $VERSIONFILESEDITALWAYS"
 Log-Message "   Vers.files scroll: $VERSIONFILESSCROLLDOWN"
 Log-Message "   Vers.replace tags: $VERSIONREPLACETAGS"
 Log-Message "   Version text     : $VERSIONTEXT"
+
+#
+# If this is a CI environment, then skip all edits
+#
+if (!$options.noCi)
+{
+    $SKIPCHANGELOGEDITS = "Y"
+    $SKIPVERSIONEDITS = "Y"
+    $VERSIONFILESEDITALWAYS = ""
+    $PROMPTVERSION = "N"
+    Log-Message "CI environment detected, the following flags/properties have been cleared:" "yellow"
+    Log-Message "   skipChangeLogEdits" "yellow"
+    Log-Message "   skipVersionEdits" "yellow"
+    Log-Message "   promptVersion" "yellow"
+    Log-Message "   versionFilesEditAlways" "yellow"
+}
 
 #
 # Convert array params to arrays, if specified as string on cmdline or publishrc
@@ -5590,7 +5625,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$E
     #
     if (!$CHANGELOGONLY)
     {   
-        Edit-File $histFile $true $false
+        Edit-File $histFile $true ($SKIPCHANGELOGEDITS -eq "Y")
         #
         # Add to changelist for scm check in.  This would be the first file modified so just
         # set changelist equal to history file
@@ -5794,7 +5829,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
     #
     if (!$CHANGELOGONLY)
     {
-        Edit-File $clFile $true $false
+        Edit-File $clFile $true ($SKIPCHANGELOGEDITS -eq "Y")
         #
         # Add to changelist for svn check in.  This would be the first file modified so just
         # set changelist equal to history file
