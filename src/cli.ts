@@ -31,7 +31,7 @@ export = async () =>
         }
     );
     parser.addArgument(
-        [ "--cf", "--changelog-only-file" ],
+        [ "-cf", "--changelog-only-file" ],
         {
             dest: "clFile",
             action: "append",
@@ -46,7 +46,7 @@ export = async () =>
         }
     );
     parser.addArgument(
-        [ "--cfg", "--config" ],
+        [ "-cfg", "--config" ],
         {
             dest: "readConfig",
             action: "storeTrue",
@@ -85,7 +85,7 @@ export = async () =>
         }
     );
     parser.addArgument(
-        [ "--h2", "--help-detailed" ],
+        [ "-h2", "--help-detailed" ],
         {
             dest: "helpDetailed",
             action: "storeTrue",
@@ -122,7 +122,7 @@ export = async () =>
         }
     );
     parser.addArgument(
-        [ "--tv", "--touch-versions" ],
+        [ "-tv", "--touch-versions" ],
         {
             dest: "touchVersions",
             action: "storeTrue",
@@ -134,7 +134,7 @@ export = async () =>
         }
     );
     parser.addArgument(
-        [ "--tvc", "--touch-versions-commit" ],
+        [ "-tvc", "--touch-versions-commit" ],
         {
             dest: "touchVersionsCommit",
             action: "storeTrue",
