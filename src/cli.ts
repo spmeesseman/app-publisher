@@ -70,14 +70,6 @@ export = async () =>
         }
     );
     parser.addArgument(
-        [ "-e", "--email-only" ],
-        {
-            dest: "emailOnly",
-            action: "storeTrue",
-            help: "Re-send the latest notification email."
-        }
-    );
-    parser.addArgument(
         [ "-h", "--help" ],
         {
             help: "Display help.",
@@ -114,15 +106,15 @@ export = async () =>
         }
     );
     parser.addArgument(
-        [ "-r", "--republish" ],
+        [ "-te", "-e", "--email-only", "--task-email-only" ],
         {
-            dest: "republish",
+            dest: "emailOnly",
             action: "storeTrue",
-            help: "Re-publish the current/latest release."
+            help: "Re-send the latest notification email."
         }
     );
     parser.addArgument(
-        [ "-tmr", "--mantisbt-release-task" ],
+        [ "-tmr", "--task-mantisbt-release" ],
         {
             dest: "mantisbtReleaseTask",
             action: "storeTrue",
@@ -130,7 +122,15 @@ export = async () =>
         }
     );
     parser.addArgument(
-        [ "-tv", "--touch-versions" ],
+        [ "-tr", "-r", "--republish", "--task-republish" ],
+        {
+            dest: "republish",
+            action: "storeTrue",
+            help: "Re-publish the current/latest release."
+        }
+    );
+    parser.addArgument(
+        [ "-ttv", "--task-touch-versions" ],
         {
             dest: "touchVersions",
             action: "storeTrue",
@@ -142,7 +142,7 @@ export = async () =>
         }
     );
     parser.addArgument(
-        [ "-tvc", "--touch-versions-commit" ],
+        [ "-ttvc", "--task-touch-versions-commit" ],
         {
             dest: "touchVersionsCommit",
             action: "storeTrue",

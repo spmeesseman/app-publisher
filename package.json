@@ -85,9 +85,9 @@
         "email_only": "npx ./build/bin/app-publisher.js --no-ci --email-only",
         "changelog_only": "npx ./build/bin/app-publisher.js --no-ci --changelog-only",
         "changelog_only_file": "npx ./build/bin/app-publisher.js --no-ci --changelog-only-file test/changelog.test",
-        "mantis-release-dry": "npx ./build/bin/app-publisher.js --no-ci -mr --dry-run",
-        "touch_versions": "npx ./build/bin/app-publisher.js --no-ci -tv",
-        "touch_versions_commit": "npx ./build/bin/app-publisher.js --no-ci -tvc",
+        "mantis-release-dry": "npx ./build/bin/app-publisher.js --no-ci -tmr --dry-run",
+        "touch_versions": "npx ./build/bin/app-publisher.js --no-ci -ttv",
+        "touch_versions_commit": "npx ./build/bin/app-publisher.js --no-ci -ttvc",
         "republish": "npx ./build/bin/app-publisher.js --republish"
     },
     "main": "./build/bin/app-publisher.js",
