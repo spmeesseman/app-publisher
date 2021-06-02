@@ -5556,27 +5556,35 @@ Log-Message "Date                : $TDATE"
 #
 if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$options.taskTouchVersions)
 {
-    $histFile = $HISTORYFILE
     if ($TASKCHANGELOG)
     {
         if ([string]::IsNullOrEmpty($TASKCHANGELOGFILE))
         {
-            $histFile = "${Env:Temp}\history.$VERSION.txt"
+            $HISTORYFILE = "${Env:Temp}\history.$VERSION.txt"
         }
         else {
-            $histFile = $TASKCHANGELOGFILE
+            $HISTORYFILE= $TASKCHANGELOGFILE
         }
-        if (Test-Path($histFile))
+        if (Test-Path($HISTORYFILE))
         {
-            Remove-Item -Force -Path "$histFile" | Out-Null
+            Remove-Item -Force -Path "$HISTORYFILE" | Out-Null
         }
     }
+    elseif ($TASKMODE)
+    {
+        $HISTORYFILE = "${Env:Temp}\history.$VERSION.txt"
+        if (Test-Path($HISTORYFILE))
+        {
+            Remove-Item -Force -Path "$HISTORYFILE" | Out-Null
+        }
+    }
+
     #
     # If history file doesnt exist, create one with the project name as a title
     #
     $IsNewHistoryFile = $false;
     $IsNewHistoryFileHasContent = $false;
-    $HistoryPath = Split-Path "$histFile"
+    $HistoryPath = Split-Path "$HISTORYFILE"
     if ($HistoryPath -ne "" -and !(Test-Path($HistoryPath))) 
     {
         Log-Message "Creating history file directory and adding to version control" "magenta"
@@ -5589,29 +5597,29 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
         }
     }
 
-    if (!(Test-Path($histFile))) 
+    if (!(Test-Path($HISTORYFILE))) 
     {
         Log-Message "Creating new history file and adding to version control" "magenta"
         if (!$TASKCHANGELOG)
         {
-            New-Item -ItemType "file" -Force -Path "$histFile" -Value "$PROJECTNAME`r`n`r`n" | Out-Null
+            New-Item -ItemType "file" -Force -Path "$HISTORYFILE" -Value "$PROJECTNAME`r`n`r`n" | Out-Null
         }
         else
         {
-            New-Item -ItemType "file" -Force -Path "$histFile" -Value "" | Out-Null
+            New-Item -ItemType "file" -Force -Path "$HISTORYFILE" -Value "" | Out-Null
         }
         $IsNewHistoryFile = $true;
         if (!$TASKCHANGELOG)
         {
-            Vc-Changelist-AddRemove "$histFile"
-            Vc-Changelist-AddNew "$histFile"
+            Vc-Changelist-AddRemove "$HISTORYFILE"
+            Vc-Changelist-AddNew "$HISTORYFILE"
         }
     }
     else 
     {   #
         # If the history file already existed, but had no entries, we need to still set the 'new' flag
         #
-        $szContents = Get-Content $histFile | Out-String
+        $szContents = Get-Content $HISTORYFILE | Out-String
         if ($szContents.IndexOf($VERSIONTEXT) -eq -1)
         {
             $IsNewHistoryFile = $true;
@@ -5642,7 +5650,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
         #
         if ($IsNewHistoryFile -and !$IsNewHistoryFileHasContent -and !$TASKCHANGELOG) {
             $HistoryFileTitle = "$PROJECTNAME History"
-            Add-Content -NoNewline -Path $histFile -Value "$HistoryFileTitle`r`n"
+            Add-Content -NoNewline -Path $HISTORYFILE -Value "$HistoryFileTitle`r`n"
             [System.Threading.Thread]::Sleep(120)
         }
 
@@ -5652,7 +5660,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
         #
         # Add lines 'version', 'date', then the header content
         #
-        # Write the formatted commits text to $histFile
+        # Write the formatted commits text to $HISTORYFILE
         # Formatted commits are also contained in the temp text file $Env:TEMP\history.txt
         # Replace all newline pairs with cr/nl pairs as SVN will have sent commit comments back
         # with newlines only
@@ -5660,11 +5668,11 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
         if (Test-Path($HISTORYHDRFILE)) 
         {
             $HistoryHeader = Get-Content $HISTORYHDRFILE -Raw
-            Add-Content -NoNewline -Path $histFile -Value "`r`n$VERSIONTEXT $VERSION`r`n$TDATE`r`n$HistoryHeader`r`n$TmpCommits"
+            Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n$VERSIONTEXT $VERSION`r`n$TDATE`r`n$HistoryHeader`r`n$TmpCommits"
         }
         else {   
             Log-Message "History header template not found" "darkyellow"
-            Add-Content -NoNewline -Path $histFile -Value "`r`n$VERSIONTEXT $VERSION`r`n$TDATE`r`n`r`n`r`n$TmpCommits"  
+            Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n$VERSIONTEXT $VERSION`r`n$TDATE`r`n`r`n`r`n$TmpCommits"  
         }
     }
     else {
@@ -5675,16 +5683,16 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
     #
     if (!$TASKCHANGELOG)
     {   
-        Edit-File $histFile $true ($SKIPCHANGELOGEDITS -eq "Y")
+        Edit-File $HISTORYFILE $true ($SKIPCHANGELOGEDITS -eq "Y")
         #
         # Add to changelist for scm check in.  This would be the first file modified so just
         # set changelist equal to history file
         #
-        Vc-Changelist-Add $histFile
+        Vc-Changelist-Add $HISTORYFILE
     }
     else {
         $FileSpec = ![string]::IsNullOrEmpty($TASKCHANGELOGFILE);
-        Edit-File $histFile $false $FileSpec $true
+        Edit-File $HISTORYFILE $false $FileSpec $true
     }
 }
 
@@ -5693,26 +5701,34 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
 #
 if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$options.taskTouchVersions)
 {
-    $clFile = $CHANGELOGFILE
     if ($TASKCHANGELOG)
     {
         if ([string]::IsNullOrEmpty($TASKCHANGELOGFILE))
         {
-            $clFile = "${Env:Temp}\changelog.$VERSION.txt"
+            $CHANGELOGFILE = "${Env:Temp}\changelog.$VERSION.txt"
         }
         else {
-            $clFile = $TASKCHANGELOGFILE
+            $CHANGELOGFILE = $TASKCHANGELOGFILE
         }
-        if (Test-Path($clFile))
+        if (Test-Path($CHANGELOGFILE))
         {
-            Remove-Item -Force -Path "$clFile" | Out-Null
+            Remove-Item -Force -Path "$CHANGELOGFILE" | Out-Null
         }
     }
+    elseif ($TASKMODE)
+    {
+        $CHANGELOGFILE = "${Env:Temp}\changelog.$VERSION.txt"
+        if (Test-Path($CHANGELOGFILE))
+        {
+            Remove-Item -Force -Path "$CHANGELOGFILE" | Out-Null
+        }
+    }
+
     #
     # If changelog markdown file doesnt exist, create one with the project name as a title
     #
     $NewChangelog = $false
-    $ChangeLogPath = Split-Path "$clFile"
+    $ChangeLogPath = Split-Path "$CHANGELOGFILE"
     if ($ChangeLogPath -ne "" -and !(Test-Path($ChangeLogPath))) 
     {
         Log-Message "Creating changelog file directory and adding to version control" "magenta"
@@ -5724,18 +5740,18 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
             Vc-Changelist-Add "$ChangeLogPath"
         }
     }
-    if (!(Test-Path($clFile))) 
+    if (!(Test-Path($CHANGELOGFILE))) 
     {
         Log-Message "Creating new changelog file and adding to version control" "magenta"
-        New-Item -ItemType "file" -Path "$clFile" -Value "$ChangeLogTitle`r`n`r`n" | Out-Null
+        New-Item -ItemType "file" -Path "$CHANGELOGFILE" -Value "$ChangeLogTitle`r`n`r`n" | Out-Null
         $NewChangelog = $true
         if (!$TASKCHANGELOG)
         {
-            Vc-Changelist-AddRemove $clFile
-            Vc-Changelist-AddNew $clFile
+            Vc-Changelist-AddRemove $CHANGELOGFILE
+            Vc-Changelist-AddNew $CHANGELOGFILE
         }
     }
-    if (!(Test-Path($clFile))) 
+    if (!(Test-Path($CHANGELOGFILE))) 
     {
         Vc-Revert $true
         Log-Message "Could not create changelog file, exiting" "red"
@@ -5866,11 +5882,11 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
         #
         #$TmpCommits = CheckSpelling $TmpCommits $false
         #
-        # Write the formatted commits text to the top of $clFile, but underneath the
+        # Write the formatted commits text to the top of $CHANGELOGFILE, but underneath the
         # changelog title
         #
         $TmpCommits = $TmpCommits.Trim();
-        $ChangeLogContents = Get-Content $clFile | Out-String
+        $ChangeLogContents = Get-Content $CHANGELOGFILE | Out-String
         $ChangeLogContents = $ChangeLogContents.Replace("$ChangeLogTitle", "").Trim();
         $ChangeLogFinal = "$ChangeLogTitle`r`n`r`n"
         if (![string]::IsNullOrEmpty($TmpCommits)) {
@@ -5879,7 +5895,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
         if (![string]::IsNullOrEmpty($ChangeLogContents)) {
             $ChangeLogFinal = "$ChangeLogFinal$ChangeLogContents`r`n"
         }
-        Set-Content $clFile $ChangeLogFinal
+        Set-Content $CHANGELOGFILE $ChangeLogFinal
     }
     else {
         Log-Message "Version match, not touching changelog file" "darkyellow"
@@ -5889,19 +5905,19 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
     #
     if (!$TASKCHANGELOG)
     {
-        Edit-File $clFile $true ($SKIPCHANGELOGEDITS -eq "Y")
+        Edit-File $CHANGELOGFILE $true ($SKIPCHANGELOGEDITS -eq "Y")
         #
         # Add to changelist for svn check in.  This would be the first file modified so just
         # set changelist equal to history file
         #
-        Vc-Changelist-Add $clFile
+        Vc-Changelist-Add $CHANGELOGFILE
     }
     else {
         #
         # TODO - Cut just the version from the content
         #
         $FileSpec = ![string]::IsNullOrEmpty($TASKCHANGELOGFILE);
-        Edit-File $clFile $false $FileSpec $true
+        Edit-File $CHANGELOGFILE $false $FileSpec $true
     }
 }
 
