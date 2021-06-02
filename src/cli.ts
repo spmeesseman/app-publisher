@@ -122,6 +122,14 @@ export = async () =>
         }
     );
     parser.addArgument(
+        [ "-tmr", "--mantisbt-release-task" ],
+        {
+            dest: "mantisbtReleaseTask",
+            action: "storeTrue",
+            help: "Perform a 'Mantis' release."
+        }
+    );
+    parser.addArgument(
         [ "-tv", "--touch-versions" ],
         {
             dest: "touchVersions",
@@ -259,14 +267,17 @@ export = async () =>
         //
         // Only one 'single-task mode' option can be specified...
         //
-        if ((opts.changeLogOnly && opts.emailOnly) || (opts.changeLogOnly && opts.touchVersions) || 
+        if ((opts.changeLogOnly && opts.emailOnly) || (opts.changeLogOnly && opts.touchVersions) ||
             (opts.touchVersions && opts.emailOnly) || (opts.touchVersions && opts.republish) ||
-            (opts.republish && opts.changeLogOnly) || (opts.republish && opts.emailOnly))
+            (opts.republish && opts.changeLogOnly) || (opts.republish && opts.emailOnly) ||
+            (opts.mantisbtReleaseTask && opts.republish) || (opts.mantisbtReleaseTask && opts.emailOnly)  ||
+            (opts.mantisbtReleaseTask && opts.touchVersions) || (opts.mantisbtReleaseTask && opts.changeLogOnly))
         {
             console.log("Invalid options specified:");
             console.log("  Only one 'single task mode' option can be used at this time.");
             console.log("    changeLogOnly : " + opts.changeLogOnly);
             console.log("    emailOnly     : " + opts.emailOnly);
+            console.log("    mantisRelease : " + opts.mantisRelease);
             console.log("    republish     : " + opts.republish);
             console.log("    touchVersions : " + opts.touchVersions);
             process.exit(0);
