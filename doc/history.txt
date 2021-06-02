@@ -3794,3 +3794,105 @@ June 1st, 2021
     
         -h2  ,  --help-detailed
 
+
+Version 1.23.0
+June 2nd, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Documentation:  Readme
+    
+    Continue section on singletask commands
+
+2.  Documentation:  Readme
+    
+    Continue section on singletask commands [skip-ci]
+
+3.  Documentation:  Readme
+    
+    Start section on singletask commands [skip-ci]
+
+4.  Feature
+    
+    Add new command line switch for single task mode:
+    
+        -cf,  --changelog-only-file <filename>
+    
+    Using this option on the command line instructs the process to run a single
+    task only, to create the changelog for the pending next version.  This
+    command is similar to the '--changelog-only' option, but it will write to
+    the specified file, and will not open the file for viewing.
+    
+    [skip-ci]
+
+5.  Feature
+    
+    Add new command line switch for single task mode:
+    
+        -tv,  --touch-versions
+    
+    Using this argument on the command line instructs the process to run a
+    single task only, to update versioned files.  Versioned filed by default
+    include:
+    
+        app.json
+        assemblynnfo.cs
+        package.json
+    
+    Additional versioned files can be specified in the .publishrc file using the
+    'versionFiles' or 'cProjectRcFile' properties.
+
+6.  Feature
+    
+    Add new command line switch for single task mode:
+    
+        -tvc,  --touch-versions-commit
+    
+    Using this argument on the command line instructs the process to run a
+    single task only, inclusing the following steps:
+    
+        Update version files (rquivalent to using the -tv option)
+        Commit changed files using the 'Chore
+    
+    VX.X.X' format for the commit message
+        Tag using the 'vX.X.X' format for the tag name
+
+7.  Refactoring
+    
+    Allow only one 'single mode task' to be ran at a time.
+
+8.  Refactoring
+    
+    Fix short command line options:
+    
+        -cfg  ->   --cfg
+        -cf    ->   --cf
+        -h2   ->   --h2
+        -tv    ->  --tv
+        -tvc  ->  --tvc
+
+9.  Refactoring
+    
+    Reput single dash options back, was not issue
+
+10. Build System:  Publishrc
+    
+    Set new flag skipchangelogedits to default N
+

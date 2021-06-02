@@ -3950,28 +3950,28 @@ if ($options.textEditor) {
     $TEXTEDITOR = $options.textEditor
 }
 #
-#
+# For MantisBT Plugin Releases
 #
 $MANTISBTPLUGIN = ""
 if ($options.mantisbtPlugin) {
     $MANTISBTPLUGIN = $options.mantisbtPlugin
 }
 #
-#
+# MantisBT Release
 #
 $MANTISBTRELEASE = "N"
 if ($options.mantisbtRelease) {
     $MANTISBTRELEASE = $options.mantisbtRelease
 }
 #
-# Changelog edit
+# MantisBT Changelog edit
 #
 $MANTISBTCHGLOGEDIT = "N"
 if ($options.mantisbtChglogEdit) {
     $MANTISBTCHGLOGEDIT = $options.mantisbtChglogEdit
 }
 #
-#
+# MantisBT API Token
 #
 $MANTISBTAPITOKEN = @()
 if ($options.mantisbtApiToken) {
@@ -3992,14 +3992,14 @@ if ([string]::IsNullOrEmpty($MANTISBTAPITOKEN)) {
     }
 }
 #
-#
+# MantisBT Project Name
 #
 $MANTISBTPROJECT = $PROJECTNAME
 if ($options.mantisbtProject) {
     $MANTISBTPROJECT = $options.mantisbtProject
 }
 #
-#
+# MantisBT URL
 #
 $MANTISBTURL = @()
 if ($options.mantisbtUrl) {
@@ -4020,16 +4020,33 @@ if ($options.mantisbtUrl) {
         }
     }
 }
-
 #
-#
+# MantisBT Release Assets
 #
 $MANTISBTASSETS = @()
 if ($options.mantisbtAssets) {
     $MANTISBTASSETS = $options.mantisbtAssets
 }
 #
+# MantisBT Release ONLY - individual task mode
 #
+$MANTISBTTASK = $false
+if ($options.mantisbtReleaseTask) {
+    if (![string]::IsNullOrEmpty($MANTISBTURL) -and ![string]::IsNullOrEmpty($MANTISBTAPITOKEN))
+    {
+        $MANTISBTTASK = $true
+        $MANTISBTRELEASE = "Y"
+        if (!$options.noCi) {
+            $MANTISBTCHGLOGEDIT = "N"
+        }
+    }
+    else {
+        Log-Message "Specified task 'mantis release' but not configured in .publishrc" "red"
+        exit 1
+    }
+}
+#
+# NPM Registry
 #
 $NPMREGISTRY = "https://registry.npmjs.org"
 if ($options.npmRegistry) {
@@ -4440,7 +4457,7 @@ if ($options.touchVersionsCommit) {
 # SIngle task mode flag to skip most of the functionality in the publisher chain except for
 # the particular task that is going to be ran.
 #
-$SINGLETASKMODE = $CHANGELOGONLY -or $EMAILONLY -or $options.touchVersions
+$TASKMODE = $CHANGELOGONLY -or $EMAILONLY -or $options.touchVersions -or $MANTISBTTASK 
 
 #********************************************************************************************************************#
 
@@ -4970,7 +4987,7 @@ Log-Message "   Project name     : $PROJECTNAME"
 Log-Message "   Prompt version   : $PROMPTVERSION"
 Log-Message "   Repo             : $_Repo"
 Log-Message "   RepoType         : $_RepoType"
-Log-Message "   Single task mode : $SINGLETASKMODE"
+Log-Message "   Single task mode : $TASKMODE"
 Log-Message "   Skip chglog edit : $SKIPCHANGELOGEDITS"
 Log-Message "   Skip deploy/push : $SKIPDEPLOYPUSH"
 Log-Message "   Skip version edit: $SKIPVERSIONEDITS"
@@ -5876,7 +5893,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
 }
 
 $DistIsVersioned = $false
-if ($DISTRELEASE -eq "Y" -and !$SINGLETASKMODE)
+if ($DISTRELEASE -eq "Y" -and !$TASKMODE)
 {
     $DistDirCreated = $false
     #
@@ -5905,11 +5922,11 @@ if ($DISTRELEASE -eq "Y" -and !$SINGLETASKMODE)
 #
 # Run pre build scripts if specified, before version file edits
 #
-if (!$SINGLETASKMODE) {
+if (!$TASKMODE) {
     Run-Scripts "preBuild" $PREBUILDCOMMAND $true $true
 }
 
-if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and (!$SINGLETASKMODE -or $options.touchVersions))
+if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and (!$TASKMODE -or $options.touchVersions))
 {
     #
     # AppPublisher publishrc version
@@ -5963,7 +5980,7 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and (!$SINGLETASKMODE -or $options.t
 #
 # Run custom build scipts if specified
 #
-if (!$SINGLETASKMODE) {
+if (!$TASKMODE) {
     Run-Scripts "build" $BUILDCOMMAND $true $true
 }
 
@@ -5978,7 +5995,7 @@ $NugetLocation = ""
 #
 # NPM Release
 #
-if ($NPMRELEASE -eq "Y" -and !$SINGLETASKMODE) 
+if ($NPMRELEASE -eq "Y" -and !$TASKMODE) 
 {
     Log-Message "Starting NPM release"
     
@@ -6081,7 +6098,7 @@ if ($NPMRELEASE -eq "Y" -and !$SINGLETASKMODE)
     #
     Run-Scripts "postNpmRelease" $NPMRELEASEPOSTCOMMAND $false $false
 }
-elseif ($NPMRELEASE -eq "Y" -and $SINGLETASKMODE)
+elseif ($NPMRELEASE -eq "Y" -and $TASKMODE)
 {
     if (![string]::IsNullOrEmpty($NPMSCOPE)) {
         $NpmLocation = "$NPMREGISTRY/-/web/detail/$NPMSCOPE/$PROJECTNAME"
@@ -6097,7 +6114,7 @@ elseif ($NPMRELEASE -eq "Y" -and $SINGLETASKMODE)
 #
 # TODO - Nuget Release / .NET
 #
-if ($NUGETRELEASE -eq "Y" -and !$SINGLETASKMODE) 
+if ($NUGETRELEASE -eq "Y" -and !$TASKMODE) 
 {
     Log-Message "Starting Nuget release"
     Log-Message "Nuget release not yet supported" "darkyellow"
@@ -6106,7 +6123,7 @@ if ($NUGETRELEASE -eq "Y" -and !$SINGLETASKMODE)
 #
 # Network Release
 #
-if ($DISTRELEASE -eq "Y" -and !$SINGLETASKMODE) 
+if ($DISTRELEASE -eq "Y" -and !$TASKMODE) 
 {
     Log-Message "Starting Distribution release"
 
@@ -6256,14 +6273,14 @@ elseif ($DISTRELEASE -eq "Y" -and $EMAILONLY)
 #
 # Run post build scripts if specified
 #
-if (!$SINGLETASKMODE) {
+if (!$TASKMODE) {
     Run-Scripts "postBuild" $POSTBUILDCOMMAND $false $false
 }
 
 #
 # Restore any configured package.json values to the original values
 #
-if ((Test-Path("package.json")) -and (!$SINGLETASKMODE -or $options.touchVersions)) {
+if ((Test-Path("package.json")) -and (!$TASKMODE -or $options.touchVersions)) {
     Restore-PackageJson
 }
 
@@ -6272,7 +6289,7 @@ if ((Test-Path("package.json")) -and (!$SINGLETASKMODE -or $options.touchVersion
 #
 $GithubReleaseId = "";
 
-if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y" -and !$SINGLETASKMODE) 
+if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y" -and !$TASKMODE) 
 {
     Log-Message "Creating GitHub v$VERSION release"
 
@@ -6431,7 +6448,7 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y" -and !$SINGLETASKMODE)
         }
     }
     else {
-        if ($GithubChangelog -ne $null) {
+        if ($null -ne $GithubChangelog) {
             Log-Message "Dry run, skipping GitHub release"
             Log-Message "Dry run has generated an html changelog from previous version to test functionality:"
             Log-Message $GithubChangelog
@@ -6450,7 +6467,7 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y" -and !$SINGLETASKMODE)
 #
 # MantisBT Release
 #
-if ($MANTISBTRELEASE -eq "Y" -and !$SINGLETASKMODE) 
+if ($MANTISBTRELEASE -eq "Y" -and (!$TASKMODE -or $MANTISBTTASK)) 
 {
     Log-Message "Starting MantisBT release"
     Log-Message "Creating MantisBT v$VERSION release"
@@ -6648,7 +6665,7 @@ if ($MANTISBTRELEASE -eq "Y" -and !$SINGLETASKMODE)
 #
 # Run custom deploy script if specified
 #
-if (!$SINGLETASKMODE)
+if (!$TASKMODE)
 {
     if ($SKIPDEPLOYPUSH -ne "Y" -and $DRYRUN -eq $false)
     {
@@ -6662,18 +6679,18 @@ if (!$SINGLETASKMODE)
 #
 # Send release notification email
 #
-if (!$CHANGELOGONLY -and !$options.touchVersions -and ($EMAILNOTIFICATION -eq "Y" -or $EMAILONLY)) {
+if (!$CHANGELOGONLY -and !$options.touchVersions -and !$MANTISBTTASK -and ($EMAILNOTIFICATION -eq "Y" -or $EMAILONLY)) {
     Send-Notification "$TargetNetLocation" "$NpmLocation" "$NugetLocation"
 }
 
 #
 # Run pre commit scripts if specified
 #
-if (!$SINGLETASKMODE) {
+if (!$TASKMODE) {
     Run-Scripts "preCommit" $PRECOMMITCOMMAND $false $false
 }
 
-if (!$SINGLETASKMODE -or $options.touchVersionsCommit)
+if (!$TASKMODE -or $options.touchVersionsCommit)
 {
     #
     # Change dircetory to svn/git root that contains the .svn/.git folder to isse SVN commands,

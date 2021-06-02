@@ -187,9 +187,9 @@ To see all available command line options and their descriptions, run app-publis
     app-publisher -h
     app-publisher --help
 
-### Usage - Configuration File
+### Usage - Configuration File and Parameters
 
-The .publishrc.json file can be used to define the configuration parameters.  To see all options and their descriptions, run app-publisher detailed help:
+Command line options and the .publishrc.json file can be used to define the configuration parameters.  To see all options and their descriptions, run app-publisher detailed help:
 
     app-publisher -h2
     app-publisher --help-detailed
@@ -201,114 +201,6 @@ To configure app-publisher per project, create a .publishrc.json file in the roo
 Environment variables can be used and expanded at runtime using the following syntax:
 
     ${ENVIRONMENT_VARIABLE_NAME}
-
-## Configuration Parameters
-
-### branch
-
-The version control branch to perform commit checks and version tagging on.  This can be left blank if specified in package.json.
-
-For Subversion, the default is **trunk**, for Git, the default is **master**, or soon to be **main**.
-
-### bugs
-
-The URL of the website where bugs, issues, and feature requests should be reported.  This can be left blank if specified in package.json.
-
-### buildCommand
-
-A command, or an array of comands, that are to be ran once all of the versions have been updated and changelog finalized.  This can be used to build the application, installer, etc.
-
-### changelogFile
-
-The path to the markdown changelog file, if it is kept.  Leaving this config blank will skip processing of marked down changelog file.
-
-### deployCommand
-
-A command, or an array of comands, that are to be ran before any releases (to MantisBT, GitHub, Directory Release, NPM Release, Nuget Release, etc) are made.
-
-### distRelease
-
-Will be reanmed to **directoryRelease** in future version.  Setting this flag to **Y** will perform a "directory release" to the directory specified in the [distReleasePath](#distReleasePath) config.  All files located in the directory specified by the [pathToDist](#pathToDist) config will be copied to the destination directory.
-
-### distReleasePath
-
-TODO
-
-### dryRun
-
-A dry run can be performed to test the publish run before it is ran "live".  Note that a dry run will automatically set the [skipVersionEdits](#skipVersionEdits) flag to **N**.
-
-### dryRunVcRevert
-
-Set this flag to **N** if you do not want the changes performed on files during a dry run to be reverted back their oiriginal content.
-
-The default value is **Y**.
-
-### emailHrefs
-
-A link, or an array of links, to display in the release notification email.  Note that the [emailNotification](#emailNotification) flag must be set or this config has no effect.
-
-The links can also specify a row label and a link label, for example:
-
-    "emailHrefs": [
-        "https://my.domin.com/svn/web/filedetails.php?repname=pja&path=%2Fapp-publisher%2Ftrunk%2FREADME.md&usemime=1|ReadMe File|Readme File - WebSVN",
-        "https://my.domin.com//projects/set_project.php?project=app-publisher&make_default=no&ref=roadmap_page.php|Project Roadmap|Roadmap - Projects Board",
-        "https://my.domin.com//projects/set_project.php?project=app-publisher&make_default=no&ref=changelog_page.php|Project Changelog|Changelog - Projects Board"
-    ]
-
-This config would be displayed in a notification email like so, where the 2nd item in each row is the actual link to the specified url:
-
-    ReadMe File            Readme File - WebSVN
-    Project Roadmap        Roadmap - Projects Board
-    Project Changelog      Changelog - Projects Board
-
-### emailNotification
-
-Set this flag to **Y** to send a release notification email when the publish run has completed.
-
-Default is **N**.
-
-### emailPort
-
-The port that the email server specified by [emailServer](#emailServer) listens on.
-
-Default is **25**.
-
-### emailRecip
-
-The email address, or an array of email addresses, that the release notification email should be sent to.  Note that the [emailNotification](#emailNotification) flag must be set or this config has no effect.
-
-### emailServer
-
-The hostname or ip address of the email server to be used to send release notification emails.  Note that the [emailNotification](#emailNotification) flag must be set or this config has no effect.
-
-### emailSender
-
-The email address, or an array of email addresses, that the release notification email should be sent from.  Note that the [emailNotification](#emailNotification) flag must be set or this config has no effect.
-
-### pathToDist
-
-TODO
-
-### postBuildCommand
-
-A command, or an array of comands, that are to be ran once all of the builds have been made.  This can be used to clean up any temporary build files that the build scripts do not, adding additional files to be checked in to source control with the version tagging, etc.  These commands are run before any releases (to MantisBT, GitHub, Directory Release, NPM Release, Nuget Release, etc) are made.
-
-### postReleaseCommand
-
-A command, or an array of comands, that are to be ran once all of the releases (to MantisBT, GitHub, Directory Release, NPM Release, Nuget Release, etc) have been made.  These commands are ran right before the publish run has completed.
-
-### projectName
-
-The name of the project.  This hould matchthe project name in version control.
-
-### skipVersionEdits
-
-This flag can be set to **Y** to skip the display of the changed version files in the editor specified by the [textEditor](#textEditor) config.  Note that setting the [dryRun](#dryRun) flag will override this config and automatically set the value to **N**.
-
-### textEditor
-
-Specify the application to be used to open text based version files and files that need to be edited during the publish run.  Defaults to **notepad**.
 
 ## How the Next Version is Determined
 
@@ -347,15 +239,15 @@ A MantsBT release requires the MANTISBT_API_TOKEN to be set in the system enviro
 
 ## NPM Token
 
-An NPM release requires the PJ_NPM_TOKEN or NPM_TOKEN to be set in the system environment.  To create a PJ NPM token, perform the following steps:
+An NPM release requires the NPM_TOKEN to be set in the system environment.  To create a PJ NPM token, perform the following steps:
 
 To create an npm user if you dont have one, run the following command and follow the prompts:
 
-    $ npm adduser --registry=npm.development.pjats.com --scope=@perryjohnson
+    npm adduser --registry=npm.development.pjats.com --scope=@perryjohnson
 
 After a period of time, the session token created with this command will expire.  When the token expires, run the login command:
 
-    $ npm login --registry=npm.development.pjats.com --scope=@perryjohnson
+    npm login --registry=npm.development.pjats.com --scope=@perryjohnson
 
 For more details, see the [Internal NPM Registry](https://app1.development.pjats.com/doc/developernotes.md#Internal-NPM-Registry) section of the Perry Johnson Developer Notes document.
 
@@ -373,7 +265,7 @@ The download link for NodeJS above installs the version of NodeJS and NPM includ
 
 With NodeJS and NPM installed, open a command line terminal and install App-Publisher globally using the command:
 
-    $ npm install -g @perryjohnson/app-publisher`
+    npm install -g @perryjohnson/app-publisher`
 
 Note that to install the package with the above command, you must login to the registry first as described in the [previous section](#npm-token).
 
@@ -385,9 +277,29 @@ To see the list of available command line options, run the following command:
 
 For a dry run, run the following command:
 
-    app-publisher -p ps --no-ci --dry-run
+    app-publisher --no-ci --dry-run
+
 For a production release, run the following command:
 
-    app-publisher -p ps --no-ci
+    app-publisher --no-ci
 
-[![app-publisher-cmdline](res/readme/cmdline.png)](res/cmdline-banner.png)
+## Single Task Commands
+
+The following *single* tasks can be performed:
+
+1. Touch version files
+2. Commit Version Files and Tag
+3. View pending changelog
+4. Write pending changelog.
+
+### Touch Version FIles
+
+To update all versioned files with the proposed new version:
+
+    app-publisher --tv
+    app-publisher --touch-versions
+
+To commit all versioned files and create a tag:
+
+    app-publisher --tvc
+    app-publisher --touch-versions-commit
