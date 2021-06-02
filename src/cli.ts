@@ -33,9 +33,16 @@ export = async () =>
     parser.addArgument(
         [ "-cf", "--changelog-only-file" ],
         {
-            dest: "changeLogOnlyFile",
-            action: "option",
-            help: "Export the next release's current changelog to the specified file."
+            dest: "clFile",
+            action: "append",
+            default: [],
+            help: "Export the next release's current changelog to the specified file.\n" +
+                  "The specified file can be a relative or an absolute path.\n" +
+                  "  Examples:\n" +
+                  "    app-publisher -cf install/dist/history.txt\n" +
+                  "    app-publisher -cf build/doc/changelog/changelog.md\n" +
+                  "    app-publisher -cf c:\\projects\\changelogs\\projectname\n" +
+                  "    app-publisher --changelog-only-file build/tmp/version_notes.txt"
         }
     );
     parser.addArgument(
@@ -230,8 +237,31 @@ export = async () =>
                         `, {interpolation: "hsv"})));
             process.exit(0);
         }
-
         delete opts.version; // remove since publishrc.json defines a param version
+
+        if (opts.clFile)
+        {
+            opts.changeLogOnlyFile = opts.clFile;
+            opts.changeLogOnly = true;
+            delete opts.clFile;
+        }
+
+        //
+        // Only one 'single-task mode' option can be specified...
+        //
+        if ((opts.changeLogOnly && opts.emailOnly) || (opts.changeLogOnly && opts.touchVersions) || 
+            (opts.touchVersions && opts.emailOnly) || (opts.touchVersions && opts.republish) ||
+            (opts.republish && opts.changeLogOnly) || (opts.republish && opts.emailOnly))
+        {
+            console.log("Invalid options specified:");
+            console.log("  Only one 'single task mode' option can be used at this time.");
+            console.log("    changeLogOnly : " + opts.changeLogOnly);
+            console.log("    emailOnly     : " + opts.emailOnly);
+            console.log("    republish     : " + opts.republish);
+            console.log("    touchVersions : " + opts.touchVersions);
+            process.exit(0);
+        }
+
         await require(".")(opts);
         return 0;
     }
