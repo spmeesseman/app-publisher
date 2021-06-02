@@ -96,10 +96,20 @@ class Vc
                     @{N='revision'; E={$_.ParentNode.ParentNode.Revision}},
                     @{N='date'; E={$_.ParentNode.ParentNode.Date}},
                     @{N='path'; E={$_.InnerText}} )|
-                Sort-Object Date -Descending | Select-Object -First 1)
-                $path = $xmlObj.path
-                $rev = $xmlObj.revision
-                $date = $xmlObj.date
+                Sort-Object Date -Descending | Select-Object -First 2)
+                $path = $xmlObj[0].path
+                $rev = $xmlObj[0].revision
+                $date = $xmlObj[0].date
+                #
+                # Make sure it exists
+                #
+                $TagVers = $path.Substring($path.LastIndexOf("/") + 1);
+                $xml = svn ls "$TagLocation/$TagVers" >$null 2>&1
+                if ($LASTEXITCODE -ne 0) {
+                    $path = $xmlObj[1].path
+                    $rev = $xmlObj[1].revision
+                    $date = $xmlObj[1].date 
+                }
             }
             catch {
                 Log-Message "Response could not be parsed, invalid module, no commits found, or no version tag exists" "red"
