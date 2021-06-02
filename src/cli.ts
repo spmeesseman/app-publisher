@@ -6,6 +6,19 @@ import hideSensitive = require("./lib/hide-sensitive");
 import gradient from "gradient-string";
 import chalk from "chalk";
 
+function getArgs(property: string, includeShort?: boolean) : string[]
+{
+    const args: string[] = [];
+    if (property)
+    {
+        if (includeShort) {
+            args.push("-" + property.replace(/(?:^|\.?)([A-Z])/g, function (x,y){return y[0].toLowerCase()}));
+        }
+        args.push("-" + property.replace(/(?:^|\.?)([A-Z])/g, function (x,y){return "-" + y.toLowerCase()}));
+    }
+    return args;
+}
+
 export = async () =>
 {
     //
@@ -22,135 +35,14 @@ export = async () =>
     });
 
     parser.addArgument(
-        [ "-c", "--changelog-only" ],
-        {
-            dest: "changeLogOnly",
-            action: "storeTrue",
-            help: "Export the next release's current changelog and view using the editor\n" +
-                  "specified in the .publishrc file."
-        }
-    );
-    parser.addArgument(
-        [ "-cf", "--changelog-only-file" ],
-        {
-            dest: "clFile",
-            action: "append",
-            default: [],
-            help: "Export the next release's current changelog to the specified file.\n" +
-                  "The specified file can be a relative or an absolute path.\n" +
-                  "  Examples:\n" +
-                  "    app-publisher -cf install/dist/history.txt\n" +
-                  "    app-publisher -cf build/doc/changelog/changelog.md\n" +
-                  "    app-publisher -cf c:\\projects\\changelogs\\projectname\n" +
-                  "    app-publisher --changelog-only-file build/tmp/version_notes.txt"
-        }
-    );
-    parser.addArgument(
-        [ "-cfg", "--config" ],
-        {
-            dest: "readConfig",
-            action: "storeTrue",
-            help: "Display the contents of the configuration file."
-        }
-    );
-    parser.addArgument(
-        [ "-d", "--dry-run" ],
-        {
-            dest: "dryRun",
-            action: "storeTrue",
-            help: "Run in dry/test mode, all changes are reverted.\n" +
-                  "In dry-run mode, the following holds:\n" +
-                  "    1) Installer is not released/published\n" +
-                  "    2) Email notification will be sent only to $TESTEMAILRECIPIENT\n" +
-                  "    3) Commit package/build file changes (svn) are not made\n" +
-                  "    4) Version tag (svn) is not made\n" +
-                  "Some local files may be changed in test mode (i.e. updated version\n" +
-                  "numbers in build and package files).  These changes should be reverted\n" +
-                  "to original state via SCM"
-        }
-    );
-    parser.addArgument(
         [ "-h", "--help" ],
         {
-            help: "Display help.",
-            action: "storeTrue"
-        }
-    );
-    parser.addArgument(
-        [ "-h2", "--help-detailed" ],
-        {
-            dest: "helpDetailed",
+            dest: "help",
             action: "storeTrue",
-            help: "Display detailed help."
+            help: "Display help."
         }
     );
-    parser.addArgument(
-        "--no-ci",
-        {
-            dest: "noCi",
-            action: "storeTrue",
-            help: "Run in a local, non-CI environment."
-        }
-    );
-    parser.addArgument(
-        [ "-o", "--opt" ],
-        {
-            dest: "option",
-            action: "append",
-            default: [],
-            help: "Specify options that override the .publishrc properties\n" +
-                  "  Examples:\n" +
-                  "    app-publisher -o promptVersion=Y\n" +
-                  "    app-publisher -o branch=v2.0 -o promptVersion=N\n" +
-                  "    app-publisher -o emailNotification=N -o skipVersionEdits=Y"
-        }
-    );
-    parser.addArgument(
-        [ "-te", "-e", "--email-only", "--task-email-only" ],
-        {
-            dest: "emailOnly",
-            action: "storeTrue",
-            help: "Re-send the latest notification email."
-        }
-    );
-    parser.addArgument(
-        [ "-tmr", "--task-mantisbt-release" ],
-        {
-            dest: "mantisbtReleaseTask",
-            action: "storeTrue",
-            help: "Perform a 'Mantis' release."
-        }
-    );
-    parser.addArgument(
-        [ "-tr", "-r", "--republish", "--task-republish" ],
-        {
-            dest: "republish",
-            action: "storeTrue",
-            help: "Re-publish the current/latest release."
-        }
-    );
-    parser.addArgument(
-        [ "-ttv", "--task-touch-versions" ],
-        {
-            dest: "touchVersions",
-            action: "storeTrue",
-            help: "Update version numbers either semantically or incrementally.\n" +
-                  "Versioned files are by default AssemblyInfo.cs, package.json, and\n" +
-                  "app.json.\n" +
-                  "Additional versioned files are specified in the .publishrc file\n" +
-                  "using the 'versionFiles' and cProjectRcFile' properties."
-        }
-    );
-    parser.addArgument(
-        [ "-ttvc", "--task-touch-versions-commit" ],
-        {
-            dest: "touchVersionsCommit",
-            action: "storeTrue",
-            help: "Commits the changes made when using the --touch-versions option,\n" +
-                  "using the 'chore: vX.X.X' format for the commit message.  Then creates\n" +
-                  "a tag using the 'vX.X.X' format for the tag name."
-        }
-    );
+
     parser.addArgument(
         [ "-v", "--version" ],
         {
@@ -158,6 +50,66 @@ export = async () =>
             action: "storeTrue"
         }
     );
+
+    Object.entries(publishRcOpts).forEach((o) =>
+    {
+        if (!o) { return; }
+        const property = o[0],
+              def = o[1],
+              noCmdLine = !def || !def[0];
+        if (property && def && !noCmdLine && def instanceof Array && def.length > 3)
+        {
+            const valueType: string = (def[1] as string).trim(),
+                  isArgParseFormat = def[3] instanceof Array && def[4] instanceof Object,
+                  argParseObj = isArgParseFormat ? (def[4] as any) : {};
+
+            let args: string[];
+
+            if (!isArgParseFormat)
+            {
+                let help = def[3] as string;
+                for (let i = 4; i < def.length; i++) {
+                    if (!(def[i] instanceof String))
+                    {
+                        break;
+                    }
+                    help += ("\n" + def[i]);
+                }
+                args = getArgs(property);
+                argParseObj.help = help;
+                if (def[2])
+                {
+                    argParseObj.default = def[2];
+                }
+            }
+            else {
+                args = def[3] as string[];
+            }
+
+            if (!argParseObj.dest) {
+                argParseObj.dest = property;
+            }
+
+            if (!argParseObj.help) {
+                argParseObj.help = "No help available";
+            }
+
+            if (!argParseObj.action)
+            {
+                if (valueType === "string" || valueType === "string[]" || valueType.startsWith("enum("))
+                {
+                    argParseObj.action = "append";
+                    argParseObj.default = [];
+                }
+                else
+                {
+                    argParseObj.action = "storeTrue";
+                }
+            }
+
+            parser.addArgument(args, argParseObj);
+        }
+    });
 
     try {
         //
@@ -229,17 +181,9 @@ export = async () =>
         //
         // If user specified '-h' or --help', then just display help and exit
         //
-        if (opts.help || opts.helpDetailed)
+        if (opts.help)
         {
-            console.log(gradient("cyan", "pink").multiline(`
-----------------------------------------------------------------------------
- App-Publisher Help
-----------------------------------------------------------------------------
-        `, {interpolation: "hsv"}));
-            parser.printHelp();
-            if (opts.helpDetailed) {
-                displayPublishRcHelp();
-            }
+            displayPublishRcHelp();
             process.exit(0);
         }
 
@@ -257,30 +201,63 @@ export = async () =>
         }
         delete opts.version; // remove since publishrc.json defines a param version
 
+        //
+        // Manipulate '--task-changelog-file'
+        //
         if (opts.clFile)
         {
-            opts.changeLogOnlyFile = opts.clFile[0];
-            opts.changeLogOnly = true;
+            opts.taskChangeLogFile = opts.clFile[0];
+            //
+            // Validate file argument
+            //
+            if (!opts.taskChangeLogFile)
+            {
+                console.log("Invalid options specified:");
+                console.log("  Option '--task-changelog-file' requires a file argument, example:");
+                console.log("    app-publisher -tcf tmp/changelog.txt");
+                console.log("    app-publisher -tcf \"tmp/dir w spaces/changelog.txt\"");
+                console.log("    app-publisher --task-changelog-file tmp/changelog.txt");
+                process.exit(1);
+            }
+            //
+            // Set transitive flag
+            //
+            opts.taskChangeLog = true;
+            //
+            // Remove temporary property from object (used for short descrip. purposes in help)
+            //
             delete opts.clFile;
+        }
+
+        if (opts.taskTouchVersionsCommit)
+        {   //
+            // Set transitive flags
+            //
+            opts.taskTouchVersions = true;
+        }
+
+        if (opts.taskEmail || opts.taskTouchVersions || opts.taskMantisbtRelease)
+        {   //
+            // Set transitive flags
+            //
+            opts.skipChangeLogEdits = true;
         }
 
         //
         // Only one 'single-task mode' option can be specified...
         //
-        if ((opts.changeLogOnly && opts.emailOnly) || (opts.changeLogOnly && opts.touchVersions) ||
-            (opts.touchVersions && opts.emailOnly) || (opts.touchVersions && opts.republish) ||
-            (opts.republish && opts.changeLogOnly) || (opts.republish && opts.emailOnly) ||
-            (opts.mantisbtReleaseTask && opts.republish) || (opts.mantisbtReleaseTask && opts.emailOnly)  ||
-            (opts.mantisbtReleaseTask && opts.touchVersions) || (opts.mantisbtReleaseTask && opts.changeLogOnly))
+        if ((opts.taskChangeLog && opts.taskEmail) || (opts.taskChangeLog && opts.taskTouchVersions) ||
+            (opts.taskTouchVersions && opts.taskEmail) || (opts.taskMantisbtRelease && opts.taskEmail) ||
+            (opts.taskMantisbtRelease && opts.taskTouchVersions) || (opts.taskMantisbtRelease && opts.taskChangeLog))
         {
             console.log("Invalid options specified:");
-            console.log("  Only one 'single task mode' option can be used at this time.");
-            console.log("    changeLogOnly : " + opts.changeLogOnly);
-            console.log("    emailOnly     : " + opts.emailOnly);
+            console.log("  Only one task option can be used at this time.");
+            console.log("    changeLog     : " + opts.changeLogOnly);
+            console.log("    email         : " + opts.emailOnly);
             console.log("    mantisRelease : " + opts.mantisRelease);
             console.log("    republish     : " + opts.republish);
             console.log("    touchVersions : " + opts.touchVersions);
-            process.exit(0);
+            process.exit(1);
         }
 
         await require(".")(opts);
@@ -313,11 +290,19 @@ function displayIntro()
 
 function displayPublishRcHelp()
 {
+    console.log(gradient("cyan", "pink").multiline(`
+----------------------------------------------------------------------------
+ App-Publisher Detailed Help
+----------------------------------------------------------------------------
+        `, {interpolation: "hsv"}));
     console.log("");
-    console.log(chalk.bold(gradient("cyan", "pink").multiline(`PublishRC Property Help`,
-                            {interpolation: "hsv"})));
+    console.log("usage:");
+    console.log("   All publishrc property names are the camel cased equivalent of the lowercase");
+    console.log("   command line options, for example:");
     console.log("");
-    console.log("usage: .publishrc.json { propertyName: value }");
+    console.log("   The command line equivalent to the .publishrc property 'emailNotification' is:");
+    console.log("");
+    console.log("      --email-notification");
     console.log("");
 
     Object.entries(publishRcOpts).forEach((o) =>
@@ -336,10 +321,22 @@ function displayPublishRcHelp()
         if (o[1] && o[1] instanceof Array && o[1].length > 3)
         {
             let aVal: string = o[1][1] as string;
-            line += o[1][3];
-            console.log(line);
-            for (let i = 4; i < o[1].length; i++) {
-                console.log(`                        ${o[1][i]}`);
+            if (o[1][3] instanceof String || typeof o[1][3] === 'string')
+            {
+                line += o[1][3];
+                console.log(line);
+                for (let i = 4; i < o[1].length; i++) {
+                    console.log(`                        ${o[1][i]}`);
+                }
+            }
+            else if (o[1].length > 4 && o[1][4] instanceof Object)
+            {
+                const lines = (o[1][4] as any).help.split("\n");
+                line += lines[0];
+                console.log(line);
+                for (let i = 1; i < lines.length; i++) {
+                    console.log(`                        ${lines[i]}`);
+                }
             }
             console.log("");
             if (aVal === "flag")
@@ -495,6 +492,26 @@ const publishRcOpts =
         "A script or list of scripts to run for the build stage, before building",
         "a standard 'dist' release.",
         "Ignored if distRelease = N."
+    ],
+
+    dryRun: [
+        true,
+        "boolean",
+        "false",
+        [ "-d", "--dry-run" ],
+        {
+            dest: "dryRun",
+            action: "storeTrue",
+            help: "Run in dry/test mode, all changes are reverted.\n" +
+                  "In dry-run mode, the following holds:\n" +
+                  "    1) Installer is not released/published\n" +
+                  "    2) Email notification will be sent only to $TESTEMAILRECIPIENT\n" +
+                  "    3) Commit package/build file changes (svn) are not made\n" +
+                  "    4) Version tag (svn) is not made\n" +
+                  "Some local files may be changed in test mode (i.e. updated version\n" +
+                  "numbers in build and package files).  These changes should be reverted\n" +
+                  "to original state via SCM"
+        }
     ],
 
     dryRunVcRevert: [
@@ -712,6 +729,18 @@ const publishRcOpts =
         "Ignored if mantisbtRelease = N."
     ],
 
+    noCi: [
+        true,
+        "boolean",
+        "false",
+        [ "--no-ci" ],
+        {
+            dest: "noCi",
+            action: "storeTrue",
+            help: "Run in a local, non-CI environment."
+        }
+    ],
+
     npmPackDist: [
         true,
         "flag",
@@ -884,6 +913,18 @@ const publishRcOpts =
         "files and the SVN project name."
     ],
 
+    readConfig: [
+        true,
+        "boolean",
+        "false",
+        [ "-cfg", "--config" ],
+        {
+            dest: "readConfig",
+            action: "storeTrue",
+            help: "Display the contents of the configuration file."
+        }
+    ],
+
     repo: [
         true,
         "string",
@@ -904,12 +945,24 @@ const publishRcOpts =
         "    2. svn"
     ],
 
+    republish: [
+        true,
+        "boolean",
+        "false",
+        [ "-r", "--republish" ],
+        {
+            dest: "republish",
+            action: "storeTrue",
+            help: "Re-publish the current/latest release."
+        }
+    ],
+
     skipChangeLogEdits: [
         true,
         "flag",
         "N",
-        "Skip manual editing of the changelog file(s).\n" +
-        "Note the changelog used for a release will be that of which is output by the\n" +
+        "Skip manual editing of the changelog file(s).",
+        "Note the changelog used for a release will be that of which is output by the",
         "internal commit parser."
     ],
 
@@ -935,6 +988,83 @@ const publishRcOpts =
         "flag",
         "N",
         "Skip all version edits in version files."
+    ],
+
+    taskChangeLogFile: [
+        true,
+        "string",
+        "",
+        [ "-tcf", "--task-changelog-file" ],
+        {
+            dest: "clFile",
+            action: "append",
+            default: [],
+            help: "Export the next release's current changelog to the specified file.\n" +
+                  "The specified file can be a relative or an absolute path.\n" +
+                  "  Examples:\n" +
+                  "    app-publisher -cf install/dist/history.txt\n" +
+                  "    app-publisher -cf build/doc/changelog/changelog.md\n" +
+                  "    app-publisher -cf c:\\projects\\changelogs\\projectname\n" +
+                  "    app-publisher --changelog-only-file build/tmp/version_notes.txt"
+        }
+    ],
+
+    taskChangeLog: [
+        true,
+        "boolean",
+        "false",
+        [ "-tc", "--task-changelog" ],
+        {
+            action: "storeTrue",
+            help: "Export the next release's current changelog and view using the editor\n" +
+                "specified in the .publishrc file."
+        }
+    ],
+
+    taskEmail: [
+        true,
+        "boolean",
+        "false",
+        [ "-te", "--task-email" ],
+        {
+            help: "Re-send the latest notification email."
+        }
+    ],
+
+    taskMantisbtRelease: [
+        true,
+        "boolean",
+        "false",
+        [ "-tmr", "--task-mantisbt-release" ],
+        {
+            help: "Perform a 'Mantis' release."
+        }
+    ],
+
+    taskTouchVersions: [
+        true,
+        "boolean",
+        "false",
+        [ "-ttv", "--task-touch-versions" ],
+        {
+            help: "Update version numbers either semantically or incrementally.\n" +
+                "Versioned files are by default AssemblyInfo.cs, package.json, and\n" +
+                "app.json.\n" +
+                "Additional versioned files are specified in the .publishrc file\n" +
+                "using the 'versionFiles' and cProjectRcFile' properties."
+        }
+    ],
+
+    taskTouchVersionsCommit: [
+        true,
+        "boolean",
+        "false",
+        [ "-ttvc", "--task-touch-versions-commit" ],
+        {
+            help: "Commits the changes made when using the --touch-versions option,\n" +
+                "using the 'chore: vX.X.X' format for the commit message.  Then creates\n" +
+                "a tag using the 'vX.X.X' format for the tag name."
+        }
     ],
 
     testEmailRecip: [

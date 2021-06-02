@@ -3740,20 +3740,20 @@ if ($options.changelogFile) {
 #
 # Changelog file only
 #
-$CHANGELOGONLY = $false
-$CHANGELOGONLYFILE = ""
-if ($options.changeLogOnly) {
-    $CHANGELOGONLY = $options.changeLogOnly
+$TASKCHANGELOG = $false
+$TASKCHANGELOGFILE = ""
+if ($options.taskChangeLog) {
+    $TASKCHANGELOG = $options.taskChangeLog
 }
-if ($CHANGELOGONLY -eq "Y") {
-    $CHANGELOGONLY = $true
+if ($TASKCHANGELOG -eq "Y") {
+    $TASKCHANGELOG = $true
 }
-if ($options.changeLogOnlyFile -is [system.string])
+if ($options.taskChangeLogFile -is [system.string])
 {
-    if (![string]::IsNullOrEmpty($options.changeLogOnlyFile))
+    if (![string]::IsNullOrEmpty($options.taskChangeLogFile))
     {
-        $CHANGELOGONLY = $true
-        $CHANGELOGONLYFILE = $options.changeLogOnlyFile
+        $TASKCHANGELOG = $true
+        $TASKCHANGELOGFILE = $options.taskChangeLogFile
     }
 }
 #
@@ -3847,12 +3847,12 @@ if ($options.dryRunVcRevert) {
 #
 # NOTIFICATION EMAIL CONFIG OPTIONS
 #
-$EMAILONLY = $false
-if ($options.emailOnly) {
-    $EMAILONLY = $options.emailOnly
+$TASKEMAIL = $false
+if ($options.taskEmail) {
+    $TASKEMAIL = $options.taskEmail
 }
-if ($EMAILONLY -eq "Y") {
-    $EMAILONLY = $true
+if ($TASKEMAIL -eq "Y") {
+    $TASKEMAIL = $true
 }
 $EMAILNOTIFICATION = "Y"
 if ($options.emailNotification) {
@@ -4030,11 +4030,11 @@ if ($options.mantisbtAssets) {
 #
 # MantisBT Release ONLY - individual task mode
 #
-$MANTISBTTASK = $false
-if ($options.mantisbtReleaseTask) {
+$TASKMANTISBT = $false
+if ($options.taskMantisbtRelease) {
     if (![string]::IsNullOrEmpty($MANTISBTURL) -and ![string]::IsNullOrEmpty($MANTISBTAPITOKEN))
     {
-        $MANTISBTTASK = $true
+        $TASKMANTISBT = $true
         $MANTISBTRELEASE = "Y"
         if (!$options.noCi) {
             $MANTISBTCHGLOGEDIT = "N"
@@ -4449,15 +4449,15 @@ if ($VCFILES.Length -gt 0)
 #
 # Foce set of this is a single task 'touch versiones commit'
 #
-if ($options.touchVersionsCommit) {
-    $options.touchVersions = $true
+if ($options.taskTouchVersionsCommit) {
+    $options.taskTouchVersions = $true
 }
 
 #
 # SIngle task mode flag to skip most of the functionality in the publisher chain except for
 # the particular task that is going to be ran.
 #
-$TASKMODE = $CHANGELOGONLY -or $EMAILONLY -or $options.touchVersions -or $MANTISBTTASK 
+$TASKMODE = $TASKCHANGELOG -or $TASKEMAIL -or $options.taskTouchVersions -or $TASKMANTISBT 
 
 #********************************************************************************************************************#
 
@@ -4870,7 +4870,7 @@ if (![string]::IsNullOrEmpty($SKIPCHANGELOGEDITS)) {
         Log-Message "Invalid value specified for skipChangeLogEdits, accepted values are y/n/Y/N" "red"
         exit 1
     }
-    if ($DRYRUN -eq $true) {
+    if ($DRYRUN -eq $true -and !$TASKMODE) {
         $SKIPCHANGELOGEDITS = "N"
         Log-Message "Overriding skipChangeLogEdits on dry run, auto set to 'N'" "darkyellow"
     }
@@ -4943,14 +4943,14 @@ Log-Message "   Current Version  : $CURRENTVERSION"
 Log-Message "   Build cmd        : $BUILDCOMMAND"
 Log-Message "   Bugs Page        : $BUGS"
 Log-Message "   Changelog file   : $CHANGELOGFILE"
-Log-Message "   Changelog only   : $CHANGELOGONLY"
-Log-Message "   Chglog only file : $CHANGELOGONLYFILE"
+Log-Message "   Changelog only   : $TASKCHANGELOG"
+Log-Message "   Chglog only file : $TASKCHANGELOGFILE"
 Log-Message "   C Project Rc File: $CPROJECTRCFILE"
 Log-Message "   Deploy cmd       : $DEPLOYCOMMAND"
 Log-Message "   Dist release     : $DISTRELEASE"
 Log-Message "   Dry run          : $DRYRUN"
 Log-Message "   Dry run vc revert: $DRYRUNVCREVERT"
-Log-Message "   Email only       : $EMAILONLY"
+Log-Message "   Email only       : $TASKEMAIL"
 Log-Message "   Github release   : $GITHUBRELEASE"
 Log-Message "   Github user      : $GITHUBUSER"
 Log-Message "   Github assets    : $GITHUBASSETS"
@@ -5327,7 +5327,7 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
 {
     Log-Message "The current version is $CURRENTVERSION"
 
-    if (!$EMAILONLY)
+    if (!$TASKEMAIL)
     {
         #
         # Get commit messages since last version
@@ -5431,7 +5431,7 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
             $VersionInteractive = "Y"
         }
 
-        if (($VERSIONSYSTEM -eq "manual" -or $PROMPTVERSION -eq "Y" -or $VersionInteractive -eq "Y") -and !$CHANGELOGONLY) 
+        if (($VERSIONSYSTEM -eq "manual" -or $PROMPTVERSION -eq "Y" -or $VersionInteractive -eq "Y") -and !$TASKCHANGELOG) 
         {
             Log-Message "[PROMPT] User input required"
             $NewVersion = read-host -prompt "Enter the version #, or C to cancel [$VERSION]"
@@ -5543,17 +5543,17 @@ Log-Message "Date                : $TDATE"
 #
 # Process $HISTORYFILE
 #
-if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$EMAILONLY -or $CHANGELOGONLY) -and !$options.touchVersions)
+if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$options.taskTouchVersions)
 {
     $histFile = $HISTORYFILE
-    if ($CHANGELOGONLY)
+    if ($TASKCHANGELOG)
     {
-        if ([string]::IsNullOrEmpty($CHANGELOGONLYFILE))
+        if ([string]::IsNullOrEmpty($TASKCHANGELOGFILE))
         {
             $histFile = "${Env:Temp}\history.$VERSION.txt"
         }
         else {
-            $histFile = $CHANGELOGONLYFILE
+            $histFile = $TASKCHANGELOGFILE
         }
         if (Test-Path($histFile))
         {
@@ -5570,7 +5570,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$E
     {
         Log-Message "Creating history file directory and adding to version control" "magenta"
         New-Item -ItemType "directory" -Force -Path "$HistoryPath" | Out-Null
-        if (!$CHANGELOGONLY)
+        if (!$TASKCHANGELOG)
         {
             Vc-Changelist-AddNew "$HistoryPath"
             Vc-Changelist-AddRemove "$HistoryPath"
@@ -5581,7 +5581,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$E
     if (!(Test-Path($histFile))) 
     {
         Log-Message "Creating new history file and adding to version control" "magenta"
-        if (!$CHANGELOGONLY)
+        if (!$TASKCHANGELOG)
         {
             New-Item -ItemType "file" -Force -Path "$histFile" -Value "$PROJECTNAME`r`n`r`n" | Out-Null
         }
@@ -5590,7 +5590,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$E
             New-Item -ItemType "file" -Force -Path "$histFile" -Value "" | Out-Null
         }
         $IsNewHistoryFile = $true;
-        if (!$CHANGELOGONLY)
+        if (!$TASKCHANGELOG)
         {
             Vc-Changelist-AddRemove "$histFile"
             Vc-Changelist-AddNew "$histFile"
@@ -5629,7 +5629,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$E
         #
         # New file
         #
-        if ($IsNewHistoryFile -and !$IsNewHistoryFileHasContent -and !$CHANGELOGONLY) {
+        if ($IsNewHistoryFile -and !$IsNewHistoryFileHasContent -and !$TASKCHANGELOG) {
             $HistoryFileTitle = "$PROJECTNAME History"
             Add-Content -NoNewline -Path $histFile -Value "$HistoryFileTitle`r`n"
             [System.Threading.Thread]::Sleep(120)
@@ -5662,7 +5662,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$E
     #
     # Allow manual modifications to history file
     #
-    if (!$CHANGELOGONLY)
+    if (!$TASKCHANGELOG)
     {   
         Edit-File $histFile $true ($SKIPCHANGELOGEDITS -eq "Y")
         #
@@ -5679,17 +5679,17 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$E
 #
 # Process $CHANGELOGFILE
 #
-if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!$EMAILONLY -or $CHANGELOGONLY) -and !$options.touchVersions)
+if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$options.taskTouchVersions)
 {
     $clFile = $CHANGELOGFILE
-    if ($CHANGELOGONLY)
+    if ($TASKCHANGELOG)
     {
-        if ([string]::IsNullOrEmpty($CHANGELOGONLYFILE))
+        if ([string]::IsNullOrEmpty($TASKCHANGELOGFILE))
         {
             $clFile = "${Env:Temp}\changelog.$VERSION.txt"
         }
         else {
-            $clFile = $CHANGELOGONLYFILE
+            $clFile = $TASKCHANGELOGFILE
         }
         if (Test-Path($clFile))
         {
@@ -5705,7 +5705,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
     {
         Log-Message "Creating changelog file directory and adding to version control" "magenta"
         New-Item -ItemType "directory" -Path "$ChangeLogPath" | Out-Null
-        if (!$CHANGELOGONLY)
+        if (!$TASKCHANGELOG)
         {
             Vc-Changelist-AddNew "$ChangeLogPath"
             Vc-Changelist-AddRemove "$ChangeLogPath"
@@ -5717,7 +5717,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
         Log-Message "Creating new changelog file and adding to version control" "magenta"
         New-Item -ItemType "file" -Path "$clFile" -Value "$ChangeLogTitle`r`n`r`n" | Out-Null
         $NewChangelog = $true
-        if (!$CHANGELOGONLY)
+        if (!$TASKCHANGELOG)
         {
             Vc-Changelist-AddRemove $clFile
             Vc-Changelist-AddNew $clFile
@@ -5875,7 +5875,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
     #
     # Allow manual modifications to changelog file
     #
-    if (!$CHANGELOGONLY)
+    if (!$TASKCHANGELOG)
     {
         Edit-File $clFile $true ($SKIPCHANGELOGEDITS -eq "Y")
         #
@@ -5926,7 +5926,7 @@ if (!$TASKMODE) {
     Run-Scripts "preBuild" $PREBUILDCOMMAND $true $true
 }
 
-if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and (!$TASKMODE -or $options.touchVersions))
+if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and (!$TASKMODE -or $options.taskTouchVersions))
 {
     #
     # AppPublisher publishrc version
@@ -6264,7 +6264,7 @@ if ($DISTRELEASE -eq "Y" -and !$TASKMODE)
     #
     Run-Scripts "postDistRelease" $DISTRELEASEPOSTCOMMAND $false $false
 }
-elseif ($DISTRELEASE -eq "Y" -and $EMAILONLY) 
+elseif ($DISTRELEASE -eq "Y" -and $TASKEMAIL) 
 {
     $TargetNetLocation = [Path]::Combine($DISTRELEASEPATH, $PROJECTNAME, $VERSION)
     $TargetDocLocation = [Path]::Combine($DISTDOCPATH, $PROJECTNAME, $VERSION)
@@ -6280,7 +6280,7 @@ if (!$TASKMODE) {
 #
 # Restore any configured package.json values to the original values
 #
-if ((Test-Path("package.json")) -and (!$TASKMODE -or $options.touchVersions)) {
+if ((Test-Path("package.json")) -and (!$TASKMODE -or $options.taskTouchVersions)) {
     Restore-PackageJson
 }
 
@@ -6467,7 +6467,7 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y" -and !$TASKMODE)
 #
 # MantisBT Release
 #
-if ($MANTISBTRELEASE -eq "Y" -and (!$TASKMODE -or $MANTISBTTASK)) 
+if ($MANTISBTRELEASE -eq "Y" -and (!$TASKMODE -or $TASKMANTISBT)) 
 {
     Log-Message "Starting MantisBT release"
     Log-Message "Creating MantisBT v$VERSION release"
@@ -6679,7 +6679,7 @@ if (!$TASKMODE)
 #
 # Send release notification email
 #
-if (!$CHANGELOGONLY -and !$options.touchVersions -and !$MANTISBTTASK -and ($EMAILNOTIFICATION -eq "Y" -or $EMAILONLY)) {
+if (!$TASKCHANGELOG -and !$options.taskTouchVersions -and !$TASKMANTISBT -and ($EMAILNOTIFICATION -eq "Y" -or $TASKEMAIL)) {
     Send-Notification "$TargetNetLocation" "$NpmLocation" "$NugetLocation"
 }
 
@@ -6690,7 +6690,7 @@ if (!$TASKMODE) {
     Run-Scripts "preCommit" $PRECOMMITCOMMAND $false $false
 }
 
-if (!$TASKMODE -or $options.touchVersionsCommit)
+if (!$TASKMODE -or $options.taskTouchVersionsCommit)
 {
     #
     # Change dircetory to svn/git root that contains the .svn/.git folder to isse SVN commands,
