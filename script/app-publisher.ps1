@@ -5570,7 +5570,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$E
         }
         else
         {
-            New-Item -ItemType "file" -Force -Path "$histFile" -Value "`r`n" | Out-Null
+            New-Item -ItemType "file" -Force -Path "$histFile" -Value "" | Out-Null
         }
         $IsNewHistoryFile = $true;
         if (!$CHANGELOGONLY)
@@ -5612,7 +5612,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$E
         #
         # New file
         #
-        if ($IsNewHistoryFile -and !$IsNewHistoryFileHasContent) {
+        if ($IsNewHistoryFile -and !$IsNewHistoryFileHasContent -and !$CHANGELOGONLY) {
             $HistoryFileTitle = "$PROJECTNAME History"
             Add-Content -NoNewline -Path $histFile -Value "$HistoryFileTitle`r`n"
             [System.Threading.Thread]::Sleep(120)

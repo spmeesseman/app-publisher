@@ -139,8 +139,8 @@ export = async () =>
             dest: "touchVersionsCommit",
             action: "storeTrue",
             help: "Commits the changes made when using the --touch-versions option,\n" +
-                  "using the 'chore: vX.X.X' commit message format.  Then creates a\n" +
-                  "tag using the 'vX.X.X' commit message format."
+                  "using the 'chore: vX.X.X' format for the commit message.  Then creates\n" +
+                  "a tag using the 'vX.X.X' format for the tag name."
         }
     );
     parser.addArgument(
@@ -251,7 +251,7 @@ export = async () =>
 
         if (opts.clFile)
         {
-            opts.changeLogOnlyFile = opts.clFile;
+            opts.changeLogOnlyFile = opts.clFile[0];
             opts.changeLogOnly = true;
             delete opts.clFile;
         }
