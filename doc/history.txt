@@ -3765,7 +3765,7 @@ June 1st, 2021
     
     Add new publisrc property to skip changelog/history file edits:
     
-        skipChangeLogEdits
+        skipChangelogEdits
     
     Setting this flag to "Y" will skip editing of the changelog/history file,
     and it will be used as output by the parser without intervention.
@@ -3776,7 +3776,7 @@ June 1st, 2021
     automatically disabled regardless of what is secified in the publishrc file:
     
         promptVersion
-        skipChangeLogEdits
+        skipChangelogEdits
         skipVersionEdits
         versionFilesEditAlways
 

@@ -17,9 +17,6 @@ export = async () =>
     //
     const opts = parseArgs();
 
-    console.log(opts);
-    process.exit(0);
-
     try { //
          // Display color banner
         //
@@ -48,52 +45,24 @@ export = async () =>
         }
 
         //
-        // Manipulate '--task-changelog-file'
+        // Set transitive task flags
         //
-        if (opts.taskChangeLogFile)
-        {   //
-            // All 'append' type options we allow single string value
-            //
-            opts.taskChangeLogFile = opts.taskChangeLogFile[0];
-            //
-            // Validate file argument
-            //
-            if (!opts.taskChangeLogFile)
-            {
-                console.log("Invalid options specified:");
-                console.log("  Option '--task-changelog-file' requires a file argument, example:");
-                console.log("    app-publisher -tcf tmp/changelog.txt");
-                console.log("    app-publisher -tcf \"tmp/dir w spaces/changelog.txt\"");
-                console.log("    app-publisher --task-changelog-file tmp/changelog.txt");
-                process.exit(1);
-            }
-            //
-            // Set transitive flag
-            //
-            opts.taskChangeLog = true;
-            
+        if (opts.taskChangelogFile) {
+            opts.taskChangelog = true;
         }
-
-        if (opts.taskTouchVersionsCommit)
-        {   //
-            // Set transitive flags
-            //
+        if (opts.taskTouchVersionsCommit) {   
             opts.taskTouchVersions = true;
         }
-
-        if (opts.taskEmail || opts.taskTouchVersions || opts.taskMantisbtRelease)
-        {   //
-            // Set transitive flags
-            //
-            opts.skipChangeLogEdits = true;
+        if (opts.taskEmail || opts.taskTouchVersions || opts.taskMantisbtRelease) {
+            opts.skipChangelogEdits = true;
         }
 
         //
         // Only one 'single-task mode' option can be specified...
         //
-        if ((opts.taskChangeLog && opts.taskEmail) || (opts.taskChangeLog && opts.taskTouchVersions) ||
+        if ((opts.taskChangelog && opts.taskEmail) || (opts.taskChangelog && opts.taskTouchVersions) ||
             (opts.taskTouchVersions && opts.taskEmail) || (opts.taskMantisbtRelease && opts.taskEmail) ||
-            (opts.taskMantisbtRelease && opts.taskTouchVersions) || (opts.taskMantisbtRelease && opts.taskChangeLog))
+            (opts.taskMantisbtRelease && opts.taskTouchVersions) || (opts.taskMantisbtRelease && opts.taskChangelog))
         {
             console.log("Invalid options specified:");
             console.log("  Only one task option can be used at this time.");
@@ -297,6 +266,20 @@ function displayPublishRcHelp()
 }
 
 
+function getArgsFromProperty(property: string, includeShort?: boolean) : string[]
+{
+    const args: string[] = [];
+    if (property)
+    {
+        if (includeShort) {
+            args.push("-" + property.replace(/(?:^|\.?)([A-Z])/g, function (x,y){return y[0].toLowerCase()}));
+        }
+        args.push("-" + property.replace(/(?:^|\.?)([A-Z])/g, function (x,y){return "-" + y.toLowerCase()}));
+    }
+    return args;
+}
+
+
 function getPropertyFromArg(arg: string) : string
 {
     return arg.replace(/^[\-]{1,2}/, "").replace(/([\-])([a-z])/g, function (x,y,z){ return z.toUpperCase()});
@@ -361,7 +344,7 @@ function parseArgs(): any
                     process.exit(0);
                 }
             }
-            if (valueType.startsWith("enum"))
+            else if (valueType.startsWith("enum"))
             {
                 if (!opts[lastProp]) {
                     opts[lastProp] = a;
@@ -1018,7 +1001,7 @@ const publishRcOpts =
         }
     ],
 
-    skipChangeLogEdits: [
+    skipChangelogEdits: [
         true,
         "flag",
         "N",
@@ -1051,7 +1034,19 @@ const publishRcOpts =
         "Skip all version edits in version files."
     ],
 
-    taskChangeLogFile: [
+    taskChangelog: [
+        true,
+        "boolean",
+        false,
+        [ "-tc", "--task-changelog" ],
+        {
+            action: "storeTrue",
+            help: "Export the next release's current changelog and view using the editor\n" +
+                "specified in the .publishrc file."
+        }
+    ],
+
+    taskChangelogFile: [
         true,
         "string",
         "",
@@ -1064,18 +1059,6 @@ const publishRcOpts =
                   "    app-publisher -cf build/doc/changelog/changelog.md\n" +
                   "    app-publisher -cf c:\\projects\\changelogs\\projectname\n" +
                   "    app-publisher --changelog-only-file build/tmp/version_notes.txt"
-        }
-    ],
-
-    taskChangeLog: [
-        true,
-        "boolean",
-        false,
-        [ "-tc", "--task-changelog" ],
-        {
-            action: "storeTrue",
-            help: "Export the next release's current changelog and view using the editor\n" +
-                "specified in the .publishrc file."
         }
     ],
 

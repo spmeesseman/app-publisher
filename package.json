@@ -1,6 +1,6 @@
 {
     "name": "@perryjohnson/app-publisher",
-    "version": "1.22.0",
+    "version": "2.0.0",
     "displayName": "App Publisher",
     "description": "App Publisher",
     "license": "MIT",
@@ -84,10 +84,10 @@
         "task-dry-email_dry": "npx ./build/bin/app-publisher.js --no-ci --task-email --dry-run",
         "task-rt-changelog_only": "npx ./build/bin/app-publisher.js --no-ci --task-changelog",
         "task-rt-changelog_only_file": "npx ./build/bin/app-publisher.js --no-ci --task-changelog-file test/changelog.test",
-        "task-dry-mantis_release": "npx ./build/bin/app-publisher.js --no-ci -tmr --dry-run",
-        "task-dry-mantis_release_noedit": "npx ./build/bin/app-publisher.js --no-ci -tmr --dry-run -o skipChangeLogEdits=true",
-        "task-rt-touch_versions": "npx ./build/bin/app-publisher.js --no-ci -ttv",
-        "task-dry-touch_versions": "npx ./build/bin/app-publisher.js --no-ci -ttv --dry-run",
+        "task-dry-mantis_release": "npx ./build/bin/app-publisher.js --no-ci --task-mantisbt-release --dry-run",
+        "task-dry-mantis_release_noedit": "npx ./build/bin/app-publisher.js --no-ci --task-mantisbt-release --dry-run --skip-changelog-edits",
+        "task-rt-touch_versions": "npx ./build/bin/app-publisher.js --no-ci -task-touch-versions",
+        "task-dry-touch_versions": "npx ./build/bin/app-publisher.js --no-ci --task-touch-versions --dry-run",
         "task-rt-touch_versions_commit": "npx ./build/bin/app-publisher.js --no-ci -ttvc",
         "task-dry-touch_versions_commit": "npx ./build/bin/app-publisher.js --no-ci -ttvc --dry-run",
         "republish": "npx ./build/bin/app-publisher.js --republish"

@@ -3742,18 +3742,18 @@ if ($options.changelogFile) {
 #
 $TASKCHANGELOG = $false
 $TASKCHANGELOGFILE = ""
-if ($options.taskChangeLog) {
-    $TASKCHANGELOG = $options.taskChangeLog
+if ($options.taskChangelog) {
+    $TASKCHANGELOG = $options.taskChangelog
 }
 if ($TASKCHANGELOG -eq "Y") {
     $TASKCHANGELOG = $true
 }
-if ($options.taskChangeLogFile -is [system.string])
+if ($options.taskChangelogFile -is [system.string])
 {
-    if (![string]::IsNullOrEmpty($options.taskChangeLogFile))
+    if (![string]::IsNullOrEmpty($options.taskChangelogFile))
     {
         $TASKCHANGELOG = $true
-        $TASKCHANGELOGFILE = $options.taskChangeLogFile
+        $TASKCHANGELOGFILE = $options.taskChangelogFile
     }
 }
 #
@@ -4265,8 +4265,8 @@ if ($options.homePage) {
 # Skip changelog edits (ci)
 #
 $SKIPCHANGELOGEDITS = "N"
-if ($options.skipChangeLogEdits) {
-    $SKIPCHANGELOGEDITS = $options.skipChangeLogEdits
+if ($options.skipChangelogEdits) {
+    $SKIPCHANGELOGEDITS = $options.skipChangelogEdits
 }
 #
 # Skip uploading dist files to dist release folder (primarily used for releasing
@@ -4867,12 +4867,12 @@ if (![string]::IsNullOrEmpty($VCTAG)) {
 if (![string]::IsNullOrEmpty($SKIPCHANGELOGEDITS)) {
     $SKIPCHANGELOGEDITS = $SKIPCHANGELOGEDITS.ToUpper()
     if ($SKIPCHANGELOGEDITS -ne "Y" -and $SKIPCHANGELOGEDITS -ne "N") {
-        Log-Message "Invalid value specified for skipChangeLogEdits, accepted values are y/n/Y/N" "red"
+        Log-Message "Invalid value specified for skipChangelogEdits, accepted values are y/n/Y/N" "red"
         exit 1
     }
     if ($DRYRUN -eq $true -and !$TASKMODE) {
         $SKIPCHANGELOGEDITS = "N"
-        Log-Message "Overriding skipChangeLogEdits on dry run, auto set to 'N'" "darkyellow"
+        Log-Message "Overriding skipChangelogEdits on dry run, auto set to 'N'" "darkyellow"
     }
 }
 if (![string]::IsNullOrEmpty($SKIPVERSIONEDITS)) {
@@ -5012,7 +5012,7 @@ if (!$options.noCi)
     $VERSIONFILESEDITALWAYS = ""
     $PROMPTVERSION = "N"
     Log-Message "CI environment detected, the following flags/properties have been cleared:" "yellow"
-    Log-Message "   skipChangeLogEdits" "yellow"
+    Log-Message "   skipChangelogEdits" "yellow"
     Log-Message "   skipVersionEdits" "yellow"
     Log-Message "   promptVersion" "yellow"
     Log-Message "   versionFilesEditAlways" "yellow"
@@ -5672,7 +5672,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
         Vc-Changelist-Add $histFile
     }
     else {
-        Edit-File $histFile $true $false $true
+        Edit-File $histFile $true ![string]::IsNullOrEmpty($TASKCHANGELOGFILE) $true
     }
 }
 
@@ -5888,7 +5888,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
         #
         # TODO - Cut just the version from the content
         #
-        Edit-File $clFile $true $false $true
+        Edit-File $clFile $true ![string]::IsNullOrEmpty($TASKCHANGELOGFILE) $true
     }
 }
 
