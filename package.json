@@ -24,7 +24,6 @@
         "@types/marked-terminal": "^3.1.1",
         "@types/semver": "^6.0.1",
         "aggregate-error": "^3.0.0",
-        "argparse": "^1.0.10",
         "chalk": "^2.4.2",
         "conventional-changelog-spm": "^1.2.3",
         "cosmiconfig": "^5.2.1",
