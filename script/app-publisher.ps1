@@ -4430,6 +4430,13 @@ if ($VCFILES.Length -gt 0)
 }
 
 #
+# Foce set of this is a single task 'touch versiones commit'
+#
+if ($options.touchVersionsCommit) {
+    $options.touchVersions = $true
+}
+
+#
 # SIngle task mode flag to skip most of the functionality in the publisher chain except for
 # the particular task that is going to be ran.
 #
@@ -5655,7 +5662,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$E
 #
 # Process $CHANGELOGFILE
 #
-if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!$EMAILONLY -or $CHANGELOGONLY -and !$options.touchVersions))
+if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!$EMAILONLY -or $CHANGELOGONLY) -and !$options.touchVersions)
 {
     $clFile = $CHANGELOGFILE
     if ($CHANGELOGONLY)
@@ -6666,7 +6673,7 @@ if (!$SINGLETASKMODE) {
     Run-Scripts "preCommit" $PRECOMMITCOMMAND $false $false
 }
 
-if (!$SINGLETASKMODE)
+if (!$SINGLETASKMODE -or $options.touchVersionsCommit)
 {
     #
     # Change dircetory to svn/git root that contains the .svn/.git folder to isse SVN commands,

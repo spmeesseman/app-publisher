@@ -134,6 +134,16 @@ export = async () =>
         }
     );
     parser.addArgument(
+        [ "-tvc", "--touch-versions-commit" ],
+        {
+            dest: "touchVersionsCommit",
+            action: "storeTrue",
+            help: "Commits the changes made when using the --touch-versions option,\n" +
+                  "using the 'chore: vX.X.X' commit message format.  Then creates a\n" +
+                  "tag using the 'vX.X.X' commit message format."
+        }
+    );
+    parser.addArgument(
         [ "-v", "--version" ],
         {
             help: "Display the current app-publisher version.",
