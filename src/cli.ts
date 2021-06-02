@@ -2,181 +2,28 @@
 
 import { env, stderr } from "process"; // eslint-disable-line node/prefer-global/process
 import * as util from "util";
+import { isNumeric } from "./util";
 import hideSensitive = require("./lib/hide-sensitive");
 import gradient from "gradient-string";
 import chalk from "chalk";
 
-function getArgs(property: string, includeShort?: boolean) : string[]
-{
-    const args: string[] = [];
-    if (property)
-    {
-        if (includeShort) {
-            args.push("-" + property.replace(/(?:^|\.?)([A-Z])/g, function (x,y){return y[0].toLowerCase()}));
-        }
-        args.push("-" + property.replace(/(?:^|\.?)([A-Z])/g, function (x,y){return "-" + y.toLowerCase()}));
-    }
-    return args;
-}
 
 export = async () =>
 {
     //
-    // Build command line argument parser
+    // Since the js port of argparse doesnt support the 'allowAbbrev' property, manually
+    // parse the arguments.  Jeezuz these devs sometimes makes the simplest things so complicated.
+    // Achieved half the functionality of the enture argparse library with a 100 line function.
     //
-    const argparse = require("argparse");
-    const ArgumentParser = argparse.ArgumentParser;
-    const RawTextHelpFormatter = argparse.RawTextHelpFormatter;
-    const parser = new ArgumentParser({
-        addHelp: false,
-        description: "App Publisher - CI Tool for Multi-Releases",
-        prog: "app-publisher",
-        formatterClass: RawTextHelpFormatter // so we can use linebreaks in the help txt
-    });
+    const opts = parseArgs();
 
-    parser.addArgument(
-        [ "-h", "--help" ],
-        {
-            dest: "help",
-            action: "storeTrue",
-            help: "Display help."
-        }
-    );
+    console.log(opts);
+    process.exit(0);
 
-    parser.addArgument(
-        [ "-v", "--version" ],
-        {
-            help: "Display the current app-publisher version.",
-            action: "storeTrue"
-        }
-    );
-
-    Object.entries(publishRcOpts).forEach((o) =>
-    {
-        if (!o) { return; }
-        const property = o[0],
-              def = o[1],
-              noCmdLine = !def || !def[0];
-        if (property && def && !noCmdLine && def instanceof Array && def.length > 3)
-        {
-            const valueType: string = (def[1] as string).trim(),
-                  isArgParseFormat = def[3] instanceof Array && def[4] instanceof Object,
-                  argParseObj = isArgParseFormat ? (def[4] as any) : {};
-
-            let args: string[];
-
-            if (!isArgParseFormat)
-            {
-                let help = def[3] as string;
-                for (let i = 4; i < def.length; i++) {
-                    if (!(def[i] instanceof String))
-                    {
-                        break;
-                    }
-                    help += ("\n" + def[i]);
-                }
-                args = getArgs(property);
-                argParseObj.help = help;
-                if (def[2])
-                {
-                    argParseObj.default = def[2];
-                }
-            }
-            else {
-                args = def[3] as string[];
-            }
-
-            if (!argParseObj.dest) {
-                argParseObj.dest = property;
-            }
-
-            if (!argParseObj.help) {
-                argParseObj.help = "No help available";
-            }
-
-            if (!argParseObj.action)
-            {
-                if (valueType === "string" || valueType === "string[]" || valueType.startsWith("enum("))
-                {
-                    argParseObj.action = "append";
-                    argParseObj.default = [];
-                }
-                else
-                {
-                    argParseObj.action = "storeTrue";
-                }
-            }
-
-            parser.addArgument(args, argParseObj);
-        }
-    });
-
-    try {
-        //
-        // Parse command line arguments
-        //
-        const opts = parser.parseArgs();
-
-        //
-        // Display color banner
+    try { //
+         // Display color banner
         //
         displayIntro();
-
-        if (opts.option) {
-            for (let o in opts.option)
-            {
-                if (!opts.option[o].includes("="))
-                {
-                    console.log("Invalid publishrc option specified:");
-                    console.log("   " + opts.option[o]);
-                    console.log("   Must be in the form property=value");
-                    process.exit(0);
-                }
-
-                const optParts = opts.option[o].split("="),
-                      optProp = optParts[0],
-                      optVal = optParts[1];
-
-                if (!publishRcOpts[optProp] || !publishRcOpts[optProp][0])
-                {
-                    console.log("Unsupported publishrc option specified:");
-                    console.log("   " + optProp)
-                    process.exit(0);
-                }
-
-                if (publishRcOpts[optProp][0] === "flag" && optVal.toUpperCase() !== "Y" && optVal.toUpperCase() !== "N")
-                {
-                    console.log("Invalid publishrc option value specified:");
-                    console.log("   " + optProp)
-                    console.log("   Must be Y/N/y/n");
-                    process.exit(0);
-                }
-                else if (publishRcOpts[optProp][0] && publishRcOpts[optProp][0].trim().startsWith("enum("))
-                {
-                    let enumIsValid = false;
-                    const matches = publishRcOpts[optProp][0].match(/[ ]*enum\((.+)\)/);
-                    if (matches && matches.length > 1) // [0] is the whole match 
-                    {                                  // [1] is the 1st capture group match
-                        const vStr = matches[1],
-                              vStrs = vStr.split("|");
-                        for (let v in vStrs)
-                        {
-                            if (optVal === v) {
-                                enumIsValid = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (!enumIsValid)
-                    {
-                        console.log("Invalid publishrc option value specified:");
-                        console.log("   " + optProp)
-                        console.log("   Must be Y/N/y/n");
-                        process.exit(0);
-                    }
-                }
-            }
-        }
 
         //
         // If user specified '-h' or --help', then just display help and exit
@@ -199,14 +46,15 @@ export = async () =>
                         `, {interpolation: "hsv"})));
             process.exit(0);
         }
-        delete opts.version; // remove since publishrc.json defines a param version
 
         //
         // Manipulate '--task-changelog-file'
         //
-        if (opts.clFile)
-        {
-            opts.taskChangeLogFile = opts.clFile[0];
+        if (opts.taskChangeLogFile)
+        {   //
+            // All 'append' type options we allow single string value
+            //
+            opts.taskChangeLogFile = opts.taskChangeLogFile[0];
             //
             // Validate file argument
             //
@@ -223,10 +71,7 @@ export = async () =>
             // Set transitive flag
             //
             opts.taskChangeLog = true;
-            //
-            // Remove temporary property from object (used for short descrip. purposes in help)
-            //
-            delete opts.clFile;
+            
         }
 
         if (opts.taskTouchVersionsCommit)
@@ -259,6 +104,95 @@ export = async () =>
             console.log("    touchVersions : " + opts.touchVersions);
             process.exit(1);
         }
+
+        //
+        // Validate options
+        //
+        Object.entries(opts).forEach((o) =>
+        {
+            const property: string = o[0];
+            let value: string | string[] = o[1] as (string | string[]);
+
+            if (property === "help" || property === "version") {
+                return; // continue forEach()
+            }
+
+            if (!publishRcOpts[property])
+            {
+                console.log("Unsupported publishrc option specified:");
+                console.log("   " + property)
+                process.exit(0);
+            }
+
+            if (!publishRcOpts[property][0])
+            {
+                console.log("A publishrc option specified cannot be used on the command line:");
+                console.log("   " + property)
+                process.exit(0);
+            }
+
+            //
+            // Remove properties from the object that were not explicitly specified
+            //
+            if (value === null) {
+                delete opts[o[0]];
+                return; // continue forEach()
+            }
+
+            //if (value instanceof Array)
+            //{
+            //    value = o.toString();
+            //}
+
+            const publishRcType = publishRcOpts[property][1].trim(),
+                  defaultValue = publishRcOpts[property][2];
+
+            if (publishRcType === "flag")
+            {
+                if ((!value && defaultValue === "N") || (value && defaultValue === "Y")) {
+                    delete opts[o[0]];
+                    return;
+                }
+                opts[o[0]] = value = value ? "Y" : "N"
+            }
+            else if (publishRcType === "boolean")
+            {
+                if ((!value && !defaultValue) || (value && defaultValue)) {
+                    delete opts[o[0]];
+                    return;
+                }
+            }
+            else if (publishRcType.startsWith("enum("))
+            {
+                let enumIsValid = false, enumValues: string;
+                const matches = publishRcType.match(/[ ]*enum\((.+)\)/);
+                if (matches && matches.length > 1) // [0] is the whole match 
+                {                                  // [1] is the 1st capture group match
+                    enumValues = matches[1];
+                    const vStrs = enumValues.split("|");
+                    if (!value) {
+                        value = vStrs[0];
+                    }
+                    else {
+                        for (let v in vStrs)
+                        {
+                            if (value[0] === vStrs[v]) {
+                                value = value[0];
+                                enumIsValid = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!enumIsValid)
+                {
+                    console.log("Invalid publishrc option value specified:");
+                    console.log("   " + property)
+                    console.log("   Must be " + enumValues);
+                    process.exit(0);
+                }
+            }
+        });
 
         await require(".")(opts);
         return 0;
@@ -360,6 +294,121 @@ function displayPublishRcHelp()
             console.log("");
         }
     });
+}
+
+
+function getPropertyFromArg(arg: string) : string
+{
+    return arg.replace(/^[\-]{1,2}/, "").replace(/([\-])([a-z])/g, function (x,y,z){ return z.toUpperCase()});
+}
+
+
+function parseArgs(): any
+{
+    const opts: any = {},
+          args = process.argv.slice(2);
+    let lastProp: string,
+        lastIsPositional: boolean;
+
+    args.forEach((a) =>
+    {
+        if (a.startsWith("-"))
+        {
+            const p = getPropertyFromArg(a);
+            if (!p || !publishRcOpts[p])
+            {
+                console.log("Unsupported publishrc option specified:");
+                console.log("   " + a)
+                process.exit(0);
+            }
+            if (lastIsPositional)
+            {
+                console.log("Positional parameter not specified for:");
+                console.log("   " + lastProp)
+                process.exit(0); 
+            }
+
+            const valueType = publishRcOpts[p][1],
+                  defaultValue = publishRcOpts[p][2];
+
+            lastProp = p;               // Record 'last', used for positionals
+            lastIsPositional = valueType.startsWith("string") || valueType === 'number' || valueType.startsWith("enum");
+
+            if (!lastIsPositional)
+            {
+                opts[p] = (valueType === 'flag' ? "Y" : true);
+            }
+        }
+        else if (lastProp)
+        {
+            const valueType = publishRcOpts[lastProp][1];
+            if (valueType.includes("string"))
+            {
+                if (!opts[lastProp]) {
+                    if (valueType.includes("string[]")) {
+                        opts[lastProp] = [ a ];
+                    }
+                    else {
+                        opts[lastProp] = a;
+                    }
+                }
+                else if (valueType.includes("string[]")) {
+                    opts[lastProp].push(a);
+                }
+                else {
+                    console.log("String type arguments can have only one positional parameter:");
+                    console.log("   " + lastProp)
+                    process.exit(0);
+                }
+            }
+            if (valueType.startsWith("enum"))
+            {
+                if (!opts[lastProp]) {
+                    opts[lastProp] = a;
+                }
+                else {
+                    console.log("Enum type arguments can have only one positional parameter:");
+                    console.log("   " + lastProp)
+                    process.exit(0);
+                }
+            }
+            else if (valueType.includes("number"))
+            {
+                if (isNumeric(a)) {
+                    if (!opts[lastProp]) {
+                        opts[lastProp] = Number(a);
+                    }
+                    else {
+                        console.log("Number type arguments can have only one positional parameter:");
+                        console.log("   " + lastProp)
+                        process.exit(0);
+                    }
+                }
+                else
+                {
+                    console.log("Positional parameter must be a number for property:");
+                    console.log("   " + lastProp)
+                    process.exit(0);
+                }
+            }
+            else
+            {
+                console.log("Positional parameters not supported for property:");
+                console.log("   " + lastProp)
+                process.exit(0);
+            }
+            lastIsPositional = undefined;
+        }
+    });
+    
+    if (lastIsPositional)
+    {
+        console.log("Positional parameter not specified for:");
+        console.log("   " + lastProp)
+        process.exit(0); 
+    }
+
+    return opts;
 }
 
 
@@ -497,7 +546,7 @@ const publishRcOpts =
     dryRun: [
         true,
         "boolean",
-        "false",
+        false,
         [ "-d", "--dry-run" ],
         {
             dest: "dryRun",
@@ -617,6 +666,18 @@ const publishRcOpts =
         "Ignored if githubRelease = N."
     ],
 
+    help: [
+        true,
+        "boolean",
+        false,
+        [ "-h", "--help" ],
+        {
+            dest: "help",
+            action: "storeTrue",
+            help: "Display help."
+        }
+    ],
+
     historyFile: [
         true,
         "string",
@@ -732,8 +793,8 @@ const publishRcOpts =
     noCi: [
         true,
         "boolean",
-        "false",
-        [ "--no-ci" ],
+        false,
+        [ "-nci", "--no-ci" ],
         {
             dest: "noCi",
             action: "storeTrue",
@@ -916,7 +977,7 @@ const publishRcOpts =
     readConfig: [
         true,
         "boolean",
-        "false",
+        false,
         [ "-cfg", "--config" ],
         {
             dest: "readConfig",
@@ -948,7 +1009,7 @@ const publishRcOpts =
     republish: [
         true,
         "boolean",
-        "false",
+        false,
         [ "-r", "--republish" ],
         {
             dest: "republish",
@@ -996,9 +1057,6 @@ const publishRcOpts =
         "",
         [ "-tcf", "--task-changelog-file" ],
         {
-            dest: "clFile",
-            action: "append",
-            default: [],
             help: "Export the next release's current changelog to the specified file.\n" +
                   "The specified file can be a relative or an absolute path.\n" +
                   "  Examples:\n" +
@@ -1012,7 +1070,7 @@ const publishRcOpts =
     taskChangeLog: [
         true,
         "boolean",
-        "false",
+        false,
         [ "-tc", "--task-changelog" ],
         {
             action: "storeTrue",
@@ -1024,7 +1082,7 @@ const publishRcOpts =
     taskEmail: [
         true,
         "boolean",
-        "false",
+        false,
         [ "-te", "--task-email" ],
         {
             help: "Re-send the latest notification email."
@@ -1034,7 +1092,7 @@ const publishRcOpts =
     taskMantisbtRelease: [
         true,
         "boolean",
-        "false",
+        false,
         [ "-tmr", "--task-mantisbt-release" ],
         {
             help: "Perform a 'Mantis' release."
@@ -1044,7 +1102,7 @@ const publishRcOpts =
     taskTouchVersions: [
         true,
         "boolean",
-        "false",
+        false,
         [ "-ttv", "--task-touch-versions" ],
         {
             help: "Update version numbers either semantically or incrementally.\n" +
@@ -1058,7 +1116,7 @@ const publishRcOpts =
     taskTouchVersionsCommit: [
         true,
         "boolean",
-        "false",
+        false,
         [ "-ttvc", "--task-touch-versions-commit" ],
         {
             help: "Commits the changes made when using the --touch-versions option,\n" +
@@ -1106,11 +1164,12 @@ const publishRcOpts =
 
     version: [
         true,
-        "string",
-        "",
-        "A version property to be used or a project that does not use a package.json",
-        "file.  Versions specified by this property should be in the same format as",
-        "that of a package.json file and can be semantically parsed.",
+        "boolean",
+        false,
+        [ "-v", "--version" ],
+        {
+            help: "Display the current app-publisher version."
+        }
     ],
 
     versionFiles: [
@@ -1128,20 +1187,29 @@ const publishRcOpts =
         "in, regardless of whether the 'skipVersionEdits' flag is set."
     ],
 
-    versionReplaceTags: [
-        false,
-        "string|string[]",
-        "",
-        "A tag or list of tags to use for performing version string replacement in files",
-        "specified by 'versionFiles', and default versioned files (e.g. package.json)."
-    ],
-
     versionFilesScrollDown: [
         false,
         "string|string[]",
         "",
         "A file path or list of file paths where sroll-down is perfoemed when opened",
         "for editing."
+    ],
+
+    versionProperty: [
+        true,
+        "string",
+        "",
+        "A version property to be used or a project that does not use a package.json",
+        "file.  Versions specified by this property should be in the same format as",
+        "that of a package.json file and can be semantically parsed.",
+    ],
+
+    versionReplaceTags: [
+        false,
+        "string|string[]",
+        "",
+        "A tag or list of tags to use for performing version string replacement in files",
+        "specified by 'versionFiles', and default versioned files (e.g. package.json)."
     ],
 
     versionText: [
@@ -1159,7 +1227,7 @@ const publishRcOpts =
     writeLog: [
         true,
         "flag",
-        "Y",
+        "N",
         "In addition to stdout, writes a log to LOCALAPPDATA\\app-publisher\\log"
     ]
 };

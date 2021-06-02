@@ -19,6 +19,20 @@ export function camelCase(name: string, indexUpper: number)
 }
 
 
+export function isNumeric(value: string | number): boolean
+{
+   return ((value != null) &&
+           (value !== '') &&
+           !isNaN(Number(value.toString())));
+}
+
+
+export function isString(value: any) : value is string
+{
+    return (value || value === "") && value instanceof String || typeof value === 'string';
+}
+
+
 export function properCase(name: string) 
 {
     if (!name) {
