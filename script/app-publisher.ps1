@@ -2762,9 +2762,10 @@ function Edit-File($editFile, $SeekToEnd = $false, $skipEdit = $false, $async = 
     {
         $script:VersionFilesEdited += $nFile
         
-        #if (Vc-IsVersioned($nFile, $true, $true)) {
+        if (!$TASKMODE) {
             Vc-Changelist-Add $nFile
-        #}
+        }
+
         if ($skipEdit -and $VERSIONFILESEDITALWAYS.Contains($nFile)) 
         {
             Log-Message "Set Edit Always Version File - $nFile"  
@@ -5682,7 +5683,8 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
         Vc-Changelist-Add $histFile
     }
     else {
-        Edit-File $histFile $true ![string]::IsNullOrEmpty($TASKCHANGELOGFILE) $true
+        $FileSpec = ![string]::IsNullOrEmpty($TASKCHANGELOGFILE);
+        Edit-File $histFile $false $FileSpec $true
     }
 }
 
@@ -5898,7 +5900,8 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
         #
         # TODO - Cut just the version from the content
         #
-        Edit-File $clFile $true ![string]::IsNullOrEmpty($TASKCHANGELOGFILE) $true
+        $FileSpec = ![string]::IsNullOrEmpty($TASKCHANGELOGFILE);
+        Edit-File $clFile $false $FileSpec $true
     }
 }
 
