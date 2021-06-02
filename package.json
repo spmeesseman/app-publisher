@@ -85,8 +85,8 @@
         "email_only": "npx ./build/bin/app-publisher.js --no-ci --email-only",
         "changelog_only": "npx ./build/bin/app-publisher.js --no-ci --changelog-only",
         "changelog_only_file": "npx ./build/bin/app-publisher.js --no-ci --changelog-only-file test/changelog.test",
-        "touch_versions": "npx ./build/bin/app-publisher.js --no-ci --tv",
-        "touch_versions_commit": "npx ./build/bin/app-publisher.js --no-ci --tvc",
+        "touch_versions": "npx ./build/bin/app-publisher.js --no-ci -tv",
+        "touch_versions_commit": "npx ./build/bin/app-publisher.js --no-ci -tvc",
         "republish": "npx ./build/bin/app-publisher.js --republish"
     },
     "main": "./build/bin/app-publisher.js",
