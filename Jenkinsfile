@@ -23,31 +23,31 @@ pipeline {
     stage("Checkout") {
       steps {
         checkout(
-          poll: false, 
+          poll: false,
           scm: [
-            $class: "SubversionSCM", 
-            additionalCredentials: [], 
+            $class: "SubversionSCM",
+            additionalCredentials: [],
             browser: [
                 $class: "WebSVN", 
                 url: "https://app1.development.pjats.com/svn/web/listing.php/?repname=pja&path=/app-publisher/${env.BRANCH_NAME}/"
             ], 
-            excludedCommitMessages: "\\[skip[ \\-]ci\\]", 
-            excludedRegions: "", 
-            excludedRevprop: "", 
-            excludedUsers: "", 
-            filterChangelog: false, 
-            ignoreDirPropChanges: false, 
-            includedRegions: "", 
+            excludedCommitMessages: "\\[skip[ \\-]ci\\]",
+            excludedRegions: "",
+            excludedRevprop: "",
+            excludedUsers: "",
+            filterChangelog: false,
+            ignoreDirPropChanges: false,
+            includedRegions: "",
             locations: [
             [
-                cancelProcessOnExternalsFail: true, 
-                credentialsId: "7e4d2229-822b-401c-919b-2e492d6eae27", 
-                depthOption: "infinity", 
-                ignoreExternalsOption: true, 
-                local: ".", 
+                cancelProcessOnExternalsFail: true,
+                credentialsId: "7e4d2229-822b-401c-919b-2e492d6eae27",
+                depthOption: "infinity",
+                ignoreExternalsOption: true,
+                local: ".",
                 remote: "https://svn.development.pjats.com/pja/app-publisher/${env.BRANCH_NAME}"
             ]],
-            quietOperation: true, 
+            quietOperation: true,
             workspaceUpdater: [$class: "UpdateWithRevertUpdater"]
           ]
         )
