@@ -4,6 +4,12 @@ pipeline {
 
   options {
     skipDefaultCheckout()
+    //
+    // Keep only last 10 builds
+    //
+    buildDiscarder(logRotator(numToKeepStr: '10'))
+    // Timeout job after 60 minutes
+    timeout(time: 60, unit: 'MINUTES')
   }
 
   parameters {
@@ -115,15 +121,6 @@ pipeline {
     //    }
     //  }
     //}
-  }
-
-  options {
-    //
-    // Keep only last 10 builds
-    //
-    buildDiscarder(logRotator(numToKeepStr: '10'))
-    // Timeout job after 60 minutes
-    timeout(time: 60, unit: 'MINUTES')
   }
 
 }
