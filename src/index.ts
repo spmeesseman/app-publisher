@@ -34,41 +34,63 @@ marked.setOptions({ renderer: new TerminalRenderer() });
 async function run(context, plugins)
 {
     const { cwd, env, options, logger } = context;
+    const runTxt = !options.dryRun ? "run" : "test run";
 
     //
     // If user specified 'cfg' or '--config', then just display config and exit
     //
     if (options.config)
     {
-        const title = `
-----------------------------------------------------------------------------
- Configuration file contents
+        const title =
+`----------------------------------------------------------------------------
+ Run Configuration - .publishrc / cmd line
 ----------------------------------------------------------------------------
         `;
-        logger.log(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
-        logger.log(options);
+        console.log(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
+        console.log(options);
         return true;
     }
 
-    let { isCi, branch: ciBranch, isPr } = envCi({ env, cwd });
-
-    if (options.option)
-    {
-        for (var o in options.option)
-        {
-            var opt = options.option[o];
-            if (opt && opt.includes("="))
-            {
-                var kvp = opt.split("=");
-                if (kvp.length === 2)
-                {
-                    options[kvp[0]] = kvp[1];
-                    logger.log(`Override publishrc:  ${kvp[0]} = ${kvp[1]}`);
-                }
-            }
-        }
-    }
+    let { 
+        isCi, branch: ciBranch, isPr, name: ciName, root: ciRoot, build: ciBuild, buildUrl: ciBuildUrl, commit: ciCommit 
+    } = envCi({ env, cwd });
     
+    if (!options.branch) {
+        options.branch = ciBranch;
+    }
+
+    //
+    // If user specified 'cfg' or '--config', then just display config and exit
+    //
+    if (options.taskCiEnv)
+    {
+        const title =
+`----------------------------------------------------------------------------
+ CI Environment Details
+----------------------------------------------------------------------------
+        `;
+        console.log(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
+        if (isCi)
+        {
+            console.log("  CI Name           : " + ciName);
+            console.log("  CI Branch         : " + ciBranch);
+            console.log("  Is PR             : " + isPr);
+            console.log("  Commit            : " + isPr);
+            console.log("  Root              : " + ciRoot);
+            console.log("  Commit            : " + ciCommit);
+            console.log("  Build             : " + ciBuild);
+            console.log("  Build URL         : " + ciBuildUrl);
+        }
+        else {
+            console.log("  No known CI environment was found");
+        }
+        return true;
+    }
+
+    if (!options.taskVersionCurrent && !options.taskVersionNext) {
+        context.logger.log(`Running ${pkg.name} version ${pkg.version}`);
+    }
+
     if (!isCi && !options.dryRun && !options.noCi)
     {
         logger.error("This run was not triggered in a known CI environment, use --no-ci flag for local publish.");
@@ -108,11 +130,6 @@ async function run(context, plugins)
         return false;
     }
 
-    const runTxt = !options.dryRun ? "run" : "test run";
-    if (!options.branch) {
-        options.branch = ciBranch;
-    }
-
     if (isCi && ciBranch !== options.branch)
     {
         logger.error(
@@ -130,19 +147,21 @@ async function run(context, plugins)
         );
     }
 
-    logger[options.dryRun ? "warn" : "log"](
-        `Run automated release from branch '${options.branch}'${options.dryRun ? " in dry-run mode" : ""}`
-    );
+    if (!options.taskVersionCurrent && !options.taskVersionNext) {
+        logger[options.dryRun ? "warn" : "log"](
+            `Run automated release from branch '${options.branch}'${options.dryRun ? " in dry-run mode" : ""}`
+        );
+    }
 
-    if (options.emailOnly)
-    {
-        // await sendEmail(logger);
+    //if (options.emailOnly)
+    //{
+    //    // await sendEmail(logger);
+    //    await runPowershellScript(options, logger);
+    //    // await runNodeScript(context, plugins);
+    //}
+    //else {
         await runPowershellScript(options, logger);
-        // await runNodeScript(context, plugins);
-    }
-    else {
-        await runPowershellScript(options, logger);
-    }
+    //}
 }
 
 /*
@@ -339,21 +358,35 @@ async function runPowershellScript(options: any, logger: any)
         if (child.killed) {
             return;
         }
-        logPowershell(data, logger);
+        if (!options.taskVersionCurrent && !options.taskVersionNext) {
+            logPowershell(data, logger);
+        }
+        else {
+            //if (/[0-9]*\.[0-9]*\.[0-9]*/.test(data)) {
+                console.log(data);
+            //}
+        }
     });
 
     child.stderr.on("data", data => {
         if (child.killed) {
             return;
         }
-        logPowershell(data, logger);
+        if (!options.taskVersionCurrent && !options.taskVersionNext) {
+            logPowershell(data, logger);
+        }
+        else {
+            console.log(data);
+        }
     });
 
     let iCode: number;
     child.on("exit", code => {
         iCode = code;
         if (iCode === 0) {
-            logger.success("Successfully published release");
+            if (!options.taskVersionCurrent && !options.taskVersionNext) {
+                logger.success("Successfully published release");
+            }
         }
         else {
             logger.error(`Failed to publish release - return code '${iCode}'`)
@@ -447,7 +480,6 @@ export = async (opts = {}, { cwd = process.cwd(), env = process.env, stdout = un
     );
     const context = { cwd, env, stdout: stdout || process.stdout, stderr: stderr || process.stderr, logger: undefined, options: undefined };
     context.logger = getLogger(context);
-    context.logger.log(`Running ${pkg.name} version ${pkg.version}`);
     try
     {
         const { plugins, options } = await getConfig(context, opts);

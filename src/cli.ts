@@ -20,7 +20,9 @@ export = async () =>
     try { //
          // Display color banner
         //
-        displayIntro();
+        if (!opts.taskVersionCurrent && !opts.taskVersionNext) {
+            displayIntro();
+        }
 
         //
         // If user specified '-h' or --help', then just display help and exit
@@ -36,8 +38,8 @@ export = async () =>
         //
         if (opts.version)
         {
-            console.log(chalk.bold(gradient("cyan", "pink").multiline(`
-----------------------------------------------------------------------------
+            console.log(chalk.bold(gradient("cyan", "pink").multiline(
+`----------------------------------------------------------------------------
  App-Publisher Version :  ${require("../package.json").version}
 ----------------------------------------------------------------------------
                         `, {interpolation: "hsv"})));
@@ -179,8 +181,8 @@ export = async () =>
 
 function displayIntro()
 {
-    const title = `
-                                       _      _       _
+    const title =
+`                                       _      _       _
   _ _ __ _ __   _ __      _ __  _   __| |_ | (_)_____| |  ____  ____
  / _\\' || '_ \\\\| '_ \\\\___| '_ \\\\| \\ \\ |  _\\| | || ___| \\_/ _ \\\\/  _|
  | (_| || |_) || |_) |___| |_) || |_| | |_)| | | \\\\__| __ | __/| |
@@ -193,8 +195,8 @@ function displayIntro()
 
 function displayPublishRcHelp()
 {
-    console.log(gradient("cyan", "pink").multiline(`
-----------------------------------------------------------------------------
+    console.log(gradient("cyan", "pink").multiline(
+`----------------------------------------------------------------------------
  App-Publisher Detailed Help
 ----------------------------------------------------------------------------
         `, {interpolation: "hsv"}));
@@ -1042,7 +1044,8 @@ const publishRcOpts =
         {
             action: "storeTrue",
             help: "Export the next release's current changelog and view using the editor\n" +
-                "specified in the .publishrc file."
+                  "specified in the .publishrc file.\n" +
+                  "Note that this opens the actual versioned changelog/history file."
         }
     ],
 
@@ -1059,6 +1062,30 @@ const publishRcOpts =
                   "    app-publisher -cf build/doc/changelog/changelog.md\n" +
                   "    app-publisher -cf c:\\projects\\changelogs\\projectname\n" +
                   "    app-publisher --changelog-only-file build/tmp/version_notes.txt"
+        }
+    ],
+
+    taskChangelogView: [
+        true,
+        "boolean",
+        false,
+        [ "-tc", "--task-changelog-view" ],
+        {
+            action: "storeTrue",
+            help: "Export the next release's current changelog and view using the editor\n" +
+                  "specified in the .publishrc file. The created file is a copy stored in\n"+
+                  "a temporary directory specified by the OS."
+        }
+    ],
+
+    taskCiEnv: [
+        true,
+        "boolean",
+        false,
+        [ "-tce", "--task-ci-env" ],
+        {
+            action: "storeTrue",
+            help: "Output the CI environment name to stdout."
         }
     ],
 
@@ -1089,10 +1116,10 @@ const publishRcOpts =
         [ "-ttv", "--task-touch-versions" ],
         {
             help: "Update version numbers either semantically or incrementally.\n" +
-                "Versioned files are by default AssemblyInfo.cs, package.json, and\n" +
-                "app.json.\n" +
-                "Additional versioned files are specified in the .publishrc file\n" +
-                "using the 'versionFiles' and cProjectRcFile' properties."
+                  "Versioned files are by default AssemblyInfo.cs, package.json, and\n" +
+                  "app.json.\n" +
+                  "Additional versioned files are specified in the .publishrc file\n" +
+                  "using the 'versionFiles' and cProjectRcFile' properties."
         }
     ],
 
@@ -1103,8 +1130,30 @@ const publishRcOpts =
         [ "-ttvc", "--task-touch-versions-commit" ],
         {
             help: "Commits the changes made when using the --touch-versions option,\n" +
-                "using the 'chore: vX.X.X' format for the commit message.  Then creates\n" +
-                "a tag using the 'vX.X.X' format for the tag name."
+                  "using the 'chore: vX.X.X' format for the commit message.  Then creates\n" +
+                  "a tag using the 'vX.X.X' format for the tag name."
+        }
+    ],
+
+    taskVersionCurrent: [
+        true,
+        "boolean",
+        false,
+        [ "-tvc", "--task-version-current" ],
+        {
+            help: "Finds the current/latest version released and outputs that version\n" +
+                  "string to stdout."
+        }
+    ],
+
+    taskVersionNext: [
+        true,
+        "boolean",
+        false,
+        [ "-tvn", "--task-version-next" ],
+        {
+            help: "Calculates the next version to be released based on versioned files\n" +
+                  "and commit messages. and outputs that version string to stdout."
         }
     ],
 

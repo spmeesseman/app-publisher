@@ -46,7 +46,7 @@ pipeline {
         nodejs("Node 13") {
           bat "call npm install"
           bat "call npm run build"
-          bat "app-publisher -p ps --dry-run --no-ci"
+          //bat "app-publisher --dry-run --no-ci"
         }
       }
     }

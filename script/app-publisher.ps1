@@ -42,6 +42,8 @@ if ($options.appPublisherVersion) {
 
 #**************************************************************#
 
+#region Classes
+
 #
 # Define some script classes:
 #
@@ -1526,6 +1528,8 @@ class HistoryFile
     }
 }
 
+#endregion
+
 #
 # Define class instances
 #
@@ -1544,6 +1548,8 @@ $ClsVc = New-Object -TypeName Vc
 
 #************************************************************************#
 
+#region Functions
+
 function Log-Message($msg, $color, $noTag = $false)
 {
     $msgTag = ""
@@ -1552,26 +1558,29 @@ function Log-Message($msg, $color, $noTag = $false)
         return
     }
 
-    if ($color) 
+    if (!$TASKSTDOUTMODE)
     {
-        $msgTag = ""
-        switch ($color) 
+        if ($color) 
         {
-            "red" { $msgTag = "[ERROR]"; break; }
-            "darkyellow" { $msgTag = "[WARNING]"; break; }
-            "darkgreen" { $msgTag = "[SUCCESS]"; break; }
-            "magenta" { $msgTag = "[NOTICE]"; break; }
-            default: { break; }
-        }
-        if ($msgTag -ne "") {
-            write-host -ForegroundColor $color "$msgTag $msg"
+            $msgTag = ""
+            switch ($color) 
+            {
+                "red" { $msgTag = "[ERROR]"; break; }
+                "darkyellow" { $msgTag = "[WARNING]"; break; }
+                "darkgreen" { $msgTag = "[SUCCESS]"; break; }
+                "magenta" { $msgTag = "[NOTICE]"; break; }
+                default: { break; }
+            }
+            if ($msgTag -ne "") {
+                write-host -ForegroundColor $color "$msgTag $msg"
+            }
+            else {
+                write-host -ForegroundColor $color $msg
+            }
         }
         else {
-            write-host -ForegroundColor $color $msg
+            write-host $msg
         }
-    }
-    else {
-        write-host $msg
     }
 
     if ($WRITELOG -eq "Y") 
@@ -2965,6 +2974,9 @@ function Get-ReleaseChangelog($ChangeLogParts, $UseFaIcons = $false, $IncludeSty
     return $ChangeLog      
 }
 
+#endregion
+
+#region ContentTypeMap
 
 $ContentTypeMap = @{
     ".323"= "text/h323";
@@ -3566,6 +3578,8 @@ $ContentTypeMap = @{
     ".zip"= "application/zip";
 }
 
+#endregion
+
 #***************************************************************************#
 
 #####  #####  #####  ###  ##### #####     #####  #   #  #####  #####  #   #
@@ -3579,10 +3593,12 @@ $ContentTypeMap = @{
 #
 # Start logging
 #
-Log-Message "----------------------------------------------------------------" "darkblue" $true
-Log-Message " App Publisher PowerShell Script" "darkblue" $true
-Log-Message "   Version   : $APPPUBLISHERVERSION" "cyan" $true
-Log-Message "   Author    : Scott Meesseman" "cyan" $true
+if (!$options.taskVersionCurrent -and !$options.taskVersionNext) {
+    Log-Message "----------------------------------------------------------------" "darkblue" $true
+    Log-Message " App Publisher PowerShell Script" "darkblue" $true
+    Log-Message "   Version   : $APPPUBLISHERVERSION" "cyan" $true
+    Log-Message "   Author    : Scott Meesseman" "cyan" $true
+}
 
 #
 # Define some local vars that should not be reset on multiple runs past the first one
@@ -3626,12 +3642,18 @@ if ($RUN -gt 1)
     $XRUNS[$RUN-2].psobject.Properties | ForEach-Object {
         $options | Add-Member -MemberType $_.MemberType -Name $_.Name -Value $_.Value -Force
     }
+    if (!$options.taskVersionCurrent -and !$options.taskVersionNext) {
+        Log-Message "----------------------------------------------------------------" "darkblue" $true
+    }
+}
+
+if (!$options.taskVersionCurrent -and !$options.taskVersionNext) {
+    Log-Message "   Run #     : $RUN of $NUMRUNS" "cyan" $true
+    Log-Message "   Directory : $CWD" "cyan" $true
     Log-Message "----------------------------------------------------------------" "darkblue" $true
 }
 
-Log-Message "   Run #     : $RUN of $NUMRUNS" "cyan" $true
-Log-Message "   Directory : $CWD" "cyan" $true
-Log-Message "----------------------------------------------------------------" "darkblue" $true
+#region Merge Run
 
 #
 # Merge republish
@@ -3709,6 +3731,8 @@ if ($options.republish -and $options.republish.Count -gt 0)
     }
 }
 
+#endregion
+
 #*********************************************************************************************#
 
 #####  ##   ##  ###      #     ###  #   #  #####    #####    #    #####    #     ##   ##  #####
@@ -3718,6 +3742,10 @@ if ($options.republish -and $options.republish.Count -gt 0)
 #####  #     #  ###      ####  ###  #   #  #####    #      #   #  #   #  #   #   #     #  #####
 
 #*********************************************************************************************#
+
+#region Command Line Arguments
+
+#region  NON-TASK RELATED ARGUMENTS
 
 #
 # Name of the project.  This must macth throughout the build files and the SVN project name
@@ -3749,25 +3777,6 @@ if ($options.changelogFile) {
     $CHANGELOGFILE = $options.changelogFile
 }
 #
-# Changelog file only
-#
-$TASKCHANGELOG = $false
-$TASKCHANGELOGFILE = ""
-if ($options.taskChangelog) {
-    $TASKCHANGELOG = $options.taskChangelog
-}
-if ($TASKCHANGELOG -eq "Y") {
-    $TASKCHANGELOG = $true
-}
-if ($options.taskChangelogFile -is [system.string])
-{
-    if (![string]::IsNullOrEmpty($options.taskChangelogFile))
-    {
-        $TASKCHANGELOG = $true
-        $TASKCHANGELOGFILE = $options.taskChangelogFile
-    }
-}
-#
 # Commit message mapping
 #
 $COMMITMSGMAP = $null
@@ -3783,19 +3792,6 @@ $CPROJECTRCFILE = ""
 if ($options.cProjectRcFile) {
     $CPROJECTRCFILE = $options.cProjectRcFile
 }
-#
-#
-#
-$TASKTOUCHVERSIONS = $false
-$TASKTOUCHVERSIONSCOMMIT = $false
-if ($options.taskTouchVersions) {
-    $TASKTOUCHVERSIONS = $true
-}
-if ($options.taskTouchVersionsCommit) {
-    $TASKTOUCHVERSIONSCOMMIT = $true
-    $TASKTOUCHVERSIONS = $true
-}
-
 #
 # App Publisher publishrc can define version, set current version to version
 # defined 
@@ -3871,13 +3867,6 @@ if ($options.dryRunVcRevert) {
 #
 # NOTIFICATION EMAIL CONFIG OPTIONS
 #
-$TASKEMAIL = $false
-if ($options.taskEmail) {
-    $TASKEMAIL = $options.taskEmail
-}
-if ($TASKEMAIL -eq "Y") {
-    $TASKEMAIL = $true
-}
 $EMAILNOTIFICATION = "Y"
 if ($options.emailNotification) {
     $EMAILNOTIFICATION = $options.emailNotification
@@ -4050,24 +4039,6 @@ if ($options.mantisbtUrl) {
 $MANTISBTASSETS = @()
 if ($options.mantisbtAssets) {
     $MANTISBTASSETS = $options.mantisbtAssets
-}
-#
-# MantisBT Release ONLY - individual task mode
-#
-$TASKMANTISBT = $false
-if ($options.taskMantisbtRelease) {
-    if (![string]::IsNullOrEmpty($MANTISBTURL) -and ![string]::IsNullOrEmpty($MANTISBTAPITOKEN))
-    {
-        $TASKMANTISBT = $true
-        $MANTISBTRELEASE = "Y"
-        if (!$options.noCi) {
-            $MANTISBTCHGLOGEDIT = "N"
-        }
-    }
-    else {
-        Log-Message "Specified task 'mantis release' but not configured in .publishrc" "red"
-        exit 1
-    }
 }
 #
 # NPM Registry
@@ -4470,11 +4441,101 @@ if ($VCFILES.Length -gt 0)
     }
 }
 
+#endregion
+
+#region Task Related Command Line Arguments
+
 #
-# SIngle task mode flag to skip most of the functionality in the publisher chain except for
+# TASK RELATED ARGUMENTS
+#
+# *IMPORTANT*
+# Any new args added need to be included in the setting of the $TASKMODE flag
+# at the bottom of this region
+#
+
+$TASKEMAIL = $false
+if ($options.taskEmail) {
+    $TASKEMAIL = $options.taskEmail
+}
+if ($TASKEMAIL -eq "Y") {
+    $TASKEMAIL = $true
+    $EMAILNOTIFICATION = "Y"
+}
+#
+# Changelog file only
+#
+$TASKCHANGELOG = $false
+$TASKCHANGELOGFILE = ""
+if ($options.taskChangelog) {
+    $TASKCHANGELOG = $options.taskChangelog
+}
+if ($TASKCHANGELOG -eq "Y") {
+    $TASKCHANGELOG = $true
+}
+if ($options.taskChangelogFile -is [system.string])
+{
+    if (![string]::IsNullOrEmpty($options.taskChangelogFile))
+    {
+        $TASKCHANGELOG = $true
+        $TASKCHANGELOGFILE = $options.taskChangelogFile
+    }
+}
+#
+# MantisBT Release ONLY - individual task mode
+#
+$TASKMANTISBT = $false
+if ($options.taskMantisbtRelease) {
+    if (![string]::IsNullOrEmpty($MANTISBTURL) -and ![string]::IsNullOrEmpty($MANTISBTAPITOKEN))
+    {
+        $TASKMANTISBT = $true
+        $MANTISBTRELEASE = "Y"
+        if (!$options.noCi) {
+            $MANTISBTCHGLOGEDIT = "N"
+        }
+    }
+    else {
+        Log-Message "Specified task 'mantis release' but not configured in .publishrc" "red"
+        Log-Message "   A valid URL and token must be configured" "red"
+        exit 1
+    }
+}
+#
+# Get current version
+#
+$TASKVERSIONCURRENT = $false
+if ($options.taskVersionCurrent) {
+    $TASKVERSIONCURRENT = $true
+}
+#
+# Get next version
+#
+$TASKVERSIONNEXT = $false
+if ($options.taskVersionNext) {
+    $TASKVERSIONNEXT = $true
+}
+#
+# Touch version files w/ new/next version
+#
+$TASKTOUCHVERSIONS = $false
+$TASKTOUCHVERSIONSCOMMIT = $false
+if ($options.taskTouchVersions) {
+    $TASKTOUCHVERSIONS = $true
+}
+if ($options.taskTouchVersionsCommit) {
+    $TASKTOUCHVERSIONSCOMMIT = $true
+    $TASKTOUCHVERSIONS = $true
+}
+
+
+#
+# Single task mode flag to skip most of the functionality in the publisher chain except for
 # the particular task that is going to be ran.
 #
-$TASKMODE = $TASKCHANGELOG -or $TASKEMAIL -or $TASKTOUCHVERSIONS -or $TASKMANTISBT 
+$TASKMODE = $TASKCHANGELOG -or $TASKEMAIL -or $TASKTOUCHVERSIONS -or $TASKMANTISBT -or $TASKVERSIONCURRENT -or $TASKVERSIONNEXT
+$TASKSTDOUTMODE = $TASKVERSIONCURRENT -or $TASKVERSIONNEXT
+
+#endregion
+
 
 #********************************************************************************************************************#
 
@@ -4485,6 +4546,10 @@ $TASKMODE = $TASKCHANGELOG -or $TASKEMAIL -or $TASKTOUCHVERSIONS -or $TASKMANTIS
 #####  #   #  ###      #####  #     #  ###      ####  ###  #   #  #####    #      #   #  #   #  #   #   #     #  #####
 
 #********************************************************************************************************************#
+
+#endregion
+
+#region COmmand Line Arguments Validation
 
 #
 # A flag to set if the build commands are run, which technically could happen up
@@ -4931,6 +4996,10 @@ if ($ExecutionPolicy -ne "RemoteSigned")
     exit 1;
 }
 
+#endregion
+
+#region Log Command Line Arguments and PublishRC Options
+
 #
 # Log publishrc options
 #
@@ -5018,6 +5087,10 @@ Log-Message "   Vers.files alw.ed: $VERSIONFILESEDITALWAYS"
 Log-Message "   Vers.files scroll: $VERSIONFILESSCROLLDOWN"
 Log-Message "   Vers.replace tags: $VERSIONREPLACETAGS"
 Log-Message "   Version text     : $VERSIONTEXT"
+
+#endregion
+
+#region COmmand Line Arguments Validation - Post Logging
 
 #
 # If this is a CI environment, then skip all interaction / edits
@@ -5127,6 +5200,10 @@ if ($TESTEMAILRECIP -is [system.string] -and ![string]::IsNullOrEmpty($TESTEMAIL
     $TESTEMAILRECIP = @($TESTEMAILRECIP); #convert to array
 }
 
+#endregion
+
+#region Current and Next Version / Get Commits
+
 #
 # Get the current version number
 #
@@ -5138,7 +5215,6 @@ if ($TESTEMAILRECIP -is [system.string] -and ![string]::IsNullOrEmpty($TESTEMAIL
 if ($CURRENTVERSION -eq "") 
 {
     Log-Message "Retrieve current version and calculate next version number"
-
     #
     # If node_modules dir exists, use package.json to obtain cur version
     #
@@ -5158,6 +5234,9 @@ if ($CURRENTVERSION -eq "")
             } 
             else {
                 Log-Message "Npm based project found, but package.json is missing" "red"
+                if ($TASKSTDOUTMODE) {
+                    Write-Host "0.0.0"
+                }
                 exit 127
             }
         #} 
@@ -5179,6 +5258,9 @@ if ($CURRENTVERSION -eq "")
             Log-Message "MantisBT plugins must use semantic versioning" "red"
             Log-Message "Invalid version found '$CURRENTVERSION'" "red"
             Log-Message "Check you mantis plugin file for valid version syntax" "red"
+            if ($TASKSTDOUTMODE) {
+                Write-Host "0.0.0"
+            }
             exit 130
         }
         #$VERSIONSYSTEM = "mantisbt"
@@ -5222,6 +5304,9 @@ if ($CURRENTVERSION -eq "")
             else {
                 Log-Message "The current version cannot be determined" "red"
                 Log-Message "Provided the current version in publishrc or on the command line" "red"
+                if ($TASKSTDOUTMODE) {
+                    Write-Host "0.0.0"
+                }
                 exit 130
             }
         }
@@ -5302,6 +5387,9 @@ if ($VERSIONSYSTEM -eq "semver")
     }
     if ([string]::IsNullOrEmpty($ValidationVersion)) {
         Log-Message "The current semantic version found ($CURRENTVERSION) is invalid" "red"
+        if ($TASKSTDOUTMODE) {
+            Write-Host $CURRENTVERSION
+        }
         exit 132
     }
 }
@@ -5312,6 +5400,9 @@ elseif ($VERSIONSYSTEM -eq '.net' -or $VERSIONSYSTEM -eq 'mantisbt')
     #
     if ($false) {
         Log-Message "The current mantisbt version ($CURRENTVERSION) is invalid" "red"
+        if ($TASKSTDOUTMODE) {
+            Write-Host $CURRENTVERSION
+        }
         exit 134
     }
 }
@@ -5322,9 +5413,13 @@ elseif ($VERSIONSYSTEM -eq 'incremental')
     #
     if ($false) {
         Log-Message "The current incremental version ($CURRENTVERSION) is invalid" "red"
+        if ($TASKSTDOUTMODE) {
+            Write-Host $CURRENTVERSION
+        }
         exit 134
     }
 }
+
 Log-Message "Current version has been validated" "darkgreen"
 
 #
@@ -5523,6 +5618,27 @@ else
 }
 
 #
+# Output some calculated info to console
+#
+Log-Message "Current Version     : $CURRENTVERSION"
+Log-Message "Next Version        : $VERSION"
+
+#endregion
+
+#
+# If task mode 'get current version' or 'get next version', then output version string
+# to stdout and exit
+#
+if ($TASKVERSIONCURRENT) {
+    Write-Host $CURRENTVERSION
+    exit 0
+}
+elseif ($TASKVERSIONNEXT) {
+    Write-Host $VERSION
+    exit 0
+}
+
+#
 # Get formatted date in the form:
 #
 #     May 6th, 1974
@@ -5550,12 +5666,9 @@ if ($TDATE -eq "") {
     $TDATE = "$Month $Day, $Year"
 }
 
-#
-# Output some calculated info to console
-#
-Log-Message "Current Version     : $CURRENTVERSION"
-Log-Message "Next Version        : $VERSION"
 Log-Message "Date                : $TDATE"
+
+#region History File Processing
 
 #
 # Process $HISTORYFILE
@@ -5701,6 +5814,10 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
         Edit-File $HISTORYFILE $false $FileSpec $true
     }
 }
+
+#endregion
+
+#region Changelog File Processing
 
 #
 # Process $CHANGELOGFILE
@@ -5927,6 +6044,8 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
     }
 }
 
+#endregion
+
 $DistIsVersioned = $false
 if ($DISTRELEASE -eq "Y" -and !$TASKMODE)
 {
@@ -5960,6 +6079,8 @@ if ($DISTRELEASE -eq "Y" -and !$TASKMODE)
 if (!$TASKMODE) {
     Run-Scripts "preBuild" $PREBUILDCOMMAND $true $true
 }
+
+#region Version Files Processing
 
 if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and (!$TASKMODE -or $TASKTOUCHVERSIONS))
 {
@@ -6012,6 +6133,8 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and (!$TASKMODE -or $TASKTOUCHVERSIO
     Prepare-VersionFiles
 }
 
+#endregion
+
 #
 # Run custom build scipts if specified
 #
@@ -6026,6 +6149,8 @@ if (!$TASKMODE) {
 $TargetNetLocation = ""
 $NpmLocation = ""
 $NugetLocation = ""
+
+#region NPM Release
 
 #
 # NPM Release
@@ -6146,6 +6271,8 @@ elseif ($NPMRELEASE -eq "Y" -and $TASKMODE)
     }
 }
 
+#endregion
+
 #
 # TODO - Nuget Release / .NET
 #
@@ -6154,6 +6281,8 @@ if ($NUGETRELEASE -eq "Y" -and !$TASKMODE)
     Log-Message "Starting Nuget release"
     Log-Message "Nuget release not yet supported" "darkyellow"
 }
+
+#region Network Release
 
 #
 # Network Release
@@ -6305,6 +6434,8 @@ elseif ($DISTRELEASE -eq "Y" -and $TASKEMAIL)
     $TargetDocLocation = [Path]::Combine($DISTDOCPATH, $PROJECTNAME, $VERSION)
 }
 
+#endregion
+
 #
 # Run post build scripts if specified
 #
@@ -6318,6 +6449,8 @@ if (!$TASKMODE) {
 if ((Test-Path("package.json")) -and (!$TASKMODE -or $TASKTOUCHVERSIONS)) {
     Restore-PackageJson
 }
+
+#region Github Release
 
 #
 # Github Release
@@ -6498,6 +6631,10 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y" -and !$TASKMODE)
     #
     Run-Scripts "postGithubRelease" $GITHUBRELEASEPOSTCOMMAND $false $false
 }
+
+#endregion
+
+#region MantisBT Release
 
 #
 # MantisBT Release
@@ -6697,6 +6834,8 @@ if ($MANTISBTRELEASE -eq "Y" -and (!$TASKMODE -or $TASKMANTISBT))
     Run-Scripts "postMantisRelease" $MANTISRELEASEPOSTCOMMAND $false $false
 }
 
+#endregion
+
 #
 # Run custom deploy script if specified
 #
@@ -6724,6 +6863,8 @@ if (!$TASKCHANGELOG -and !$TASKTOUCHVERSIONS -and !$TASKMANTISBT -and ($EMAILNOT
 if (!$TASKMODE) {
     Run-Scripts "preCommit" $PRECOMMITCOMMAND $false $false
 }
+
+#region Commit / Tag VC
 
 if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
 {
@@ -7029,6 +7170,8 @@ else  # SINGLETASKMODE
 {
     Log-Message "Single task mode run completed"
 }
+
+#endregion
 
 Log-Message "Completed"
 Log-Message "Finished successfully" "darkgreen"
