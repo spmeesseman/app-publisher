@@ -5,13 +5,13 @@ pipeline {
   options {
     skipDefaultCheckout()
     //
-    // Keep only last 10 builds
+    // Keep only last 100 builds
     //
-    buildDiscarder(logRotator(numToKeepStr: '10'))
+    buildDiscarder(logRotator(numToKeepStr: '100'))
     // Timeout job after 60 minutes
-    timeout(time: 60, unit: 'MINUTES')
+    timeout(time: 10, unit: 'MINUTES')
   }
-
+ 
   parameters {
     string(defaultValue: "smeesseman@pjats.com", // "$emailRecipients",
             description: 'List of email recipients',
@@ -51,11 +51,18 @@ pipeline {
       }
     }
 
+    stage("NPM Install") {
+      steps {
+        nodejs("Node 13") {
+          bat "npm install"
+        }
+      }
+    }
+
     stage("Build") {
       steps {
         nodejs("Node 13") {
-          bat "call npm install"
-          bat "call npm run build"
+          bat "npm run build"
           //bat "app-publisher --dry-run --no-ci"
         }
       }
@@ -65,7 +72,7 @@ pipeline {
       steps {
         echo "Store Jenkins Artifacts"
         archiveArtifacts allowEmptyArchive: true, 
-                          artifacts: 'doc/history.txt',
+                          artifacts: 'install/dist/history.txt,install/dist/app-publisher.tgz',
                           followSymlinks: false,
                           onlyIfSuccessful: true
       }
