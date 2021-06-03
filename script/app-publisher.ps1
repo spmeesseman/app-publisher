@@ -2190,7 +2190,7 @@ function Prepare-VersionFiles()
                 # Allow manual modifications to $vFile and commit to modified list
                 # Edit-File will add this file to $VersionFilesEdited
                 #
-                Edit-File $vFile $false ($SKIPVERSIONEDITS -eq "Y")
+                Edit-File $vFile $false ($SKIPVERSIONEDITS -eq "Y" -or $TASKTOUCHVERSIONS)
             }
         }
     }
@@ -2206,7 +2206,7 @@ function Prepare-ExtJsBuild()
     #
     # Allow manual modifications to app.json
     #
-    Edit-File "app.json" # $false $SKIPVERSIONEDITS
+    Edit-File "app.json" $false $TASKTOUCHVERSIONS
 }
 
 function Prepare-DotNetBuild($AssemblyInfoLocation)
@@ -2241,7 +2241,7 @@ function Prepare-DotNetBuild($AssemblyInfoLocation)
     #
     # Allow manual modifications to assembly file and commit to modified list
     #
-    Edit-File $AssemblyInfoLocation $false  ($SKIPVERSIONEDITS -eq "Y")
+    Edit-File $AssemblyInfoLocation $false  ($SKIPVERSIONEDITS -eq "Y" -or $TASKTOUCHVERSIONS)
 }
 
 
@@ -2255,7 +2255,7 @@ function Prepare-AppPublisherBuild()
         #
         # Allow manual modifications to publishrc and commit to modified list
         #
-        Edit-File ".publishrc.json" $false ($SKIPVERSIONEDITS -eq "Y")
+        Edit-File ".publishrc.json" $false ($SKIPVERSIONEDITS -eq "Y" -or $TASKTOUCHVERSIONS)
     }
 }
 
@@ -2274,7 +2274,7 @@ function Prepare-MantisPluginBuild()
             #
             # Allow manual modifications to mantisbt main plugin file and commit to modified list
             #
-            Edit-File $MANTISBTPLUGIN $false ($SKIPVERSIONEDITS -eq "Y")
+            Edit-File $MANTISBTPLUGIN $false ($SKIPVERSIONEDITS -eq "Y" -or $TASKTOUCHVERSIONS)
         }
     }
 }
@@ -2340,7 +2340,7 @@ function Prepare-CProjectBuild()
             #
             # Allow manual modifications to rc file and commit to modified list
             #
-            Edit-File $CPROJECTRCFILE $false ($SKIPVERSIONEDITS -eq "Y")
+            Edit-File $CPROJECTRCFILE $false ($SKIPVERSIONEDITS -eq "Y" -or $TASKTOUCHVERSIONS)
         }
     }
 }
@@ -3784,6 +3784,19 @@ if ($options.cProjectRcFile) {
     $CPROJECTRCFILE = $options.cProjectRcFile
 }
 #
+#
+#
+$TASKTOUCHVERSIONS = $false
+$TASKTOUCHVERSIONSCOMMIT = $false
+if ($options.taskTouchVersions) {
+    $TASKTOUCHVERSIONS = $true
+}
+if ($options.taskTouchVersionsCommit) {
+    $TASKTOUCHVERSIONSCOMMIT = $true
+    $TASKTOUCHVERSIONS = $true
+}
+
+#
 # App Publisher publishrc can define version, set current version to version
 # defined 
 #
@@ -4458,17 +4471,10 @@ if ($VCFILES.Length -gt 0)
 }
 
 #
-# Foce set of this is a single task 'touch versiones commit'
-#
-if ($options.taskTouchVersionsCommit) {
-    $options.taskTouchVersions = $true
-}
-
-#
 # SIngle task mode flag to skip most of the functionality in the publisher chain except for
 # the particular task that is going to be ran.
 #
-$TASKMODE = $TASKCHANGELOG -or $TASKEMAIL -or $options.taskTouchVersions -or $TASKMANTISBT 
+$TASKMODE = $TASKCHANGELOG -or $TASKEMAIL -or $TASKTOUCHVERSIONS -or $TASKMANTISBT 
 
 #********************************************************************************************************************#
 
@@ -5554,7 +5560,7 @@ Log-Message "Date                : $TDATE"
 #
 # Process $HISTORYFILE
 #
-if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$options.taskTouchVersions)
+if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$TASKTOUCHVERSIONS)
 {
     if ($TASKCHANGELOG)
     {
@@ -5699,7 +5705,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
 #
 # Process $CHANGELOGFILE
 #
-if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$options.taskTouchVersions)
+if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$TASKTOUCHVERSIONS)
 {
     if ($TASKCHANGELOG)
     {
@@ -5955,7 +5961,7 @@ if (!$TASKMODE) {
     Run-Scripts "preBuild" $PREBUILDCOMMAND $true $true
 }
 
-if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and (!$TASKMODE -or $options.taskTouchVersions))
+if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and (!$TASKMODE -or $TASKTOUCHVERSIONS))
 {
     #
     # AppPublisher publishrc version
@@ -6309,7 +6315,7 @@ if (!$TASKMODE) {
 #
 # Restore any configured package.json values to the original values
 #
-if ((Test-Path("package.json")) -and (!$TASKMODE -or $options.taskTouchVersions)) {
+if ((Test-Path("package.json")) -and (!$TASKMODE -or $TASKTOUCHVERSIONS)) {
     Restore-PackageJson
 }
 
@@ -6708,7 +6714,7 @@ if (!$TASKMODE)
 #
 # Send release notification email
 #
-if (!$TASKCHANGELOG -and !$options.taskTouchVersions -and !$TASKMANTISBT -and ($EMAILNOTIFICATION -eq "Y" -or $TASKEMAIL)) {
+if (!$TASKCHANGELOG -and !$TASKTOUCHVERSIONS -and !$TASKMANTISBT -and ($EMAILNOTIFICATION -eq "Y" -or $TASKEMAIL)) {
     Send-Notification "$TargetNetLocation" "$NpmLocation" "$NugetLocation"
 }
 
@@ -6719,7 +6725,7 @@ if (!$TASKMODE) {
     Run-Scripts "preCommit" $PRECOMMITCOMMAND $false $false
 }
 
-if (!$TASKMODE -or $options.taskTouchVersionsCommit)
+if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
 {
     #
     # Change dircetory to svn/git root that contains the .svn/.git folder to isse SVN commands,
