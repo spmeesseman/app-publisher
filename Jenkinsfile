@@ -2,6 +2,10 @@
 pipeline {
   agent any
 
+  options {
+    skipDefaultCheckout()
+  }
+
   parameters {
     string(defaultValue: "smeesseman@pjats.com", // "$emailRecipients",
             description: 'List of email recipients',
@@ -50,6 +54,17 @@ pipeline {
         }
       }
     }
+
+    stage("Publish") {
+      steps {
+        echo "Store Jenkins Artifacts"
+        archiveArtifacts allowEmptyArchive: true, 
+                          artifacts: 'doc/history.txt',
+                          followSymlinks: false,
+                          onlyIfSuccessful: true
+      }
+    }
+  
   }
 
   post { 
@@ -64,8 +79,7 @@ pipeline {
         //
         //env.ForEmailPlugin = env.WORKSPACE      
         emailext body: '${JELLY_SCRIPT,template="html"}',
-                //body: '''${SCRIPT, template="groovy-html.template"}''', 
-                //body: '${SCRIPT,template="managed:EmailTemplate"}',
+                //body: '''${SCRIPT, template="groovy-html.template"}''',
                 attachLog: true,
                 compressLog: true,
                 //attachmentsPattern: "$reportZipFile",
