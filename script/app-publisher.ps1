@@ -4488,6 +4488,37 @@ if (!$options.taskChangelogFile -is [system.string])
         Log-Message "The '--task-changelog-view' option overrides '--task-changelog-file'" "yellow"
     }
 }
+if ($TASKCHANGELOG)
+{
+    $hFileSpecified = ![string]::IsNullOrEmpty($HISTORYFILE);
+    $cFileSpecified = ![string]::IsNullOrEmpty($CHANGELOGFILE);
+    if (!$hFileSpecified -and !$cFileSpecified)
+    {   #
+        # Attempt to find a history.txt file
+        #
+        $hFileLoc = Get-ChildItem -Name -Recurse -Depth 1 -Filter "history.txt" -File -Path "$PATHTOROOT/doc" -ErrorAction SilentlyContinue
+        if ($hFileLoc -is [system.string] -and ![string]::IsNullOrEmpty($hFileLoc))
+        {
+            $HISTORYFILE = $hFileLoc
+        }
+        else {
+            $cFileLoc = Get-ChildItem -Name -Recurse -Depth 1 -Filter "changelog.md" -File -Path "$PATHTOROOT/doc" -ErrorAction SilentlyContinue
+            if ($cFileLoc -is [system.string] -and ![string]::IsNullOrEmpty($cFileLoc))
+            {
+                $HISTORYFILE = $cFileLoc
+            }
+        }
+
+        $hFileSpecified = ![string]::IsNullOrEmpty($HISTORYFILE);
+        $cFileSpecified = ![string]::IsNullOrEmpty($CHANGELOGFILE);
+
+        if (!$hFileSpecified -and !$cFileSpecified) {
+            Log-Message "Specified a 'changelog' task, but no changelog or history file is configured or could be found" "red"
+            Log-Message "   A valid changelog file must configured using the 'historyFile' or 'changelogFile' publishrc properties" "red"
+            exit 1
+        }
+    }
+}
 #
 # MantisBT Release ONLY - individual task mode
 #
@@ -5683,7 +5714,7 @@ Log-Message "Date                : $TDATE"
 #
 if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$TASKTOUCHVERSIONS)
 {
-    if ($TASKCHANGELOGVIEW)
+    if ($TASKCHANGELOGVIEW -or $TASKCHANGELOGFILE)
     {
         if ([string]::IsNullOrEmpty($TASKCHANGELOGFILE))
         {
@@ -5832,7 +5863,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
 #
 if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$TASKTOUCHVERSIONS)
 {
-    if ($TASKCHANGELOG)
+    if ($TASKCHANGELOGVIEW -or $TASKCHANGELOGFILE)
     {
         if ([string]::IsNullOrEmpty($TASKCHANGELOGFILE))
         {
@@ -5846,7 +5877,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
             Remove-Item -Force -Path "$CHANGELOGFILE" | Out-Null
         }
     }
-    elseif ($TASKMODE)
+    elseif ($TASKMODE -and !$TASKCHANGELOG)
     {
         $CHANGELOGFILE = "${Env:Temp}\changelog.$VERSION.txt"
         if (Test-Path($CHANGELOGFILE))

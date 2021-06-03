@@ -293,12 +293,20 @@ function parseArgs(): any
     const opts: any = {},
           args = process.argv.slice(2);
     let lastProp: string,
-        lastIsPositional: boolean;
+        lastIsPositional: boolean,
+        skipCompat = false;
 
     args.forEach((a) =>
     {
         if (a.startsWith("-"))
-        {
+        {   //
+            // Backwards compat
+            //
+            if (a === "-p" || a === "--profile") {
+                skipCompat = true;
+                return; // continue forEach()
+            }
+            //
             const p = getPropertyFromArg(a);
             if (!p || !publishRcOpts[p])
             {
@@ -318,6 +326,7 @@ function parseArgs(): any
 
             lastProp = p;               // Record 'last', used for positionals
             lastIsPositional = valueType.startsWith("string") || valueType === 'number' || valueType.startsWith("enum");
+            skipCompat = false;
 
             if (!lastIsPositional)
             {
@@ -327,6 +336,14 @@ function parseArgs(): any
         else if (lastProp)
         {
             const valueType = publishRcOpts[lastProp][1];
+            //
+            // Backwards compat
+            //
+            if (skipCompat) {
+                skipCompat = false;
+                return; // continue forEach()
+            }
+            //
             if (valueType.includes("string"))
             {
                 if (!opts[lastProp]) {

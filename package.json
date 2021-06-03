@@ -94,7 +94,8 @@
         "task-dry-touch_versions_commit": "npx ./build/bin/app-publisher.js --no-ci -ttvc --dry-run",
         "task-rt-version_current": "npx ./build/bin/app-publisher.js --no-ci --task-version-current",
         "task-rt-version_next": "npx ./build/bin/app-publisher.js --no-ci --task-version-next",
-        "republish": "npx ./build/bin/app-publisher.js --republish"
+        "republish": "npx ./build/bin/app-publisher.js --republish",
+        "jenkins-validate-jenkinsfile": "cmd /c curl -X POST -L -H \"Authorization: basic c21lZXNzZW1hbjoxMTU5NzgyYTBmNDE5OTI2M2VkYTY0ZTVlZjViYzIzZDY4\" -F \"jenkinsfile=<Jenkinsfile\" https://jenkins.development.pjats.com/pipeline-model-converter/validate"
     },
     "main": "./build/bin/app-publisher.js",
     "bin": {
