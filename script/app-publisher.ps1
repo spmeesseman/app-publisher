@@ -4465,19 +4465,27 @@ if ($TASKEMAIL -eq "Y") {
 # Changelog file only
 #
 $TASKCHANGELOG = $false
+$TASKCHANGELOGVIEW = $false
 $TASKCHANGELOGFILE = ""
 if ($options.taskChangelog) {
     $TASKCHANGELOG = $options.taskChangelog
 }
-if ($TASKCHANGELOG -eq "Y") {
+if ($options.taskChangelogView) {
     $TASKCHANGELOG = $true
+    $TASKCHANGELOGVIEW = $true
 }
-if ($options.taskChangelogFile -is [system.string])
+if (!$options.taskChangelogFile -is [system.string])
 {
-    if (![string]::IsNullOrEmpty($options.taskChangelogFile))
+    if (!$TASKCHANGELOGVIEW)
     {
-        $TASKCHANGELOG = $true
-        $TASKCHANGELOGFILE = $options.taskChangelogFile
+        if (![string]::IsNullOrEmpty($options.taskChangelogFile))
+        {
+            $TASKCHANGELOG = $true
+            $TASKCHANGELOGFILE = $options.taskChangelogFile
+        }
+    }
+    else {
+        Log-Message "The '--task-changelog-view' option overrides '--task-changelog-file'" "yellow"
     }
 }
 #
@@ -5090,7 +5098,7 @@ Log-Message "   Version text     : $VERSIONTEXT"
 
 #endregion
 
-#region COmmand Line Arguments Validation - Post Logging
+#region Command Line Arguments Validation - Post Logging
 
 #
 # If this is a CI environment, then skip all interaction / edits
@@ -5675,7 +5683,7 @@ Log-Message "Date                : $TDATE"
 #
 if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$TASKTOUCHVERSIONS)
 {
-    if ($TASKCHANGELOG)
+    if ($TASKCHANGELOGVIEW)
     {
         if ([string]::IsNullOrEmpty($TASKCHANGELOGFILE))
         {
@@ -5689,7 +5697,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
             Remove-Item -Force -Path "$HISTORYFILE" | Out-Null
         }
     }
-    elseif ($TASKMODE)
+    elseif ($TASKMODE -and !$TASKCHANGELOG)
     {
         $HISTORYFILE = "${Env:Temp}\history.$VERSION.txt"
         if (Test-Path($HISTORYFILE))

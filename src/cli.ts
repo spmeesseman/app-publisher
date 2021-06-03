@@ -1061,7 +1061,8 @@ const publishRcOpts =
                   "    app-publisher -cf install/dist/history.txt\n" +
                   "    app-publisher -cf build/doc/changelog/changelog.md\n" +
                   "    app-publisher -cf c:\\projects\\changelogs\\projectname\n" +
-                  "    app-publisher --changelog-only-file build/tmp/version_notes.txt"
+                  "    app-publisher --changelog-only-file build/tmp/version_notes.txt\n" +
+                  "Ignored if the option '--task-changelog-view' is used."
         }
     ],
 
