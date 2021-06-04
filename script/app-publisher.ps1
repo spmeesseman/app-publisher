@@ -773,6 +773,11 @@ class HistoryFile
                     $idx = $line.IndexOf("`n", $idx + 1)
                 }
 
+                if (!$line.EndsWith("."))
+                {
+                    $line = "$line."
+                }
+
                 $comments = $comments + $line + "`r`n`r`n"
             
                 $commentNum++
@@ -7231,7 +7236,6 @@ if ($TASKCIENVSET)
     Add-Content "ap.env" "$VERSION" | Out-Null
     Add-Content "ap.env" "$($MANTISBTAPITOKEN[0])" | Out-Null
     if (![string]::IsNullOrEmpty($HISTORYFILE)) {
-        Log-Message "1111"
         Add-Content "ap.env" "$HISTORYFILE" | Out-Null
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) {
