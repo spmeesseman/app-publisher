@@ -328,6 +328,13 @@ async function runPowershellScript(options: any, logger: any)
     // Set some additional options specific to powershell script
     //
     options.appPublisherVersion = pkg.version;
+    //
+    options.isNodeJsEnv = typeof module !== 'undefined' && module.exports;
+    if (options.isNodeJsEnv) {
+        logger.log('Running in Node.js');
+    } else {
+        logger.log('Running in bin mode');
+    }
 
     //
     // Launch Powershell script

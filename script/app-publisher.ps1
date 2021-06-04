@@ -4422,7 +4422,7 @@ if ($options.writeLog) {
 # this project since it is running a publish run on itself
 #
 $IsAppPublisher = $false
-if ($PROJECTNAME -eq "app-publisher") {
+if ($PROJECTNAME -eq "app-publisher" -and $options.isNodeJsEnv) {
     $IsAppPublisher = $true
 }
 
@@ -4867,7 +4867,8 @@ if (![string]::IsNullOrEmpty($CURRENTVERSION)) {
 }
 
 #
-# Check for environment vars that did not get set
+# Check for environment vars that did not get set.  Env vars are wrapped in ${} and will
+# have been replaced by the nodejs config parser if they exist in the env.
 #
 $objMembers = $options.psobject.Members | where-object membertype -like 'noteproperty'
 foreach ($option in $objMembers) {
