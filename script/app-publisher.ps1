@@ -778,10 +778,25 @@ class HistoryFile
                     }
                 }
                 else {
+                    $lCt = 0
                     while ($idx -ne -1)
                     {
+                        ++$lCt;
                         $line = $line.Substring(0, $idx + 1) + "    " + $line.Substring($idx + 1)
                         $idx = $line.IndexOf("`n", $idx + 1)
+                    }
+                    if ($lCt -eq 2)
+                    {
+                        if ([Regex]::Match($line, "^[1-9]{1,2}\. ").Success)
+                        {   #
+                            # Auto append '.' to single lines if there isn't one already, and the line isn't ended
+                            # with a boxed tag, e.g. [skip ci] , [fixes #333] , etc
+                            #
+                            $line = $line.TrimEnd()
+                            if (!$line.EndsWith(".") -and !$line.EndsWith("]")) {
+                                $line = "$line."
+                            }
+                        }
                     }
                 }
 
