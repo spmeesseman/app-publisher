@@ -214,50 +214,79 @@ function displayPublishRcHelp()
     {
         if (!o || !o[0]) { return; }
         let line = `  ${o[0]}`;
-        if (o[0].length < 22)
+        const property =  o[0],
+              def = o[1];
+
+        if (property.length < 22)
         {
-            for (let i = o[0].length; i < 22; i++) {
+            for (let i = property.length; i < 22; i++) {
                 line += " ";
             }
         }
         else {
             line += "\n                        ";
         }
-        if (o[1] && o[1] instanceof Array && o[1].length > 3)
+
+        if (def && def instanceof Array && def.length > 3)
         {
-            let aVal: string = o[1][1] as string;
-            if (o[1][3] instanceof String || typeof o[1][3] === 'string')
-            {
-                line += o[1][3];
-                console.log(line);
-                for (let i = 4; i < o[1].length; i++) {
-                    console.log(`                        ${o[1][i]}`);
+            let valueType: string = def[1] as string,
+                cmdLineArgs = getArgsFromProperty(property),
+                cmdLine = "";
+
+            if (def[3] instanceof String || typeof def[3] === 'string')   //  [
+            {                                                             //    true,
+                line += def[3];                                           //    "boolean",
+                console.log(line);                                        //    false,
+                for (let i = 4; i < def.length; i++) {                    //    "A script or list of scripts to...",
+                    console.log(`                        ${def[i]}`);     //  ]
                 }
             }
-            else if (o[1].length > 4 && o[1][4] instanceof Object)
-            {
-                const lines = (o[1][4] as any).help.split("\n");
-                line += lines[0];
-                console.log(line);
-                for (let i = 1; i < lines.length; i++) {
-                    console.log(`                        ${lines[i]}`);
+            else if (def.length > 4 && def[4] instanceof Object)          //  [
+            {                                                             //     true,
+                const lines = (def[4] as any).help.split("\n");           //     "boolean"
+                line += lines[0];                                         //     true,
+                console.log(line);                                        //     [ -s, ---long ],
+                for (let i = 1; i < lines.length; i++) {                  //     { help: "A script or list of to..." }
+                    console.log(`                        ${lines[i]}`);   //  ]
                 }
             }
             console.log("");
-            if (aVal === "flag")
+            if (valueType === "flag")
             {
+                cmdLine = cmdLineArgs.join(", ");
                 console.log("                        Type         : flag");
-                console.log("                        Allowed      : Y / N / y / n");
             }
-            else if (aVal.startsWith("enum("))
+            else if (valueType.startsWith("enum("))
             {
+                cmdLine = cmdLineArgs[0] + " <enum>";
+                if (cmdLineArgs.length > 1){
+                    cmdLine = " ,  " + cmdLineArgs[1] + " <enum>";
+                }
                 console.log("                        Type         : enumeration");
-                console.log("                        Allowed      : " + aVal.replace(/[\(\)]|enum\(/gi, "").replace(/\|/g, " | "));
+                console.log("                        Allowed      : " + valueType.replace(/[\(\)]|enum\(/gi, "").replace(/\|/g, " | "));
             }
-            else {
-                console.log("                        Type         : " + aVal.replace(/\|/g, " | ") + (aVal === "flag" ? " (Y/N)" : ""));
+            else if (valueType.startsWith("string")) // string , string[], string|string[]
+            { 
+                cmdLine = cmdLineArgs[0] + " <value>";
+                if (cmdLineArgs.length > 1){
+                    cmdLine = " ,  " + cmdLineArgs[1] + " <value>";
+                }
+                console.log("                        Type         : " + valueType.replace(/\|/g, " | "));
             }
-            console.log("                        Defaults to  : " + o[1][2].toString());
+            else if (valueType === "number")
+            {
+                cmdLine = cmdLineArgs[0] + " <number>";
+                if (cmdLineArgs.length > 1){
+                    cmdLine = " ,  " + cmdLineArgs[1] + " <number>";
+                }
+                console.log("                        Type         : " + valueType);
+            }
+            else { // boolean
+                cmdLine = cmdLineArgs.join(", ");
+                console.log("                        Type         : " + valueType);
+            }
+            console.log("                        Defaults to  : " + def[2].toString());
+            console.log("                        Command Line : " + cmdLine);
             console.log("");
         }
         else {
@@ -1089,7 +1118,6 @@ const publishRcOpts =
         false,
         [ "-tc", "--task-changelog-view" ],
         {
-            action: "storeTrue",
             help: "Export the next release's current changelog and view using the editor\n" +
                   "specified in the .publishrc file. The created file is a copy stored in\n"+
                   "a temporary directory specified by the OS."
@@ -1102,8 +1130,18 @@ const publishRcOpts =
         false,
         [ "-tce", "--task-ci-env" ],
         {
-            action: "storeTrue",
             help: "Output the CI environment name to stdout."
+        }
+    ],
+
+    taskCiEnvSet: [
+        true,
+        "boolean",
+        false,
+        [ "-tces", "--task-ci-env-set" ],
+        {
+            help: "Finds the current/latest version released and outputs that version\n" +
+                  "string to stdout."
         }
     ],
 

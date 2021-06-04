@@ -381,7 +381,21 @@ async function runPowershellScript(options: any, logger: any)
     });
 
     let iCode: number;
-    child.on("exit", code => {
+    child.on("exit", code =>
+    {
+        if (fs.existsSync("ap.env"))
+        {
+            const envContent = fs.readFileSync("ap.env");
+            if (envContent)
+            {
+                const envVars = envContent.toString().split("\n");
+                process.env.AP_CURRENT_VERSION = envVars[0];
+                process.env.AP_NEXT_VERSION = envVars[1];
+                process.env.AP_MANTISBT_TOKEN = envVars[2];
+                process.env.AP_CHANGELOG_FILE = envVars[3];
+                fs.unlinkSync("ap.env");
+            }
+        }
         iCode = code;
         if (iCode === 0) {
             if (!options.taskVersionCurrent && !options.taskVersionNext) {
@@ -429,6 +443,9 @@ function logPowershell(data: string, logger: any)
     }
     else if (data.includes("[INPUT] ")) {
         logger.star(data.substring(8));
+    }
+    else if (data.includes("[RAW] ")) {
+        console.log(data.substring(6));
     }
     else {
         logger.log(data);

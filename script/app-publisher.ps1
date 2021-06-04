@@ -240,6 +240,7 @@ class CommitAnalyzer
 
     [string]get($Commits) 
     {
+        $linefmt = $null
         $ReleaseLevel = "patch";
         #
         # Loop through each line and look at the comment tag.  The comment tag needs to be
@@ -253,8 +254,7 @@ class CommitAnalyzer
         #
         foreach($line in $Commits)
         {
-            if ($line -eq "") { continue; }
-
+            if ([string]::IsNullOrEmpty($line)) { continue; }
             $linefmt = $line.ToLower().Trim();
             if ($linefmt.Contains("breaking change")) # bump major on breaking change
             {
@@ -315,7 +315,7 @@ class CommitAnalyzer
             }
         }
 
-        if ($this.CommitMap -and $ReleaseLevel -ne "major")
+        if ($this.CommitMap -and $ReleaseLevel -ne "major" -and ![string]::IsNullOrEmpty($linefmt))
         {
             $this.CommitMap.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
                 if ($ReleaseLevel -eq "major") {
@@ -4520,6 +4520,14 @@ if ($TASKCHANGELOG)
     }
 }
 #
+# Set CI Envoronment task
+#
+$TASKCIENVSET = $false
+if ($options.taskCiEnvSet)
+{
+    $TASKCIENVSET = $true
+}
+#
 # MantisBT Release ONLY - individual task mode
 #
 $TASKMANTISBT = $false
@@ -4570,7 +4578,7 @@ if ($options.taskTouchVersionsCommit) {
 # Single task mode flag to skip most of the functionality in the publisher chain except for
 # the particular task that is going to be ran.
 #
-$TASKMODE = $TASKCHANGELOG -or $TASKEMAIL -or $TASKTOUCHVERSIONS -or $TASKMANTISBT -or $TASKVERSIONCURRENT -or $TASKVERSIONNEXT
+$TASKMODE = $TASKCHANGELOG -or $TASKEMAIL -or $TASKTOUCHVERSIONS -or $TASKMANTISBT -or $TASKVERSIONCURRENT -or $TASKVERSIONNEXT -or $TASKCIENVSET
 $TASKSTDOUTMODE = $TASKVERSIONCURRENT -or $TASKVERSIONNEXT
 
 #endregion
@@ -4588,7 +4596,7 @@ $TASKSTDOUTMODE = $TASKVERSIONCURRENT -or $TASKVERSIONNEXT
 
 #endregion
 
-#region COmmand Line Arguments Validation
+#region Command Line Arguments Validation
 
 #
 # A flag to set if the build commands are run, which technically could happen up
@@ -5050,7 +5058,7 @@ foreach ($option in $objMembers) {
     for ($i = $logMsg.Length; $i -lt 20; $i++) {
         $logMsg += " "
     }
-    if ($option.Value -ne $null) {
+    if ($null -ne $option.Value) {
         $logMsg += ": $($option.Value)"
     }
     else {
@@ -5070,6 +5078,7 @@ Log-Message "   Bugs Page        : $BUGS"
 Log-Message "   Changelog file   : $CHANGELOGFILE"
 Log-Message "   Changelog only   : $TASKCHANGELOG"
 Log-Message "   Chglog only file : $TASKCHANGELOGFILE"
+Log-Message "   CI Set Env       : $TASKCIENVSET"
 Log-Message "   C Project Rc File: $CPROJECTRCFILE"
 Log-Message "   Deploy cmd       : $DEPLOYCOMMAND"
 Log-Message "   Dist release     : $DISTRELEASE"
@@ -5493,7 +5502,7 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
         # not to proceed, since technically the first time this script is used, we don't know
         # how to retrieve the latest commits
         #
-        if (($null -eq $COMMITS -or $COMMITS.Length -eq 0)) 
+        if (($null -eq $COMMITS -or $COMMITS.Length -eq 0) -and !$TASKMODE) 
         {
             Log-Message "Commits since the last version or the version tag could not be found"
             Log-Message "[PROMPT] User input required"
@@ -5712,7 +5721,7 @@ Log-Message "Date                : $TDATE"
 #
 # Process $HISTORYFILE
 #
-if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$TASKTOUCHVERSIONS)
+if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$TASKTOUCHVERSIONS -and !$TASKCIENVSET)
 {
     if ($TASKCHANGELOGVIEW -or $TASKCHANGELOGFILE)
     {
@@ -5784,7 +5793,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
             $IsNewHistoryFileHasContent = $true;
         }
     }
-    if (!(Test-Path($histFile))) 
+    if (!(Test-Path($HISTORYFILE))) 
     {
         Log-Message "Could not create history file, exiting" "red"
         exit 140;
@@ -5861,7 +5870,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
 #
 # Process $CHANGELOGFILE
 #
-if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$TASKTOUCHVERSIONS)
+if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$TASKTOUCHVERSIONS -and !$TASKCIENVSET)
 {
     if ($TASKCHANGELOGVIEW -or $TASKCHANGELOGFILE)
     {
@@ -6892,7 +6901,7 @@ if (!$TASKMODE)
 #
 # Send release notification email
 #
-if (!$TASKCHANGELOG -and !$TASKTOUCHVERSIONS -and !$TASKMANTISBT -and ($EMAILNOTIFICATION -eq "Y" -or $TASKEMAIL)) {
+if (!$TASKCHANGELOG -and !$TASKTOUCHVERSIONS -and !$TASKMANTISBT -and !$TASKCIENVSET -and ($EMAILNOTIFICATION -eq "Y" -or $TASKEMAIL)) {
     Send-Notification "$TargetNetLocation" "$NpmLocation" "$NugetLocation"
 }
 
@@ -7211,6 +7220,24 @@ else  # SINGLETASKMODE
 }
 
 #endregion
+
+if ($TASKCIENVSET)
+{
+    Log-Message "Set CI environment variables"
+    if (Test-Path("ap.env")) {
+        Remove-Item -Force -Path "ap.env" | Out-Null
+    }
+    New-Item -ItemType "file" -Force -Path "ap.env" -Value "$CURRENTVERSION`n" | Out-Null
+    Add-Content "ap.env" "$VERSION" | Out-Null
+    Add-Content "ap.env" "$($MANTISBTAPITOKEN[0])" | Out-Null
+    if (![string]::IsNullOrEmpty($HISTORYFILE)) {
+        Log-Message "1111"
+        Add-Content "ap.env" "$HISTORYFILE" | Out-Null
+    }
+    elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) {
+        Add-Content "ap.env" "$CHANGELOGFILE" | Out-Null
+    }
+}
 
 Log-Message "Completed"
 Log-Message "Finished successfully" "darkgreen"
