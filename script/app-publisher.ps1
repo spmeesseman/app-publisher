@@ -767,15 +767,22 @@ class HistoryFile
                 #     2.  .......
                 #
                 $idx = $line.IndexOf("`n");
-                while ($idx -ne -1)
-                {
-                    $line = $line.Substring(0, $idx + 1) + "    " + $line.Substring($idx + 1)
-                    $idx = $line.IndexOf("`n", $idx + 1)
+                if ($idx -eq -1)
+                {   #
+                    # Auto append '.' to single lines if there isn't one already, and the line isn't ended
+                    # with a boxed tag, e.g. [skip ci] , [fixes #333] , etc
+                    #
+                    $line = $line.TrimEnd()
+                    if (!$line.EndsWith(".") -and !$line.EndsWith("]")) {
+                        $line = "$line."
+                    }
                 }
-
-                if (!$line.EndsWith("."))
-                {
-                    $line = "$line."
+                else {
+                    while ($idx -ne -1)
+                    {
+                        $line = $line.Substring(0, $idx + 1) + "    " + $line.Substring($idx + 1)
+                        $idx = $line.IndexOf("`n", $idx + 1)
+                    }
                 }
 
                 $comments = $comments + $line + "`r`n`r`n"
