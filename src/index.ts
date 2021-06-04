@@ -9,7 +9,7 @@ import * as child_process from "child_process";
 import { template, pick } from "lodash";
 import marked from "marked";
 import TerminalRenderer from "marked-terminal";
-const envCi = require("env-ci");
+const envCi = require("@spmeesseman/env-ci");
 // import envCi from "env-ci";
 import hookStd from "hook-std";
 import hideSensitive = require("./lib/hide-sensitive");
@@ -140,19 +140,16 @@ async function run(context, plugins)
 
     if (isCi && ciBranch !== options.branch)
     {
-        logger.error(
-            `This ${runTxt} was triggered on the branch '${ciBranch}', but is configured to publish from '${options.branch}'`
-        );
+        logger.error(`This ${runTxt} was triggered on the branch '${ciBranch}', but is configured to ` +
+                     `publish from '${options.branch}'`);
         logger.error("   A new version won’t be published");
         return false;
     }
     else if (ciBranch !== options.branch)
     {
-        logger.warn(
-            `This ${runTxt} was triggered on the branch '${ciBranch}', but is configured to publish from '${options.branch}'`
-        );
-        logger.warn("   Continuing due to non-ci environment"
-        );
+        logger.warn(`This ${runTxt} was triggered on the branch '${ciBranch}', but is configured to ` +
+                    `publish from '${options.branch}'`);
+        logger.warn("   Continuing due to non-ci environment");
     }
 
     if (!options.taskVersionCurrent && !options.taskVersionNext) {
