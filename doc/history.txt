@@ -3794,3 +3794,157 @@ June 1st, 2021
     
         -h2  ,  --help-detailed
 
+
+Version 2.0.0
+June 3rd, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+
+    Add initial support for running within a CI system.
+    
+2.  Feature
+
+    All .publishrc properties can now be specified on command line in dashed
+    lowercase form, converted from the .publishrc property camel-case form.
+    
+    For example, the command line option to override the .publishrc switch
+    property 'emailNotification' would be:
+    
+        --email-notification
+
+3.  Feature
+    
+    Add new 'task mode' command line switch:
+    
+        -tcv, --task-changelog-view
+    
+    Run 'app-publisher --help' for details.
+
+4.  Feature
+    
+    Add new 'task mode' command line switch:
+    
+        -tcf <filename>,  --task-changelog-file <filename>
+    
+    Using this option instructs the process to create the changelog for the
+    pending next version.  Similar to the '--task-changelog-view' option, but it
+    will write to the specified file, and will not open the file for viewing.
+
+5.  Feature
+    
+    Add new 'task mode' command line switch:
+    
+        -tmr,  --task-mantisbt-release
+    
+    Using this option instructs the process to perform a MantisBT release only,
+    using the next calculated version number.
+
+6.  Feature
+    
+    Add new 'task mode' command line switch:
+    
+        -ttv,  --task-touch-versions
+    
+    Using this option instructs the process to update all versioned files with.
+    the next / new version #.  Versioned filed by default include:
+    
+        app.json
+        assemblynnfo.cs
+        package.json
+    
+    Additional versioned files can be specified in the .publishrc file using the
+    following properties:
+
+        cProjectRcFile
+        versionFiles
+
+7.  Feature
+    
+    Add new 'task mode' command line switch:
+    
+        -ttvc,  --task-touch-versions-commit
+    
+    Using this option instructs the process to run the following steps:
+    
+        1) Update version files (equivalent to using the -ttv option).
+        2) Commit changed files using the 'chore: vX.X.X' format for the commit
+           message.
+        3) Tag using the 'vX.X.X' format for the tag name.
+
+8.  Feature
+    
+    Add new 'task mode' command line switch:
+    
+        --task-ci-env
+
+    Using this option instructs the process to output details about the current
+    CI environment.
+
+9.  Feature
+    
+    Add new 'task mode' command line switch:
+
+        --task-version-current
+
+    Using this option instructs the process to output the version # of the last
+    released build.
+
+10. Feature
+    
+    Add new 'task mode' command line switch:
+
+        --task-version-next
+
+    Using this option instructs the process to calculate and output the version #
+    of the next released build, based on commit message subjects and version file
+    parsing.
+    
+11. Feature:  Help
+    
+    Improved help output.  Run 'app-publisher --help' for details.
+
+12. Bug Fix
+    
+    If a tag in the format 'vX.X.X' is created manually, then deleted, all commit
+    messages collected when building a new release are pulled after the revision
+    of the deleted tag, commits made prior to that revision are not collected.
+
+    Poll prior tags until tag version is found that still exists.
+
+13. Bug Fix
+    
+    Regression - v1.22 breaks the embedded VSCode Task Manager commands (the -p
+    option being no longer supported).
+
+14. Refactoring
+    
+    Remove argparse command line parser, implement custom solution.
+
+15. Refactoring
+    
+    Reduce line breaks in informational commands that are output on the command
+    line, i.e. '--version', '--help', etc.
+
+16. Documentation:  ReadMe
+    
+    Add initial section on 'task mode' commands.
+
