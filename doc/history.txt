@@ -3995,3 +3995,32 @@ June 4th, 2021
     Running the process in bin command mode throws errors when running it on
     the app-publisher project itself.
 
+
+Version 2.1.1
+June 4th, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+    
+    Running the process with the cmd line options '--task-version-current' or
+    '--task-version-next' are outputting some additional text to the console
+    other than just the just version number itself.
+

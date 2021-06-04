@@ -1,6 +1,6 @@
 {
     "name": "@perryjohnson/app-publisher",
-    "version": "2.1.0",
+    "version": "2.1.1",
     "displayName": "App Publisher",
     "description": "App Publisher",
     "license": "MIT",
@@ -86,7 +86,7 @@
         "task-rt-changelog_view": "npx ./build/bin/app-publisher.js --no-ci --task-changelog-view",
         "task-rt-changelog_file": "npx ./build/bin/app-publisher.js --no-ci --task-changelog-file test/changelog.test",
         "task-rt-ci_env": "npx ./build/bin/app-publisher.js --no-ci --task-ci-env",
-        "task-rt-ci_env-set": "npx ./build/bin/app-publisher.js --no-ci --task-ci-env-set",
+        "task-rt-ci_env_set": "npx ./build/bin/app-publisher.js --no-ci --task-ci-env-set",
         "task-dry-mantis_release": "npx ./build/bin/app-publisher.js --no-ci --task-mantisbt-release --dry-run",
         "task-dry-mantis_release_noedit": "npx ./build/bin/app-publisher.js --no-ci --task-mantisbt-release --dry-run --skip-changelog-edits",
         "task-rt-touch_versions": "npx ./build/bin/app-publisher.js --no-ci -task-touch-versions",
