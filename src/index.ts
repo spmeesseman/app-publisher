@@ -330,10 +330,12 @@ async function runPowershellScript(options: any, logger: any)
     options.appPublisherVersion = pkg.version;
     //
     options.isNodeJsEnv = typeof module !== 'undefined' && module.exports;
-    if (options.isNodeJsEnv) {
-        logger.log('Running in Node.js');
-    } else {
-        logger.log('Running in bin mode');
+    if (!options.taskVersionCurrent && !options.taskVersionNext) {
+        if (options.isNodeJsEnv) {
+            logger.log('Running in Node.js');
+        } else {
+            logger.log('Running in bin mode');
+        }
     }
 
     //

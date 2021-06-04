@@ -3948,3 +3948,50 @@ June 3rd, 2021
     
     Add initial section on 'task mode' commands.
 
+
+Version 2.1.0
+June 4th, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+    
+    Add new 'task mode' command line switch:
+    
+        --task-ci-env-set
+    
+    Using this option instructs the process to export relevant build variables
+    to a file that can be used to inject environment varilables into the CI's
+    build process.  The following variables are exported:
+    
+        AP_CHANGELOG_FILE
+        AP_CURRENT_VERSION
+        AP_NEXT_VERSION
+
+2.  Bug Fix
+    
+    Commits that fit onto a single line in the history file should have a '.'
+    character inserted at the end if one does not exist already.
+
+3.  Bug Fix
+    
+    Running the process in bin command mode throws errors when running it on
+    the app-publisher project itself.
+
