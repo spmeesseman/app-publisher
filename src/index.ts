@@ -87,8 +87,16 @@ async function run(context, plugins)
         return true;
     }
 
-    if (!options.taskVersionCurrent && !options.taskVersionNext) {
-        context.logger.log(`Running ${pkg.name} version ${pkg.version}`);
+    //
+    // Set some additional options specific to powershell script
+    //
+    options.appPublisherVersion = pkg.version;
+    options.isNodeJsEnv = typeof module !== 'undefined' && module.exports;
+
+    if (!options.taskVersionCurrent && !options.taskVersionNext)
+    {
+        const mode = options.isNodeJsEnv ? "Node.js" : "bin mode"
+        logger.log(`Running ${pkg.name} version ${pkg.version} in ${mode}`);
     }
 
     if (!isCi && !options.dryRun && !options.noCi)
@@ -322,20 +330,6 @@ async function runPowershellScript(options: any, logger: any)
     if (!ps1Script) {
         logger.error("Could not find powershell script app-publisher.ps1");
         return;
-    }
-
-    //
-    // Set some additional options specific to powershell script
-    //
-    options.appPublisherVersion = pkg.version;
-    //
-    options.isNodeJsEnv = typeof module !== 'undefined' && module.exports;
-    if (!options.taskVersionCurrent && !options.taskVersionNext) {
-        if (options.isNodeJsEnv) {
-            logger.log('Running in Node.js');
-        } else {
-            logger.log('Running in bin mode');
-        }
     }
 
     //
