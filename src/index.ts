@@ -390,19 +390,18 @@ async function runPowershellScript(options: any, logger: any)
     let iCode: number;
     child.on("exit", code =>
     {
-        if (fs.existsSync("ap.env"))
-        {
-            const envContent = fs.readFileSync("ap.env");
-            if (envContent)
-            {
-                const envVars = envContent.toString().split("\n");
-                process.env.AP_CURRENT_VERSION = envVars[0];
-                process.env.AP_NEXT_VERSION = envVars[1];
-                process.env.AP_MANTISBT_TOKEN = envVars[2];
-                process.env.AP_CHANGELOG_FILE = envVars[3];
-                fs.unlinkSync("ap.env");
-            }
-        }
+        // if (fs.existsSync("ap.env"))
+        // {
+        //     const envContent = fs.readFileSync("ap.env");
+        //     if (envContent)
+        //     {
+        //         const envVars = envContent.toString().split("\n");
+        //         process.env.AP_CURRENT_VERSION = envVars[0];
+        //         process.env.AP_NEXT_VERSION = envVars[1];
+        //         process.env.AP_CHANGELOG_FILE = envVars[2];
+        //         fs.unlinkSync("ap.env");
+        //     }
+        // }
         iCode = code;
         if (iCode === 0) {
             if (!options.taskVersionCurrent && !options.taskVersionNext) {

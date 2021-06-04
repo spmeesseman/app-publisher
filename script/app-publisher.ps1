@@ -7257,7 +7257,6 @@ if ($TASKCIENVSET)
     }
     New-Item -ItemType "file" -Force -Path "ap.env" -Value "$CURRENTVERSION`n" | Out-Null
     Add-Content "ap.env" "$VERSION" | Out-Null
-    Add-Content "ap.env" "$($MANTISBTAPITOKEN[0])" | Out-Null
     if (![string]::IsNullOrEmpty($HISTORYFILE)) {
         Add-Content "ap.env" "$HISTORYFILE" | Out-Null
     }
