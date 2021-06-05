@@ -1593,7 +1593,7 @@ function Log-Message($msg, $color, $noTag = $false)
         return
     }
 
-    if (!$TASKSTDOUTMODE)
+    if (!$TASKSTDOUTMODE -or $color -eq "red")
     {
         if ($color) 
         {

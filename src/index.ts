@@ -345,7 +345,7 @@ async function runPowershellScript(options: any, logger: any)
     // }
     // logger.success("Published release successfully");
     // logger.success(`Published release ${nextRelease.version}`);
-
+    const isStdOutCmd = !options.taskVersionCurrent && !options.taskVersionNext;
     const child = child_process.spawn("powershell.exe", [`${ps1Script} '${JSON.stringify(options)}'`], { stdio: ["pipe", "pipe", "pipe"], env: process.env});
     // const child = child_process.spawn("powershell.exe", [`${ps1Script} ${options}`], { stdio: ["pipe", "inherit", "inherit"] });
 
@@ -363,28 +363,14 @@ async function runPowershellScript(options: any, logger: any)
         if (child.killed) {
             return;
         }
-        if (!options.taskVersionCurrent && !options.taskVersionNext) {
-            logPowershell(data, logger);
-        }
-        else {
-            //if (/[0-9]*\.[0-9]*\.[0-9]*/.test(data)) {
-                data = data.toString();
-                console.log(data.trimEnd());
-            //}
-        }
+        logPowershell(data, logger, isStdOutCmd);
     });
 
     child.stderr.on("data", data => {
         if (child.killed) {
             return;
         }
-        if (!options.taskVersionCurrent && !options.taskVersionNext) {
-            logPowershell(data, logger);
-        }
-        else {
-            data = data.toString();
-            console.log(data.trimEnd());
-        }
+        logPowershell(data, logger, isStdOutCmd);
     });
 
     let iCode: number;
@@ -404,7 +390,7 @@ async function runPowershellScript(options: any, logger: any)
         // }
         iCode = code;
         if (iCode === 0) {
-            if (!options.taskVersionCurrent && !options.taskVersionNext) {
+            if (!isStdOutCmd) {
                 logger.success("Successfully published release");
             }
         }
@@ -416,15 +402,31 @@ async function runPowershellScript(options: any, logger: any)
 }
 
 
-function logPowershell(data: string, logger: any)
+function logPowershell(data: string, logger: any, isStdOutCmd: boolean)
 {
+    if (!data) {
+        return;
+    }
+
+    //
+    // Trim
+    //
     data = data.trimRight();
     while (data[0] === "\n" || data[0] === "\r") {
         data = data.substring(1);
     }
+
     if (!data) {
         return;
     }
+    
+    const isError = data.includes("[ERROR] ");
+
+    if (isStdOutCmd && !isError) {
+        console.log(data);
+        return;
+    }
+
     if (data.includes("\r\n")) {
         data.replace(/\r\n/gm, "\r\n                                  ");
     }
@@ -443,7 +445,7 @@ function logPowershell(data: string, logger: any)
     else if (data.includes("[SUCCESS] ")) {
         logger.success(data.substring(10));
     }
-    else if (data.includes("[ERROR] ")) {
+    else if (isError) {
         logger.error(data.substring(8));
     }
     else if (data.includes("[PROMPT] ")) {
