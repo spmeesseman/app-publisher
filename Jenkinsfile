@@ -18,6 +18,12 @@ pipeline {
             name: 'EMAIL_RECIPIENTS')
   }
 
+  environment { 
+    CURRENT_VERSION = '',
+    NEXT_VERSION = '',
+    CHANGELOG_FILE = ''
+  }
+
   stages {
     
     stage("Checkout") {
@@ -54,7 +60,7 @@ pipeline {
       }
     }
 
-    stage("NPM Install") {
+    stage("Pre-Build") {
       steps {
         nodejs("Node 13") {
           bat "npm install"

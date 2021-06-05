@@ -4024,3 +4024,41 @@ June 4th, 2021
     '--task-version-next' are outputting some additional text to the console
     other than just the just version number itself.
 
+
+Version 2.1.2
+June 4th, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix:  General
+    
+    The stdout output is double line broken if the output is from a task that is
+    to output data to stdout.
+
+2.  Bug Fix: CI
+    
+    The CI environment is not being set to use the Subversion service module
+    properties, continues to use 'Git' as the default.
+
+3.  Refactoring:  Changelog
+    
+    Remove CI related tags ([skip-ci], etc) from commit messages when formatting
+    the changelog/history file entry.
+

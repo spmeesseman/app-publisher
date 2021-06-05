@@ -1250,6 +1250,16 @@ const publishRcOpts =
         "Web path to version control repository, if WebSVN is available"
     ],
 
+    verbose: [
+        true,
+        "boolean",
+        false,
+        [ "--verbose" ],
+        {
+            help: "Enable additional log output."
+        }
+    ],
+
     version: [
         true,
         "boolean",

@@ -1,12 +1,12 @@
 
-import { visit, JSONVisitor } from "jsonc-parser";
+//import { visit, JSONVisitor } from "jsonc-parser";
 import * as util from "./util";
-import * as fs from "fs";
-import * as path from "path";
+//import * as fs from "fs";
+//import * as path from "path";
 import gradient from "gradient-string";
 import chalk from "chalk";
 import * as child_process from "child_process";
-import { template, pick } from "lodash";
+//import { template, pick } from "lodash";
 import marked from "marked";
 import TerminalRenderer from "marked-terminal";
 const envCi = require("@spmeesseman/env-ci");
@@ -14,17 +14,17 @@ const envCi = require("@spmeesseman/env-ci");
 import hookStd from "hook-std";
 import hideSensitive = require("./lib/hide-sensitive");
 import getConfig = require("./lib/get-config");
-import getReleaseLevel = require("./lib/commit-analyzer");
-import verify = require("./lib/verify");
-import getCommits = require("./lib/get-commits");
-import getNextVersion = require("./lib/get-next-version");
-import getLastRelease = require("./lib/get-last-release");
+//import getReleaseLevel = require("./lib/commit-analyzer");
+//import verify = require("./lib/verify");
+//import getCommits = require("./lib/get-commits");
+//import getNextVersion = require("./lib/get-next-version");
+//import getLastRelease = require("./lib/get-last-release");
 import { extractErrors } from "./lib/utils";
-import { sendEmail } from "./lib/email";
-import getGitAuthUrl = require("./lib/get-git-auth-url");
+//import { sendEmail } from "./lib/email";
+//import getGitAuthUrl = require("./lib/get-git-auth-url");
 import getLogger = require("./lib/get-logger");
-import { fetch, verifyAuth, isBranchUpToDate, getHead, tag, push } from "./lib/repo";
-import getError = require("./lib/get-error");
+//import { fetch, verifyAuth, isBranchUpToDate, getHead, tag, push } from "./lib/repo";
+//import getError = require("./lib/get-error");
 import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
 
 const pkg = require("../package.json");
@@ -156,6 +156,11 @@ async function run(context, plugins)
         logger[options.dryRun ? "warn" : "log"](
             `Run automated release from branch '${options.branch}'${options.dryRun ? " in dry-run mode" : ""}`
         );
+    }
+
+    if (options.verbose) // even if it's a stdout type task
+    {
+        logger.log(JSON.stringify(options, null, 3));
     }
 
     //if (options.emailOnly)
