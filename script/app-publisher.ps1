@@ -469,8 +469,16 @@ class HistoryFile
 
             if ($null -ne $msg -and $msg -ne "" -and !$msgLwr.StartsWith("chore") -and 
                 !$msgLwr.StartsWith("progress") -and !$msgLwr.StartsWith("style") -and !$msgLwr.StartsWith("project"))
-            {
-                 #
+            {   #
+                # Remove CI related tags
+                #
+                $msg = $msg.Replace("[skip-ci] ", "")
+                $msg = $msg.Replace(" [skip-ci]", "")
+                $msg = $msg.Replace("[skip-ci]", "")
+                $msg = $msg.Replace("[skip ci]", "")
+                $msg = $msg.Replace(" [skip ci]", "")
+                $msg = $msg.Replace("[skip ci]", "")
+                #
                 # Replace commit tags with full text (non-scoped)
                 #
                 # Commit tags should be at the start of the commit message.
