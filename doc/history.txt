@@ -4218,3 +4218,31 @@ June 5th, 2021
     Flag type command line arguments should just default to "Y" is there is no
     positional value specified (behaving like a boolean type).
 
+
+Version 2.2.5
+June 5th, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Refactoring
+    
+    Output task related message to the console when a task finishes, not the
+    standard "release successful" message.
+
