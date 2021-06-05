@@ -71,12 +71,21 @@ class Vc
 
         if ($RepoType -eq "svn")
         {
+            $svnUser = $Env:SVN_AUTHOR_NAME
+            $svnToken = $Env:SVN_TOKEN
+            
             Log-Message "Retrieving most recent tag"
             #
             # Issue SVN log command
             #
             $TagLocation = $Repo.Replace("trunk", "tags").Replace("branches/" + $Branch, "tags");
-            $xml = svn log --xml "$TagLocation" --verbose --limit 50
+            
+            if (![string]::IsNullOrEmpty($svnUser) -and ![string]::IsNullOrEmpty($svnToken)) {
+                $xml = svn log --xml "$TagLocation" --verbose --limit 50 --non-interactive --no-auth-cache --username "$svnUser" --password "$svnToken"
+            }
+            else {
+                $xml = svn log --xml "$TagLocation" --verbose --limit 50 --non-interactive --no-auth-cache
+            }
             if ($LASTEXITCODE -ne 0) {
                 Log-Message "No commits found or no version tag exists" "red"
                 return $comments
@@ -106,7 +115,13 @@ class Vc
                 # Make sure it exists
                 #
                 $TagVers = $path.Substring($path.LastIndexOf("/") + 1);
-                $xml = svn ls "$TagLocation/$TagVers" >$null 2>&1
+                
+                if (![string]::IsNullOrEmpty($svnUser) -and ![string]::IsNullOrEmpty($svnToken)) {
+                    $xml = svn ls "$TagLocation/$TagVers" --non-interactive --no-auth-cache --username "$svnUser" --password "$svnToken" >$null 2>&1 
+                }
+                else {
+                    $xml = svn ls "$TagLocation/$TagVers" --non-interactive >$null 2>&1
+                }
                 if ($LASTEXITCODE -ne 0) {
                     $path = $xmlObj[1].path
                     $rev = $xmlObj[1].revision
@@ -133,7 +148,13 @@ class Vc
             # Retrieve commits since last version tag
             #
             Log-Message "Retrieving commits since last version"
-            $xml = svn log --xml "$Repo" --verbose --limit 250 -r ${rev}:HEAD
+            
+            if (![string]::IsNullOrEmpty($svnUser) -and ![string]::IsNullOrEmpty($svnToken)) {
+                $xml = svn log --xml "$Repo" --verbose --limit 250 -r ${rev}:HEAD --non-interactive --no-auth-cache --username "$svnUser" --password "$svnToken"
+            }
+            else {
+                $xml = svn log --xml "$Repo" --verbose --limit 250 -r ${rev}:HEAD --non-interactive
+            }
             if ($LASTEXITCODE -ne 0) {
                 Log-Message "Failed to retrieve commits" "red"
                 return $comments
@@ -151,7 +172,13 @@ class Vc
                 Log-Message "No commits found or no version tag exists" "red"
                 $Proceed = read-host -prompt "Do you want to get all commits on this branch? Y[N]"
                 if ($Proceed.ToUpper() -eq "Y") {
-                    $xml = svn log --xml "$Repo" --verbose --limit 250
+                    
+                    if (![string]::IsNullOrEmpty($svnUser) -and ![string]::IsNullOrEmpty($svnToken)) {
+                        $xml = svn log --xml "$Repo" --verbose --limit 250 --non-interactive --no-auth-cache --username "$svnUser" --password "$svnToken"
+                    }
+                    else {
+                        $xml = svn log --xml "$Repo" --verbose --limit 250 --non-interactive
+                    }
                     if ($LASTEXITCODE -ne 0) {
                         Log-Message "No commits found or no version tag exists" "red"
                         return $comments
@@ -1884,7 +1911,14 @@ function Vc-IsVersioned($ObjectPath, $AppendPre = $false, $ChangePath = $false)
         set-location $PATHTOMAINROOT
     }
     if ($_RepoType -eq "svn") {
-        $tmp = & svn info "$VcFile"
+        $svnUser = $Env:SVN_AUTHOR_NAME
+        $svnToken = $Env:SVN_TOKEN
+        if (![string]::IsNullOrEmpty($svnUser) -and ![string]::IsNullOrEmpty($svnToken)) {
+            $tmp = & svn info "$VcFile" --non-interactive --no-auth-cache --username "$svnUser" --password "$svnToken"
+        }
+        else {
+            $tmp = & svn info "$VcFile" --non-interactive
+        }
     }
     else {
         $tmp = & git ls-files --error-unmatch "$VcFile"
@@ -2001,7 +2035,14 @@ function Vc-Revert($ChangePath = $false)
             {
                 $VcRevertList = $VcRevertList.Trim()
                 Log-Message "Versioned List:  $VcRevertList"
-                Invoke-Expression -Command "svn revert -R $VcRevertList"
+                $svnUser = $Env:SVN_AUTHOR_NAME
+                $svnToken = $Env:SVN_TOKEN
+                if (![string]::IsNullOrEmpty($svnUser) -and ![string]::IsNullOrEmpty($svnToken)) {
+                    Invoke-Expression -Command "svn revert -R $VcRevertList --non-interactive --no-auth-cache --username $svnUser --password $svnToken"
+                }
+                else {
+                    Invoke-Expression -Command "svn revert -R $VcRevertList --non-interactive"
+                }
                 Check-ExitCode
             }
             else {
@@ -4875,38 +4916,6 @@ if (![string]::IsNullOrEmpty($CURRENTVERSION)) {
 }
 
 #
-# Check for environment vars that did not get set.  Env vars are wrapped in ${} and will
-# have been replaced by the nodejs config parser if they exist in the env.
-#
-$objMembers = $options.psobject.Members | where-object membertype -like 'noteproperty'
-foreach ($option in $objMembers) {
-    if ($option.Value -eq $null) {
-        continue;
-    }
-    if ($option.Value -is [system.array])
-    {
-        foreach ($val in $option.Value) {
-            if ($val -is [system.string]) {
-                if ($val.Trim().StartsWith("$`{") -and $val.Trim().EndsWith("`}")) {
-                    Log-Message "Option $($option.Name) environment value was not found/set" "red"
-                    Log-Message "   $($option.Value)" "red"
-                    exit 1
-                }
-            }
-        }
-    }
-    else {
-        if ($option.Value -is [system.string]) {
-            if ($option.Value.Trim().StartsWith("$`{") -and $option.Value.Trim().EndsWith("`}")) {
-                Log-Message "Option $($option.Name) environment value was not found/set" "red"
-                Log-Message "   $($option.Value)" "red"
-                exit 1
-            }
-        }
-    }
-}
-
-#
 # Convert any Y/N vars to upper case and check validity
 #
 if (![string]::IsNullOrEmpty($DISTRELEASE)) {
@@ -4972,7 +4981,7 @@ if (![string]::IsNullOrEmpty($MANTISBTRELEASE)) {
             exit 1
         }
         if ($MANTISBTAPITOKEN.Length -eq 0) {
-            Log-Message "You must have MANTISBT_API_TOKEN defined in the environment for a MantisBT release type" "red"
+            Log-Message "You must have MANTISBT_API_TOKEN defined for a MantisBT release type" "red"
             Log-Message "-or- you must have mantisbtApiToken defined in publishrc" "red"
             Log-Message "Set the envvar MANTISBT_API_TOKEN or the config mantisApiToken with the token value created on the MantisBT website" "red"
             Log-Message "To create a token, see the `"Tokens`" section of your Mantis User Preferences page" "red"
@@ -5082,6 +5091,37 @@ if ($ExecutionPolicy -ne "RemoteSigned")
 #endregion
 
 #region Log Command Line Arguments and PublishRC Options
+
+#
+# Check for environment vars that did not get set.  Env vars are wrapped in ${} and will
+# have been replaced by the nodejs config parser if they exist in the env.  Provide a warning
+# if any of the variables are not found in the environment.
+#
+$objMembers = $options.psobject.Members | where-object membertype -like 'noteproperty'
+foreach ($option in $objMembers) {
+    if ($option.Value -eq $null) {
+        continue;
+    }
+    if ($option.Value -is [system.array])
+    {
+        foreach ($val in $option.Value) {
+            if ($val -is [system.string]) {
+                if ($val.Trim().StartsWith("$`{") -and $val.Trim().EndsWith("`}")) {
+                    Log-Message "Option $($option.Name) environment value was not found/set" "yellow"
+                    Log-Message "   $($option.Value)" "yellow"
+                }
+            }
+        }
+    }
+    else {
+        if ($option.Value -is [system.string]) {
+            if ($option.Value.Trim().StartsWith("$`{") -and $option.Value.Trim().EndsWith("`}")) {
+                Log-Message "Option $($option.Name) environment value was not found/set" "yellow"
+                Log-Message "   $($option.Value)" "yellow"
+            }
+        }
+    }
+}
 
 #
 # Log publishrc options
@@ -6964,6 +7004,8 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
     {
         if (Test-Path(".svn"))
         {
+            $svnUser = $Env:SVN_AUTHOR_NAME
+            $svnToken = $Env:SVN_TOKEN
             #$VCCHANGELIST = $VCCHANGELIST.Trim()
             #
             # Check version changes in to SVN if there's any touched files
@@ -6981,7 +7023,12 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
                             $cl = $VCCHANGELISTADD.Replace("|", " ");
                             Log-Message "Adding unversioned touched files to GIT version control"
                             Log-Message "   $cl"
-                            Invoke-Expression -Command "svn add $cl"
+                            if (![string]::IsNullOrEmpty($svnUser) -and ![string]::IsNullOrEmpty($svnToken)) {
+                                Invoke-Expression -Command "svn add $cl --non-interactive --no-auth-cache --username `"$svnUser`" --password `"$svnToken`""
+                            }
+                            else {
+                                Invoke-Expression -Command "svn add $cl --non-interactive"
+                            }
                             Check-ExitCode $false
                         }
                         $cl = $VCCHANGELIST.Replace("|", " ");
@@ -6990,7 +7037,12 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
                         #
                         # SVN commit
                         #
-                        Invoke-Expression -Command "svn commit $cl -m `"chore(release): $VERSION [skip ci]`""
+                        if (![string]::IsNullOrEmpty($svnUser) -and ![string]::IsNullOrEmpty($svnToken)) {
+                            Invoke-Expression -Command "svn commit $cl -m `"chore(release): $VERSION [skip ci]`" --non-interactive --no-auth-cache --username `"$svnUser`" --password `"$svnToken`""
+                        }
+                        else {
+                            Invoke-Expression -Command "svn commit $cl -m `"chore(release): $VERSION [skip ci]`" --non-interactive"
+                        }
                         Check-ExitCode $false
                     }
                     elseif (![string]::IsNullOrEmpty($VCCHANGELISTMLT)) 
@@ -7001,7 +7053,13 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
                         #
                         # SVN commit
                         #
-                        Invoke-Expression -Command "svn commit $cl -m `"chore(release-mlt): $VERSION [skip ci]`""
+                        if (![string]::IsNullOrEmpty($svnUser) -and ![string]::IsNullOrEmpty($svnToken)) {
+                            
+                            Invoke-Expression -Command "svn commit $cl -m `"chore(release-mlt): $VERSION [skip ci]`" --non-interactive --no-auth-cache --username `"$svnUser`" --password `"$svnToken`""
+                        }
+                        else {
+                            Invoke-Expression -Command "svn commit $cl -m `"chore(release-mlt): $VERSION [skip ci]`" --non-interactive"
+                        }
                         Check-ExitCode $false
                     }
                     else {
@@ -7047,11 +7105,16 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
                     }
                     Log-Message "Tagging SVN version at $TagLocation"
                     if ($DRYRUN -eq $false) 
-                    {
-                        #
+                    {   #
                         # Call svn copy to create 'tag'
                         #
-                        & svn copy "$_Repo" "$TagLocation" -m "$TagMessage"
+                        if (![string]::IsNullOrEmpty($svnUser) -and ![string]::IsNullOrEmpty($svnToken)) {
+                            
+                            & svn copy "$_Repo" "$TagLocation" -m "$TagMessage" --non-interactive --no-auth-cache --username "$svnUser" --password "$svnToken"
+                        }
+                        else {
+                            & svn copy "$_Repo" "$TagLocation" -m "$TagMessage" --non-interactive
+                        }
                         Check-ExitCode $false
                     }
                     else {
