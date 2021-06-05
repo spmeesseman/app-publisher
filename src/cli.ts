@@ -367,8 +367,8 @@ function parseArgs(): any
                 }
             }
 
-            const valueType = publishRcOpts[p][1],
-                  defaultValue = publishRcOpts[p][2];
+            const valueType = publishRcOpts[p][1];//,
+                  //defaultValue = publishRcOpts[p][2];
 
             lastProp = p;               // Record 'last', used for positionals
             lastType = valueType;
