@@ -55,7 +55,35 @@ export const publishRcOpts =
         "boolean",
         false,
         [ "-c", "--config" ],
-        "Display config."
+        "Display config.",
+        "Note that the default publishrc file is '.publishrc.*'.  A config file can",
+        "be one of four different formats:",
+        "",
+        "    .publishrc.json",
+        "    .publishrc.js",
+        "    .publishrc.yaml",
+        "    .publishrc.yml"
+    ],
+
+    configName: [
+        true,
+        "string",
+        "",
+        [ "-cn", "--config-name" ],
+        "Use the specified config name.  The config name determines the publishrc",
+        "file to use.  For example, consider the following command line:",
+        "",
+        "    app-publisher --config-name spm",
+        "",
+        "Specifying this will cause the publishrc file named '.publishrc.spm.json",
+        "to be used.",
+        "Note that the default publishrc file is '.publishrc.*'.  A config file can",
+        "be one of four different formats:",
+        "",
+        "    .publishrc.json",
+        "    .publishrc.js",
+        "    .publishrc.yaml",
+        "    .publishrc.yml"
     ],
 
     cProjectRcFile: [

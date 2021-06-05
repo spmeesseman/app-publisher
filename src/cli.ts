@@ -170,7 +170,7 @@ export = async () =>
         {
             console.log(gradient("cyan", "pink").multiline(
 `----------------------------------------------------------------------------
-    Current Command Line Options
+Current Command Line Options
 ----------------------------------------------------------------------------
         `, {interpolation: "hsv"}));
             console.log(JSON.stringify(opts, undefined, 2));

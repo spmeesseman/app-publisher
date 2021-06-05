@@ -5,7 +5,7 @@ import minimatch from "minimatch";
 const logValueWhiteSpace = 40;
 
 
-export function camelCase(name: string, indexUpper: number) 
+export function camelCase(name: string, indexUpper: number)
 {
     if (!name) {
       return name;
@@ -21,19 +21,19 @@ export function camelCase(name: string, indexUpper: number)
 
 export function isNumeric(value: string | number): boolean
 {
-   return ((value != null) &&
-           (value !== '') &&
+   return ((value !== null) && (value !== undefined) &&
+           (value !== "") &&
            !isNaN(Number(value.toString())));
 }
 
 
-export function isString(value: any) : value is string
+export function isString(value: any): value is string
 {
-    return (value || value === "") && value instanceof String || typeof value === 'string';
+    return (value || value === "") && value instanceof String || typeof value === "string";
 }
 
 
-export function properCase(name: string) 
+export function properCase(name: string)
 {
     if (!name) {
       return name;
@@ -47,9 +47,9 @@ export function properCase(name: string)
 }
 
 
-export function isExcluded(uriPath: string, exclude: string) 
+export function isExcluded(uriPath: string, exclude: string)
 {
-    function testForExclusionPattern(path: string, pattern: string): boolean 
+    function testForExclusionPattern(path: string, pattern: string): boolean
     {
         return minimatch(path, pattern, { dot: true, nocase: true });
     }
@@ -58,18 +58,18 @@ export function isExcluded(uriPath: string, exclude: string)
     this.log("Check exclusion", 2);
     this.logValue("   path", uriPath, 2);
 
-    if (exclude) 
+    if (exclude)
     {
-        if (Array.isArray(exclude)) 
+        if (Array.isArray(exclude))
         {
-            for (let pattern of exclude) {
+            for (const pattern of exclude) {
                 this.logValue("   checking pattern", pattern, 3);
                 if (testForExclusionPattern(uriPath, pattern)) {
                     this.log("   Excluded!", 2);
                     return true;
                 }
             }
-        } 
+        }
         else {
             this.logValue("   checking pattern", exclude, 3);
             if (testForExclusionPattern(uriPath, exclude)) {
@@ -84,13 +84,13 @@ export function isExcluded(uriPath: string, exclude: string)
 }
 
 
-export function timeout(ms: number) 
+export function timeout(ms: number)
 {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 
-export function pathExists(path: string) 
+export function pathExists(path: string)
 {
     try {
         fs.accessSync(path);
@@ -101,7 +101,7 @@ export function pathExists(path: string)
 }
 
 
-export async function readFile(file: string): Promise<string> 
+export async function readFile(file: string): Promise<string>
 {
     return new Promise<string>((resolve, reject) => {
         fs.readFile(file, (err, data) => {
@@ -122,20 +122,20 @@ export function readFileSync(file: string)
 
 export function removeFromArray(arr: any[], item: any)
 {
-    let idx: number = -1;
-	let idx2: number = -1;
+    let idx = -1;
+    let idx2 = -1;
 
-	arr.forEach(each => {
-		idx++;
-		if (item === each) {
+    arr.forEach(each => {
+        idx++;
+        if (item === each) {
             idx2 = idx;
             return false;
-		}
-	});
+        }
+    });
 
-	if (idx2 !== -1 && idx2 < arr.length) {
-		arr.splice(idx2, 1);
-	}
+    if (idx2 !== -1 && idx2 < arr.length) {
+        arr.splice(idx2, 1);
+    }
 }
 
 
@@ -150,12 +150,12 @@ export function existsInArray(arr: any[], item: any)
             }
         });
     }
-    
-	return exists;
+
+    return exists;
 }
 
 
-export async function log(msg: string, level?: number) 
+export async function log(msg: string, level?: number)
 {
     if (level && level) {
         return;
@@ -164,39 +164,39 @@ export async function log(msg: string, level?: number)
 }
 
 
-export async function logError(msg: string) 
+export async function logError(msg: string)
 {
     console.log("ap " + chalk.red("[ERROR] ") + msg);
 }
 
 
-export async function logWarning(msg: string) 
+export async function logWarning(msg: string)
 {
     console.log("ap " + chalk.yellow("[WARNING] ") + msg);
 }
 
 
-export async function logSuccess(msg: string) 
+export async function logSuccess(msg: string)
 {
     console.log("ap " + chalk.green("[SUCCESS] ") + msg);
 }
 
 
-export async function logValue(msg: string, value: any, level?: number) 
+export async function logValue(msg: string, value: any, level?: number)
 {
-    var logMsg = msg;
+    let logMsg = msg;
 
-    for (var i = msg.length; i < logValueWhiteSpace; i++) {
+    for (let i = msg.length; i < logValueWhiteSpace; i++) {
         logMsg += " ";
     }
 
     if (value || value === 0 || value === "") {
         logMsg += ": ";
         logMsg += value.toString();
-    } 
+    }
     else if (value === undefined) {
         logMsg += ": undefined";
-    } 
+    }
     else if (value === null) {
         logMsg += ": null";
     }

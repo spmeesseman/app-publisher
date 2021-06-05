@@ -42,7 +42,6 @@
         "marked": "^0.7.0",
         "marked-terminal": "^3.2.0",
         "minimatch": "^3.0.4",
-        "node-svn-ultimate": "^1.2.0",
         "nodemailer": "^6.6.1",
         "p-locate": "^4.1.0",
         "p-reduce": "^2.1.0",
@@ -98,7 +97,7 @@
         "task-rt-version_info": "npx ./build/bin/app-publisher.js --no-ci --task-version-info",
         "task-rt-version_next": "npx ./build/bin/app-publisher.js --no-ci --task-version-next",
         "republish": "npx ./build/bin/app-publisher.js --republish",
-        "jenkins-validate-jenkinsfile": "cmd /c curl -X POST -L -H \"Authorization: basic c21lZXNzZW1hbjoxMTU5NzgyYTBmNDE5OTI2M2VkYTY0ZTVlZjViYzIzZDY4\" -F \"jenkinsfile=<Jenkinsfile\" https://jenkins.development.pjats.com/pipeline-model-converter/validate"
+        "jenkins-validate-jenkinsfile": "cmd /c curl -X POST -L -H \"Authorization: basic \" -F \"jenkinsfile=<Jenkinsfile\" https://jenkins.development.pjats.com/pipeline-model-converter/validate"
     },
     "main": "./build/bin/app-publisher.js",
     "bin": {

@@ -8,20 +8,25 @@ const PLUGINS_DEFINITIONS = require("./definitions/plugins");
 const plugins = require("./plugins");
 const { validatePlugin, parseConfig } = require("./plugins/utils");
 
-const CONFIG_NAME = "publishrc";
-const CONFIG_FILES = [
-    "package.json",
-    `.${CONFIG_NAME}`,
-    `.${CONFIG_NAME}.json`,
-    `.${CONFIG_NAME}.yaml`,
-    `.${CONFIG_NAME}.yml`,
-    `.${CONFIG_NAME}.js`
-];
-
 export = getConfig;
 
 async function getConfig(context: any, opts: any)
 {
+    let CONFIG_NAME = "publishrc";
+    if (opts.configName)
+    {
+        CONFIG_NAME = "publishrc." + opts.configName;
+    }
+
+    const CONFIG_FILES = [
+        "package.json",
+        `.${CONFIG_NAME}`,
+        `.${CONFIG_NAME}.json`,
+        `.${CONFIG_NAME}.yaml`,
+        `.${CONFIG_NAME}.yml`,
+        `.${CONFIG_NAME}.js`
+    ];
+
     const { cwd, env } = context;
     const { config, filepath } = (await cosmiconfig(CONFIG_NAME, { searchPlaces: CONFIG_FILES }).search(cwd)) || { config: {}, filepath: "" };
 
