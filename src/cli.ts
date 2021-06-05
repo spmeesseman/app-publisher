@@ -10,10 +10,12 @@ import { publishRcOpts } from "./args";
 
 export = async () =>
 {
+    const version = require("../package.json").version;
     const ArgParser = require("@spmeesseman/arg-parser").ArgParser;
     const parser = new ArgParser({
         app: "app-publisher",
-        banner: apBanner
+        banner: apBanner(version),
+        version
     });
     const opts = parser.parseArgs(publishRcOpts);
 
@@ -23,7 +25,7 @@ export = async () =>
         // For stdout type tasks, then we dont display the banner or anything else for that matter.
         //
         if (!opts.taskVersionCurrent && !opts.taskVersionNext && !opts.taskVersionInfo && !opts.taskCiEvInfo && !opts.verbose) {
-            displayIntro();
+            displayIntro(version);
         }
 
         //
@@ -69,16 +71,17 @@ export = async () =>
   }
 };
 
-const apBanner =
-`                                       _      _       _
+function apBanner(version: string)
+{
+    return `                                       _      _       _
   _ _ __ _ __   _ __      _ __  _   __| |_ | (_)_____| |  ____  ____
  / _\\' || '_ \\\\| '_ \\\\___| '_ \\\\| \\ \\ |  _\\| | || ___| \\_/ _ \\\\/  _|
  | (_| || |_) || |_) |___| |_) || |_| | |_)| | | \\\\__| __ | __/| |
- \\__\\\\__| | .//| | .//   | | .//|____/|___/|_|_|/___/|_| \\___|.|_| v${require("../package.json").version} 
-        |_|    |_|       |_|                                                    
-`;
+ \\__\\\\__| | .//| | .//   | | .//|____/|___/|_|_|/___/|_| \\___|.|_| v${version}
+        |_|    |_|       |_|`;
+}
 
-function displayIntro()
+function displayIntro(banner)
 {
-    console.log(chalk.bold(gradient("cyan", "pink").multiline(apBanner, {interpolation: "hsv"})));
+    console.log(chalk.bold(gradient("cyan", "pink").multiline(banner, {interpolation: "hsv"})));
 }
