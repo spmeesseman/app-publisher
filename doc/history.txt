@@ -4246,3 +4246,64 @@ June 5th, 2021
     Output task related message to the console when a task finishes, not the
     standard "release successful" message.
 
+
+Version 2.3.0
+June 5th, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+    
+    Add new 'task mode' command line switch:
+    
+        -tvi ,  --task-version-info
+    
+    Using this option instructs the process to output both the current version
+    of the last released build, and the proposed next version # to stdout.
+    Outputs in the format 'current|next'.
+    
+2.  Feature
+    
+    Add new 'task mode' command line switch:
+    
+        -tcei,  --task-ci-env-info
+    
+    Using this option instructs the process to output CI related
+    buildinformation to stdout.  Outputs in the format 'current|next|changelog'.
+    
+3.  Feature
+    
+    Add new command line switch option:
+    
+        --version-force-current ,  --version-force
+    
+    Using this option instructs the process to use the provided version number
+    for the 'current version'.
+    
+4.  Feature
+    
+    Add new command line switch option:
+    
+        --version-force-next
+    
+    Using this option instructs the process to use the provided version number
+    for the 'next version'.  Note that a version number will not be calculated,
+    and a VCS request will be skipped
+

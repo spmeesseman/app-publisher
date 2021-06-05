@@ -1,6 +1,6 @@
 {
     "name": "@perryjohnson/app-publisher",
-    "version": "2.2.5",
+    "version": "2.3.0",
     "displayName": "App Publisher",
     "description": "App Publisher",
     "license": "MIT",
@@ -17,7 +17,7 @@
         "url": "https://svn.development.pjats.com/pja/app-publisher/trunk"
     },
     "dependencies": {
-        "@spmeesseman/arg-parser": "^1.0.0",
+        "@spmeesseman/arg-parser": "^1.0.1",
         "@spmeesseman/env-ci": "^1.0.3",
         "@types/env-ci": "*",
         "@types/glob": "^7.1.1",
