@@ -165,6 +165,16 @@ export = async () =>
             }
         });
 
+        if (opts.verbose) // even if it's a stdout type task
+        {
+            console.log(gradient("cyan", "pink").multiline(
+`----------------------------------------------------------------------------
+    Current Command Line Options
+----------------------------------------------------------------------------
+        `, {interpolation: "hsv"}));
+            console.log(JSON.stringify(opts, null, 2));
+        }
+
         await require(".")(opts);
         return 0;
     }
@@ -1240,7 +1250,7 @@ const publishRcOpts =
         true,
         "string",
         "",
-        "TA prefix for the version tag.  Tags in the form prefix-vX.X.X."
+        "Tag prefix for the version tag.  Labels the created tag in the form prefix-vX.X.X."
     ],
 
     vcWebPath: [
