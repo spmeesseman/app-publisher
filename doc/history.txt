@@ -4062,3 +4062,48 @@ June 4th, 2021
     Remove CI related tags ([skip-ci], etc) from commit messages when formatting
     the changelog/history file entry.
 
+
+Version 2.2.0
+June 5th, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+    
+    Add new command line switch:
+    
+        --verbose
+    
+    Using this option instructs the process to perform additional logging.
+
+2.  Bug Fix
+    
+    For stdout type tasks, if an error occurs, the error messages are not
+    output to the console.
+
+3.  Bug Fix
+    
+    If there has not been a successful SVN login before using the svn command
+    found in the system PATH, all tasks and publish runs fail.  The SVN username
+    and token can now be stored in the environment for such cases:
+    
+        SVN_AUTHOR_NAME
+        SVN_TOKEN
+
