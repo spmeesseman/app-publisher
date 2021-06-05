@@ -2,7 +2,6 @@
 export const publishRcOpts =
 {
     branch: [
-        // false,                  // Required
         true,                     // Can specify on command line
         "string",                 // Value type
         "trunk",                  // Default value
@@ -172,8 +171,6 @@ export const publishRcOpts =
         false,
         [ "-d", "--dry-run" ],
         {
-            dest: "dryRun",
-            action: "storeTrue",
             help: "Run in dry/test mode, all changes are reverted.\n" +
                   "In dry-run mode, the following holds:\n" +
                   "    1) Installer is not released/published\n" +
