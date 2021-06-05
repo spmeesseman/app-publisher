@@ -345,7 +345,7 @@ async function runPowershellScript(options: any, logger: any)
     // }
     // logger.success("Published release successfully");
     // logger.success(`Published release ${nextRelease.version}`);
-    const isStdOutCmd = !options.taskVersionCurrent && !options.taskVersionNext;
+    const isStdOutCmd = options.taskVersionCurrent || options.taskVersionNext;
     const child = child_process.spawn("powershell.exe", [`${ps1Script} '${JSON.stringify(options)}'`], { stdio: ["pipe", "pipe", "pipe"], env: process.env});
     // const child = child_process.spawn("powershell.exe", [`${ps1Script} ${options}`], { stdio: ["pipe", "inherit", "inherit"] });
 
