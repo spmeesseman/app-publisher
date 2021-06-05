@@ -364,10 +364,11 @@ function parseArgs(): any
                   defaultValue = publishRcOpts[p][2];
 
             lastProp = p;               // Record 'last', used for positionals
-            lastIsPositional = valueType.startsWith("string") || valueType === 'number' || valueType.startsWith("enum");
+            lastIsPositional = valueType.startsWith("string") || valueType === 'number' || 
+                               valueType.startsWith("enum") || valueType === "flag";
             skipCompat = false;
 
-            if (!lastIsPositional)
+            if (!lastIsPositional || valueType === 'flag')
             {
                 opts[p] = (valueType === 'flag' ? "Y" : true);
             }
@@ -410,6 +411,22 @@ function parseArgs(): any
                 else {
                     console.log("Enum type arguments can have only one positional parameter:");
                     console.log("   " + lastProp)
+                    process.exit(0);
+                }
+            }
+            else if (valueType.startsWith("flag"))
+            {
+                if (!opts[lastProp]) {
+                    if (a !== "Y" && a !== "N") {
+                        console.log("Flag type arguments can have only one positional parameter:");
+                        console.log("   " + lastProp)
+                        process.exit(0); 
+                    }
+                    opts[lastProp] = a;
+                }
+                else {
+                    console.log("Flag type arguments can have only one positional parameter:");
+                    console.log("   Y/N/y/n")
                     process.exit(0);
                 }
             }

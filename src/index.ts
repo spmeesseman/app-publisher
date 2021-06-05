@@ -145,7 +145,7 @@ async function run(context, plugins)
         logger.error("   A new version won’t be published");
         return false;
     }
-    else if (ciBranch !== options.branch)
+    else if (ciBranch !== options.branch && !options.taskVersionCurrent && !options.taskVersionNext)
     {
         logger.warn(`This ${runTxt} was triggered on the branch '${ciBranch}', but is configured to ` +
                     `publish from '${options.branch}'`);

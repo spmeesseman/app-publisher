@@ -4294,7 +4294,7 @@ if ($options.prompt) {
 elseif ($options.promptVersion) {
     $PROMPTVERSION = $options.promptVersion
 }
-elseif ($options.interactive) { # for backwards
+elseif ($options.interactive) { # for backwards compat
     $PROMPTVERSION = $options.interactive
 }
 #
