@@ -21,7 +21,7 @@ export = async () =>
     try { //
          // Display color banner
         //
-        if (!opts.taskVersionCurrent && !opts.taskVersionNext) {
+        if (!opts.taskVersionCurrent && !opts.taskVersionNext && !opts.taskVersionInfo && !opts.taskCiEvInfo) {
             displayIntro();
         }
 
@@ -242,23 +242,27 @@ function displayPublishRcHelp()
         {
             const valueType: string = def[1] as string,
                 cmdLineArgs = getArgsFromProperty(property);
-            let cmdLine = "";
+            let cmdLine = "", usage = "";
 
             if (def[3] instanceof String || typeof def[3] === "string")   //  [
             {                                                             //    true,
                 line += def[3];                                           //    "boolean",
                 console.log(line);                                        //    false,
-                for (let i = 4; i < def.length; i++) {                    //    "A script or list of scripts to...",
-                    console.log(`                        ${def[i]}`);     //  ]
-                }
+                for (let i = 4; i < def.length; i++) {                    //    "Display help. This continues",
+                    console.log(`                        ${def[i]}`);     //    "to successuve lines with ','."
+                }                                                         //  ]
             }
             else if (def.length > 4 && def[4] instanceof Object)          //  [
             {                                                             //     true,
-                const lines = (def[4] as any).help.split("\n");           //     "boolean"
-                line += lines[0];                                         //     true,
-                console.log(line);                                        //     [ -s, ---long ],
-                for (let i = 1; i < lines.length; i++) {                  //     { help: "A script or list of to..." }
-                    console.log(`                        ${lines[i]}`);   //  ]
+                const odef = (def[4] as any),                             //     "boolean"
+                      lines = odef.help.split("\n");                      //     true,
+                line += lines[0];                                         //     [ -h, ---help ],
+                console.log(line);                                        //     {
+                for (let i = 1; i < lines.length; i++) {                  //       help: "Display help.  This continues" +
+                    console.log(`                        ${lines[i]}`);   //             "to successive lines with '+'."
+                }                                                         //       usage: ""
+                if (odef.usage) {                                         //     }
+                    usage = odef.usage;                                   //  ]
                 }
             }
             console.log("");
@@ -296,8 +300,12 @@ function displayPublishRcHelp()
                 cmdLine = cmdLineArgs.join(", ");
                 console.log("                        Type         : " + valueType);
             }
+
             console.log("                        Defaults to  : " + def[2].toString());
             console.log("                        Command Line : " + cmdLine);
+            if (usage) {
+                console.log("                        Usage        : " + usage);
+            }
             console.log("");
         }
         else {

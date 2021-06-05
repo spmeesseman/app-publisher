@@ -66,6 +66,13 @@ pipeline {
           bat "npm install"
         }
         script {
+          //stdout = bat(returnStdout: true,
+          //        script: """
+          //          @echo off
+          //          app-publisher --task-version-info
+          //        """)
+          //env.CURRENTVERSION = stdout.split("|")[0]
+          //env.NEXTVERSION = stdout.split("|")[1]
           env.CURRENTVERSION = bat(returnStdout: true,
                   script: """
                     @echo off
@@ -108,7 +115,7 @@ pipeline {
             echo "Successful build"
             echo "    1. Tag version in SVN."
             echo "    2. Send release email."
-            bat "app-publisher --task-touch-versions-commit --task-email"
+            //bat "app-publisher --task-touch-versions-commit --task-email"
           }
         }
       }

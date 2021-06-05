@@ -1620,7 +1620,7 @@ function Log-Message($msg, $color, $noTag = $false)
         return
     }
 
-    if (!$TASKSTDOUTMODE -or $color -eq "red")
+    if (!$TASKMODESTDOUT -or $color -eq "red")
     {
         if ($color) 
         {
@@ -3669,7 +3669,7 @@ $ContentTypeMap = @{
 #
 # Start logging
 #
-if (!$options.taskVersionCurrent -and !$options.taskVersionNext) {
+if (!$options.taskModeStdOut) {
     Log-Message "----------------------------------------------------------------" "darkblue" $true
     Log-Message " App Publisher PowerShell Script" "darkblue" $true
     Log-Message "   Version   : $APPPUBLISHERVERSION" "cyan" $true
@@ -3680,6 +3680,7 @@ if (!$options.taskVersionCurrent -and !$options.taskVersionNext) {
 # Define some local vars that should not be reset on multiple runs past the first one
 #
 $VERSIONSYSTEM = ""
+$CURRENTVERSION = ""
 $VERSION = ""
 
 #
@@ -3718,12 +3719,12 @@ if ($RUN -gt 1)
     $XRUNS[$RUN-2].psobject.Properties | ForEach-Object {
         $options | Add-Member -MemberType $_.MemberType -Name $_.Name -Value $_.Value -Force
     }
-    if (!$options.taskVersionCurrent -and !$options.taskVersionNext) {
+    if (!$options.taskModeStdOut) {
         Log-Message "----------------------------------------------------------------" "darkblue" $true
     }
 }
 
-if (!$options.taskVersionCurrent -and !$options.taskVersionNext) {
+if (!$options.taskModeStdOut) {
     Log-Message "   Run #     : $RUN of $NUMRUNS" "cyan" $true
     Log-Message "   Directory : $CWD" "cyan" $true
     Log-Message "----------------------------------------------------------------" "darkblue" $true
@@ -3963,15 +3964,21 @@ if ($options.emailSender) {
     $EMAILSENDER = $options.emailSender
 }
 #
+# Email Mode
+#
 $EMAILMODE = ""
 if ($options.emailMode) {
     $EMAILMODE = $options.emailMode
 }
 #
+# Email port
+#
 $EMAILPORT = 25
 if ($options.emailPort) {
     $EMAILPORT = $options.emailPort
 }
+#
+#
 #
 $EMAILHREFS = @()
 if ($options.emailHrefs) {
@@ -4440,6 +4447,26 @@ if ($options.versionFilesScrollDown) {
     $VERSIONFILESSCROLLDOWN = $options.versionFilesScrollDown
 }
 #
+# Whether or not to tag the new version in SVN.  Default is Yes.
+#
+$VERSIONFORCECURRENT = $false
+if (![string]::IsNullOrEmpty($options.versionForceCurrent)) {
+    $VERSIONFORCECURRENT = $true
+    $CURRENTVERSION = $options.versionForceCurrent
+}
+#
+# Whether or not to tag the new version in SVN.  Default is Yes.
+#
+$VERSIONFORCENEXT = $false
+if (![string]::IsNullOrEmpty($options.versionForceNext)) {
+    $VERSIONFORCENEXT = $true
+    $VERSION = $options.versionForceNext
+}
+elseif (![string]::IsNullOrEmpty($options.versionForce)) {
+    $VERSIONFORCENEXT = $true
+    $VERSION = $options.versionForce
+}
+#
 #
 #
 $VERSIONREPLACETAGS = @()
@@ -4596,6 +4623,13 @@ if ($TASKCHANGELOG)
     }
 }
 #
+# Get current and next version.  Gets output to stdout inthe form 'current|next'
+#
+$TASKCIENVINFO = $false
+if ($options.taskCiEnvInfo) {
+    $TASKCIENVINFO= $true
+}
+#
 # Set CI Envoronment task
 #
 $TASKCIENVSET = $false
@@ -4637,6 +4671,13 @@ if ($options.taskVersionNext) {
     $TASKVERSIONNEXT = $true
 }
 #
+# Get current and next version.  Gets output to stdout inthe form 'current|next'
+#
+$TASKVERSIONINFO = $false
+if ($options.taskVersionInfo) {
+    $TASKVERSIONINFO= $true
+}
+#
 # Touch version files w/ new/next version
 #
 $TASKTOUCHVERSIONS = $false
@@ -4654,8 +4695,9 @@ if ($options.taskTouchVersionsCommit) {
 # Single task mode flag to skip most of the functionality in the publisher chain except for
 # the particular task that is going to be ran.
 #
-$TASKMODE = $TASKCHANGELOG -or $TASKEMAIL -or $TASKTOUCHVERSIONS -or $TASKMANTISBT -or $TASKVERSIONCURRENT -or $TASKVERSIONNEXT -or $TASKCIENVSET
-$TASKSTDOUTMODE = $TASKVERSIONCURRENT -or $TASKVERSIONNEXT
+$TASKMODE = $TASKCHANGELOG -or $TASKEMAIL -or $TASKTOUCHVERSIONS -or $TASKMANTISBT -or $TASKVERSIONCURRENT -or 
+            $TASKVERSIONNEXT -or $TASKCIENVSET -or $TASKVERSIONINFO -or $TASKCIENVINFO
+$TASKMODESTDOUT = $options.taskModeStdOut
 
 #endregion
 
@@ -5152,9 +5194,6 @@ Log-Message "   Current Version  : $CURRENTVERSION"
 Log-Message "   Build cmd        : $BUILDCOMMAND"
 Log-Message "   Bugs Page        : $BUGS"
 Log-Message "   Changelog file   : $CHANGELOGFILE"
-Log-Message "   Changelog only   : $TASKCHANGELOG"
-Log-Message "   Chglog only file : $TASKCHANGELOGFILE"
-Log-Message "   CI Set Env       : $TASKCIENVSET"
 Log-Message "   C Project Rc File: $CPROJECTRCFILE"
 Log-Message "   Deploy cmd       : $DEPLOYCOMMAND"
 Log-Message "   Dist release     : $DISTRELEASE"
@@ -5197,7 +5236,15 @@ Log-Message "   Project name     : $PROJECTNAME"
 Log-Message "   Prompt version   : $PROMPTVERSION"
 Log-Message "   Repo             : $_Repo"
 Log-Message "   RepoType         : $_RepoType"
-Log-Message "   Single task mode : $TASKMODE"
+Log-Message "   Task mode        : $TASKMODE"
+Log-Message "   Task stdout mode : $TASKMODESTDOUT"
+Log-Message "   Task Chglog      : $TASKCHANGELOG"
+Log-Message "   Task Chglog file : $TASKCHANGELOGFILE"
+Log-Message "   Task CI info out : $TASKCIENVINFO"
+Log-Message "   Task CI set env  : $TASKCIENVSET"
+Log-Message "   Task Version Cur : $TASKVERSIONCURRENT"
+Log-Message "   Task Version Next: $TASKVERSIONNEXT"
+Log-Message "   Task Version Info: $TASKVERSIONINFO"
 Log-Message "   Skip chglog edit : $SKIPCHANGELOGEDITS"
 Log-Message "   Skip deploy/push : $SKIPDEPLOYPUSH"
 Log-Message "   Skip version edit: $SKIPVERSIONEDITS"
@@ -5336,7 +5383,7 @@ if ($TESTEMAILRECIP -is [system.string] -and ![string]::IsNullOrEmpty($TESTEMAIL
 #     1. Incremental (100, 101, 102)
 #     2. Semantic (major.minor.patch)
 #
-if ($CURRENTVERSION -eq "") 
+if ($CURRENTVERSION -eq "" -or ($VERSIONFORCECURRENT -and $RUN -eq 1)) 
 {
     Log-Message "Retrieve current version and calculate next version number"
     #
@@ -5353,12 +5400,14 @@ if ($CURRENTVERSION -eq "")
                 #
                 # use package.json properties to retrieve current version
                 #
-                $CURRENTVERSION = & node -e "console.log(require('./package.json').version);"
+                if (!$VERSIONFORCECURRENT) {
+                    $CURRENTVERSION = & node -e "console.log(require('./package.json').version);"
+                }
                 $VERSIONSYSTEM = "semver"
             } 
             else {
                 Log-Message "Npm based project found, but package.json is missing" "red"
-                if ($TASKSTDOUTMODE) {
+                if ($TASKMODESTDOUT) {
                     Write-Host "0.0.0"
                 }
                 exit 127
@@ -5376,13 +5425,15 @@ if ($CURRENTVERSION -eq "")
     #
     elseif (![string]::IsNullOrEmpty($MANTISBTPLUGIN))
     {
-        $CURRENTVERSION = Get-MantisPluginVersion
+        if (!$VERSIONFORCECURRENT) {
+            $CURRENTVERSION = Get-MantisPluginVersion
+        }
         if (!$CURRENTVERSION.Contains(".")) 
         {
             Log-Message "MantisBT plugins must use semantic versioning" "red"
             Log-Message "Invalid version found '$CURRENTVERSION'" "red"
             Log-Message "Check you mantis plugin file for valid version syntax" "red"
-            if ($TASKSTDOUTMODE) {
+            if ($TASKMODESTDOUT) {
                 Write-Host "0.0.0"
             }
             exit 130
@@ -5395,7 +5446,9 @@ if ($CURRENTVERSION -eq "")
     #
     elseif (![string]::IsNullOrEmpty($HISTORYFILE))
     {
-        $CURRENTVERSION = $ClsHistoryFile.getVersion($HISTORYFILE, $VERSIONTEXT)
+        if (!$VERSIONFORCECURRENT) {
+            $CURRENTVERSION = $ClsHistoryFile.getVersion($HISTORYFILE, $VERSIONTEXT)
+        }
         if ([string]::IsNullOrEmpty($CURRENTVERSION))
         {
             $VERSIONSYSTEM = "manual"
@@ -5421,14 +5474,16 @@ if ($CURRENTVERSION -eq "")
         $AssemblyInfoLoc = Get-ChildItem -Name -Recurse -Depth 1 -Filter "assemblyinfo.cs" -File -Path . -ErrorAction SilentlyContinue
         if ($AssemblyInfoLoc -is [system.string] -and ![string]::IsNullOrEmpty($AssemblyInfoLoc))
         {
-            $CURRENTVERSION = Get-AssemblyInfoVersion $AssemblyInfoLoc
+            if (!$VERSIONFORCECURRENT) {
+                $CURRENTVERSION = Get-AssemblyInfoVersion $AssemblyInfoLoc
+            }
             if (![string]::IsNullOrEmpty($CURRENTVERSION )) {
                 $VERSIONSYSTEM = ".net"
             }
             else {
                 Log-Message "The current version cannot be determined" "red"
                 Log-Message "Provided the current version in publishrc or on the command line" "red"
-                if ($TASKSTDOUTMODE) {
+                if ($TASKMODESTDOUT) {
                     Write-Host "0.0.0"
                 }
                 exit 130
@@ -5443,7 +5498,7 @@ if ($CURRENTVERSION -eq "")
     }
 }
 else {
-    Log-Message "Current version obtained from publishrc"
+    Log-Message "Current version obtained from publishrc /cmd line"
 }
 
 #
@@ -5511,7 +5566,7 @@ if ($VERSIONSYSTEM -eq "semver")
     }
     if ([string]::IsNullOrEmpty($ValidationVersion)) {
         Log-Message "The current semantic version found ($CURRENTVERSION) is invalid" "red"
-        if ($TASKSTDOUTMODE) {
+        if ($TASKMODESTDOUT) {
             Write-Host $CURRENTVERSION
         }
         exit 132
@@ -5524,7 +5579,7 @@ elseif ($VERSIONSYSTEM -eq '.net' -or $VERSIONSYSTEM -eq 'mantisbt')
     #
     if ($false) {
         Log-Message "The current mantisbt version ($CURRENTVERSION) is invalid" "red"
-        if ($TASKSTDOUTMODE) {
+        if ($TASKMODESTDOUT) {
             Write-Host $CURRENTVERSION
         }
         exit 134
@@ -5537,7 +5592,7 @@ elseif ($VERSIONSYSTEM -eq 'incremental')
     #
     if ($false) {
         Log-Message "The current incremental version ($CURRENTVERSION) is invalid" "red"
-        if ($TASKSTDOUTMODE) {
+        if ($TASKMODESTDOUT) {
             Write-Host $CURRENTVERSION
         }
         exit 134
@@ -5565,132 +5620,134 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
 
     if (!$TASKEMAIL)
     {
-        #
-        # Get commit messages since last version
-        #
-        # The previous version tag in the form 'vX.X.X' must exist in svn/projectroot/tags in
-        # order to successfully obtain the latest commit messages.  If it does not exist, the
-        # most current tag will be used
-        #
-        $COMMITS = $ClsVc.getCommits($_RepoType, $_Repo, $BRANCH, $CURRENTVERSION, $VCTAGPREFIX)
-        #
-        # Check to ensure we got commits since last version.  If not, prompt user whether or
-        # not to proceed, since technically the first time this script is used, we don't know
-        # how to retrieve the latest commits
-        #
-        if (($null -eq $COMMITS -or $COMMITS.Length -eq 0) -and !$TASKMODE) 
+        if (!$VERSIONFORCENEXT)
         {
-            Log-Message "Commits since the last version or the version tag could not be found"
-            Log-Message "[PROMPT] User input required"
-            $Proceed = read-host -prompt "Proceed anyway? Y[N]"
-            if ($Proceed.ToUpper() -ne "Y") {
-                Log-Message "User cancelled, exiting" "red"
-                exit 155
+            #
+            # Get commit messages since last version
+            #
+            # The previous version tag in the form 'vX.X.X' must exist in svn/projectroot/tags in
+            # order to successfully obtain the latest commit messages.  If it does not exist, the
+            # most current tag will be used
+            #
+            $COMMITS = $ClsVc.getCommits($_RepoType, $_Repo, $BRANCH, $CURRENTVERSION, $VCTAGPREFIX)
+            #
+            # Check to ensure we got commits since last version.  If not, prompt user whether or
+            # not to proceed, since technically the first time this script is used, we don't know
+            # how to retrieve the latest commits
+            #
+            if (($null -eq $COMMITS -or $COMMITS.Length -eq 0) -and !$TASKMODE) 
+            {
+                Log-Message "Commits since the last version or the version tag could not be found"
+                Log-Message "[PROMPT] User input required"
+                $Proceed = read-host -prompt "Proceed anyway? Y[N]"
+                if ($Proceed.ToUpper() -ne "Y") {
+                    Log-Message "User cancelled, exiting" "red"
+                    exit 155
+                }
             }
-        }
 
-        #
-        # Calculate next version number
-        #
-        # If this is an NPM project, we use node to determine the current version in package.json
-        # For all other project types, we parse the history file for the current version.
-        #
-        # Currently projects are versioned in one of two ways:
-        #
-        #     1. Legacy incremental whole number version (100, 101, 102)
-        #     2. Semantically versioned (major.minor.patch)
-        #
-        # If this is a semantically versioned project (whether the version was obtained via node or 
-        # history file parsing), we will use semver to calculate the next version if possible.  If 
-        # semver is not available, prompt user for next version number.
-        #
-        # If this is a legacy incremental versioned project, the verison obtained in the history will be
-        # incremented by +1.
-        #
-        $VersionInteractive = "N"
-        #
-        if ($VERSIONSYSTEM -eq "semver")
-        {
             #
-            # use semver to retrieve next version
-            # Analyze the commits to determine major, minor, patch release
+            # Calculate next version number
             #
-            $RELEASELEVEL = $ClsCommitAnalyzer.get($COMMITS)
+            # If this is an NPM project, we use node to determine the current version in package.json
+            # For all other project types, we parse the history file for the current version.
             #
-            # Get next version
+            # Currently projects are versioned in one of two ways:
             #
-            if ($RUN -eq 1 -or $DRYRUN -eq $true) {
-                if (!$IsAppPublisher) {
-                    $VERSION = & app-publisher-semver -i $RELEASELEVEL $CURRENTVERSION
+            #     1. Legacy incremental whole number version (100, 101, 102)
+            #     2. Semantically versioned (major.minor.patch)
+            #
+            # If this is a semantically versioned project (whether the version was obtained via node or 
+            # history file parsing), we will use semver to calculate the next version if possible.  If 
+            # semver is not available, prompt user for next version number.
+            #
+            # If this is a legacy incremental versioned project, the verison obtained in the history will be
+            # incremented by +1.
+            #
+            $VersionInteractive = "N"
+            #
+            if ($VERSIONSYSTEM -eq "semver")
+            {
+                #
+                # use semver to retrieve next version
+                # Analyze the commits to determine major, minor, patch release
+                #
+                $RELEASELEVEL = $ClsCommitAnalyzer.get($COMMITS)
+                #
+                # Get next version
+                #
+                if ($RUN -eq 1 -or $DRYRUN -eq $true) {
+                    if (!$IsAppPublisher) {
+                        $VERSION = & app-publisher-semver -i $RELEASELEVEL $CURRENTVERSION
+                    }
+                    else {
+                        $VERSION = & semver -i $RELEASELEVEL $CURRENTVERSION
+                    }
                 }
                 else {
-                    $VERSION = & semver -i $RELEASELEVEL $CURRENTVERSION
+                    $VERSION = $CURRENTVERSION
                 }
             }
-            else {
-                $VERSION = $CURRENTVERSION
+            elseif ($VERSIONSYSTEM -eq "mantisbt" -or $VERSIONSYSTEM -eq '.net')
+            {
+                $VERSION = ""
+                $VersionInteractive = "Y"
             }
-        }
-        elseif ($VERSIONSYSTEM -eq "mantisbt" -or $VERSIONSYSTEM -eq '.net')
-        {
-            $VERSION = ""
-            $VersionInteractive = "Y"
-        }
-        elseif ($VERSIONSYSTEM -eq "incremental")
-        {
+            elseif ($VERSIONSYSTEM -eq "incremental")
+            {
+                #
+                # Whole # incremental versioning, i.e. 100, 101, 102...
+                #
+                Log-Message "Using legacy incremental versioning"
+                if ($RUN -eq 1 -or $DRYRUN -eq $true) {
+                    try {
+                        $VERSION = ([System.Int32]::Parse($CURRENTVERSION) + 1).ToString()
+                    }
+                    catch {
+                        $VERSION = ""
+                    }
+                }
+                else {
+                    $VERSION = $CURRENTVERSION
+                }
+            }
             #
-            # Whole # incremental versioning, i.e. 100, 101, 102...
+            # If version could not be found or version system is 'manual', then prompt for version 
             #
-            Log-Message "Using legacy incremental versioning"
-            if ($RUN -eq 1 -or $DRYRUN -eq $true) {
-                try {
-                    $VERSION = ([System.Int32]::Parse($CURRENTVERSION) + 1).ToString()
+            if (![string]::IsNullOrEmpty($VERSION)) 
+            {
+                Log-Message "The suggested new version is $VERSION"
+            }
+            elseif ($VERSIONSYSTEM -ne "manual" -and $VersionInteractive -eq "N")
+            {
+                Log-Message "New version could not be determined, you must manually input the new version"
+                $VersionInteractive = "Y"
+            }
+    
+            if (($VERSIONSYSTEM -eq "manual" -or $PROMPTVERSION -eq "Y" -or $VersionInteractive -eq "Y") -and !$TASKCHANGELOG -and !$TASKMODESTDOUT) 
+            {
+                Log-Message "[PROMPT] User input required"
+                $NewVersion = read-host -prompt "Enter the version #, or C to cancel [$VERSION]"
+                if ($NewVersion.ToUpper() -eq "C") {
+                    Log-Message "User cancelled process, exiting" "red"
+                    exit 155
                 }
-                catch {
-                    $VERSION = ""
-                }
-            }
-            else {
-                $VERSION = $CURRENTVERSION
-            }
-        }
-        #
-        # If version could not be found or version system is 'manual', then prompt for version 
-        #
-        if (![string]::IsNullOrEmpty($VERSION)) 
-        {
-            Log-Message "The suggested new version is $VERSION"
-        }
-        elseif ($VERSIONSYSTEM -ne "manual" -and $VersionInteractive -eq "N")
-        {
-            Log-Message "New version could not be determined, you must manually input the new version"
-            $VersionInteractive = "Y"
-        }
-
-        if (($VERSIONSYSTEM -eq "manual" -or $PROMPTVERSION -eq "Y" -or $VersionInteractive -eq "Y") -and !$TASKCHANGELOG -and !$TASKSTDOUTMODE) 
-        {
-            Log-Message "[PROMPT] User input required"
-            $NewVersion = read-host -prompt "Enter the version #, or C to cancel [$VERSION]"
-            if ($NewVersion.ToUpper() -eq "C") {
-                Log-Message "User cancelled process, exiting" "red"
-                exit 155
-            }
-            if (![string]::IsNullOrEmpty($NewVersion)) {
-                $VERSION = $NewVersion
-                if ($VERSIONSYSTEM -eq "manual") {
-                    $CURRENTVERSION = $VERSION + "-pre";
+                if (![string]::IsNullOrEmpty($NewVersion)) {
+                    $VERSION = $NewVersion
+                    if ($VERSIONSYSTEM -eq "manual") {
+                        $CURRENTVERSION = $VERSION + "-pre";
+                    }
                 }
             }
-        }
-
-        if ([string]::IsNullOrEmpty($VERSION)) {
-            Log-Message "Invalid version for release, exiting" "red"
-            exit 133
         }
 
         #
         # Validate new version
         #
+        if ([string]::IsNullOrEmpty($VERSION)) {
+            Log-Message "Invalid version for release, exiting" "red"
+            exit 133
+        }
         Log-Message "Validating new version: $VERSION"
         if ($VERSIONSYSTEM -eq "semver")
         {
@@ -5753,6 +5810,10 @@ Log-Message "Next Version        : $VERSION"
 # If task mode 'get current version' or 'get next version', then output version string
 # to stdout and exit
 #
+if ($TASKVERSIONINFO) {
+    Write-Host "$CURRENTVERSION|$VERSION" 
+    exit 0
+}
 if ($TASKVERSIONCURRENT) {
     Write-Host $CURRENTVERSION
     exit 0
@@ -5797,7 +5858,7 @@ Log-Message "Date                : $TDATE"
 #
 # Process $HISTORYFILE
 #
-if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$TASKTOUCHVERSIONS -and !$TASKCIENVSET)
+if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$TASKTOUCHVERSIONS -and !$TASKCIENVSET -and !$TASKMODESTDOUT)
 {
     if ($TASKCHANGELOGVIEW -or $TASKCHANGELOGFILE)
     {
@@ -5946,7 +6007,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
 #
 # Process $CHANGELOGFILE
 #
-if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$TASKTOUCHVERSIONS -and !$TASKCIENVSET)
+if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$TASKTOUCHVERSIONS -and !$TASKCIENVSET -and !$TASKMODESTDOUT)
 {
     if ($TASKCHANGELOGVIEW -or $TASKCHANGELOGFILE)
     {
@@ -6977,7 +7038,7 @@ if (!$TASKMODE)
 #
 # Send release notification email
 #
-if (!$TASKCHANGELOG -and !$TASKTOUCHVERSIONS -and !$TASKMANTISBT -and !$TASKCIENVSET -and ($EMAILNOTIFICATION -eq "Y" -or $TASKEMAIL)) {
+if (!$TASKCHANGELOG -and !$TASKTOUCHVERSIONS -and !$TASKMANTISBT -and !$TASKCIENVSET -and !$TASKMODESTDOUT -and ($EMAILNOTIFICATION -eq "Y" -or $TASKEMAIL)) {
     Send-Notification "$TargetNetLocation" "$NpmLocation" "$NugetLocation"
 }
 
@@ -7320,9 +7381,12 @@ else  # SINGLETASKMODE
 
 #endregion
 
+#
+# CI Tasks
+#
 if ($TASKCIENVSET)
 {
-    Log-Message "Set CI environment variables"
+    Log-Message "Write CI environment to file 'ap.env'"
     if (Test-Path("ap.env")) {
         Remove-Item -Force -Path "ap.env" | Out-Null
     }
@@ -7333,6 +7397,22 @@ if ($TASKCIENVSET)
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) {
         Add-Content "ap.env" "$CHANGELOGFILE" | Out-Null
+    }
+}
+#
+# CI Tasks
+#
+if ($TASKCIENVINFO)
+{
+    Log-Message "Output CI environment info"
+    if (![string]::IsNullOrEmpty($HISTORYFILE)) {
+        Write-Host "$CURRENTVERSION|$VERSION|$HISTORYFILE"
+    }
+    elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) {
+        Write-Host "$CURRENTVERSION|$VERSION|$CHANGELOGFILE"
+    }
+    else {
+        Write-Host "$CURRENTVERSION|$VERSION"
     }
 }
 

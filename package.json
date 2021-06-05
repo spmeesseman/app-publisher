@@ -85,7 +85,9 @@
         "task-rt-changelog_view": "npx ./build/bin/app-publisher.js --no-ci --task-changelog-view",
         "task-rt-changelog_file": "npx ./build/bin/app-publisher.js --no-ci --task-changelog-file test/changelog.test",
         "task-rt-ci_env": "npx ./build/bin/app-publisher.js --no-ci --task-ci-env",
+        "task-rt-ci_info": "npx ./build/bin/app-publisher.js --no-ci --task-ci-env-info",
         "task-rt-ci_env_set": "npx ./build/bin/app-publisher.js --no-ci --task-ci-env-set",
+        "task-rt-config": "npx ./build/bin/app-publisher.js --no-ci --config",
         "task-dry-mantis_release": "npx ./build/bin/app-publisher.js --no-ci --task-mantisbt-release --dry-run",
         "task-dry-mantis_release_noedit": "npx ./build/bin/app-publisher.js --no-ci --task-mantisbt-release --dry-run --skip-changelog-edits",
         "task-rt-touch_versions": "npx ./build/bin/app-publisher.js --no-ci -task-touch-versions",
@@ -93,6 +95,7 @@
         "task-rt-touch_versions_commit": "npx ./build/bin/app-publisher.js --no-ci -ttvc",
         "task-dry-touch_versions_commit": "npx ./build/bin/app-publisher.js --no-ci -ttvc --dry-run",
         "task-rt-version_current": "npx ./build/bin/app-publisher.js --no-ci --task-version-current",
+        "task-rt-version_info": "npx ./build/bin/app-publisher.js --no-ci --task-version-info",
         "task-rt-version_next": "npx ./build/bin/app-publisher.js --no-ci --task-version-next",
         "republish": "npx ./build/bin/app-publisher.js --republish",
         "jenkins-validate-jenkinsfile": "cmd /c curl -X POST -L -H \"Authorization: basic c21lZXNzZW1hbjoxMTU5NzgyYTBmNDE5OTI2M2VkYTY0ZTVlZjViYzIzZDY4\" -F \"jenkinsfile=<Jenkinsfile\" https://jenkins.development.pjats.com/pipeline-model-converter/validate"

@@ -50,6 +50,14 @@ export const publishRcOpts =
         "    }"
     ],
 
+    config: [
+        true,
+        "boolean",
+        false,
+        [ "-c", "--config" ],
+        "Display config."
+    ],
+
     cProjectRcFile: [
         true,
         "string",
@@ -170,6 +178,13 @@ export const publishRcOpts =
         "enum(std|ssl)",
         "std (Standard / Non-Secure)",
         "The delivery method to use when sending an email notification."
+    ],
+
+    emailPort: [
+        true,
+        "number",
+        25,
+        "The smtp server port to use when sending an email notification."
     ],
 
     emailNotification: [
@@ -690,14 +705,25 @@ export const publishRcOpts =
         }
     ],
 
+    taskCiEnvInfo: [
+        true,
+        "boolean",
+        false,
+        [ "-tcei", "--task-ci-env-info" ],
+        {
+            help: "Finds CI related build information, and outputs the info to stdout\n" +
+                  "using a concatenated string in the form 'current|next|changelogpath'."
+        }
+    ],
+
     taskCiEnvSet: [
         true,
         "boolean",
         false,
         [ "-tces", "--task-ci-env-set" ],
         {
-            help: "Finds the current/latest version released and outputs that version\n" +
-                  "string to stdout."
+            help: "Finds CI related build information, and outputs the info to the file\n" +
+                  "'ap.env' in the root workspace directory."
         }
     ],
 
@@ -754,7 +780,21 @@ export const publishRcOpts =
         [ "-tvc", "--task-version-current" ],
         {
             help: "Finds the current/latest version released and outputs that version\n" +
-                  "string to stdout."
+                  "string to stdout.\n" +
+                  "Ignored if the --task-version-info switch is used."
+        }
+    ],
+
+    taskVersionInfo: [
+        true,
+        "boolean",
+        false,
+        [ "-tvi", "--task-version-info" ],
+        {
+            help: "Finds the current/latest and next version released, and outputs the\n" +
+                  "info to stdout using a concatenated string in the form 'current|next'.\n" +
+                  "Note that this switch overrides both the --task-version-current and the\n" +
+                  "--task-version-current switches."
         }
     ],
 
@@ -765,7 +805,8 @@ export const publishRcOpts =
         [ "-tvn", "--task-version-next" ],
         {
             help: "Calculates the next version to be released based on versioned files\n" +
-                  "and commit messages. and outputs that version string to stdout."
+                  "and commit messages. and outputs that version string to stdout.\n" +
+                  "Ignored if the --task-version-info switch is used."
         }
     ],
 
@@ -833,12 +874,31 @@ export const publishRcOpts =
         "A file path or list of file paths to perform version string replacement in."
     ],
 
-    versionForce: [
+    versionForceCurrent: [
         false,
         "string",
         "",
-        "A version number to use as the 'next version'.  Version calculation will not be",
-        "performed other than for reading in the current version, skipping an SCM step."
+        [ "--version-force-current" ],
+        {
+            help: "A version number to use as the 'current version'.",
+            usage: [
+                "--version-force-current 300", "--version-force-current 3.0.0"
+            ]
+        }
+    ],
+
+    versionForceNext: [
+        false,
+        "string",
+        "",
+        [ "--version-force-next", "--version-force" ],
+        {
+            help: "A version number to use as the 'next version'.  Version calculation will not be" +
+                  "performed other than for reading in the current version, skipping an SCM step.",
+            usage: [
+                "--version-force 300", "--version-force 2.0.0"
+            ]
+        }
     ],
 
     versionFilesEditAlways: [

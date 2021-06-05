@@ -47,7 +47,7 @@ async function run(context, plugins)
 ----------------------------------------------------------------------------
         `;
         console.log(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
-        console.log(options);
+        console.log(JSON.stringify(options, undefined, 3));
         return true;
     }
 
@@ -93,8 +93,9 @@ async function run(context, plugins)
     options.appPublisherVersion = pkg.version;
     // tslint:disable-next-line: quotemark
     options.isNodeJsEnv = typeof module !== 'undefined' && module.exports;
+    options.taskModeStdOut = options.taskVersionCurrent || options.taskVersionNext || options.taskVersionInfo || options.taskCiEvInfo;
 
-    if (!options.taskVersionCurrent && !options.taskVersionNext)
+    if (!options.taskModeStdOut)
     {
         const mode = options.isNodeJsEnv ? "Node.js" : "bin mode";
         logger.log(`Running ${pkg.name} version ${pkg.version} in ${mode}`);
@@ -146,14 +147,14 @@ async function run(context, plugins)
         logger.error("   A new version won’t be published");
         return false;
     }
-    else if (ciBranch !== options.branch && !options.taskVersionCurrent && !options.taskVersionNext)
+    else if (ciBranch !== options.branch && !options.taskModeStdOut)
     {
         logger.warn(`This ${runTxt} was triggered on the branch '${ciBranch}', but is configured to ` +
                     `publish from '${options.branch}'`);
         logger.warn("   Continuing due to non-ci environment");
     }
 
-    if (!options.taskVersionCurrent && !options.taskVersionNext) {
+    if (!options.taskModeStdOut) {
         logger[options.dryRun ? "warn" : "log"](
             `Run automated release from branch '${options.branch}'${options.dryRun ? " in dry-run mode" : ""}`
         );
@@ -348,7 +349,7 @@ async function runPowershellScript(options: any, logger: any)
     // logger.success(`Published release ${nextRelease.version}`);
     const isTaskCmd = options.taskChangelog || options.taskEmail || options.taskTouchVersions || options.taskMantisbtRelease ||
                       options.taskVersionCurrent || options.taskVersionNext || options.taskCiEnvSet,
-          isStdOutCmd = options.taskVersionCurrent || options.taskVersionNext,
+          isStdOutCmd = options.taskModeStdOut,
           child = child_process.spawn("powershell.exe", [`${ps1Script} '${JSON.stringify(options)}'`], { stdio: ["pipe", "pipe", "pipe"], env: process.env});
     // const child = child_process.spawn("powershell.exe", [`${ps1Script} ${options}`], { stdio: ["pipe", "inherit", "inherit"] });
 
