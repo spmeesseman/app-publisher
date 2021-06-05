@@ -47,17 +47,11 @@
     "historyHref":       "<a href=\"https://app1.development.pjats.com/svn/web/filedetails.php?repname=pja&path=%2Fapp-publisher%2Ftrunk%2Fdoc%2Fhistory.txt&usemime=1\">History File - WebSVN</a>",
     "homePage":          "",
     "mantisbtRelease":   "Y",
-    "mantisbtApiToken": [
-        "${MANTISBT_API_TOKEN}",
-        "${MANTIS_API_TOKEN}"
-    ],
+    "mantisbtApiToken": "${MANTISBT_API_TOKEN}",
     "mantisbtChglogEdit":  "N",
     "mantisbtPlugin":    "",
     "mantisbtProject":   "",
-    "mantisbtUrl": [
-        "https://app1.development.pjats.com/projects",
-        "https://app1.spmeesseman.com/projects"
-    ],
+    "mantisbtUrl": "https://app1.development.pjats.com/projects",
     "mantisbtAssets": [
         "install\\dist\\history.txt|History File",
         "install\\dist\\app-publisher.tgz|NPM Tarball"

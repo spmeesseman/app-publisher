@@ -19,8 +19,8 @@ pipeline {
   }
 
   environment { 
-    CURRENT_VERSION = '',
-    NEXT_VERSION = '',
+    CURRENT_VERSION = ''
+    NEXT_VERSION = ''
     CHANGELOG_FILE = ''
   }
 
