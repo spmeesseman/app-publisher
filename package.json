@@ -17,7 +17,8 @@
         "url": "https://svn.development.pjats.com/pja/app-publisher/trunk"
     },
     "dependencies": {
-        "@spmeesseman/env-ci": "^1.0.2",
+        "@spmeesseman/arg-parser": "0.0.6",
+        "@spmeesseman/env-ci": "^1.0.3",
         "@types/env-ci": "*",
         "@types/glob": "^7.1.1",
         "@types/gradient-string": "^1.1.0",
