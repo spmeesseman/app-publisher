@@ -96,8 +96,7 @@
         "task-rt-version_current": "npx ./build/bin/app-publisher.js --no-ci --task-version-current",
         "task-rt-version_info": "npx ./build/bin/app-publisher.js --no-ci --task-version-info",
         "task-rt-version_next": "npx ./build/bin/app-publisher.js --no-ci --task-version-next",
-        "republish": "npx ./build/bin/app-publisher.js --republish",
-        "jenkins-validate-jenkinsfile": "cmd /c curl -X POST -L -H \"Authorization: basic \" -F \"jenkinsfile=<Jenkinsfile\" https://jenkins.development.pjats.com/pipeline-model-converter/validate"
+        "republish": "npx ./build/bin/app-publisher.js --republish"
     },
     "main": "./build/bin/app-publisher.js",
     "bin": {

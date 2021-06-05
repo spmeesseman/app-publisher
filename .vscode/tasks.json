@@ -1,0 +1,41 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Validate Jenkinsfile",
+            "type": "process",
+            "command": "curl",
+            "args": [
+                "-X",
+                "POST",
+                "-L",
+                "-H",
+                "Authorization: basic ${env:JENKINS_API_TOKEN}",
+                "-F",
+                "jenkinsfile=<Jenkinsfile",
+                "https://jenkins.development.pjats.com/pipeline-model-converter/validate"
+            ],
+            "options": {
+                "shell": {
+                    "executable": "cmd.exe",
+                    "args": [ "/c" ]
+                }
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        }
+    ]
+}

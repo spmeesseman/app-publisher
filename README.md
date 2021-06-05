@@ -251,6 +251,14 @@ After a period of time, the session token created with this command will expire.
 
 For more details, see the [Internal NPM Registry](https://app1.development.pjats.com/doc/developernotes.md#Internal-NPM-Registry) section of the Perry Johnson Developer Notes document.
 
+## Jenkins Token
+
+I order to run the VSCode task *Validate Jenkinsfile*, the following environment variable must be set:
+
+    c21lZXNzZW1hbjoxMTU5NzgyYTBmNDE5OTI2M2VkYTY0ZTVlZjViYzIzZDY4
+
+This *token* is the base64 encoded version of http basic auth using an API token, i.e. username:token
+
 ## Running Outside of the Code Package Environment
 
 To run App-Publisher, nodejs and npm are required.  These are by default installed with the *Code Package* installer.

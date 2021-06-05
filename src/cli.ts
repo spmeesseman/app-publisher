@@ -11,6 +11,13 @@ import { publishRcOpts } from "./args";
 
 export = async () =>
 {
+    //const ArguParser = require("@spmeesseman/arg-parser").ArgParser;
+    //const parser = new ArgParser({
+    //    addHelp: false,
+    //    description: "",
+    //    prog: "app-publisher"
+    //});
+
     //
     // Since the js port of argparse doesnt support the 'allowAbbrev' property, manually
     // parse the arguments.  Jeezuz these devs sometimes makes the simplest things so complicated.
