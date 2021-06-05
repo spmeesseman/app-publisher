@@ -18,21 +18,19 @@ pipeline {
             name: 'EMAIL_RECIPIENTS')
   }
 
-  environment { 
-    environment {
-      CURRENTVERSION = """
-                ${bat(
-                  returnStdout: true,
-                  script: 'app-publisher --task-version-current'
-                )}
-                """
-      VERSION = """
-                ${bat(
-                  returnStatus: true,
-                  script: 'app-publisher --task-task-version-next'
-                )}
-                """
-    }
+  environment {
+    CURRENTVERSION = """
+              ${bat(
+                returnStdout: true,
+                script: 'app-publisher --task-version-current'
+              )}
+              """
+    VERSION = """
+              ${bat(
+                returnStatus: true,
+                script: 'app-publisher --task-task-version-next'
+              )}
+              """
   }
 
   stages {
