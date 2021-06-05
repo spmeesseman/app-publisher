@@ -17,24 +17,13 @@ export = async () =>
     });
     const opts = parser.parseArgs(publishRcOpts);
 
-    try { //
-         // Display color banner
+    try {  //
+          // Display color banner
+         // If opts.verbose s set, then the ArgumentParser will have diplayed the banner already
+        // For stdout type tasks, then we dont display the banner or anything else for that matter.
         //
-        if (!opts.taskVersionCurrent && !opts.taskVersionNext && !opts.taskVersionInfo && !opts.taskCiEvInfo) {
+        if (!opts.taskVersionCurrent && !opts.taskVersionNext && !opts.taskVersionInfo && !opts.taskCiEvInfo && !opts.verbose) {
             displayIntro();
-        }
-
-        //
-        // If user specified '--version', then just display version and exit
-        //
-        if (opts.version)
-        {
-            console.log(chalk.bold(gradient("cyan", "pink").multiline(
-`----------------------------------------------------------------------------
- App-Publisher Version :  ${require("../package.json").version}
-----------------------------------------------------------------------------
-                        `, {interpolation: "hsv"})));
-            process.exit(0);
         }
 
         //
