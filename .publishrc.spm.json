@@ -1,12 +1,13 @@
 {
     "projectName":       "app-publisher",
     "version": "2.2.5",
-    "branch":            "trunk",
+    "branch":            "master",
     "bugs":              "",
     "buildCommand": [
         "npm run build"
     ],
-    "changelogFile":     "",
+    "changelogFile":     "CHANGELOG.md",
+    "cProjectRcFile":    "",
     "commitMsgMap": {
         "internal": {
             "versionBump": "patch",
@@ -15,21 +16,20 @@
             "iconCls": "fa-building"
         }
     },
-    "cProjectRcFile":    "",
     "deployCommand":     "",
-    "distRelease":       "N", 
-    "distAddAllToVC":    "N",
-    "distReleasePath":   "\\\\192.168.68.120\\d$\\softwareimages",
+    "distRelease":       "N",
+    "distReleasePath":   "",
     "distReleasePreCommand": [],
     "distReleasePostCommand": [],
     "distDocPath":       "",
+    "distAddAllToVC":    "N",
     "dryRunVcRevert":    "Y",
     "emailNotification": "Y",
     "emailMode":         "",
     "emailPort":         25,
+    "emailServer":       "10.0.7.50",
     "emailRecip":        "productrelease@pjats.com",
-    "emailSender":       "Product Build <service_pja@pjats.com>",
-    "emailServer":       "10.0.7.152",
+    "emailSender":       "productbuild@pjats.com",
     "emailHrefs": [
         "https://app1.development.pjats.com/svn/web/filedetails.php?repname=pja&path=%2Fapp-publisher%2Ftrunk%2FREADME.md&usemime=1|ReadMe File|Readme File - WebSVN",
         "https://app1.development.pjats.com/projects/set_project.php?project=app-publisher&make_default=no&ref=roadmap_page.php|Project Roadmap|Roadmap - Projects Board",
@@ -46,15 +46,23 @@
     "historyLineLen":    80,
     "historyHref":       "<a href=\"https://app1.development.pjats.com/svn/web/filedetails.php?repname=pja&path=%2Fapp-publisher%2Ftrunk%2Fdoc%2Fhistory.txt&usemime=1\">History File - WebSVN</a>",
     "homePage":          "",
+    "interactive":       "N",
     "mantisbtRelease":   "Y",
-    "mantisbtApiToken": "${MANTISBT_API_TOKEN}",
+    "mantisbtApiToken": [
+        "${MANTISBT_API_TOKEN}",
+        "${MANTIS_API_TOKEN}"
+    ],
     "mantisbtChglogEdit":  "N",
     "mantisbtPlugin":    "",
     "mantisbtProject":   "",
-    "mantisbtUrl": "https://app1.development.pjats.com/projects",
+    "mantisbtUrl": [
+        "https://app1.development.pjats.com/projects",
+        "https://app1.spmeesseman.com/projects"
+    ],
     "mantisbtAssets": [
         "install\\dist\\history.txt|History File",
-        "install\\dist\\app-publisher.tgz|NPM Tarball"
+        "install\\dist\\app-publisher.tgz|NPM Tarball",
+        "install\\dist\\App-Publisher_32bit.exe|Windows Installer"
     ],
     "mantisReleasePreCommand": [],
     "mantisReleasePostCommand": [],
@@ -66,10 +74,10 @@
     "npmReleasePostCommand": [],
     "nugetRelease":      "N",
     "pathToDist":        "install\\dist",
-    "pathToRoot":        ".",
-    "pathToMainRoot":    "",
+    "pathtoRoot":        ".",
+    "pathtoMainRoot":    "",
     "pathPreRoot":       "",
-    "postBuildCommand":  [],
+    "postBuildCommand":  "",
     "preCommitCommand":  [],
     "postCommitCommand": [],
     "postReleaseCommand":"",
@@ -85,10 +93,28 @@
     "vcTag":             "Y",
     "vcTagPrefix":       "",
     "vcWebPath":         "https://app1.development.pjats.com/web/svn/filedetails.php%3Frepname=pja%26usemime=1%26path=",
-    "versionFiles":      [],
+    "versionFiles": [
+        "install\\installer-x86.nsi"
+    ],
     "versionFilesEditAlways": [],
     "versionReplaceTags":     [],
     "versionFilesScrollDown": [],
     "versionText":       "Version",
-    "writeLog":          "N"
+    "writeLog":          "N",
+    "xRuns": [
+    {
+        "repoType":      "git",
+        "branch":        "master",
+        "repo":          "https://github.com/spmeesseman/app-publisher.git",
+        "homePage":      "https://github.com/spmeesseman/app-publisher",
+        "bugs":          "https://app1.spmeesseman.com/projects/set_project.php?project=app-publisher&make_default=no&ref=bug_report_page.php",
+        "npmRegistry":   "https://registry.npmjs.org",
+        "textEditor":    "",
+        "historyFile":   "",
+        "npmScope":      "@spmeesseman",
+        "mantisbtRelease":"N",
+        "githubRelease": "Y",
+        "githubUser":    "spmeesseman",
+        "emailNotification": "N"
+    }] 
 }
