@@ -18,6 +18,12 @@ pipeline {
             name: 'EMAIL_RECIPIENTS')
   }
 
+  environment { 
+    CURRENT_VERSION = ''
+    NEXT_VERSION = ''
+    CHANGELOG_FILE = ''
+  }
+
   stages {
     
     stage("Checkout") {
@@ -59,22 +65,22 @@ pipeline {
         nodejs("Node 13") {
           bat "npm install"
         }
+        script {
+          env.CURRENTVERSION = bat(returnStdout: true,
+                  script: """
+                    @echo off
+                    app-publisher --task-version-current
+                  """)
+          env.NEXTVERSION = bat(returnStdout: true,
+                  script: """
+                    @echo off
+                    app-publisher --task-version-next
+                  """)
+        }
       }
     }
 
     stage("Build") {
-      environment {
-        CURRENTVERSION = bat(returnStdout: true,
-                 script: """
-                  @echo off
-                  app-publisher --task-version-current
-                """)
-        NEXTVERSION = bat(returnStdout: true,
-                 script: """
-                  @echo off
-                  app-publisher --task-version-next
-                """)
-      }
       steps {
         nodejs("Node 13") {
           echo "Current version is ${env.CURRENTVERSION}"
@@ -92,6 +98,19 @@ pipeline {
                           artifacts: 'install/dist/history.txt,install/dist/app-publisher.tgz',
                           followSymlinks: false,
                           onlyIfSuccessful: true
+        //when {
+        //  not {
+        //    changelog '^.*\\[skip release\\].+$'
+        //  }
+        //}
+        script {
+          if (env.BRANCH_NAME == "trunk") {
+            echo "Successful build"
+            echo "    1. Tag version in SVN."
+            echo "    2. Send release email."
+            bat "app-publisher --task-touch-versions-commit --task-email"
+          }
+        }
       }
     }
   
@@ -122,29 +141,6 @@ pipeline {
         //deleteDir()
       }
     }
-    //
-    // Only run the steps if the current Pipeline’s or stage’s run has a "success" status
-    //
-    //success {
-    //  when {
-    //    branch 'trunk'
-    //  }
-    //  steps {
-    //    echo "Subversion Tasks."
-    //    dir("src/ui") {
-    //      bat "app-publisher --touch-versions-commit"
-    //    }
-    //  }
-    //  
-    //  when {
-    //    branch 'trunk'
-    //  }
-    //  steps {
-    //    dir("src/ui") {
-    //      bat "app-publisher --email-only"
-    //    }
-    //  }
-    //}
   }
 
 }

@@ -1,12 +1,12 @@
 
-//import { visit, JSONVisitor } from "jsonc-parser";
+// import { visit, JSONVisitor } from "jsonc-parser";
 import * as util from "./util";
-//import * as fs from "fs";
-//import * as path from "path";
+// import * as fs from "fs";
+// import * as path from "path";
 import gradient from "gradient-string";
 import chalk from "chalk";
 import * as child_process from "child_process";
-//import { template, pick } from "lodash";
+// import { template, pick } from "lodash";
 import marked from "marked";
 import TerminalRenderer from "marked-terminal";
 const envCi = require("@spmeesseman/env-ci");
@@ -14,17 +14,17 @@ const envCi = require("@spmeesseman/env-ci");
 import hookStd from "hook-std";
 import hideSensitive = require("./lib/hide-sensitive");
 import getConfig = require("./lib/get-config");
-//import getReleaseLevel = require("./lib/commit-analyzer");
-//import verify = require("./lib/verify");
-//import getCommits = require("./lib/get-commits");
-//import getNextVersion = require("./lib/get-next-version");
-//import getLastRelease = require("./lib/get-last-release");
+// import getReleaseLevel = require("./lib/commit-analyzer");
+// import verify = require("./lib/verify");
+// import getCommits = require("./lib/get-commits");
+// import getNextVersion = require("./lib/get-next-version");
+// import getLastRelease = require("./lib/get-last-release");
 import { extractErrors } from "./lib/utils";
-//import { sendEmail } from "./lib/email";
-//import getGitAuthUrl = require("./lib/get-git-auth-url");
+// import { sendEmail } from "./lib/email";
+// import getGitAuthUrl = require("./lib/get-git-auth-url");
 import getLogger = require("./lib/get-logger");
-//import { fetch, verifyAuth, isBranchUpToDate, getHead, tag, push } from "./lib/repo";
-//import getError = require("./lib/get-error");
+// import { fetch, verifyAuth, isBranchUpToDate, getHead, tag, push } from "./lib/repo";
+// import getError = require("./lib/get-error");
 import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
 
 const pkg = require("../package.json");
@@ -51,10 +51,10 @@ async function run(context, plugins)
         return true;
     }
 
-    let { 
-        isCi, branch: ciBranch, isPr, name: ciName, root: ciRoot, build: ciBuild, buildUrl: ciBuildUrl, commit: ciCommit 
+    const {
+        isCi, branch: ciBranch, isPr, name: ciName, root: ciRoot, build: ciBuild, buildUrl: ciBuildUrl, commit: ciCommit
     } = envCi({ env, cwd });
-    
+
     if (!options.branch) {
         options.branch = ciBranch;
     }
@@ -91,11 +91,12 @@ async function run(context, plugins)
     // Set some additional options specific to powershell script
     //
     options.appPublisherVersion = pkg.version;
+    // tslint:disable-next-line: quotemark
     options.isNodeJsEnv = typeof module !== 'undefined' && module.exports;
 
     if (!options.taskVersionCurrent && !options.taskVersionNext)
     {
-        const mode = options.isNodeJsEnv ? "Node.js" : "bin mode"
+        const mode = options.isNodeJsEnv ? "Node.js" : "bin mode";
         logger.log(`Running ${pkg.name} version ${pkg.version} in ${mode}`);
     }
 
@@ -131,7 +132,7 @@ async function run(context, plugins)
             });
         }
     }
-    
+
     if (isCi && isPr && !options.noCi)
     {
         logger.error("This run was triggered by a pull request and therefore a new version won't be published.");
@@ -160,18 +161,18 @@ async function run(context, plugins)
 
     if (options.verbose) // even if it's a stdout type task
     {
-        logger.log(JSON.stringify(options, null, 3));
+        logger.log(JSON.stringify(options, undefined, 3));
     }
 
-    //if (options.emailOnly)
-    //{
-    //    // await sendEmail(logger);
-    //    await runPowershellScript(options, logger);
-    //    // await runNodeScript(context, plugins);
-    //}
-    //else {
-        await runPowershellScript(options, logger);
-    //}
+    // if (options.emailOnly)
+    // {
+    //     // await sendEmail(logger);
+    //     await runPowershellScript(options, logger);
+    //     // await runNodeScript(context, plugins);
+    // }
+    // else {
+         await runPowershellScript(options, logger);
+    // }
 }
 
 /*
@@ -345,7 +346,7 @@ async function runPowershellScript(options: any, logger: any)
     // }
     // logger.success("Published release successfully");
     // logger.success(`Published release ${nextRelease.version}`);
-    const isTaskCmd = options.taskChangelog || options.taskEmail || options.taskTouchVersions || options.taskMantisbtRelease || 
+    const isTaskCmd = options.taskChangelog || options.taskEmail || options.taskTouchVersions || options.taskMantisbtRelease ||
                       options.taskVersionCurrent || options.taskVersionNext || options.taskCiEnvSet,
           isStdOutCmd = options.taskVersionCurrent || options.taskVersionNext,
           child = child_process.spawn("powershell.exe", [`${ps1Script} '${JSON.stringify(options)}'`], { stdio: ["pipe", "pipe", "pipe"], env: process.env});
@@ -402,7 +403,7 @@ async function runPowershellScript(options: any, logger: any)
             }
         }
         else {
-            logger.error(`Failed to publish release - return code '${iCode}'`)
+            logger.error(`Failed to publish release - return code '${iCode}'`);
         }
         process.exit(iCode);
     });
@@ -426,7 +427,7 @@ function logPowershell(data: string, logger: any, isStdOutCmd: boolean)
     if (!data) {
         return;
     }
-    
+
     const isError = data.includes("[ERROR] ");
 
     if (isStdOutCmd && !isError) {

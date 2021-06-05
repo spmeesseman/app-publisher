@@ -13,7 +13,13 @@ export async function getTagHead(tagName: any, execaOpts: { cwd: any; env: any; 
 {
     try
     {
-        return await execa.stdout("git", ["rev-list", "-1", tagName], execaOpts);
+        if (repoType === "git")
+        {
+            return await execa.stdout("git", ["rev-list", "-1", tagName], execaOpts);
+        }
+        else {
+            return await execa.stdout("svn", ["info", "tags/" + tagName], execaOpts);
+        }
     } catch (error)
     {
         debug(error);
