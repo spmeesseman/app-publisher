@@ -4162,3 +4162,31 @@ June 5th, 2021
     Flag type command line args should accept a positional parameter of Y/N/y/n.
     Or, if omitted, and the option is specified, default the flag value to "Y".
 
+
+Version 2.2.3
+June 5th, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+    
+    Flag type command line arguments should just default to "Y" is there is no
+    positional value specified (behaving like a boolean type).
+
