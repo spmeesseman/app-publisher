@@ -19,9 +19,20 @@ pipeline {
   }
 
   environment { 
-    CURRENT_VERSION = ''
-    NEXT_VERSION = ''
-    CHANGELOG_FILE = ''
+    environment {
+      CURRENTVERSION = """
+                ${bat(
+                  returnStdout: true,
+                  script: 'app-publisher --task-version-current'
+                )}
+                """
+      VERSION = """
+                ${bat(
+                  returnStatus: true,
+                  script: 'app-publisher --task-task-version-next'
+                )}
+                """
+    }
   }
 
   stages {
@@ -71,8 +82,10 @@ pipeline {
     stage("Build") {
       steps {
         nodejs("Node 13") {
+          echo "Current version is ${env.CURRENTVERSION}"
+          echo "Next proposed version is ${env.NEXTVERSION}"
+          bat "app-publisher --task-touch-versions"
           bat "npm run build"
-          //bat "app-publisher --dry-run --no-ci"
         }
       }
     }
