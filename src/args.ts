@@ -296,18 +296,6 @@ export const publishRcOpts =
         "Ignored if githubRelease = N."
     ],
 
-    help: [
-        true,
-        "boolean",
-        false,
-        [ "-h", "--help" ],
-        {
-            dest: "help",
-            action: "storeTrue",
-            help: "Display help."
-        }
-    ],
-
     historyFile: [
         true,
         "string",
@@ -873,26 +861,6 @@ export const publishRcOpts =
         "string",
         "",
         "Web path to version control repository, if WebSVN is available"
-    ],
-
-    verbose: [
-        true,
-        "boolean",
-        false,
-        [ "--verbose" ],
-        {
-            help: "Enable additional log output."
-        }
-    ],
-
-    version: [
-        true,
-        "boolean",
-        false,
-        [ "-v", "--version" ],
-        {
-            help: "Display the current app-publisher version."
-        }
     ],
 
     versionFiles: [
