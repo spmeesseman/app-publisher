@@ -5667,7 +5667,7 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
             $VersionInteractive = "Y"
         }
 
-        if (($VERSIONSYSTEM -eq "manual" -or $PROMPTVERSION -eq "Y" -or $VersionInteractive -eq "Y") -and !$TASKCHANGELOG) 
+        if (($VERSIONSYSTEM -eq "manual" -or $PROMPTVERSION -eq "Y" -or $VersionInteractive -eq "Y") -and !$TASKCHANGELOG -and !$TASKSTDOUTMODE) 
         {
             Log-Message "[PROMPT] User input required"
             $NewVersion = read-host -prompt "Enter the version #, or C to cancel [$VERSION]"

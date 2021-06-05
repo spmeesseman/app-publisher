@@ -332,6 +332,7 @@ function parseArgs(): any
     const opts: any = {},
           args = process.argv.slice(2);
     let lastProp: string,
+        lastType: string,
         lastIsPositional: boolean,
         skipCompat = false;
 
@@ -355,15 +356,22 @@ function parseArgs(): any
             }
             if (lastIsPositional)
             {
-                console.log("Positional parameter not specified for:");
-                console.log("   " + lastProp)
-                process.exit(0); 
+                if (lastType=== 'flag')
+                {   // flag types specified on cmd linew/ no positional just default to Y
+                    opts[lastProp] = "Y"; 
+                }
+                else {
+                    console.log("Positional parameter not specified for:");
+                    console.log("   " + lastProp)
+                    process.exit(0);
+                }
             }
 
             const valueType = publishRcOpts[p][1],
                   defaultValue = publishRcOpts[p][2];
 
             lastProp = p;               // Record 'last', used for positionals
+            lastType = valueType;
             lastIsPositional = valueType.startsWith("string") || valueType === 'number' || 
                                valueType.startsWith("enum") || valueType === "flag";
             skipCompat = false;
