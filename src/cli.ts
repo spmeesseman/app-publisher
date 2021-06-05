@@ -10,12 +10,11 @@ import { publishRcOpts } from "./args";
 
 export = async () =>
 {
-    const version = require("../package.json").version;
+    const version = require("../package.json").version,
+          banner = apBanner(version);
     const ArgParser = require("@spmeesseman/arg-parser").ArgParser;
     const parser = new ArgParser({
-        app: "app-publisher",
-        banner: apBanner(version),
-        version
+        app: "app-publisher", banner, version
     });
     const opts = parser.parseArgs(publishRcOpts);
 
@@ -25,7 +24,7 @@ export = async () =>
         // For stdout type tasks, then we dont display the banner or anything else for that matter.
         //
         if (!opts.taskVersionCurrent && !opts.taskVersionNext && !opts.taskVersionInfo && !opts.taskCiEvInfo && !opts.verbose) {
-            displayIntro(version);
+            displayIntro(banner);
         }
 
         //
