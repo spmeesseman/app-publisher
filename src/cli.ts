@@ -372,13 +372,12 @@ function parseArgs(): any
 
             lastProp = p;               // Record 'last', used for positionals
             lastType = valueType;
-            lastIsPositional = valueType.startsWith("string") || valueType === 'number' || 
-                               valueType.startsWith("enum") || valueType === "flag";
+            lastIsPositional = valueType !==  "boolean";
             skipCompat = false;
 
-            if (!lastIsPositional || valueType === 'flag')
+            if (!lastIsPositional)
             {
-                opts[p] = (valueType === 'flag' ? "Y" : true);
+                opts[p] = true;
             }
         }
         else if (lastProp)
