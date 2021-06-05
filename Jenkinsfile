@@ -18,21 +18,6 @@ pipeline {
             name: 'EMAIL_RECIPIENTS')
   }
 
-  environment {
-    CURRENTVERSION = """
-              ${bat(
-                returnStdout: true,
-                script: 'app-publisher --task-version-current'
-              )}
-              """
-    VERSION = """
-              ${bat(
-                returnStatus: true,
-                script: 'app-publisher --task-task-version-next'
-              )}
-              """
-  }
-
   stages {
     
     stage("Checkout") {
@@ -78,6 +63,20 @@ pipeline {
     }
 
     stage("Build") {
+      environment {
+        CURRENTVERSION = """
+                  ${bat(
+                    returnStdout: true,
+                    script: 'app-publisher --task-version-current'
+                  )}
+                  """
+        VERSION = """
+                  ${bat(
+                    returnStatus: true,
+                    script: 'app-publisher --task-version-next'
+                  )}
+                  """
+      }
       steps {
         nodejs("Node 13") {
           echo "Current version is ${env.CURRENTVERSION}"

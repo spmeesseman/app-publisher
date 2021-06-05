@@ -87,7 +87,7 @@ class Vc
                 $xml = svn log --xml "$TagLocation" --verbose --limit 50 --non-interactive --no-auth-cache
             }
             if ($LASTEXITCODE -ne 0) {
-                Log-Message "No commits found or no version tag exists" "red"
+                Log-Message "No commits found or no version tag exists" "yellow"
                 return $comments
             }
 
