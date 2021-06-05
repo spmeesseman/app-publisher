@@ -14,7 +14,8 @@ export = async () =>
           banner = apBanner(version);
     const ArgParser = require("@spmeesseman/arg-parser").ArgParser;
     const parser = new ArgParser({
-        app: "app-publisher", banner, version
+        app: "app-publisher", banner, version,
+        ignorePositional: [ "-p", "--profile" ]
     });
     const opts = parser.parseArgs(publishRcOpts);
 
