@@ -64,18 +64,16 @@ pipeline {
 
     stage("Build") {
       environment {
-        CURRENTVERSION = """
-                  ${bat(
-                    returnStdout: true,
-                    script: 'app-publisher --task-version-current'
-                  )}
-                  """
-        VERSION = """
-                  ${bat(
-                    returnStatus: true,
-                    script: 'app-publisher --task-version-next'
-                  )}
-                  """
+        CURRENTVERSION = bat(returnStdout: true,
+                 script: """
+                  @echo off
+                  app-publisher --task-version-current
+                """)
+        NEXTVERSION = bat(returnStdout: true,
+                 script: """
+                  @echo off
+                  app-publisher --task-version-next
+                """)
       }
       steps {
         nodejs("Node 13") {

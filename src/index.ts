@@ -345,8 +345,10 @@ async function runPowershellScript(options: any, logger: any)
     // }
     // logger.success("Published release successfully");
     // logger.success(`Published release ${nextRelease.version}`);
-    const isStdOutCmd = options.taskVersionCurrent || options.taskVersionNext;
-    const child = child_process.spawn("powershell.exe", [`${ps1Script} '${JSON.stringify(options)}'`], { stdio: ["pipe", "pipe", "pipe"], env: process.env});
+    const isTaskCmd = options.taskChangelog || options.taskEmail || options.taskTouchVersions || options.taskMantisbtRelease || 
+                      options.taskVersionCurrent || options.taskVersionNext || options.taskCiEnvSet,
+          isStdOutCmd = options.taskVersionCurrent || options.taskVersionNext,
+          child = child_process.spawn("powershell.exe", [`${ps1Script} '${JSON.stringify(options)}'`], { stdio: ["pipe", "pipe", "pipe"], env: process.env});
     // const child = child_process.spawn("powershell.exe", [`${ps1Script} ${options}`], { stdio: ["pipe", "inherit", "inherit"] });
 
     child.stdout.setEncoding("utf8");
@@ -391,7 +393,12 @@ async function runPowershellScript(options: any, logger: any)
         iCode = code;
         if (iCode === 0) {
             if (!isStdOutCmd) {
-                logger.success("Successfully published release");
+                if (!isTaskCmd) {
+                    logger.success("Successfully published release");
+                }
+                else {
+                    logger.success("Successfully completed task");
+                }
             }
         }
         else {
