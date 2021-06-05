@@ -363,7 +363,8 @@ async function runPowershellScript(options: any, logger: any)
         }
         else {
             //if (/[0-9]*\.[0-9]*\.[0-9]*/.test(data)) {
-                console.log(data);
+                data = data.toString();
+                console.log(data.trimEnd());
             //}
         }
     });
@@ -376,7 +377,8 @@ async function runPowershellScript(options: any, logger: any)
             logPowershell(data, logger);
         }
         else {
-            console.log(data);
+            data = data.toString();
+            console.log(data.trimEnd());
         }
     });
 
