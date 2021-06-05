@@ -4134,3 +4134,31 @@ June 5th, 2021
     
     Stdout commands are still outputting some log messages to the console.
 
+
+Version 2.2.2
+June 5th, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+    
+    Flag type command line args should accept a positional parameter of Y/N/y/n.
+    Or, if omitted, and the option is specified, default the flag value to "Y".
+
