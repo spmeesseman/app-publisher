@@ -57,24 +57,24 @@ class Vc
     [array]getCommits($RepoType, $Repo, $Branch, $CurrentVersion, $TagPrefix)
     {
         $comments = @()
-        Log-Message "Getting commits made since prior release/version"
+        LogMessage "Getting commits made since prior release/version"
 
         $TagPre = "v"
         if (![string]::IsNullOrEmpty($TagPrefix) -and $TagPrefix -ne ".") {
             $TagPre = "$TagPrefix-v"
         }
 
-        Log-Message "   Repo type      :  $RepoType"
-        Log-Message "   Repo           :  $Repo"
-        Log-Message "   CurrentVersion :  $CurrentVersion"
-        Log-Message "   TagPrefix      :  $TagPre"
+        LogMessage "   Repo type      :  $RepoType"
+        LogMessage "   Repo           :  $Repo"
+        LogMessage "   CurrentVersion :  $CurrentVersion"
+        LogMessage "   TagPrefix      :  $TagPre"
 
         if ($RepoType -eq "svn")
         {
             $svnUser = $Env:SVN_AUTHOR_NAME
             $svnToken = $Env:SVN_TOKEN
             
-            Log-Message "Retrieving most recent tag"
+            LogMessage "Retrieving most recent tag"
             #
             # Issue SVN log command
             #
@@ -87,7 +87,7 @@ class Vc
                 $xml = svn log --xml "$TagLocation" --verbose --limit 50 --non-interactive --no-auth-cache
             }
             if ($LASTEXITCODE -ne 0) {
-                Log-Message "No commits found or no version tag exists" "yellow"
+                LogMessage "No commits found or no version tag exists" "yellow"
                 return $comments
             }
 
@@ -99,7 +99,7 @@ class Vc
             $rev = $null
             $date = $null
 
-            Log-Message "Parsing response from SVN"
+            LogMessage "Parsing response from SVN"
             try {
                 $xmlObj = (([Xml] ($xml)).Log.LogEntry.Paths.Path |
                 Where-Object { $_.action -eq 'A' -and $_.kind -eq 'dir' -and $_.InnerText -like "*tags/$TagPre[1-9]*"} |
@@ -129,25 +129,25 @@ class Vc
                 }
             }
             catch {
-                Log-Message "Response could not be parsed, invalid module, no commits found, or no version tag exists" "red"
+                LogMessage "Response could not be parsed, invalid module, no commits found, or no version tag exists" "red"
                 return $comments
             }
 
             if ([string]::IsNullOrEmpty($path) -or [string]::IsNullOrEmpty($rev) -or [string]::IsNullOrEmpty($date)) {
-                Log-Message "Response could not be parsed, invalid module, no commits found, or no version tag exists" "red"
+                LogMessage "Response could not be parsed, invalid module, no commits found, or no version tag exists" "red"
                 return $comments
             }
 
             #
-            Log-Message "   Found version tag:"
-            Log-Message "      Rev     : $rev"
-            Log-Message "      Path    : $path"
-            Log-Message "      Date    : $date"
+            LogMessage "   Found version tag:"
+            LogMessage "      Rev     : $rev"
+            LogMessage "      Path    : $path"
+            LogMessage "      Date    : $date"
 
             #
             # Retrieve commits since last version tag
             #
-            Log-Message "Retrieving commits since last version"
+            LogMessage "Retrieving commits since last version"
             
             if (![string]::IsNullOrEmpty($svnUser) -and ![string]::IsNullOrEmpty($svnToken)) {
                 $xml = svn log --xml "$Repo" --verbose --limit 250 -r ${rev}:HEAD --non-interactive --no-auth-cache --username "$svnUser" --password "$svnToken"
@@ -156,10 +156,10 @@ class Vc
                 $xml = svn log --xml "$Repo" --verbose --limit 250 -r ${rev}:HEAD --non-interactive
             }
             if ($LASTEXITCODE -ne 0) {
-                Log-Message "Failed to retrieve commits" "red"
+                LogMessage "Failed to retrieve commits" "red"
                 return $comments
             }
-            Log-Message "Parsing response from SVN"
+            LogMessage "Parsing response from SVN"
 
             #
             # Create xml document object from SVN log response
@@ -169,7 +169,7 @@ class Vc
                 $xdoc = [Xml]$xml
             }
             catch {
-                Log-Message "No commits found or no version tag exists" "red"
+                LogMessage "No commits found or no version tag exists" "red"
                 $Proceed = read-host -prompt "Do you want to get all commits on this branch? Y[N]"
                 if ($Proceed.ToUpper() -eq "Y") {
                     
@@ -180,14 +180,14 @@ class Vc
                         $xml = svn log --xml "$Repo" --verbose --limit 250 --non-interactive
                     }
                     if ($LASTEXITCODE -ne 0) {
-                        Log-Message "No commits found or no version tag exists" "red"
+                        LogMessage "No commits found or no version tag exists" "red"
                         return $comments
                     }
                     try {
                         $xdoc = [Xml]$xml
                     }
                     catch {
-                        Log-Message "No commits found" "red"
+                        LogMessage "No commits found" "red"
                         return $comments
                     }
                 }
@@ -215,19 +215,19 @@ class Vc
                 $comments = $GitOut.Substring(0, $GitOut.Length - 5).Split($separator, [System.StringSplitOptions]::RemoveEmptyEntries)
             }
             else {
-                Log-Message "No commits found or no version tag exists" "red"
-                Log-Message "Git Output: $GitOut" "red"
+                LogMessage "No commits found or no version tag exists" "red"
+                LogMessage "Git Output: $GitOut" "red"
                 return $comments
             }
         }
         else 
         {
-            Log-Message "Invalid repository type specified: $RepoType" "red"
+            LogMessage "Invalid repository type specified: $RepoType" "red"
             return $comments
         }
 
         $NumCommits = $comments.Length;
-        Log-Message "Found $NumCommits commits"
+        LogMessage "Found $NumCommits commits"
 
         #
         # Sort comments array
@@ -285,55 +285,55 @@ class CommitAnalyzer
             $linefmt = $line.ToLower().Trim();
             if ($linefmt.Contains("breaking change")) # bump major on breaking change
             {
-                Log-Message "Breaking change found"
+                LogMessage "Breaking change found"
                 $ReleaseLevel = "major";
             }
             elseif ($linefmt.StartsWith("majfeat: ") -or $linefmt.StartsWith("majfeat(")) # bump major on major feature
             {
-                Log-Message "Major feature found"
+                LogMessage "Major feature found"
                 $ReleaseLevel = "major";
             }
             elseif ($linefmt.StartsWith("featmaj: ") -or $linefmt.StartsWith("featmaj(")) # bump major on major feature
             {
-                Log-Message "Major feature found"
+                LogMessage "Major feature found"
                 $ReleaseLevel = "major";
             }
             elseif ($linefmt.StartsWith("featmin:") -or $linefmt.StartsWith("featmin(")) # bump patch on minor feature
             {
-                Log-Message "Minor feature found";
+                LogMessage "Minor feature found";
                 if ($ReleaseLevel -ne "minor") {
                     $ReleaseLevel = "patch";
                 }
             }
             elseif ($linefmt.StartsWith("minfeat:") -or $linefmt.StartsWith("minfeat(")) # bump patch on minor feature
             {
-                Log-Message "Minor feature found";
+                LogMessage "Minor feature found";
                 if ($ReleaseLevel -ne "minor") {
                     $ReleaseLevel = "patch";
                 }
             }
             elseif ($linefmt.StartsWith("feat:") -or $linefmt.StartsWith("feat(")) # bump minor on feature
             {
-                Log-Message "Feature found";
+                LogMessage "Feature found";
                 $ReleaseLevel = "minor";
             }
             elseif ($linefmt.StartsWith("perfmin:") -or $linefmt.StartsWith("perfmin("))
             {
-                Log-Message "Minor performance enhancement found";
+                LogMessage "Minor performance enhancement found";
                 if ($ReleaseLevel -ne "minor") {
                     $ReleaseLevel = "patch";
                 }
             }
             elseif ($linefmt.StartsWith("minperf:") -or $linefmt.StartsWith("minperf("))
             {
-                Log-Message "Minor performance enhancement found";
+                LogMessage "Minor performance enhancement found";
                 if ($ReleaseLevel -ne "minor") {
                     $ReleaseLevel = "patch";
                 }
             }
             elseif ($linefmt.StartsWith("perf:") -or $linefmt.StartsWith("perf("))
             {
-                Log-Message "Performance enhancement found";
+                LogMessage "Performance enhancement found";
                 $ReleaseLevel = "minor";
             }
             
@@ -348,15 +348,15 @@ class CommitAnalyzer
                 if ($ReleaseLevel -eq "major") {
                     return;
                 }
-                Log-Message ("Processing custom commit message map property '" + $_.Name + "'")
+                LogMessage ("Processing custom commit message map property '" + $_.Name + "'")
                 if ($linefmt.StartsWith($_.Name + ":") -or $linefmt.StartsWith($_.Name + "("))
                 {
-                    Log-Message ($_.Value.formatText + " found")
+                    LogMessage ($_.Value.formatText + " found")
                     if ($_.Value.versionBump -ne "none" -and $_.Value.include -ne $false)
                     {
                         if ($_.Value.versionBump -eq 'patch' -or $_.Value.versionBump -eq 'minor' -or $_.Value.versionBump -eq 'major')
                         {
-                            Log-Message ("Found '" + $_.Value.versionBump + "' custom version bump")
+                            LogMessage ("Found '" + $_.Value.versionBump + "' custom version bump")
                             $ReleaseLevel = $_.Value.versionBump
                             if ($_.Value.versionBump -eq "patch") {
                                 if ($ReleaseLevel -ne "minor" -and $ReleaseLevel -ne "major") {
@@ -368,8 +368,8 @@ class CommitAnalyzer
                             }
                         }
                         else {
-                            Log-Message ("Found '" + $_.Value.versionBump + "' custom version bump", "red")
-                            Log-Message "Invalid custom version bump", "red"
+                            LogMessage ("Found '" + $_.Value.versionBump + "' custom version bump", "red")
+                            LogMessage "Invalid custom version bump", "red"
                         }
                     }
                 }
@@ -411,7 +411,7 @@ class CommitAnalyzer
         if ($this.CommitMap)
         {
             $this.CommitMap.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
-                Log-Message ("Processing custom commit message map property '" + $_.Name + "'")
+                LogMessage ("Processing custom commit message map property '" + $_.Name + "'")
                 if ($Subject -eq $_.Name)
                 {
                     $FormattedSubject = $_.Value.formatText
@@ -445,7 +445,7 @@ class HistoryFile
         if (!$valid -and $this.CommitMap)
         {
             $this.CommitMap.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
-                Log-Message ("Processing custom commit message map property '" + $_.Name + "'")
+                LogMessage ("Processing custom commit message map property '" + $_.Name + "'")
                 if ($LineText.Contains($_.Value.formatText))
                 {
                     $valid = $true;
@@ -970,7 +970,7 @@ class HistoryFile
         # Make sure user entered correct cmd line params
         #
         if (!(Test-Path $szInputFile) -or [string]::IsNullOrEmpty($szInputFile)) {
-            Log-Message "Error: No changelog file specified" "red"
+            LogMessage "Error: No changelog file specified" "red"
             exit 160;
         }
 
@@ -985,29 +985,29 @@ class HistoryFile
             $iNumSections = [int32]::Parse($szNumSections);
         }
         catch {
-            Log-Message "   Parse Error - Invalid NumSections parameter" "red"
-            Log-Message "   Error type  : $_.Exception.GetType().FullName" "red"
-            Log-Message "   Error code  : $($_.Exception.ErrorCode)" "red"
-            Log-Message "   Error text  : $($_.Exception.Message)" "red"
+            LogMessage "   Parse Error - Invalid NumSections parameter" "red"
+            LogMessage "   Error type  : $_.Exception.GetType().FullName" "red"
+            LogMessage "   Error code  : $($_.Exception.ErrorCode)" "red"
+            LogMessage "   Error text  : $($_.Exception.Message)" "red"
             exit 161;
         }
 
-        Log-Message "Extract from changelog markdown file"
-        Log-Message "   Input File         : '$szInputFile'"
-        Log-Message "   Num Sections       : '$iNumSections'"
-        Log-Message "   Version            : '$version'"
-        Log-Message "   Version string     : '$stringver'"
-        Log-Message "   List only          : '$listonly'"
-        Log-Message "   Target Location    : '$targetloc'"
-        Log-Message "   NPM                : '$npmpkg'"
-        Log-Message "   Nuget              : '$nugetpkg'"
-        Log-Message "   MantisBT release   : '$mantisRelease'"
-        Log-Message "   MantisBT url       : '$mantisUrl'"
-        Log-Message "   History file href  : '$historyFileHref'"
-        Log-Message "   Email hrefs        : '$emailHrefs'"
-        Log-Message "   Vc web path        : '$vcWebPath'"
-        Log-Message "   Include email hdr  : '$includeEmailHdr'"
-        Log-Message "   Is app-publisher   : '$isAp'"
+        LogMessage "Extract from changelog markdown file"
+        LogMessage "   Input File         : '$szInputFile'"
+        LogMessage "   Num Sections       : '$iNumSections'"
+        LogMessage "   Version            : '$version'"
+        LogMessage "   Version string     : '$stringver'"
+        LogMessage "   List only          : '$listonly'"
+        LogMessage "   Target Location    : '$targetloc'"
+        LogMessage "   NPM                : '$npmpkg'"
+        LogMessage "   Nuget              : '$nugetpkg'"
+        LogMessage "   MantisBT release   : '$mantisRelease'"
+        LogMessage "   MantisBT url       : '$mantisUrl'"
+        LogMessage "   History file href  : '$historyFileHref'"
+        LogMessage "   Email hrefs        : '$emailHrefs'"
+        LogMessage "   Vc web path        : '$vcWebPath'"
+        LogMessage "   Include email hdr  : '$includeEmailHdr'"
+        LogMessage "   Is app-publisher   : '$isAp'"
 
         #
         # Code operation:
@@ -1045,19 +1045,19 @@ class HistoryFile
 
         $iIndex1 = $szContents.IndexOf("## $stringver $version")
         if ($iIndex1 -eq -1) {
-            Log-Message "   Section could not be found, exit" "red"
+            LogMessage "   Section could not be found, exit" "red"
             exit 165
         }
         $iIndex2 = $szContents.IndexOf("## $stringver ", $iIndex1 + 1)
         if ($iIndex2 -eq -1) {
             $iIndex2 = $szContents.Length
         }
-        Log-Message "   Found version section(s)"
+        LogMessage "   Found version section(s)"
         $szContents = $szContents.Substring($iIndex1, $iIndex2 - $iIndex1)
 
         if ($listonly -is [system.string] -and $listonly -eq 'parts') 
         {
-            Log-Message "Determining changelog parts"
+            LogMessage "Determining changelog parts"
 
             $TextInfo = (Get-Culture).TextInfo
             $typeParts = @()
@@ -1089,8 +1089,8 @@ class HistoryFile
             $szContents = @()
 
             if ($msgParts.Length -ne $typeParts.Length) {
-                Log-Message "Error parsing changelog for commit parts" "red"
-                Log-Message "Message parts array length $($msgParts.Length) is less than types array length $($typeParts.Length)" "red"
+                LogMessage "Error parsing changelog for commit parts" "red"
+                LogMessage "Message parts array length $($msgParts.Length) is less than types array length $($typeParts.Length)" "red"
                 return @( "error" )
             }
 
@@ -1142,7 +1142,7 @@ class HistoryFile
         else {
             $szContents = & marked --breaks --gfm --file "${Env:Temp}\changelog.md"
         }
-        Check-ExitCode
+        CheckExitCode
         Remove-Item -Path "${Env:Temp}\changelog.md"
 
         if ($includeEmailHdr -eq $true)
@@ -1151,7 +1151,7 @@ class HistoryFile
             $szContents = $szHrefs + $szContents
         }
 
-        Log-Message "   Successful" "darkgreen"
+        LogMessage "   Successful" "darkgreen"
 
         return @($szContents)
     }
@@ -1167,7 +1167,7 @@ class HistoryFile
         # Make sure user entered correct cmd line params
         #
         if (!(Test-Path $szInputFile) -or [string]::IsNullOrEmpty($szInputFile)) {
-            Log-Message "History file does not exist" "red"
+            LogMessage "History file does not exist" "red"
             return $szFinalContents;
         }
 
@@ -1186,28 +1186,28 @@ class HistoryFile
             $iNumSections = [int32]::Parse($szNumSections);
         }
         catch {
-            Log-Message "   Parse Error - Invalid NumSections parameter" "red"
-            Log-Message "   Error type  : $_.Exception.GetType().FullName" "red"
-            Log-Message "   Error code  : $($_.Exception.ErrorCode)" "red"
-            Log-Message "   Error text  : $($_.Exception.Message)" "red"
+            LogMessage "   Parse Error - Invalid NumSections parameter" "red"
+            LogMessage "   Error type  : $_.Exception.GetType().FullName" "red"
+            LogMessage "   Error code  : $($_.Exception.ErrorCode)" "red"
+            LogMessage "   Error text  : $($_.Exception.Message)" "red"
             exit 161;
         }
 
-        Log-Message "Extract from history.txt file"
-        Log-Message "   Input File         : '$szInputFile'"
-        Log-Message "   Output File        : '$szOutputFile'"
-        Log-Message "   Num Sections       : '$iNumSections'"
-        Log-Message "   Version            : '$version'"
-        Log-Message "   Version string     : '$stringver'"       
-        Log-Message "   List only          : '$listonly'"
-        Log-Message "   Target Location    : '$targetloc'"
-        Log-Message "   NPM                : '$npmpkg'"
-        Log-Message "   Nuget              : '$nugetpkg'"
-        Log-Message "   MantisBT release   : '$mantisRelease'"
-        Log-Message "   MantisBT url       : '$mantisUrl'"
-        Log-Message "   History file href  : '$historyFileHref'"
-        Log-Message "   Email hrefs        : '$emailHrefs'"
-        Log-Message "   Vc web path        : '$vcWebPath'"
+        LogMessage "Extract from history.txt file"
+        LogMessage "   Input File         : '$szInputFile'"
+        LogMessage "   Output File        : '$szOutputFile'"
+        LogMessage "   Num Sections       : '$iNumSections'"
+        LogMessage "   Version            : '$version'"
+        LogMessage "   Version string     : '$stringver'"       
+        LogMessage "   List only          : '$listonly'"
+        LogMessage "   Target Location    : '$targetloc'"
+        LogMessage "   NPM                : '$npmpkg'"
+        LogMessage "   Nuget              : '$nugetpkg'"
+        LogMessage "   MantisBT release   : '$mantisRelease'"
+        LogMessage "   MantisBT url       : '$mantisUrl'"
+        LogMessage "   History file href  : '$historyFileHref'"
+        LogMessage "   Email hrefs        : '$emailHrefs'"
+        LogMessage "   Vc web path        : '$vcWebPath'"
 
         #
         # Code operation:
@@ -1248,7 +1248,7 @@ class HistoryFile
             #
             if ($iIndex1 -eq -1)
             {
-                Log-Message "   Last section could not be found (0), exit" "red"
+                LogMessage "   Last section could not be found (0), exit" "red"
                 exit 162
             }
             
@@ -1265,7 +1265,7 @@ class HistoryFile
             # make sure the newline was found
             if ($iIndex2 -eq -1)
             {
-                Log-Message "   Last section could not be found (1), exit" "red"
+                LogMessage "   Last section could not be found (1), exit" "red"
                 exit 163
             }
 
@@ -1275,7 +1275,7 @@ class HistoryFile
             #
             if ($iIndex2 -eq -1)
             {
-                Log-Message "   Last section could not be found (2), exit" "red"
+                LogMessage "   Last section could not be found (2), exit" "red"
                 exit 164
             }
             
@@ -1312,11 +1312,11 @@ class HistoryFile
         #
         if ($bFoundStart -eq 0)
         {
-            Log-Message "   Last section could not be found, exit" "red"
+            LogMessage "   Last section could not be found, exit" "red"
             exit 165
         }
 
-        Log-Message "   Found version section"
+        LogMessage "   Found version section"
         $szContents = $szContents.Substring($iIndex1)
 
         #
@@ -1338,12 +1338,12 @@ class HistoryFile
         # if version is empty, then the script is to return the version
         if ($version -ne "" -and $version -ne $null)
         {
-            Log-Message "   Write header text to message"
+            LogMessage "   Write header text to message"
             
             $szHrefs = $this.getEmailHeader($project, $version, $stringver, $targetloc, $npmpkg, $nugetpkg, $mantisRelease, $mantisUrl, $historyFileHref, $emailHrefs, $vcWebPath)
 
             $szFinalContents += "$szHrefs<br>Most Recent History File Entry:<br><br>";
-            Log-Message "   Write $iNumSections history section(s) to message"
+            LogMessage "   Write $iNumSections history section(s) to message"
 
             if ($listonly -eq $false) {
                 $szFinalContents += $szContents
@@ -1411,7 +1411,7 @@ class HistoryFile
 
                 if ($listonly -is [system.string] -and $listonly -eq 'parts')
                 {
-                    Log-Message "   Extracting parts"
+                    LogMessage "   Extracting parts"
 
                     $TextInfo = (Get-Culture).TextInfo
                     $typeParts = @()
@@ -1538,7 +1538,7 @@ class HistoryFile
             #
             if ($iNumSections -gt 1)
             {   
-                Log-Message "   Re-ordering $iNumSections sections newest to oldest"
+                LogMessage "   Re-ordering $iNumSections sections newest to oldest"
 
                 $sections = @()
                 
@@ -1575,16 +1575,16 @@ class HistoryFile
             $iIndex1 = $szContents.IndexOf(">$stringver&nbsp;", 0) + $stringver.Length + 7
             $iIndex2 = $szContents.IndexOf("<br>", $iIndex1)
             $curversion = $szContents.Substring($iIndex1, $iIndex2 - $iIndex1)
-            Log-Message "   Found version $curversion"
+            LogMessage "   Found version $curversion"
             return $curversion
         }
 
         if ($szOutputFile -ne "" -and $szOutputFile -ne $null) {
             New-Item -ItemType "file" -Force -Path "$szOutputFile" -Value $szFinalContents | Out-Null
-            Log-Message "   Saved release history output to $szOutputFile"
+            LogMessage "   Saved release history output to $szOutputFile"
         }
 
-        Log-Message "   Successful" "darkgreen"
+        LogMessage "   Successful" "darkgreen"
 
         return @($szFinalContents)
     }
@@ -1598,6 +1598,10 @@ class HistoryFile
 $ClsCommitAnalyzer = New-Object -TypeName CommitAnalyzer
 $ClsHistoryFile = New-Object -TypeName HistoryFile
 $ClsVc = New-Object -TypeName Vc
+#
+# Global var for holding the tag found that is the version tag for a Maven project
+#
+$MavenVersionTag = "version"
 
 
 #************************************************************************#
@@ -1612,7 +1616,7 @@ $ClsVc = New-Object -TypeName Vc
 
 #region Functions
 
-function Log-Message($msg, $color, $noTag = $false)
+function LogMessage($msg, $color, $noTag = $false)
 {
     $msgTag = ""
 
@@ -1620,8 +1624,8 @@ function Log-Message($msg, $color, $noTag = $false)
         return
     }
 
-    if (!$TASKMODESTDOUT -or $color -eq "red")
-    {
+    #if (!$TASKMODESTDOUT -or $color -eq "red")
+    #{
         if ($color) 
         {
             $msgTag = ""
@@ -1643,7 +1647,7 @@ function Log-Message($msg, $color, $noTag = $false)
         else {
             write-host $msg
         }
-    }
+    #}
 
     if ($WRITELOG -eq "Y") 
     {
@@ -1671,15 +1675,15 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     # Check to make sure all necessary parameters are set
     #
     if ([string]::IsNullOrEmpty($EMAILSERVER)) {
-        Log-Message "   Notification could not be sent, invalid email server specified" "red"
+        LogMessage "   Notification could not be sent, invalid email server specified" "red"
         return
     }
     if ([string]::IsNullOrEmpty($EMAILRECIP)) {
-        Log-Message "   Notification could not be sent, invalid recipient address specified" "red"
+        LogMessage "   Notification could not be sent, invalid recipient address specified" "red"
         return
     }
     if ([string]::IsNullOrEmpty($EMAILSENDER)) {
-        Log-Message "   Notification could not be sent, invalid sender address specified" "red"
+        LogMessage "   Notification could not be sent, invalid sender address specified" "red"
         return
     }
 
@@ -1687,16 +1691,16 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     $EMAILBODY = ""
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
-        Log-Message "   Converting history text to html"
+        LogMessage "   Converting history text to html"
         $EMAILBODY = $ClsHistoryFile.getHistory($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $HISTORYFILE, $null, $targetloc, $npmloc, $nugetloc, $MANTISBTRELEASE, $MANTISBTURL[0], $HISTORYHREF, $EMAILHREFS, $VCWEBPATH)
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
-        Log-Message "   Converting changelog markdown to html"
+        LogMessage "   Converting changelog markdown to html"
         $EMAILBODY = $ClsHistoryFile.getChangelog($PROJECTNAME, $VERSION, 1, $VERSIONTEXT, $false, $CHANGELOGFILE, $null, $targetloc, $npmloc, $nugetloc, $MANTISBTRELEASE, $MANTISBTURL[0], $HISTORYHREF, $EMAILHREFS, $VCWEBPATH, $true, $IsAppPublisher)
     }
     else {
-        Log-Message "   Notification could not be sent, history file not specified" "red"
+        LogMessage "   Notification could not be sent, history file not specified" "red"
         return
     }
 
@@ -1717,7 +1721,7 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
     $EMAILBODY += "<i>app-publisher</i></font></td></tr><tr><td valign=`"middle`" colspan=`"3`">"
     $EMAILBODY += "<font style=`"font-size:10px;font-weight:bold`">Do not respond to this email message</font></td></tr></table>";
 
-    Log-Message "Sending release notification email"
+    LogMessage "Sending release notification email"
     try 
     {
         $ProjectNameFmt = $PROJECTNAME.Replace("-", " ")
@@ -1740,22 +1744,22 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
                 else {
                     Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $EMAILRECIP -Subject $Subject -Body $EMAILBODY -Port $EMAILPORT
                 }
-                Check-PsCmdSuccess
+                CheckPsCmdSuccess
             }
             else {
                 if ($TESTEMAILRECIP.Length -gt 0) 
                 {
-                    Log-Message "   Notification could not be sent to email recip, sending to test recip" "darkyellow"
+                    LogMessage "   Notification could not be sent to email recip, sending to test recip" "darkyellow"
                     if ($EMAILMODE -eq "ssl" -or $EMAILMODE -eq "tls") {
                         Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY -Port $EMAILPORT -UseSsl
                     }
                     else {
                         Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY -Port $EMAILPORT
                     }
-                    Check-PsCmdSuccess
+                    CheckPsCmdSuccess
                 }
                 else {
-                    Log-Message "   Notification could not be sent, invalid email address specified" "red"
+                    LogMessage "   Notification could not be sent, invalid email address specified" "red"
                 }
             }
         }
@@ -1770,15 +1774,15 @@ function Send-Notification($targetloc, $npmloc, $nugetloc)
                 else {
                     Send-MailMessage -SmtpServer $EMAILSERVER -BodyAsHtml -From $EMAILSENDER -To $TESTEMAILRECIP -Subject $Subject -Body $EMAILBODY -Port $EMAILPORT
                 }
-                Check-PsCmdSuccess
+                CheckPsCmdSuccess
             }
             else {
-                Log-Message "   Notification could not be sent, invalid email address specified" "red"
+                LogMessage "   Notification could not be sent, invalid email address specified" "red"
             }
         }
     }
     catch {
-        Log-Message "   Delivery failure" "red"
+        LogMessage "   Delivery failure" "red"
     }
 }
 
@@ -1789,7 +1793,7 @@ function CheckSpelling($String, $RemoveSpecialChars)
 {
     $OutString = $String
 
-    Log-Message "Perform spelling check"
+    LogMessage "Perform spelling check"
 
     if ($RemoveSpecialChars) { 
         $String = Clean-String $String	
@@ -1834,10 +1838,10 @@ function CheckSpelling($String, $RemoveSpecialChars)
                 # No error was found in the input string	
                 #
             }
-            Log-Message "   Success" "darkgreen"
+            LogMessage "   Success" "darkgreen"
         }
         catch{
-            Log-Message "   Failure" "red"
+            LogMessage "   Failure" "red"
         }
     }
 
@@ -1854,51 +1858,51 @@ function Clean-String($Str)
     Return $str
 }
 
-function Vc-Changelist-AddRemove($VcFile)
+function VcChangelistAddRemove($VcFile)
 {
     if ($PATHPREROOT -ne "" -and $PATHPREROOT -ne $null) {
         $VcFile = Join-Path -Path "$PATHPREROOT" -ChildPath "$VcFile"
     }
     if (!$script:VCCHANGELISTRMV.Contains($VcFile)) {
-        Log-Message "Adding $VcFile to failure/testrun vc removelist"
+        LogMessage "Adding $VcFile to failure/testrun vc removelist"
         $script:VCCHANGELISTRMV = "$script:VCCHANGELISTRMV|`"$VcFile`""
     }
 }
 
-function Vc-Changelist-Add($VcFile)
+function VcChangelistAdd($VcFile)
 {
     if ($PATHPREROOT -ne "" -and $PATHPREROOT -ne $null) {
         $VcFile = Join-Path -Path "$PATHPREROOT" -ChildPath "$VcFile"
     }
     if (!$script:VCCHANGELIST.Contains($VcFile)) {
-        Log-Message "Adding $VcFile to vc changelist"
+        LogMessage "Adding $VcFile to vc changelist"
         $script:VCCHANGELIST = "$script:VCCHANGELIST|`"$VcFile`""
     }
 }
 
-function Vc-Changelist-AddMulti($VcFile)
+function VcChangelistAddMulti($VcFile)
 {
     if ($PATHPREROOT -ne "" -and $PATHPREROOT -ne $null) {
         $VcFile = Join-Path -Path "$PATHPREROOT" -ChildPath "$VcFile"
     }
     if (!$script:VCCHANGELISTMLT.Contains($VcFile)) {
-        Log-Message "Adding $VcFile to multi-publish vc changelist"
+        LogMessage "Adding $VcFile to multi-publish vc changelist"
         $script:VCCHANGELISTMLT = "$script:VCCHANGELISTMLT|`"$VcFile`""
     }
 }
 
-function Vc-Changelist-AddNew($VcFile, $isFullPath = $false)
+function VcChangelistAddNew($VcFile, $isFullPath = $false)
 {
     if ($PATHPREROOT -ne "" -and $PATHPREROOT -ne $null -and $isFullPath -eq $false) {
         $VcFile = Join-Path -Path "$PATHPREROOT" -ChildPath "$VcFile"
     }
     if (!$script:VCCHANGELISTADD.Contains($VcFile)) {
-        Log-Message "Adding $VcFile to vc 'add' changelist"
+        LogMessage "Adding $VcFile to vc 'add' changelist"
         $script:VCCHANGELISTADD = "$script:VCCHANGELISTADD|`"$VcFile`""
     }
 }
 
-function Vc-IsVersioned($ObjectPath, $AppendPre = $false, $ChangePath = $false)
+function VcIsVersioned($ObjectPath, $AppendPre = $false, $ChangePath = $false)
 {
     $IsVersioned = $false
     $VcFile = $ObjectPath
@@ -1937,14 +1941,14 @@ function Vc-IsVersioned($ObjectPath, $AppendPre = $false, $ChangePath = $false)
     return $IsVersioned
 }
 
-function Vc-Revert($ChangePath = $false)
+function VcRevert($ChangePath = $false)
 {
     if (![string]::IsNullOrEmpty($VCCHANGELIST)) 
     {
-        Log-Message "Removing new files / reverting touched files under version control"
-        Log-Message "Stored Commit List: $VCCHANGELIST"
-        Log-Message "Stored Add List   : $VCCHANGELISTADD"
-        Log-Message "Stored Remove List: $VCCHANGELISTRMV"
+        LogMessage "Removing new files / reverting touched files under version control"
+        LogMessage "Stored Commit List: $VCCHANGELIST"
+        LogMessage "Stored Add List   : $VCCHANGELISTADD"
+        LogMessage "Stored Remove List: $VCCHANGELISTRMV"
 
         #
         # Back up copies of history/changelog just in case user made edits and they are about
@@ -1953,14 +1957,14 @@ function Vc-Revert($ChangePath = $false)
         if (![string]::IsNullOrEmpty($HISTORYFILE) -and (Test-Path($HISTORYFILE)))
         {
             $TmpFile = "${Env:Temp}\history.save.txt"
-            Log-Message "Saving temporary copy of history file to $TmpFile" "magenta"
+            LogMessage "Saving temporary copy of history file to $TmpFile" "magenta"
             Copy-Item -Path "$HISTORYFILE" -PassThru -Force -Destination "$TmpFile" | Out-Null
         }
 
         if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and (Test-Path($CHANGELOGFILE)))
         {
             $TmpFile = "${Env:Temp}\changelog.save.md"
-            Log-Message "Saving temporary copy of history file to $TmpFile" "magenta"
+            LogMessage "Saving temporary copy of history file to $TmpFile" "magenta"
             Copy-Item -Path "$CHANGELOGFILE" -PassThru -Force -Destination "$TmpFile" | Out-Null
         }
 
@@ -1982,9 +1986,9 @@ function Vc-Revert($ChangePath = $false)
             }
             if (Test-Path($VcRevertFile)) 
             {
-                Log-Message "Deleting unversioned $($VcRevertListParts[$i]) from fs"
+                LogMessage "Deleting unversioned $($VcRevertListParts[$i]) from fs"
                 Remove-Item -path $VcRevertListParts[$i].Replace("`"", "") -Recurse | Out-Null
-                Check-PsCmdSuccess
+                CheckPsCmdSuccess
             }
         }
 
@@ -1999,9 +2003,9 @@ function Vc-Revert($ChangePath = $false)
             }
             if ((Test-Path($VcRevertFile)))
             {
-                Log-Message "Deleting unversioned $($VcRevertListParts[$i]) from fs"
+                LogMessage "Deleting unversioned $($VcRevertListParts[$i]) from fs"
                 Remove-Item -path $VcRevertFile -Recurse | Out-Null
-                Check-PsCmdSuccess
+                CheckPsCmdSuccess
             }
         }
 
@@ -2018,23 +2022,23 @@ function Vc-Revert($ChangePath = $false)
                 }
                 if (Test-Path($VcRevertFile))
                 {
-                    if (Vc-IsVersioned($VcRevertFile)) 
+                    if (VcIsVersioned($VcRevertFile)) 
                     {
-                        Log-Message " - Adding versioned $VcRevertFile to revert list"
+                        LogMessage " - Adding versioned $VcRevertFile to revert list"
                         $VcRevertList = "$VcRevertList $($VcRevertListParts[$i])"
                     }
                     else # delete unversioned file
                     {
-                        Log-Message " - Deleting unversioned $VcRevertFile from fs"
+                        LogMessage " - Deleting unversioned $VcRevertFile from fs"
                         Remove-Item -path "$VcRevertFile" -Recurse | Out-Null
-                        Check-PsCmdSuccess
+                        CheckPsCmdSuccess
                     }
                 }
             }
             if (![string]::IsNullOrEmpty($VcRevertList)) 
             {
                 $VcRevertList = $VcRevertList.Trim()
-                Log-Message "Versioned List:  $VcRevertList"
+                LogMessage "Versioned List:  $VcRevertList"
                 $svnUser = $Env:SVN_AUTHOR_NAME
                 $svnToken = $Env:SVN_TOKEN
                 if (![string]::IsNullOrEmpty($svnUser) -and ![string]::IsNullOrEmpty($svnToken)) {
@@ -2043,10 +2047,10 @@ function Vc-Revert($ChangePath = $false)
                 else {
                     Invoke-Expression -Command "svn revert -R $VcRevertList --non-interactive"
                 }
-                Check-ExitCode
+                CheckExitCode
             }
             else {
-                Log-Message "0 versioned files to revert"
+                LogMessage "0 versioned files to revert"
             }
         }
         elseif ($_RepoType -eq "git") 
@@ -2059,29 +2063,29 @@ function Vc-Revert($ChangePath = $false)
                 }
                 if (Test-Path($VcRevertFile))
                 {
-                    if (Vc-IsVersioned($VcRevertFile)) {
-                        Log-Message " - Adding versioned $VcRevertFile to revert list"
+                    if (VcIsVersioned($VcRevertFile)) {
+                        LogMessage " - Adding versioned $VcRevertFile to revert list"
                         $VcRevertList = "$VcRevertList $($VcRevertListParts[$i])"
                     }
                     else 
                     {   # delete unversioned file
-                        Log-Message "Deleting unversioned $VcRevertFile from fs"
+                        LogMessage "Deleting unversioned $VcRevertFile from fs"
                         Remove-Item -path "$VcRevertFile" -Recurse | Out-Null
-                        Check-PsCmdSuccess
+                        CheckPsCmdSuccess
                     }
                 }
             }
             if (![string]::IsNullOrEmpty($VcRevertList)) 
             {
                 $VcRevertList = $VcRevertList.Trim()
-                Log-Message "Versioned List:  $VcRevertList"
+                LogMessage "Versioned List:  $VcRevertList"
                 Invoke-Expression -Command "git stash push -- $VcRevertList"
-                Check-ExitCode
+                CheckExitCode
                 Invoke-Expression -Command "git stash drop"
-                Check-ExitCode
+                CheckExitCode
             }
             else {
-                Log-Message "0 versioned files to revert"
+                LogMessage "0 versioned files to revert"
             }
         }
         #
@@ -2094,46 +2098,46 @@ function Vc-Revert($ChangePath = $false)
     }
 }
 
-function Check-ExitCode($ExitOnError = $false, $ChangePath = $true)
+function CheckExitCode($ExitOnError = $false, $ChangePath = $true)
 {
     $ECode = $LASTEXITCODE
     #
     # Check script error code, 0 is success
     #
     if ($ECode -eq 0) {
-        Log-Message "Exit Code 0" "darkgreen"
+        LogMessage "Exit Code 0" "darkgreen"
     }
     else {
-        Log-Message "Exit Code $ECode" "red"
+        LogMessage "Exit Code $ECode" "red"
         if ($ExitOnError -eq $true) {
-            Vc-Revert $ChangePath
+            VcRevert $ChangePath
             exit $ECode
         }
     }
 }
 
-function Check-PsCmdSuccess($ExitOnError = $false, $ChangePath = $true)
+function CheckPsCmdSuccess($ExitOnError = $false, $ChangePath = $true)
 {
     #
     # Check script error code, 0 is success
     #
     if ($? -eq $true) {
-        Log-Message "Status True" "darkgreen"
+        LogMessage "Status True" "darkgreen"
     }
     else {
-        Log-Message "Status False" "red"
+        LogMessage "Status False" "red"
         if ($ExitOnError -eq $true) {
-            Vc-Revert $ChangePath
+            VcRevert $ChangePath
             exit 110
         }
     }
 }
 
-function Replace-Version($File, $Old, $New, $CaseSensitive = $false)
+function ReplaceVersion($File, $Old, $New, $CaseSensitive = $false)
 {
-    Log-Message "Write new version $New, previously $Old, to $File"
+    LogMessage "Write new version $New, previously $Old, to $File"
     $Content = Get-Content -path $File -Raw
-    Check-PsCmdSuccess
+    CheckPsCmdSuccess
     $ContentNew = ""
     if ($CaseSensitive -eq $false) {
         $ContentNew = ((Get-Content -path $File -Raw) -replace "$Old", "$New");
@@ -2141,45 +2145,45 @@ function Replace-Version($File, $Old, $New, $CaseSensitive = $false)
     else {
         $ContentNew = ((Get-Content -path $File -Raw) -creplace "$Old", "$New");
     }
-    Check-PsCmdSuccess
+    CheckPsCmdSuccess
     if ($Content -ne $ContentNew)
     {
         Set-Content -NoNewline -Path $File -Value $ContentNew
-        Check-PsCmdSuccess
+        CheckPsCmdSuccess
         [System.Threading.Thread]::Sleep(750)
     }
     return ($Content -ne $ContentNew)
 }
 
-function Run-Scripts($ScriptType, $Scripts, $ExitOnError, $RunInTestMode = $false)
+function RunScripts($ScriptType, $Scripts, $ExitOnError, $RunInTestMode = $false)
 {
     if ($Scripts.Length -gt 0 -and !$script:BuildCmdsRun.Contains($ScriptType))
     {
         # Run custom script
         #
-        Log-Message "Running custom $ScriptType script(s)"
+        LogMessage "Running custom $ScriptType script(s)"
 
         if ($DRYRUN -eq $false -or $RunInTestMode) 
         {
             foreach ($Script in $Scripts) 
             {
                 Invoke-Expression -Command "$Script"
-                Check-ExitCode $ExitOnError
+                CheckExitCode $ExitOnError
             }
         }
         else {
-            Log-Message "   Dry run, skipping script run" "magenta"
+            LogMessage "   Dry run, skipping script run" "magenta"
         }
 
         $script:BuildCmdsRun += $ScriptType
     }
 }
 
-function Prepare-VersionFiles()
+function Set-VersionFiles()
 {
     if ($VERSIONFILES.Length -gt 0)
     {
-        Log-Message "Preparing version files"
+        LogMessage "Preparing version files"
         $Incremental = $false
 
         #
@@ -2227,12 +2231,12 @@ function Prepare-VersionFiles()
                 # replace version in file
                 #
                 $rc = $false
-                Log-Message "Writing new version $VERSION to $vFile"
+                LogMessage "Writing new version $VERSION to $vFile"
                 if ($VERSIONREPLACETAGS.Length -gt 0)
                 {
                     foreach ($ReplaceTag in $VERSIONREPLACETAGS) 
                     {
-                        $rc = Replace-Version $vFile "$ReplaceTag$CURRENTVERSION" "$ReplaceTag$VERSION"
+                        $rc = ReplaceVersion $vFile "$ReplaceTag$CURRENTVERSION" "$ReplaceTag$VERSION"
                         if ($rc -eq $true) {
                             break;
                         }
@@ -2240,13 +2244,13 @@ function Prepare-VersionFiles()
                 }
                 if ($rc -ne $true)
                 {
-                    $rc = Replace-Version $vFile "`"$CURRENTVERSION`"" "`"$VERSION`""
+                    $rc = ReplaceVersion $vFile "`"$CURRENTVERSION`"" "`"$VERSION`""
                     if ($rc -ne $true)
                     {
-                        $rc = Replace-Version $vFile "'$CURRENTVERSION'" "'$VERSION'"
+                        $rc = ReplaceVersion $vFile "'$CURRENTVERSION'" "'$VERSION'"
                         if ($rc -ne $true)
                         {
-                            $rc = Replace-Version $vFile $CURRENTVERSION $VERSION
+                            $rc = ReplaceVersion $vFile $CURRENTVERSION $VERSION
                             if ($rc -ne $true)
                             {
                                 # TODO
@@ -2261,13 +2265,13 @@ function Prepare-VersionFiles()
                 #
                 if ($Incremental -eq $true)
                 {
-                    $rc = Replace-Version $vFile "`"$SEMVERSIONCUR`"" "`"$SEMVERSION`""
+                    $rc = ReplaceVersion $vFile "`"$SEMVERSIONCUR`"" "`"$SEMVERSION`""
                     if ($rc -ne $true)
                     {
-                        $rc = Replace-Version $vFile "'$SEMVERSIONCUR'" "'$SEMVERSION'"
+                        $rc = ReplaceVersion $vFile "'$SEMVERSIONCUR'" "'$SEMVERSION'"
                         if ($rc -ne $true)
                         {
-                            $rc = Replace-Version $vFile $SEMVERSIONCUR $SEMVERSION
+                            $rc = ReplaceVersion $vFile $SEMVERSIONCUR $SEMVERSION
                         }
                     }
                 }
@@ -2281,20 +2285,20 @@ function Prepare-VersionFiles()
     }
 }
 
-function Prepare-ExtJsBuild()
+function Set-ExtJsBuild()
 {
     #
     # Replace version in app.json
     #
-    Replace-Version "app.json" "appVersion`"[ ]*:[ ]*[`"]$CURRENTVERSION" "appVersion`": `"$VERSION" $true
-    Replace-Version "app.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION" $true
+    ReplaceVersion "app.json" "appVersion`"[ ]*:[ ]*[`"]$CURRENTVERSION" "appVersion`": `"$VERSION" $true
+    ReplaceVersion "app.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION" $true
     #
     # Allow manual modifications to app.json
     #
     Edit-File "app.json" $false $TASKTOUCHVERSIONS
 }
 
-function Prepare-DotNetBuild($AssemblyInfoLocation)
+function Set-DotNetBuild($AssemblyInfoLocation)
 {
     $SEMVERSION = ""
     if (!$VERSION.Contains("."))
@@ -2321,8 +2325,8 @@ function Prepare-DotNetBuild($AssemblyInfoLocation)
     #
     # Replace version in assemblyinfo file
     #
-    Replace-Version $AssemblyInfoLocation "AssemblyVersion[ ]*[(][ ]*[`"]$SEMVERSIONCUR" "AssemblyVersion(`"$SEMVERSION"
-    Replace-Version $AssemblyInfoLocation "AssemblyFileVersion[ ]*[(][ ]*[`"]$SEMVERSIONCUR" "AssemblyFileVersion(`"$SEMVERSION"
+    ReplaceVersion $AssemblyInfoLocation "AssemblyVersion[ ]*[(][ ]*[`"]$SEMVERSIONCUR" "AssemblyVersion(`"$SEMVERSION"
+    ReplaceVersion $AssemblyInfoLocation "AssemblyFileVersion[ ]*[(][ ]*[`"]$SEMVERSIONCUR" "AssemblyFileVersion(`"$SEMVERSION"
     #
     # Allow manual modifications to assembly file and commit to modified list
     #
@@ -2330,13 +2334,13 @@ function Prepare-DotNetBuild($AssemblyInfoLocation)
 }
 
 
-function Prepare-AppPublisherBuild()
+function Set-AppPublisherBuild()
 {
     if ($APPPUBLISHERVERSION -eq $true) {
         #
         # Replace version in defined main mantisbt plugin file
         #
-        Replace-Version ".publishrc.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
+        ReplaceVersion ".publishrc.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
         #
         # Allow manual modifications to publishrc and commit to modified list
         #
@@ -2345,7 +2349,7 @@ function Prepare-AppPublisherBuild()
 }
 
 
-function Prepare-MantisPluginBuild()
+function Set-MantisPluginBuild()
 {
     if (![string]::IsNullOrEmpty($MANTISBTPLUGIN))
     {
@@ -2354,8 +2358,8 @@ function Prepare-MantisPluginBuild()
             #
             # Replace version in defined main mantisbt plugin file
             #
-            Replace-Version $MANTISBTPLUGIN "this->version[ ]*[=][ ]*[`"]$CURRENTVERSION" "this->version = `"$VERSION"
-            Replace-Version $MANTISBTPLUGIN "this->version[ ]*[=][ ]*[']$CURRENTVERSION" "this->version = '$VERSION"
+            ReplaceVersion $MANTISBTPLUGIN "this->version[ ]*[=][ ]*[`"]$CURRENTVERSION" "this->version = `"$VERSION"
+            ReplaceVersion $MANTISBTPLUGIN "this->version[ ]*[=][ ]*[']$CURRENTVERSION" "this->version = '$VERSION"
             #
             # Allow manual modifications to mantisbt main plugin file and commit to modified list
             #
@@ -2365,7 +2369,20 @@ function Prepare-MantisPluginBuild()
 }
 
 
-function Prepare-CProjectBuild()
+function Set-MavenPomBuild($mavenTag)
+{
+    if ($MavenTags.Length -eq 2 -and (Test-Path("pom.xml")))
+    {
+        ReplaceVersion "pom.xml" "<$MmvenTag>$CURRENTVERSION</$mavenTag>" "<$mavenTag>$VERSION</$mavenTag>"
+        #
+        # Allow manual modifications to mantisbt main plugin file and commit to modified list
+        #
+        Edit-File "pom.xml" $false ($SKIPVERSIONEDITS -eq "Y" -or $TASKTOUCHVERSIONS)
+    }
+}
+
+
+function Set-CProjectBuild()
 {
     if (![string]::IsNullOrEmpty($CPROJECTRCFILE))
     {
@@ -2414,14 +2431,14 @@ function Prepare-CProjectBuild()
             # VALUE "FileVersion", "10,4,1,0"
             # VALUE "ProductVersion", "7, 0, 0, 0"
             #
-            Replace-Version $CPROJECTRCFILE "FileVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "FileVersion`", `"$RcVersion`""
-            Replace-Version $CPROJECTRCFILE "ProductVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "ProductVersion`", `"$RcVersion`""
+            ReplaceVersion $CPROJECTRCFILE "FileVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "FileVersion`", `"$RcVersion`""
+            ReplaceVersion $CPROJECTRCFILE "ProductVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "ProductVersion`", `"$RcVersion`""
             $RcVersionCUR = $RcVersionCUR.Replace(" ", ""); # and try without spaces in the version number too
-            Replace-Version $CPROJECTRCFILE "FileVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "FileVersion`", `"$RcVersion`""
-            Replace-Version $CPROJECTRCFILE "ProductVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "ProductVersion`", `"$RcVersion`""
+            ReplaceVersion $CPROJECTRCFILE "FileVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "FileVersion`", `"$RcVersion`""
+            ReplaceVersion $CPROJECTRCFILE "ProductVersion[ ]*[`"][ ]*,[ ]*[`"][ ]*$RcVersionCUR[ ]*[`"]" "ProductVersion`", `"$RcVersion`""
             $RcVersion = $RcVersion.Replace(" ", ""); 
-            Replace-Version $CPROJECTRCFILE "FILEVERSION[ ]*$RcVersionCUR" "FILEVERSION $RcVersion"
-            Replace-Version $CPROJECTRCFILE "PRODUCTVERSION[ ]*$RcVersionCUR" "PRODUCTVERSION $RcVersion"
+            ReplaceVersion $CPROJECTRCFILE "FILEVERSION[ ]*$RcVersionCUR" "FILEVERSION $RcVersion"
+            ReplaceVersion $CPROJECTRCFILE "PRODUCTVERSION[ ]*$RcVersionCUR" "PRODUCTVERSION $RcVersion"
             #
             # Allow manual modifications to rc file and commit to modified list
             #
@@ -2434,7 +2451,7 @@ function Prepare-CProjectBuild()
 function Get-AssemblyInfoVersion($AssemblyInfoLocation)
 {
     $AssemblyInfoVersion = ""
-    Log-Message "Retrieving assemblyinfo version from $AssemblyInfoLocation"
+    LogMessage "Retrieving assemblyinfo version from $AssemblyInfoLocation"
     if (Test-Path($AssemblyInfoLocation))
     {
         $AssemblyInfoContent = Get-Content -Path $AssemblyInfoLocation -Raw
@@ -2450,7 +2467,7 @@ function Get-AssemblyInfoVersion($AssemblyInfoLocation)
         }
     }
     else {
-        Log-Message "Could not retrieve version, $AssemblyInfoLocation does not exist" "red"
+        LogMessage "Could not retrieve version, $AssemblyInfoLocation does not exist" "red"
     }
     return $AssemblyInfoVersion
 }
@@ -2459,7 +2476,7 @@ function Get-AssemblyInfoVersion($AssemblyInfoLocation)
 function Get-MantisPluginVersion()
 {
     $MantisVersion = ""
-    Log-Message "Retrieving MantisBT plugin version from $MANTISBTPLUGIN"
+    LogMessage "Retrieving MantisBT plugin version from $MANTISBTPLUGIN"
     if (Test-Path($MANTISBTPLUGIN))
     {
         $PluginFileContent = Get-Content -Path $MANTISBTPLUGIN -Raw
@@ -2474,16 +2491,72 @@ function Get-MantisPluginVersion()
         }
     }
     else {
-        Log-Message "Could not retrieve version, '$MANTISBTPLUGIN' does not exist" "red"
+        LogMessage "Could not retrieve version, '$MANTISBTPLUGIN' does not exist" "red"
     }
     return $MantisVersion
+}
+
+
+function Get-MavenPomVersion()
+{   #
+    # POM can be a preporty replacement version within the file itself:
+    #
+    # <version>${revision}${changelist}</version>
+    # <name>MantisBT Plugin</name>
+    # <properties>
+    #     <revision>0.2.0</revision>
+    #     <changelist>-PRE</changelist>
+    #     ...
+    # </properties>
+    #
+    $mavenVersion = "0.0.0"
+    $mavenVersionInfo = @()
+    LogMessage "Retrieving Maven plugin version from pom.xml"
+    if (Test-Path("pom.xml"))
+    {
+        $PomFileContent = Get-Content -Path "pom.xml" -Raw
+
+        $match = [Regex]::Match($PomFileContent, "\$\{(.+?)\}(?=\<\/version|\$\{\w+\})");
+        if ($match.Success -and $match.Groups.Length -gt 1)
+        {
+            while ($match.Success)
+            {
+                $prop = $match.Groups[1].Value;
+                if ($mavenVersionInfo.Length -eq 0) {
+                    $mavenVersionInfo += $prop;
+                }
+                [Match] $match2 = [Regex]::Match($PomFileContent, "<$prop>(.+)<\/$prop>");
+                if ($match2.Success -and $match2.Groups.Length -gt 1)
+                {
+                    if ($mavenVersion -eq "0.0.0") {
+                        $mavenVersion = "";
+                    }
+                    $mavenVersion += $match2.Groups[1].Value;
+                }
+                $match = $match.NextMatch()
+            }
+            $mavenVersionInfo += $mavenVersion
+        }
+        else {
+            [Match] $match = [Regex]::Match($PomFileContent, "<version>([0-9]+[.]{1}[0-9]+[.]{1}[0-9]+)<\/version>");
+            if ($match.Success -and $match.Groups.Length -gt 1)
+            {
+                $mavenVersionInfo += "version"
+                $mavenVersionInfo += $match.Groups[1].Value
+            }
+        }
+    }
+    else {
+        LogMessage "Could not retrieve version, 'pom.xml' does not exist" "red"
+    }
+    return $mavenVersionInfo
 }
 
 
 function Get-AppPublisherVersion()
 {
     $AppPublisherVersion = ""
-    Log-Message "Retrieving App-Publisher publishrc version"
+    LogMessage "Retrieving App-Publisher publishrc version"
     $FileContent = Get-Content -Path ".publishrc.json" -Raw
     [Match] $match = [Regex]::Match($FileContent, "version`"[ ]*:[ ]*`"[0-9]+[.]{0,1}[0-9]+[.]{0,1}[0-9]+[.]{0,1}[0-9]{0,}");
     if ($match.Success)
@@ -2504,7 +2577,7 @@ $DefaultBugs = ""
 $DefaultName = ""
 $DefaultScope = ""
 
-function Prepare-PackageJson()
+function Set-PackageJson()
 {
     #
     # Replace current version with new version in package.json and package-lock.json
@@ -2512,72 +2585,72 @@ function Prepare-PackageJson()
     # two version tags, on for the main package.json field, and one in the sencha object definition, we 
     # want to replace them both if they match
     #
-    Log-Message "Setting new version $VERSION in package.json"
+    LogMessage "Setting new version $VERSION in package.json"
     & npm version --no-git-tag-version --allow-same-version $VERSION
-    Check-ExitCode
+    CheckExitCode
     [System.Threading.Thread]::Sleep(750)
-    Replace-Version "package.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
+    ReplaceVersion "package.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION"
 
     if (![string]::IsNullOrEmpty($REPO))
     {
         #Save
-        Log-Message "Saving repository in package.json"
+        LogMessage "Saving repository in package.json"
         if (!$IsAppPublisher) {
             $script:DefaultRepo = & app-publisher-json -f package.json repository.url
         }
         else {
             $script:DefaultRepo = & json -f package.json repository.url
         }
-        Check-ExitCode
-        Log-Message "Repository: $DefaultRepo"
+        CheckExitCode
+        LogMessage "Repository: $DefaultRepo"
         # Set repo
-        Log-Message "Setting repository in package.json: $REPO"
+        LogMessage "Setting repository in package.json: $REPO"
         if (!$IsAppPublisher) {
             & app-publisher-json -I -4 -f package.json -e "this.repository.url='$REPO'"
         }
         else {
             & json -I -4 -f package.json -e "this.repository.url='$REPO'"
         }
-        Check-ExitCode
+        CheckExitCode
     }
 
     if (![string]::IsNullOrEmpty($REPOTYPE))
     {
         #Save
-        Log-Message "Saving repository type in package.json"
+        LogMessage "Saving repository type in package.json"
         if (!$IsAppPublisher) {
             $script:DefaultRepoType = & app-publisher-json -f package.json repository.type
         }
         else {
             $script:DefaultRepoType = & json -f package.json repository.type
         }
-        Check-ExitCode
-        Log-Message "Repository Type: $DefaultRepoType"
+        CheckExitCode
+        LogMessage "Repository Type: $DefaultRepoType"
         # Set repo type
-        Log-Message "Setting repository type in package.json: $REPOTYPE"
+        LogMessage "Setting repository type in package.json: $REPOTYPE"
         if (!$IsAppPublisher) {
             & app-publisher-json -I -4 -f package.json -e "this.repository.type='$REPOTYPE'"
         }
         else {
             & json -I -4 -f package.json -e "this.repository.type='$REPOTYPE'"
         }
-        Check-ExitCode
+        CheckExitCode
     }
 
     if (![string]::IsNullOrEmpty($HOMEPAGE))
     {
         #Save
-        Log-Message "Saving homepage in package.json"
+        LogMessage "Saving homepage in package.json"
         if (!$IsAppPublisher) {
             $script:DefaultHomePage = & app-publisher-json -f package.json homepage
         }
         else {
             $script:DefaultHomePage = & json -f package.json homepage
         }
-        Check-ExitCode
-        Log-Message "Homepage: $DefaultHomePage"
+        CheckExitCode
+        LogMessage "Homepage: $DefaultHomePage"
         # Set homepage 
-        Log-Message "Setting homepage in package.json: $HOMEPAGE"
+        LogMessage "Setting homepage in package.json: $HOMEPAGE"
         #
         # A bug in npm module json where writing an ampersand throws an error, if the bugs page contains
         # one then use powershell replace mechanism for replacement
@@ -2590,11 +2663,11 @@ function Prepare-PackageJson()
             else {
                 & json -I -4 -f package.json -e "this.homepage='$HOMEPAGE'"
             }
-            Check-ExitCode
+            CheckExitCode
         }
         else {
             ((Get-Content -path "package.json" -Raw) -replace "$DefaultHomePage", "$HOMEPAGE") | Set-Content -NoNewline -Path "package.json"
-            Check-PsCmdSuccess
+            CheckPsCmdSuccess
             [System.Threading.Thread]::Sleep(500) # removed this ps stuff to begin with because of access errors. try to sleep
         }
     }
@@ -2602,17 +2675,17 @@ function Prepare-PackageJson()
     if (![string]::IsNullOrEmpty($BUGS))
     {
         #Save
-        Log-Message "Saving bugs page in package.json"
+        LogMessage "Saving bugs page in package.json"
         if (!$IsAppPublisher) {
             $script:DefaultBugs = & app-publisher-json -f package.json bugs.url
         }
         else {
             $script:DefaultBugs =  & json -f package.json bugs.url
         }
-        Check-ExitCode
-        Log-Message "Bugs page: $DefaultBugs"
+        CheckExitCode
+        LogMessage "Bugs page: $DefaultBugs"
         # Set
-        Log-Message "Setting bugs page in package.json: $BUGS"
+        LogMessage "Setting bugs page in package.json: $BUGS"
         #
         # A bug in npm module json where writing an ampersand throws an error, if the bugs page contains
         # one then use powershell replace mechanism for replacement
@@ -2628,43 +2701,43 @@ function Prepare-PackageJson()
         }
         else {
             ((Get-Content -path "package.json" -Raw) -replace "$DefaultBugs", "$BUGS") | Set-Content -NoNewline -Path "package.json"
-            Check-PsCmdSuccess
+            CheckPsCmdSuccess
             [System.Threading.Thread]::Sleep(500) # removed this ps stuff to begin with because of access errors. try to sleep
         }
-        Check-ExitCode
+        CheckExitCode
     }
 
     #
     # Scope/name - package.json
     #
-    Log-Message "Saving package name in package.json"
+    LogMessage "Saving package name in package.json"
     if (!$IsAppPublisher) {
         $script:DefaultName = & app-publisher-json -f package.json name
     }
     else {
         $script:DefaultName = & json -f package.json name
     }
-    Check-ExitCode
-    Log-Message "Package name : $DefaultName"
+    CheckExitCode
+    LogMessage "Package name : $DefaultName"
     if ($DefaultName.Contains("@") -and $DefaultName.Contains("/")) {
         $script:DefaultScope = $DefaultName.Substring(0, $DefaultName.IndexOf("/"));
-        Log-Message "Package scope: $DefaultScope"
+        LogMessage "Package scope: $DefaultScope"
     }
 
     if (![string]::IsNullOrEmpty($NPMSCOPE))
     {
         if (!$DefaultName.Contains($NPMSCOPE))
         {
-            Log-Message "Setting package name in package.json: $NPMSCOPE/$PROJECTNAME"
+            LogMessage "Setting package name in package.json: $NPMSCOPE/$PROJECTNAME"
             if (!$IsAppPublisher) {
                 & app-publisher-json -I -4 -f package.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
             }
             else {
                 & json -I -4 -f package.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
             }
-            Check-ExitCode
+            CheckExitCode
             if ($LASTEXITCODE -ne 0) {
-                Log-Message "Setting package name in package.json failed, retrying"
+                LogMessage "Setting package name in package.json failed, retrying"
                 [System.Threading.Thread]::Sleep(500)
                 if (!$IsAppPublisher) {
                     & app-publisher-json -I -4 -f package.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
@@ -2672,23 +2745,23 @@ function Prepare-PackageJson()
                 else {
                     & json -I -4 -f package.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
                 }
-                Check-ExitCode
+                CheckExitCode
             }
             #
             # Scope - package-lock.json
             #
             if (Test-Path("package-lock.json")) 
             {
-                Log-Message "Setting package name in package-lock.json: $NPMSCOPE/$PROJECTNAME"
+                LogMessage "Setting package name in package-lock.json: $NPMSCOPE/$PROJECTNAME"
                 if (!$IsAppPublisher) {
                     & app-publisher-json -I -4 -f package-lock.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
                 }
                 else {
                     & json -I -4 -f package-lock.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
                 }
-                Check-ExitCode
+                CheckExitCode
                 if ($LASTEXITCODE -ne 0) {
-                    Log-Message "Setting package name in package-lock.json failed, retrying"
+                    LogMessage "Setting package name in package-lock.json failed, retrying"
                     [System.Threading.Thread]::Sleep(500)
                     if (!$IsAppPublisher) {
                         & app-publisher-json -I -4 -f package-lock.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
@@ -2696,7 +2769,7 @@ function Prepare-PackageJson()
                     else {
                         & json -I -4 -f package-lock.json -e "this.name='$NPMSCOPE/$PROJECTNAME'"
                     }
-                    Check-ExitCode
+                    CheckExitCode
                 }
             }
         }
@@ -2705,9 +2778,9 @@ function Prepare-PackageJson()
     #
     # The json utility will output line feed only, replace with windows stle crlf
     #
-    #Log-Message "Set windows line feeds in package.json"
+    #LogMessage "Set windows line feeds in package.json"
     #((Get-Content -path "package.json" -Raw) -replace "`n", "`r`n") | Set-Content -NoNewline -Path "package.json"
-    #Check-ExitCode
+    #CheckExitCode
     #
     # Allow manual modifications to package.json and package-lock.json
     #
@@ -2716,9 +2789,9 @@ function Prepare-PackageJson()
     {
         # The json utility will output line feed only, replace with windows stle crlf
         #
-        #Log-Message "Set windows line feeds in package-lock.json"
+        #LogMessage "Set windows line feeds in package-lock.json"
         #((Get-Content -path "package-lock.json" -Raw) -replace "`n", "`r`n") | Set-Content -NoNewline -Path "package-lock.json"
-        #Check-PsCmdSuccess
+        #CheckPsCmdSuccess
         Edit-File "package-lock.json" $false  ($SKIPVERSIONEDITS -eq "Y")
     }
 }
@@ -2730,35 +2803,35 @@ function Restore-PackageJson()
     #
     if (![string]::IsNullOrEmpty($DefaultRepo))
     {
-        Log-Message "Re-setting default repository in package.json: $DefaultRepo"
+        LogMessage "Re-setting default repository in package.json: $DefaultRepo"
         if (!$IsAppPublisher) {
             & app-publisher-json -I -4 -f package.json -e "this.repository.url='$DefaultRepo'"
         }
         else {
             & json -I -4 -f package.json -e "this.repository.url='$DefaultRepo'"
         }
-        Check-ExitCode
+        CheckExitCode
     }
     #
     # Set repo type
     #
     if (![string]::IsNullOrEmpty($DefaultRepoType))
     {
-        Log-Message "Re-setting default repository type in package.json: $DefaultRepoType"
+        LogMessage "Re-setting default repository type in package.json: $DefaultRepoType"
         if (!$IsAppPublisher) {
             & app-publisher-json -I -4 -f package.json -e "this.repository.type='$DefaultRepoType'"
         }
         else {
             & json -I -4 -f package.json -e "this.repository.type='$DefaultRepoType'"
         }
-        Check-ExitCode
+        CheckExitCode
     }
     #
     # Set bugs
     #
     if (![string]::IsNullOrEmpty($DefaultBugs))
     {
-        Log-Message "Re-setting default bugs page in package.json: $DefaultBugs"
+        LogMessage "Re-setting default bugs page in package.json: $DefaultBugs"
         #
         # A bug in npm module json where writing an ampersand throws an error, if the bugs page contains
         # one then use powershell replace mechanism for replacement
@@ -2771,11 +2844,11 @@ function Restore-PackageJson()
             else {
                 & json -I -4 -f package.json -e "this.bugs.url='$DefaultBugs'"
             }
-            Check-ExitCode
+            CheckExitCode
         }
         else {
             ((Get-Content -path "package.json" -Raw) -replace "$BUGS", "$DefaultBugs") | Set-Content -NoNewline -Path "package.json"
-            Check-PsCmdSuccess
+            CheckPsCmdSuccess
             [System.Threading.Thread]::Sleep(500) # removed this ps stuff to begin with because of access errors. try to sleep
         }
     }
@@ -2784,7 +2857,7 @@ function Restore-PackageJson()
     #
     if (![string]::IsNullOrEmpty($DefaultHomePage))
     {
-        Log-Message "Re-setting default homepage in package.json: $DefaultHomePage"
+        LogMessage "Re-setting default homepage in package.json: $DefaultHomePage"
         #
         # A bug in npm module json where writing an ampersand throws an error, if the bugs page contains
         # one then use powershell replace mechanism for replacement
@@ -2797,11 +2870,11 @@ function Restore-PackageJson()
             else {
                 & json -I -4 -f package.json -e "this.homepage='$DefaultHomePage'"
             }
-            Check-ExitCode
+            CheckExitCode
         }
         else {
             ((Get-Content -path "package.json" -Raw) -replace "$HOMEPAGE", "$DefaultHomePage") | Set-Content -NoNewline -Path "package.json"
-            Check-PsCmdSuccess
+            CheckPsCmdSuccess
             [System.Threading.Thread]::Sleep(500) # removed this ps stuff to begin with because of access errors. try to sleep
         }
     }
@@ -2810,27 +2883,27 @@ function Restore-PackageJson()
     #
     if (![string]::IsNullOrEmpty($NPMSCOPE) -and !$DefaultName.Contains($NPMSCOPE))
     {
-        Log-Message "Re-setting default package name in package.json: $DefaultName"
+        LogMessage "Re-setting default package name in package.json: $DefaultName"
         if (!$IsAppPublisher) {
             & app-publisher-json -I -4 -f package.json -e "this.name='$DefaultName'"
         }
         else {
             & json -I -4 -f package.json -e "this.name='$DefaultName'"
         }
-        Check-ExitCode
+        CheckExitCode
         #
         # Scope - package-lock.json
         #
         if (Test-Path("package-lock.json")) 
         {
-            Log-Message "Re-scoping default package name in package-lock.json: $DefaultName"
+            LogMessage "Re-scoping default package name in package-lock.json: $DefaultName"
             if (!$IsAppPublisher) {
                 & app-publisher-json -I -4 -f package-lock.json -e "this.name='$DefaultName'"
             }
             else {
                 & json -I -4 -f package-lock.json -e "this.name='$DefaultName'"
             }
-            Check-ExitCode
+            CheckExitCode
         }
     }
 }
@@ -2841,19 +2914,19 @@ function Edit-File($editFile, $SeekToEnd = $false, $skipEdit = $false, $async = 
 {
     $nFile = $editFile;
 
-    Log-Message "edit file $nFile" "cyan" $true
+    LogMessage "edit file $nFile" "cyan" $true
 
     if (![string]::IsNullOrEmpty($nFile) -and (Test-Path($nFile)) -and !$VersionFilesEdited.Contains($nFile))
     {
         $script:VersionFilesEdited += $nFile
         
         if (!$TASKMODE) {
-            Vc-Changelist-Add $nFile
+            VcChangelistAdd $nFile
         }
 
         if ($skipEdit -and $VERSIONFILESEDITALWAYS.Contains($nFile)) 
         {
-            Log-Message "Set Edit Always Version File - $nFile"  
+            LogMessage "Set Edit Always Version File - $nFile"  
             $skipEdit = $false
         }
 
@@ -2867,7 +2940,7 @@ function Edit-File($editFile, $SeekToEnd = $false, $skipEdit = $false, $async = 
 
         if (!$skipEdit -and ![string]::IsNullOrEmpty($TEXTEDITOR))
         {
-            Log-Message "Edit $nFile"
+            LogMessage "Edit $nFile"
             #
             # Create scripting shell for process activation and sendkeys
             #
@@ -2946,7 +3019,7 @@ function Edit-File($editFile, $SeekToEnd = $false, $skipEdit = $false, $async = 
             #
             if ($async -ne $true) {
                 Wait-Process -Id $TextEditorProcess.Id | Out-Null
-                Check-PsCmdSuccess
+                CheckPsCmdSuccess
             }
         }
     }
@@ -3670,10 +3743,10 @@ $ContentTypeMap = @{
 # Start logging
 #
 if (!$options.taskModeStdOut) {
-    Log-Message "----------------------------------------------------------------" "darkblue" $true
-    Log-Message " App Publisher PowerShell Script" "darkblue" $true
-    Log-Message "   Version   : $APPPUBLISHERVERSION" "cyan" $true
-    Log-Message "   Author    : Scott Meesseman" "cyan" $true
+    LogMessage "----------------------------------------------------------------" "darkblue" $true
+    LogMessage " App Publisher PowerShell Script" "darkblue" $true
+    LogMessage "   Version   : $APPPUBLISHERVERSION" "cyan" $true
+    LogMessage "   Author    : Scott Meesseman" "cyan" $true
 }
 
 #
@@ -3720,14 +3793,14 @@ if ($RUN -gt 1)
         $options | Add-Member -MemberType $_.MemberType -Name $_.Name -Value $_.Value -Force
     }
     if (!$options.taskModeStdOut) {
-        Log-Message "----------------------------------------------------------------" "darkblue" $true
+        LogMessage "----------------------------------------------------------------" "darkblue" $true
     }
 }
 
 if (!$options.taskModeStdOut) {
-    Log-Message "   Run #     : $RUN of $NUMRUNS" "cyan" $true
-    Log-Message "   Directory : $CWD" "cyan" $true
-    Log-Message "----------------------------------------------------------------" "darkblue" $true
+    LogMessage "   Run #     : $RUN of $NUMRUNS" "cyan" $true
+    LogMessage "   Directory : $CWD" "cyan" $true
+    LogMessage "----------------------------------------------------------------" "darkblue" $true
 }
 
 #region Merge Run
@@ -3837,6 +3910,13 @@ if ($options.projectName) {
 $BRANCH = ""
 if ($options.branch) {
     $BRANCH = $options.branch
+}
+#
+#
+#
+$BUGS = ""
+if ($options.bugs) {
+    $BUGS = $options.bugs
 }
 #
 # The build command(s) to run once versions have been updated in version files (i.e. package.json,
@@ -4039,11 +4119,11 @@ if ($options.historyHref) {
     $HISTORYHREF = $options.historyHref
 }
 #
-# Text Editor preference
+# Homepage (package.json property)
 #
-$TEXTEDITOR = ""
-if ($options.textEditor) {
-    $TEXTEDITOR = $options.textEditor
+$HOMEPAGE = ""
+if ($options.homePage) {
+    $HOMEPAGE = $options.homePage
 }
 #
 # For MantisBT Plugin Releases
@@ -4326,20 +4406,6 @@ if ($options.republish) {
     $REPUBLISH = $options.republish
 }
 #
-#
-#
-$BUGS = ""
-if ($options.bugs) {
-    $BUGS = $options.bugs
-}
-#
-#
-#
-$HOMEPAGE = ""
-if ($options.homePage) {
-    $HOMEPAGE = $options.homePage
-}
-#
 # Skip changelog edits (ci)
 #
 $SKIPCHANGELOGEDITS = "N"
@@ -4368,6 +4434,13 @@ if ($options.skipVersionEdits) {
 $TESTEMAILRECIP = @()
 if ($options.testEmailRecip) {
     $TESTEMAILRECIP = $options.testEmailRecip
+}
+#
+# Text Editor preference
+#
+$TEXTEDITOR = ""
+if ($options.textEditor) {
+    $TEXTEDITOR = $options.textEditor
 }
 #
 # Whether or not to tag the new version in SVN.  Default is Yes.
@@ -4538,7 +4611,7 @@ if ($VCFILES.Length -gt 0)
             $VCCHANGELIST = "$VCCHANGELIST `"$VcFile`""
         }
         else {
-            Log-Message "Specified file $File for version control addition does not exist" "red"
+            LogMessage "Specified file $File for version control addition does not exist" "red"
             exit 1
         }
     }
@@ -4588,7 +4661,7 @@ if (!$options.taskChangelogFile -is [system.string])
         }
     }
     else {
-        Log-Message "The '--task-changelog-view' option overrides '--task-changelog-file'" "yellow"
+        LogMessage "The '--task-changelog-view' option overrides '--task-changelog-file'" "yellow"
     }
 }
 if ($TASKCHANGELOG)
@@ -4616,8 +4689,8 @@ if ($TASKCHANGELOG)
         $cFileSpecified = ![string]::IsNullOrEmpty($CHANGELOGFILE);
 
         if (!$hFileSpecified -and !$cFileSpecified) {
-            Log-Message "Specified a 'changelog' task, but no changelog or history file is configured or could be found" "red"
-            Log-Message "   A valid changelog file must configured using the 'historyFile' or 'changelogFile' publishrc properties" "red"
+            LogMessage "Specified a 'changelog' task, but no changelog or history file is configured or could be found" "red"
+            LogMessage "   A valid changelog file must configured using the 'historyFile' or 'changelogFile' publishrc properties" "red"
             exit 1
         }
     }
@@ -4651,8 +4724,8 @@ if ($options.taskMantisbtRelease) {
         }
     }
     else {
-        Log-Message "Specified task 'mantis release' but not configured in .publishrc" "red"
-        Log-Message "   A valid URL and token must be configured" "red"
+        LogMessage "Specified task 'mantis release' but not configured in .publishrc" "red"
+        LogMessage "   A valid URL and token must be configured" "red"
         exit 1
     }
 }
@@ -4761,41 +4834,41 @@ if (Test-Path("package.json"))
 {
     if ([string]::IsNullOrEmpty($_Repo))
     {
-        Log-Message "Reading repository in package.json"
+        LogMessage "Reading repository in package.json"
         if (!$IsAppPublisher) {
             $_Repo = & app-publisher-json -f package.json repository.url
         }
         else {
             $_Repo = & json -f package.json repository.url
         }
-        Check-ExitCode
-        Log-Message "Repository: $_Repo"
+        CheckExitCode
+        LogMessage "Repository: $_Repo"
     }
 
     if ([string]::IsNullOrEmpty($_RepoType))
     {
-        Log-Message "Saving repository type in package.json"
+        LogMessage "Saving repository type in package.json"
         if (!$IsAppPublisher) {
             $_RepoType = & app-publisher-json -f package.json repository.type
         }
         else {
             $_RepoType = & json -f package.json repository.type
         }
-        Check-ExitCode
-        Log-Message "Repository Type: $_RepoType"
+        CheckExitCode
+        LogMessage "Repository Type: $_RepoType"
     }
 }
 if ([string]::IsNullOrEmpty($_Repo)) {
-    Log-Message "Repository must be specified on cmd line, package.json or publishrc" "red"
+    LogMessage "Repository must be specified on cmd line, package.json or publishrc" "red"
     exit 1
 }
 elseif ([string]::IsNullOrEmpty($_RepoType)) {
-    Log-Message "Repository type must be specified on cmd line, package.json or publishrc" "red"
+    LogMessage "Repository type must be specified on cmd line, package.json or publishrc" "red"
     exit 1
 }
 if ($_RepoType -ne "git" -and $_RepoType -ne "svn")
 {
-    Log-Message "Invalid repository type, must be 'git' or 'svn'" "red"
+    LogMessage "Invalid repository type, must be 'git' or 'svn'" "red"
     exit 1
 }
 
@@ -4806,12 +4879,12 @@ if ([string]::IsNullOrEmpty($BRANCH))
 {
     if ($_RepoType -eq "git") 
     {
-        Log-Message "Setting branch name to default 'master'" "darkyellow"
+        LogMessage "Setting branch name to default 'master'" "darkyellow"
         $BRANCH = "master"
     }
     else # if ($_RepoType -eq "svn") 
     {
-        Log-Message "Setting branch name to default 'trunk'" "darkyellow"
+        LogMessage "Setting branch name to default 'trunk'" "darkyellow"
         $BRANCH = "trunk"
     }
 }
@@ -4873,11 +4946,11 @@ if (![string]::IsNullOrEmpty($TEXTEDITOR))
         }
         if (!$Found) {
             if ($TEXTEDITOR.ToLower() -ne "notepad" -and $TEXTEDITOR.ToLower() -ne "notepad.exe") {
-                Log-Message "Text editor not found, falling back to notepad" "magenta"
+                LogMessage "Text editor not found, falling back to notepad" "magenta"
                 $TEXTEDITOR = "notepad"
             }
             else {
-                Log-Message "Text editor not found" "red"
+                LogMessage "Text editor not found" "red"
                 exit 1
             }
         }
@@ -4890,12 +4963,12 @@ if (![string]::IsNullOrEmpty($TEXTEDITOR))
 #
 
 if (![string]::IsNullOrEmpty($PATHTOMAINROOT) -and [string]::IsNullOrEmpty($PATHPREROOT)) {
-    Log-Message "pathPreRoot must be specified with pathToMainRoot" "red"
+    LogMessage "pathPreRoot must be specified with pathToMainRoot" "red"
     exit 1
 }
 
 if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($PATHTOMAINROOT)) {
-    Log-Message "pathToMainRoot must be specified with pathPreRoot" "red"
+    LogMessage "pathToMainRoot must be specified with pathPreRoot" "red"
     exit 1
 }
 
@@ -4905,15 +4978,15 @@ if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($PATHTOM
 #
 if ([string]::IsNullOrEmpty($PATHPREROOT) -and !(Test-Path(".$_RepoType")))
 {
-    Log-Message "The .$_RepoType directory was not found" "red"
-    Log-Message "Set pathToPreRoot, or ensure a branch (i.e. trunk) is the root directory" "red"
+    LogMessage "The .$_RepoType directory was not found" "red"
+    LogMessage "Set pathToPreRoot, or ensure a branch (i.e. trunk) is the root directory" "red"
     exit 1
 }
 
 if (![string]::IsNullOrEmpty($PATHTOMAINROOT)) 
 {
     if ([string]::IsNullOrEmpty($PATHPREROOT)) { 
-        Log-Message "Invalid value specified for pathPreRoot" "red"
+        LogMessage "Invalid value specified for pathPreRoot" "red"
         exit 1
     }
     #
@@ -4932,9 +5005,9 @@ if (![string]::IsNullOrEmpty($PATHTOMAINROOT))
     $Path2 = Get-Location
     $Path2 = [Path]::Combine($Path2, $PATHPREROOT)
     if ($Path1.ToString() -ne $Path2.ToString()) {
-        Log-Message "Invalid values specified for pathToMainRoot and pathPreRoot" "red"
-        Log-Message "    pathToMainRoot indicates the path to the root project folder with respect to the initial working directory" "red"
-        Log-Message "    pathPreRoot indicates the path back to the initial working directory with respect to the project root" "red"
+        LogMessage "Invalid values specified for pathToMainRoot and pathPreRoot" "red"
+        LogMessage "    pathToMainRoot indicates the path to the root project folder with respect to the initial working directory" "red"
+        LogMessage "    pathPreRoot indicates the path back to the initial working directory with respect to the project root" "red"
         exit 1
     }
     Set-Location $PATHPREROOT
@@ -4943,7 +5016,7 @@ if (![string]::IsNullOrEmpty($PATHTOMAINROOT))
 if ($NPMPACKDIST -eq "Y") 
 {
     if ([string]::IsNullOrEmpty($PATHTODIST)) {
-        Log-Message "You must specify 'pathToDist' if 'npmPackDist' flag is set to Y" "red"
+        LogMessage "You must specify 'pathToDist' if 'npmPackDist' flag is set to Y" "red"
         exit 1
     }
 }
@@ -4963,143 +5036,143 @@ if (![string]::IsNullOrEmpty($CURRENTVERSION)) {
 if (![string]::IsNullOrEmpty($DISTRELEASE)) {
     $DISTRELEASE = $DISTRELEASE.ToUpper()
     if ($DISTRELEASE -ne "Y" -and $DISTRELEASE -ne "N") {
-        Log-Message "Invalid value specified for distRelease, accepted values are y/n/Y/N" "red"
+        LogMessage "Invalid value specified for distRelease, accepted values are y/n/Y/N" "red"
         exit 1
     }
 }
 if (![string]::IsNullOrEmpty($NPMRELEASE)) {
     $NPMRELEASE = $NPMRELEASE.ToUpper()
     if ($NPMRELEASE -ne "Y" -and $NPMRELEASE -ne "N") {
-        Log-Message "Invalid value specified for npmRelease, accepted values are y/n/Y/N" "red"
+        LogMessage "Invalid value specified for npmRelease, accepted values are y/n/Y/N" "red"
         exit 1
     }
 }
 if (![string]::IsNullOrEmpty($NUGETRELEASE)) {
     $NUGETRELEASE = $NUGETRELEASE.ToUpper()
     if ($NUGETRELEASE -ne "Y" -and $NUGETRELEASE -ne "N") {
-        Log-Message "Invalid value specified for nugetRelease, accepted values are y/n/Y/N" "red"
+        LogMessage "Invalid value specified for nugetRelease, accepted values are y/n/Y/N" "red"
         exit 1
     }
 }
 if (![string]::IsNullOrEmpty($GITHUBRELEASE)) {
     $GITHUBRELEASE = $GITHUBRELEASE.ToUpper()
     if ($GITHUBRELEASE -ne "Y" -and $GITHUBRELEASE -ne "N") {
-        Log-Message "Invalid value specified for githubRelease, accepted values are y/n/Y/N" "red"
+        LogMessage "Invalid value specified for githubRelease, accepted values are y/n/Y/N" "red"
         exit 1
     }
     if ($GITHUBRELEASE -eq "Y")
     {
         if ([string]::IsNullOrEmpty($GITHUBUSER)) {
-            Log-Message "You must specify githubUser for a GitHub release type" "red"
+            LogMessage "You must specify githubUser for a GitHub release type" "red"
             exit 1
         }
         if ([string]::IsNullOrEmpty(${Env:GITHUB_TOKEN})) {
-            Log-Message "You must have GITHUB_TOKEN defined in the environment for a GitHub release type" "red"
-            Log-Message "Set the environment variable GITHUB_TOKEN using the token value created on the GitHub website" "red"
+            LogMessage "You must have GITHUB_TOKEN defined in the environment for a GitHub release type" "red"
+            LogMessage "Set the environment variable GITHUB_TOKEN using the token value created on the GitHub website" "red"
             exit 1
         }
     }
 }
 if (![string]::IsNullOrEmpty($MANTISBTPLUGIN)) {
     if (!$MANTISBTPLUGIN.Contains((".php"))) {
-        Log-Message "Invalid value for mantisbtPlugin, file must have a php extension" "red"
+        LogMessage "Invalid value for mantisbtPlugin, file must have a php extension" "red"
         exit 1
     }
     if (!(Test-Path($MANTISBTPLUGIN))) {
-        Log-Message "Invalid value for mantisbtPlugin, non-existent file specified" "red"
+        LogMessage "Invalid value for mantisbtPlugin, non-existent file specified" "red"
         exit 1
     }
 }
 if (![string]::IsNullOrEmpty($MANTISBTRELEASE)) {
     $MANTISBTRELEASE = $MANTISBTRELEASE.ToUpper()
     if ($MANTISBTRELEASE -ne "Y" -and $MANTISBTRELEASE -ne "N") {
-        Log-Message "Invalid value specified for mantisbtRelease, accepted values are y/n/Y/N" "red"
+        LogMessage "Invalid value specified for mantisbtRelease, accepted values are y/n/Y/N" "red"
         exit 1
     }
     if ($MANTISBTRELEASE -eq "Y")
     {
         if ($MANTISBTURL.Length -eq 0) {
-            Log-Message "You must specify mantisbtUrl for a MantisBT release type" "red"
+            LogMessage "You must specify mantisbtUrl for a MantisBT release type" "red"
             exit 1
         }
         if ($MANTISBTAPITOKEN.Length -eq 0) {
-            Log-Message "You must have MANTISBT_API_TOKEN defined for a MantisBT release type" "red"
-            Log-Message "-or- you must have mantisbtApiToken defined in publishrc" "red"
-            Log-Message "Set the envvar MANTISBT_API_TOKEN or the config mantisApiToken with the token value created on the MantisBT website" "red"
-            Log-Message "To create a token, see the `"Tokens`" section of your Mantis User Preferences page" "red"
+            LogMessage "You must have MANTISBT_API_TOKEN defined for a MantisBT release type" "red"
+            LogMessage "-or- you must have mantisbtApiToken defined in publishrc" "red"
+            LogMessage "Set the envvar MANTISBT_API_TOKEN or the config mantisApiToken with the token value created on the MantisBT website" "red"
+            LogMessage "To create a token, see the `"Tokens`" section of your Mantis User Preferences page" "red"
             exit 1
         }
         if ($MANTISBTURL.Length -ne $MANTISBTAPITOKEN.Length) {
-            Log-Message "You must specify the same number of MantisBT urls and API tokens" "red"
+            LogMessage "You must specify the same number of MantisBT urls and API tokens" "red"
             exit 1
         }
     }
 }
 if (![string]::IsNullOrEmpty($CPROJECTRCFILE)) {
     if (!$CPROJECTRCFILE.Contains((".rc"))) {
-        Log-Message "Invalid value for cProjectRcFile, file must have an rc extension" "red"
+        LogMessage "Invalid value for cProjectRcFile, file must have an rc extension" "red"
         exit 1
     }
     if (!(Test-Path($CPROJECTRCFILE))) {
-        Log-Message "Invalid value for cProjectRcFile, non-existent file specified" "red"
+        LogMessage "Invalid value for cProjectRcFile, non-existent file specified" "red"
         exit 1
     }
 }
 if (![string]::IsNullOrEmpty($SKIPDEPLOYPUSH)) {
     $SKIPDEPLOYPUSH = $SKIPDEPLOYPUSH.ToUpper()
     if ($SKIPDEPLOYPUSH -ne "Y" -and $SKIPDEPLOYPUSH -ne "N") {
-        Log-Message "Invalid value specified for skipDeployPush, accepted values are y/n/Y/N" "red"
+        LogMessage "Invalid value specified for skipDeployPush, accepted values are y/n/Y/N" "red"
         exit 1
     }
 }
 if (![string]::IsNullOrEmpty($DRYRUNVCREVERT)) {
     $DRYRUNVCREVERT = $DRYRUNVCREVERT.ToUpper()
     if ($DRYRUNVCREVERT -ne "Y" -and $DRYRUNVCREVERT -ne "N") {
-        Log-Message "Invalid value specified for testModeSvnRevert, accepted values are y/n/Y/N" "red"
+        LogMessage "Invalid value specified for testModeSvnRevert, accepted values are y/n/Y/N" "red"
         exit 1
     }
 }
 if (![string]::IsNullOrEmpty($WRITELOG)) {
     $WRITELOG = $WRITELOG.ToUpper()
     if ($WRITELOG -ne "Y" -and $WRITELOG -ne "N") {
-        Log-Message "Invalid value specified for writeLog, accepted values are y/n/Y/N" "red"
+        LogMessage "Invalid value specified for writeLog, accepted values are y/n/Y/N" "red"
         exit 1
     }
 }
 if (![string]::IsNullOrEmpty($PROMPTVERSION)) {
     $PROMPTVERSION = $PROMPTVERSION.ToUpper()
     if ($PROMPTVERSION -ne "Y" -and $PROMPTVERSION -ne "N") {
-        Log-Message "Invalid value specified for promptVersion, accepted values are y/n/Y/N" "red"
+        LogMessage "Invalid value specified for promptVersion, accepted values are y/n/Y/N" "red"
         exit 1
     }
 }
 if (![string]::IsNullOrEmpty($VCTAG)) {
     $VCTAG = $VCTAG.ToUpper()
     if ($VCTAG -ne "Y" -and $VCTAG -ne "N") {
-        Log-Message "Invalid value specified for svnTag, accepted values are y/n/Y/N" "red"
+        LogMessage "Invalid value specified for svnTag, accepted values are y/n/Y/N" "red"
         exit 1
     }
 }
 if (![string]::IsNullOrEmpty($SKIPCHANGELOGEDITS)) {
     $SKIPCHANGELOGEDITS = $SKIPCHANGELOGEDITS.ToUpper()
     if ($SKIPCHANGELOGEDITS -ne "Y" -and $SKIPCHANGELOGEDITS -ne "N") {
-        Log-Message "Invalid value specified for skipChangelogEdits, accepted values are y/n/Y/N" "red"
+        LogMessage "Invalid value specified for skipChangelogEdits, accepted values are y/n/Y/N" "red"
         exit 1
     }
     if ($DRYRUN -eq $true -and !$TASKMODE) {
         $SKIPCHANGELOGEDITS = "N"
-        Log-Message "Overriding skipChangelogEdits on dry run, auto set to 'N'" "darkyellow"
+        LogMessage "Overriding skipChangelogEdits on dry run, auto set to 'N'" "darkyellow"
     }
 }
 if (![string]::IsNullOrEmpty($SKIPVERSIONEDITS)) {
     $SKIPVERSIONEDITS = $SKIPVERSIONEDITS.ToUpper()
     if ($SKIPVERSIONEDITS -ne "Y" -and $SKIPVERSIONEDITS -ne "N") {
-        Log-Message "Invalid value specified for skipVersionEdits, accepted values are y/n/Y/N" "red"
+        LogMessage "Invalid value specified for skipVersionEdits, accepted values are y/n/Y/N" "red"
         exit 1
     }
     if ($DRYRUN -eq $true) {
         $SKIPVERSIONEDITS = "N"
-        Log-Message "Overriding skipVersionEdits on dry run, auto set to 'N'" "darkyellow"
+        LogMessage "Overriding skipVersionEdits on dry run, auto set to 'N'" "darkyellow"
     }
 }
 
@@ -5107,7 +5180,7 @@ if (![string]::IsNullOrEmpty($SKIPVERSIONEDITS)) {
 # Check dist release path for dist release
 #
 if ($DISTRELEASE -eq "Y" -and [string]::IsNullOrEmpty($PATHTODIST)) {
-    Log-Message "pathToDist must be specified for dist release" "red"
+    LogMessage "pathToDist must be specified for dist release" "red"
     exit 1
 }
 
@@ -5117,16 +5190,16 @@ if ($DISTRELEASE -eq "Y" -and [string]::IsNullOrEmpty($PATHTODIST)) {
 $ExecutionPolicy = Get-ExecutionPolicy
 if ($ExecutionPolicy -ne "RemoteSigned")
 {
-    Log-Message "You must set the powershell execution policy for localhost to 'RemoteSigned'" "red"
+    LogMessage "You must set the powershell execution policy for localhost to 'RemoteSigned'" "red"
     if (![string]::IsNullOrEmpty($ExecutionPolicy)) {
-        Log-Message "    Current policy is '$ExecutionPolicy'" "red"
+        LogMessage "    Current policy is '$ExecutionPolicy'" "red"
     }
     else {
-        Log-Message "    There is no current policy set" "red"
+        LogMessage "    There is no current policy set" "red"
     }
-    Log-Message "    Open an elevated command shell using 'Run as Administrator' and execute the following commands:" "red"
-    Log-Message "        powershell" "red"
-    Log-Message "        Set-ExecutionPolicy -ExecutionPolicy RemoteSigned" "red"
+    LogMessage "    Open an elevated command shell using 'Run as Administrator' and execute the following commands:" "red"
+    LogMessage "        powershell" "red"
+    LogMessage "        Set-ExecutionPolicy -ExecutionPolicy RemoteSigned" "red"
     exit 1;
 }
 
@@ -5149,8 +5222,8 @@ foreach ($option in $objMembers) {
         foreach ($val in $option.Value) {
             if ($val -is [system.string]) {
                 if ($val.Trim().StartsWith("$`{") -and $val.Trim().EndsWith("`}")) {
-                    Log-Message "Option $($option.Name) environment value was not found/set" "yellow"
-                    Log-Message "   $($option.Value)" "yellow"
+                    LogMessage "Option $($option.Name) environment value was not found/set" "yellow"
+                    LogMessage "   $($option.Value)" "yellow"
                 }
             }
         }
@@ -5158,8 +5231,8 @@ foreach ($option in $objMembers) {
     else {
         if ($option.Value -is [system.string]) {
             if ($option.Value.Trim().StartsWith("$`{") -and $option.Value.Trim().EndsWith("`}")) {
-                Log-Message "Option $($option.Name) environment value was not found/set" "yellow"
-                Log-Message "   $($option.Value)" "yellow"
+                LogMessage "Option $($option.Name) environment value was not found/set" "yellow"
+                LogMessage "   $($option.Value)" "yellow"
             }
         }
     }
@@ -5168,7 +5241,7 @@ foreach ($option in $objMembers) {
 #
 # Log publishrc options
 #
-Log-Message "Options received from .publishrc"
+LogMessage "Options received from .publishrc"
 $objMembers = $options.psobject.Members | where-object membertype -like 'noteproperty'
 foreach ($option in $objMembers) {
     $logMsg = "   "
@@ -5182,82 +5255,82 @@ foreach ($option in $objMembers) {
     else {
         $logMsg += ": null"
     }
-    Log-Message $logMsg
+    LogMessage $logMsg
 }
 
 #
 # Write project specific properties
 #
-Log-Message "Project specific script configuration:"
-Log-Message "   Branch           : $BRANCH"
-Log-Message "   Current Version  : $CURRENTVERSION"
-Log-Message "   Build cmd        : $BUILDCOMMAND"
-Log-Message "   Bugs Page        : $BUGS"
-Log-Message "   Changelog file   : $CHANGELOGFILE"
-Log-Message "   C Project Rc File: $CPROJECTRCFILE"
-Log-Message "   Deploy cmd       : $DEPLOYCOMMAND"
-Log-Message "   Dist release     : $DISTRELEASE"
-Log-Message "   Dry run          : $DRYRUN"
-Log-Message "   Dry run vc revert: $DRYRUNVCREVERT"
-Log-Message "   Email only       : $TASKEMAIL"
-Log-Message "   Github release   : $GITHUBRELEASE"
-Log-Message "   Github user      : $GITHUBUSER"
-Log-Message "   Github assets    : $GITHUBASSETS"
-Log-Message "   History file     : $HISTORYFILE"
-Log-Message "   History file line: $HISTORYLINELEN"
-Log-Message "   History hdr file : $HISTORYHDRFILE"
-Log-Message "   Home page        : $HOMEPAGE"
-Log-Message "   MantisBT plugin  : $MANTISBTPLUGIN"
-Log-Message "   MantisBT release : $MANTISBTRELEASE"
-Log-Message "   MantisBT project : $MANTISBTPROJECT"
-Log-Message "   MantisBT url     : $MANTISBTURL"
-Log-Message "   MantisBT assets  : $MANTISBTASSETS"
-Log-Message "   NPM release      : $NPMRELEASE"
-Log-Message "   NPM registry     : $NPMREGISTRY"
-Log-Message "   NPM scope        : $NPMSCOPE"
-Log-Message "   Nuget release    : $NUGETRELEASE"
-Log-Message "   Path to root     : $PATHTOROOT"
-Log-Message "   Path to main root: $PATHTOMAINROOT"
-Log-Message "   Path pre root    : $PATHPREROOT"
-Log-Message "   Post Build cmd   : $POSTBUILDCOMMAND"
-Log-Message "   Post Commit cmd  : $POSTCOMMITCOMMAND"
-Log-Message "   Post Dist cmd    : $DISTRELEASEPOSTCOMMAND"
-Log-Message "   Post Github cmd  : $GITHUBRELEASEPOSTCOMMAND"
-Log-Message "   Post Mantis cmd  : $MANTISRELEASEPOSTCOMMAND"
-Log-Message "   Post Npm cmd     : $NPMRELEASEPOSTCOMMAND"
-Log-Message "   Post Release cmd : $POSTRELEASECOMMAND"
-Log-Message "   Pre Build cmd    : $PREBUILDCOMMAND"
-Log-Message "   Pre Commit cmd   : $PRECOMMITCOMMAND"
-Log-Message "   Pre Dist cmd     : $DISTRELEASEPRECOMMAND"
-Log-Message "   Pre Github cmd   : $GITHUBRELEASEPRECOMMAND"
-Log-Message "   Pre Mantis cmd   : $MANTISRELEASEPRECOMMAND"
-Log-Message "   Pre Npm cmd      : $NPMRELEASEPRECOMMAND"
-Log-Message "   Project name     : $PROJECTNAME"
-Log-Message "   Prompt version   : $PROMPTVERSION"
-Log-Message "   Repo             : $_Repo"
-Log-Message "   RepoType         : $_RepoType"
-Log-Message "   Task mode        : $TASKMODE"
-Log-Message "   Task stdout mode : $TASKMODESTDOUT"
-Log-Message "   Task Chglog      : $TASKCHANGELOG"
-Log-Message "   Task Chglog file : $TASKCHANGELOGFILE"
-Log-Message "   Task CI info out : $TASKCIENVINFO"
-Log-Message "   Task CI set env  : $TASKCIENVSET"
-Log-Message "   Task Version Cur : $TASKVERSIONCURRENT"
-Log-Message "   Task Version Next: $TASKVERSIONNEXT"
-Log-Message "   Task Version Info: $TASKVERSIONINFO"
-Log-Message "   Skip chglog edit : $SKIPCHANGELOGEDITS"
-Log-Message "   Skip deploy/push : $SKIPDEPLOYPUSH"
-Log-Message "   Skip version edit: $SKIPVERSIONEDITS"
-Log-Message "   Tag version      : $VCTAG"
-Log-Message "   Tag format       : $VCTAGFORMAT"
-Log-Message "   Tag prefix       : $VCTAGPREFIX"
-Log-Message "   Text editor      : $TEXTEDITOR"
-Log-Message "   Test email       : $TESTEMAILRECIP"
-Log-Message "   Version files    : $VERSIONFILES"
-Log-Message "   Vers.files alw.ed: $VERSIONFILESEDITALWAYS"
-Log-Message "   Vers.files scroll: $VERSIONFILESSCROLLDOWN"
-Log-Message "   Vers.replace tags: $VERSIONREPLACETAGS"
-Log-Message "   Version text     : $VERSIONTEXT"
+LogMessage "Project specific script configuration:"
+LogMessage "   Branch           : $BRANCH"
+LogMessage "   Current Version  : $CURRENTVERSION"
+LogMessage "   Build cmd        : $BUILDCOMMAND"
+LogMessage "   Bugs Page        : $BUGS"
+LogMessage "   Changelog file   : $CHANGELOGFILE"
+LogMessage "   C Project Rc File: $CPROJECTRCFILE"
+LogMessage "   Deploy cmd       : $DEPLOYCOMMAND"
+LogMessage "   Dist release     : $DISTRELEASE"
+LogMessage "   Dry run          : $DRYRUN"
+LogMessage "   Dry run vc revert: $DRYRUNVCREVERT"
+LogMessage "   Email only       : $TASKEMAIL"
+LogMessage "   Github release   : $GITHUBRELEASE"
+LogMessage "   Github user      : $GITHUBUSER"
+LogMessage "   Github assets    : $GITHUBASSETS"
+LogMessage "   History file     : $HISTORYFILE"
+LogMessage "   History file line: $HISTORYLINELEN"
+LogMessage "   History hdr file : $HISTORYHDRFILE"
+LogMessage "   Home page        : $HOMEPAGE"
+LogMessage "   MantisBT plugin  : $MANTISBTPLUGIN"
+LogMessage "   MantisBT release : $MANTISBTRELEASE"
+LogMessage "   MantisBT project : $MANTISBTPROJECT"
+LogMessage "   MantisBT url     : $MANTISBTURL"
+LogMessage "   MantisBT assets  : $MANTISBTASSETS"
+LogMessage "   NPM release      : $NPMRELEASE"
+LogMessage "   NPM registry     : $NPMREGISTRY"
+LogMessage "   NPM scope        : $NPMSCOPE"
+LogMessage "   Nuget release    : $NUGETRELEASE"
+LogMessage "   Path to root     : $PATHTOROOT"
+LogMessage "   Path to main root: $PATHTOMAINROOT"
+LogMessage "   Path pre root    : $PATHPREROOT"
+LogMessage "   Post Build cmd   : $POSTBUILDCOMMAND"
+LogMessage "   Post Commit cmd  : $POSTCOMMITCOMMAND"
+LogMessage "   Post Dist cmd    : $DISTRELEASEPOSTCOMMAND"
+LogMessage "   Post Github cmd  : $GITHUBRELEASEPOSTCOMMAND"
+LogMessage "   Post Mantis cmd  : $MANTISRELEASEPOSTCOMMAND"
+LogMessage "   Post Npm cmd     : $NPMRELEASEPOSTCOMMAND"
+LogMessage "   Post Release cmd : $POSTRELEASECOMMAND"
+LogMessage "   Pre Build cmd    : $PREBUILDCOMMAND"
+LogMessage "   Pre Commit cmd   : $PRECOMMITCOMMAND"
+LogMessage "   Pre Dist cmd     : $DISTRELEASEPRECOMMAND"
+LogMessage "   Pre Github cmd   : $GITHUBRELEASEPRECOMMAND"
+LogMessage "   Pre Mantis cmd   : $MANTISRELEASEPRECOMMAND"
+LogMessage "   Pre Npm cmd      : $NPMRELEASEPRECOMMAND"
+LogMessage "   Project name     : $PROJECTNAME"
+LogMessage "   Prompt version   : $PROMPTVERSION"
+LogMessage "   Repo             : $_Repo"
+LogMessage "   RepoType         : $_RepoType"
+LogMessage "   Task mode        : $TASKMODE"
+LogMessage "   Task stdout mode : $TASKMODESTDOUT"
+LogMessage "   Task Chglog      : $TASKCHANGELOG"
+LogMessage "   Task Chglog file : $TASKCHANGELOGFILE"
+LogMessage "   Task CI info out : $TASKCIENVINFO"
+LogMessage "   Task CI set env  : $TASKCIENVSET"
+LogMessage "   Task Version Cur : $TASKVERSIONCURRENT"
+LogMessage "   Task Version Next: $TASKVERSIONNEXT"
+LogMessage "   Task Version Info: $TASKVERSIONINFO"
+LogMessage "   Skip chglog edit : $SKIPCHANGELOGEDITS"
+LogMessage "   Skip deploy/push : $SKIPDEPLOYPUSH"
+LogMessage "   Skip version edit: $SKIPVERSIONEDITS"
+LogMessage "   Tag version      : $VCTAG"
+LogMessage "   Tag format       : $VCTAGFORMAT"
+LogMessage "   Tag prefix       : $VCTAGPREFIX"
+LogMessage "   Text editor      : $TEXTEDITOR"
+LogMessage "   Test email       : $TESTEMAILRECIP"
+LogMessage "   Version files    : $VERSIONFILES"
+LogMessage "   Vers.files alw.ed: $VERSIONFILESEDITALWAYS"
+LogMessage "   Vers.files scroll: $VERSIONFILESSCROLLDOWN"
+LogMessage "   Vers.replace tags: $VERSIONREPLACETAGS"
+LogMessage "   Version text     : $VERSIONTEXT"
 
 #endregion
 
@@ -5272,11 +5345,11 @@ if (!$options.noCi)
     $SKIPVERSIONEDITS = "Y"
     $VERSIONFILESEDITALWAYS = ""
     $PROMPTVERSION = "N"
-    Log-Message "CI environment detected, the following flags/properties have been cleared:" "yellow"
-    Log-Message "   skipChangelogEdits" "yellow"
-    Log-Message "   skipVersionEdits" "yellow"
-    Log-Message "   promptVersion" "yellow"
-    Log-Message "   versionFilesEditAlways" "yellow"
+    LogMessage "CI environment detected, the following flags/properties have been cleared:" "yellow"
+    LogMessage "   skipChangelogEdits" "yellow"
+    LogMessage "   skipVersionEdits" "yellow"
+    LogMessage "   promptVersion" "yellow"
+    LogMessage "   versionFilesEditAlways" "yellow"
 }
 
 #
@@ -5385,40 +5458,54 @@ if ($TESTEMAILRECIP -is [system.string] -and ![string]::IsNullOrEmpty($TESTEMAIL
 #
 if ($CURRENTVERSION -eq "" -or ($VERSIONFORCECURRENT -and $RUN -eq 1)) 
 {
-    Log-Message "Retrieve current version and calculate next version number"
+    LogMessage "Retrieve current version and calculate next version number"
     #
     # If node_modules dir exists, use package.json to obtain cur version
     #
     if (Test-Path("package.json"))
-    #if (Test-Path("node_modules"))
     {
-        #if (Test-Path("node_modules\semver"))
-        #{
-            if (Test-Path("package.json"))
-            {
-                Log-Message "Using node to obtain next version number"
-                #
-                # use package.json properties to retrieve current version
-                #
-                if (!$VERSIONFORCECURRENT) {
-                    $CURRENTVERSION = & node -e "console.log(require('./package.json').version);"
-                }
-                $VERSIONSYSTEM = "semver"
-            } 
-            else {
-                Log-Message "Npm based project found, but package.json is missing" "red"
-                if ($TASKMODESTDOUT) {
-                    Write-Host "0.0.0"
-                }
-                exit 127
+        if (Test-Path("package.json"))
+        {
+            LogMessage "Using node to obtain next version number"
+            #
+            # use package.json properties to retrieve current version
+            #
+            if (!$VERSIONFORCECURRENT) {
+                $CURRENTVERSION = & node -e "console.log(require('./package.json').version);"
             }
-        #} 
-        #else {
-        #    Log-Message "Semver not found.  Run 'npm install --save-dev semver'" "red"
-        #    exit 129
-        #}
+            $VERSIONSYSTEM = "semver"
+        } 
+        else {
+            LogMessage "Npm based project found, but package.json is missing" "red"
+            if ($TASKMODESTDOUT) {
+                Write-Host "0.0.0"
+            }
+            exit 127
+        }
         $VERSIONSYSTEM = "semver"
     }
+    #
+    # Maven pom.xml based Plugin
+    #
+    elseif (Test-Path("pom.xml"))
+    {
+        if (!$VERSIONFORCECURRENT) {
+            $mavenInfo = Get-MavenPomVersion
+            $CURRENTVERSION = $mavenInfo[1]
+            $MavenVersionTag = $mavenInfo[0]
+        }
+        if (!$CURRENTVERSION.Contains(".")) 
+        {
+            LogMessage "App-Publisher based Maven projects must use semantic versioning" "red"
+            LogMessage "Invalid version found '$CURRENTVERSION'" "red"
+            LogMessage "Check you pom.xml file for valid version syntax" "red"
+            if ($TASKMODESTDOUT) {
+                Write-Host "0.0.0"
+            }
+            exit 130
+        }
+        $VERSIONSYSTEM = "semver"
+    } 
     #
     # MantisBT Plugin
     # $MANTISBTPLUGIN specified the main class file, containing version #
@@ -5430,9 +5517,9 @@ if ($CURRENTVERSION -eq "" -or ($VERSIONFORCECURRENT -and $RUN -eq 1))
         }
         if (!$CURRENTVERSION.Contains(".")) 
         {
-            Log-Message "MantisBT plugins must use semantic versioning" "red"
-            Log-Message "Invalid version found '$CURRENTVERSION'" "red"
-            Log-Message "Check you mantis plugin file for valid version syntax" "red"
+            LogMessage "MantisBT plugins must use semantic versioning" "red"
+            LogMessage "Invalid version found '$CURRENTVERSION'" "red"
+            LogMessage "Check you mantis plugin file for valid version syntax" "red"
             if ($TASKMODESTDOUT) {
                 Write-Host "0.0.0"
             }
@@ -5462,8 +5549,8 @@ if ($CURRENTVERSION -eq "" -or ($VERSIONFORCECURRENT -and $RUN -eq 1))
             #
             # Semantic versioning non-npm project
             #
-            #Log-Message "Using non-npm project semantic versioning"
-            #Log-Message "Semver not found, run 'npm install -g semver' to automate semantic versioning of non-NPM projects" "darkyellow"
+            #LogMessage "Using non-npm project semantic versioning"
+            #LogMessage "Semver not found, run 'npm install -g semver' to automate semantic versioning of non-NPM projects" "darkyellow"
         }
     } 
     #
@@ -5481,8 +5568,8 @@ if ($CURRENTVERSION -eq "" -or ($VERSIONFORCECURRENT -and $RUN -eq 1))
                 $VERSIONSYSTEM = ".net"
             }
             else {
-                Log-Message "The current version cannot be determined" "red"
-                Log-Message "Provided the current version in publishrc or on the command line" "red"
+                LogMessage "The current version cannot be determined" "red"
+                LogMessage "Provided the current version in publishrc or on the command line" "red"
                 if ($TASKMODESTDOUT) {
                     Write-Host "0.0.0"
                 }
@@ -5490,15 +5577,15 @@ if ($CURRENTVERSION -eq "" -or ($VERSIONFORCECURRENT -and $RUN -eq 1))
             }
         }
         elseif ($AssemblyInfoLoc -is [System.Array] -and $AssemblyInfoLoc.Length -gt 0) {
-            Log-Message "The current version cannot be determined, multiple assemblyinfo files found" "red"
+            LogMessage "The current version cannot be determined, multiple assemblyinfo files found" "red"
         }
         else {
-            Log-Message "The current version cannot be determined" "red"
+            LogMessage "The current version cannot be determined" "red"
         }
     }
 }
 else {
-    Log-Message "Current version obtained from publishrc /cmd line"
+    LogMessage "Current version obtained from publishrc /cmd line"
 }
 
 #
@@ -5528,17 +5615,17 @@ if ($CURRENTVERSION -eq "")
     #if ($PROMPTVERSION) 
     #{
         
-        #Log-Message "[PROMPT] User input required"
+        #LogMessage "[PROMPT] User input required"
         #$CurVersion = read-host -prompt "Enter the current version #, or C to cancel [$CURRENTVERSION]"
         #if ($CurVersion.ToUpper() -eq "C") {
-        #    Log-Message "User cancelled process, exiting" "red"
+        #    LogMessage "User cancelled process, exiting" "red"
         #    exit 155
         #}
         #if (![string]::IsNullOrEmpty($CurVersion)) {
         #    $CURRENTVERSION = $CurVersion
         #}
         #else {
-        #    Log-Message "Invalid current version, exiting" "red"
+        #    LogMessage "Invalid current version, exiting" "red"
         #    exit 133
         #}
         $CURRENTVERSION = "1.0.0"
@@ -5546,8 +5633,8 @@ if ($CURRENTVERSION -eq "")
         $VERSIONSYSTEM = "manual"
     #}
     #else {
-    #    Log-Message "New version has been validated" "darkgreen"
-    #    Log-Message "Could not determine current version, correct issue and re-run publish" "red"
+    #    LogMessage "New version has been validated" "darkgreen"
+    #    LogMessage "Could not determine current version, correct issue and re-run publish" "red"
     #    exit 131
     #}
 }
@@ -5555,7 +5642,7 @@ if ($CURRENTVERSION -eq "")
 #
 # Validate current version if necessary
 #
-Log-Message "Validating current version found: $CURRENTVERSION"
+LogMessage "Validating current version found: $CURRENTVERSION"
 if ($VERSIONSYSTEM -eq "semver")
 {
     if (!$IsAppPublisher) {
@@ -5565,7 +5652,7 @@ if ($VERSIONSYSTEM -eq "semver")
         $ValidationVersion = & semver $CURRENTVERSION
     }
     if ([string]::IsNullOrEmpty($ValidationVersion)) {
-        Log-Message "The current semantic version found ($CURRENTVERSION) is invalid" "red"
+        LogMessage "The current semantic version found ($CURRENTVERSION) is invalid" "red"
         if ($TASKMODESTDOUT) {
             Write-Host $CURRENTVERSION
         }
@@ -5574,11 +5661,11 @@ if ($VERSIONSYSTEM -eq "semver")
 }
 elseif ($VERSIONSYSTEM -eq '.net' -or $VERSIONSYSTEM -eq 'mantisbt')
 {
-    Log-Message "MantisBT/.NET version system has no validation method - todo" "darkyellow"
+    LogMessage "MantisBT/.NET version system has no validation method - todo" "darkyellow"
     # TODO - Version should digits and two dots
     #
     if ($false) {
-        Log-Message "The current mantisbt version ($CURRENTVERSION) is invalid" "red"
+        LogMessage "The current mantisbt version ($CURRENTVERSION) is invalid" "red"
         if ($TASKMODESTDOUT) {
             Write-Host $CURRENTVERSION
         }
@@ -5587,11 +5674,11 @@ elseif ($VERSIONSYSTEM -eq '.net' -or $VERSIONSYSTEM -eq 'mantisbt')
 }
 elseif ($VERSIONSYSTEM -eq 'incremental')
 {
-    Log-Message "Incremental version has no validation method - todo" "darkyellow"
+    LogMessage "Incremental version has no validation method - todo" "darkyellow"
     # TODO - Version should contain all digits
     #
     if ($false) {
-        Log-Message "The current incremental version ($CURRENTVERSION) is invalid" "red"
+        LogMessage "The current incremental version ($CURRENTVERSION) is invalid" "red"
         if ($TASKMODESTDOUT) {
             Write-Host $CURRENTVERSION
         }
@@ -5599,7 +5686,7 @@ elseif ($VERSIONSYSTEM -eq 'incremental')
     }
 }
 
-Log-Message "Current version has been validated" "darkgreen"
+LogMessage "Current version has been validated" "darkgreen"
 
 #
 # Certain tasks only need to be done once if there are multiple publish runs configured to run.
@@ -5616,7 +5703,7 @@ Log-Message "Current version has been validated" "darkgreen"
 
 if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
 {
-    Log-Message "The current version is $CURRENTVERSION"
+    LogMessage "The current version is $CURRENTVERSION"
 
     if (!$TASKEMAIL)
     {
@@ -5637,11 +5724,11 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
             #
             if (($null -eq $COMMITS -or $COMMITS.Length -eq 0) -and !$TASKMODE) 
             {
-                Log-Message "Commits since the last version or the version tag could not be found"
-                Log-Message "[PROMPT] User input required"
+                LogMessage "Commits since the last version or the version tag could not be found"
+                LogMessage "[PROMPT] User input required"
                 $Proceed = read-host -prompt "Proceed anyway? Y[N]"
                 if ($Proceed.ToUpper() -ne "Y") {
-                    Log-Message "User cancelled, exiting" "red"
+                    LogMessage "User cancelled, exiting" "red"
                     exit 155
                 }
             }
@@ -5698,7 +5785,7 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
                 #
                 # Whole # incremental versioning, i.e. 100, 101, 102...
                 #
-                Log-Message "Using legacy incremental versioning"
+                LogMessage "Using legacy incremental versioning"
                 if ($RUN -eq 1 -or $DRYRUN -eq $true) {
                     try {
                         $VERSION = ([System.Int32]::Parse($CURRENTVERSION) + 1).ToString()
@@ -5716,20 +5803,20 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
             #
             if (![string]::IsNullOrEmpty($VERSION)) 
             {
-                Log-Message "The suggested new version is $VERSION"
+                LogMessage "The suggested new version is $VERSION"
             }
             elseif ($VERSIONSYSTEM -ne "manual" -and $VersionInteractive -eq "N")
             {
-                Log-Message "New version could not be determined, you must manually input the new version"
+                LogMessage "New version could not be determined, you must manually input the new version"
                 $VersionInteractive = "Y"
             }
     
             if (($VERSIONSYSTEM -eq "manual" -or $PROMPTVERSION -eq "Y" -or $VersionInteractive -eq "Y") -and !$TASKCHANGELOG -and !$TASKMODESTDOUT) 
             {
-                Log-Message "[PROMPT] User input required"
+                LogMessage "[PROMPT] User input required"
                 $NewVersion = read-host -prompt "Enter the version #, or C to cancel [$VERSION]"
                 if ($NewVersion.ToUpper() -eq "C") {
-                    Log-Message "User cancelled process, exiting" "red"
+                    LogMessage "User cancelled process, exiting" "red"
                     exit 155
                 }
                 if (![string]::IsNullOrEmpty($NewVersion)) {
@@ -5745,10 +5832,10 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
         # Validate new version
         #
         if ([string]::IsNullOrEmpty($VERSION)) {
-            Log-Message "Invalid version for release, exiting" "red"
+            LogMessage "Invalid version for release, exiting" "red"
             exit 133
         }
-        Log-Message "Validating new version: $VERSION"
+        LogMessage "Validating new version: $VERSION"
         if ($VERSIONSYSTEM -eq "semver")
         {
             if (!$IsAppPublisher) {
@@ -5758,7 +5845,7 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
                 $ValidationVersion = & semver $VERSION
             }
             if ([string]::IsNullOrEmpty($ValidationVersion)) {
-                Log-Message "The new semantic version ($VERSION) is invalid" "red"
+                LogMessage "The new semantic version ($VERSION) is invalid" "red"
                 exit 133
             }
         }
@@ -5772,37 +5859,37 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
             # TODO - Version should contain all digits
             #
             if ($false) {
-                Log-Message "The new incremental version ($VERSION) is invalid" "red"
+                LogMessage "The new incremental version ($VERSION) is invalid" "red"
                 exit 134
             }
         }
-        Log-Message "New version has been validated" "darkgreen"
+        LogMessage "New version has been validated" "darkgreen"
     }
     else
     { 
-        Log-Message "Single task mode (Email) - Set version to $CURRENTVERSION"
+        LogMessage "Single task mode (Email) - Set version to $CURRENTVERSION"
         $VERSION = $CURRENTVERSION
     }
 }
 else
 {
-    Log-Message "The current version is $CURRENTVERSION"
+    LogMessage "The current version is $CURRENTVERSION"
     if ($REPUBLISH.Count -eq 0)
     {
-        Log-Message "This is publish run #$RUN, the previously determined version $VERSION is the new version" "magenta"
+        LogMessage "This is publish run #$RUN, the previously determined version $VERSION is the new version" "magenta"
     }
     else 
     {
         $VERSION = $CURRENTVERSION
-        Log-Message "This is a re-publish run, setting version to $CURRENTVERSION" "magenta"
+        LogMessage "This is a re-publish run, setting version to $CURRENTVERSION" "magenta"
     }
 }
 
 #
 # Output some calculated info to console
 #
-Log-Message "Current Version     : $CURRENTVERSION"
-Log-Message "Next Version        : $VERSION"
+LogMessage "Current Version     : $CURRENTVERSION"
+LogMessage "Next Version        : $VERSION"
 
 #endregion
 
@@ -5851,7 +5938,7 @@ if ($TDATE -eq "") {
     $TDATE = "$Month $Day, $Year"
 }
 
-Log-Message "Date                : $TDATE"
+LogMessage "Date                : $TDATE"
 
 #region History File Processing
 
@@ -5891,19 +5978,19 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
     $HistoryPath = Split-Path "$HISTORYFILE"
     if ($HistoryPath -ne "" -and !(Test-Path($HistoryPath))) 
     {
-        Log-Message "Creating history file directory and adding to version control" "magenta"
+        LogMessage "Creating history file directory and adding to version control" "magenta"
         New-Item -ItemType "directory" -Force -Path "$HistoryPath" | Out-Null
         if (!$TASKCHANGELOG)
         {
-            Vc-Changelist-AddNew "$HistoryPath"
-            Vc-Changelist-AddRemove "$HistoryPath"
-            Vc-Changelist-Add "$HistoryPath"
+            VcChangelistAddNew "$HistoryPath"
+            VcChangelistAddRemove "$HistoryPath"
+            VcChangelistAdd "$HistoryPath"
         }
     }
 
     if (!(Test-Path($HISTORYFILE))) 
     {
-        Log-Message "Creating new history file and adding to version control" "magenta"
+        LogMessage "Creating new history file and adding to version control" "magenta"
         if (!$TASKCHANGELOG)
         {
             New-Item -ItemType "file" -Force -Path "$HISTORYFILE" -Value "$PROJECTNAME`r`n`r`n" | Out-Null
@@ -5915,8 +6002,8 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
         $IsNewHistoryFile = $true;
         if (!$TASKCHANGELOG)
         {
-            Vc-Changelist-AddRemove "$HISTORYFILE"
-            Vc-Changelist-AddNew "$HISTORYFILE"
+            VcChangelistAddRemove "$HISTORYFILE"
+            VcChangelistAddNew "$HISTORYFILE"
         }
     }
     else 
@@ -5932,13 +6019,13 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
     }
     if (!(Test-Path($HISTORYFILE))) 
     {
-        Log-Message "Could not create history file, exiting" "red"
+        LogMessage "Could not create history file, exiting" "red"
         exit 140;
     }
     if (($CURRENTVERSION -eq "1.0.0" -or $CURRENTVERSION -eq "0.0.1") -and $IsNewHistoryFile)
     {
-        Log-Message "It appears this is the first release, resetting version"
-        Log-Message "   Reset to Version    : $CURRENTVERSION"
+        LogMessage "It appears this is the first release, resetting version"
+        LogMessage "   Reset to Version    : $CURRENTVERSION"
     }
     #
     # Add the 'Version X' line, date, and commit content
@@ -5947,7 +6034,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
     {
         $TmpCommits = $ClsHistoryFile.createSectionFromCommits($COMMITS, $HISTORYLINELEN)
 
-        Log-Message "Preparing history file"
+        LogMessage "Preparing history file"
 
         #
         # New file
@@ -5975,12 +6062,12 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
             Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n$VERSIONTEXT $VERSION`r`n$TDATE`r`n$HistoryHeader`r`n$TmpCommits"
         }
         else {   
-            Log-Message "History header template not found" "darkyellow"
+            LogMessage "History header template not found" "darkyellow"
             Add-Content -NoNewline -Path $HISTORYFILE -Value "`r`n$VERSIONTEXT $VERSION`r`n$TDATE`r`n`r`n`r`n$TmpCommits"  
         }
     }
     else {
-        Log-Message "Version match, not touching history file" "darkyellow"
+        LogMessage "Version match, not touching history file" "darkyellow"
     }
     #
     # Allow manual modifications to history file
@@ -5992,7 +6079,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
         # Add to changelist for scm check in.  This would be the first file modified so just
         # set changelist equal to history file
         #
-        Vc-Changelist-Add $HISTORYFILE
+        VcChangelistAdd $HISTORYFILE
     }
     else {
         $FileSpec = ![string]::IsNullOrEmpty($TASKCHANGELOGFILE);
@@ -6039,30 +6126,30 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
     $ChangeLogPath = Split-Path "$CHANGELOGFILE"
     if ($ChangeLogPath -ne "" -and !(Test-Path($ChangeLogPath))) 
     {
-        Log-Message "Creating changelog file directory and adding to version control" "magenta"
+        LogMessage "Creating changelog file directory and adding to version control" "magenta"
         New-Item -ItemType "directory" -Path "$ChangeLogPath" | Out-Null
         if (!$TASKCHANGELOG)
         {
-            Vc-Changelist-AddNew "$ChangeLogPath"
-            Vc-Changelist-AddRemove "$ChangeLogPath"
-            Vc-Changelist-Add "$ChangeLogPath"
+            VcChangelistAddNew "$ChangeLogPath"
+            VcChangelistAddRemove "$ChangeLogPath"
+            VcChangelistAdd "$ChangeLogPath"
         }
     }
     if (!(Test-Path($CHANGELOGFILE))) 
     {
-        Log-Message "Creating new changelog file and adding to version control" "magenta"
+        LogMessage "Creating new changelog file and adding to version control" "magenta"
         New-Item -ItemType "file" -Path "$CHANGELOGFILE" -Value "$ChangeLogTitle`r`n`r`n" | Out-Null
         $NewChangelog = $true
         if (!$TASKCHANGELOG)
         {
-            Vc-Changelist-AddRemove $CHANGELOGFILE
-            Vc-Changelist-AddNew $CHANGELOGFILE
+            VcChangelistAddRemove $CHANGELOGFILE
+            VcChangelistAddNew $CHANGELOGFILE
         }
     }
     if (!(Test-Path($CHANGELOGFILE))) 
     {
-        Vc-Revert $true
-        Log-Message "Could not create changelog file, exiting" "red"
+        VcRevert $true
+        LogMessage "Could not create changelog file, exiting" "red"
         exit 141
     }
 
@@ -6074,7 +6161,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
         $Sectionless = @()
         $ChangeLogTitle = "# $PROJECTNAME Change Log".ToUpper()
 
-        Log-Message "Preparing changelog file"
+        LogMessage "Preparing changelog file"
         #
         # Touch changelog file with the latest commits
         #
@@ -6206,7 +6293,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
         Set-Content $CHANGELOGFILE $ChangeLogFinal
     }
     else {
-        Log-Message "Version match, not touching changelog file" "darkyellow"
+        LogMessage "Version match, not touching changelog file" "darkyellow"
     }
     #
     # Allow manual modifications to changelog file
@@ -6218,7 +6305,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
         # Add to changelist for svn check in.  This would be the first file modified so just
         # set changelist equal to history file
         #
-        Vc-Changelist-Add $CHANGELOGFILE
+        VcChangelistAdd $CHANGELOGFILE
     }
     else {
         #
@@ -6239,22 +6326,22 @@ if ($DISTRELEASE -eq "Y" -and !$TASKMODE)
     # Create dist directory if it doesnt exist
     #
     if (!(Test-Path($PATHTODIST))) {
-        Log-Message "Creating dist directory" "magenta"
+        LogMessage "Creating dist directory" "magenta"
         New-Item -Path "$PATHTODIST" -ItemType "directory" | Out-Null
-        Vc-Changelist-AddRemove "$PATHTODIST"
+        VcChangelistAddRemove "$PATHTODIST"
         $DistDirCreated = $true
     }
     #
     # Get whether or not dist dir is under vesion control, in some cases it may not be
     #
-    $DistIsVersioned = Vc-IsVersioned $PATHTODIST $true $true
+    $DistIsVersioned = VcIsVersioned $PATHTODIST $true $true
     #
     #
     #
     if (!$DistDirCreated -and $DistIsVersioned) 
     {
-        Vc-Changelist-Add "$PATHTODIST"
-        Vc-Changelist-AddMulti "$PATHTODIST"
+        VcChangelistAdd "$PATHTODIST"
+        VcChangelistAddMulti "$PATHTODIST"
     }
 }
 
@@ -6262,7 +6349,7 @@ if ($DISTRELEASE -eq "Y" -and !$TASKMODE)
 # Run pre build scripts if specified, before version file edits
 #
 if (!$TASKMODE) {
-    Run-Scripts "preBuild" $PREBUILDCOMMAND $true $true
+    RunScripts "preBuild" $PREBUILDCOMMAND $true $true
 }
 
 #region Version Files Processing
@@ -6272,30 +6359,36 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and (!$TASKMODE -or $TASKTOUCHVERSIO
     #
     # AppPublisher publishrc version
     #
-    Prepare-AppPublisherBuild
+    Set-AppPublisherBuild
     #
     # ExtJs build
     #
     if ((Test-Path("app.json")) -and (Test-Path("package.json"))) {
-        Prepare-ExtJsBuild
+        Set-ExtJsBuild
     }
     #
     # NPM managed project, update package.json if required
     #
     if ((Test-Path("package.json"))) {
-        Prepare-PackageJson
+        Set-PackageJson
+    }
+    #
+    # Maven managed project, update pom.xml if required
+    #
+    if ((Test-Path("pom.xml"))) {
+        Set-MavenPomBuild $MavenVersionTag
     }
     #
     # Mantisbt plugin project, update main plugin file if required
     #
     if (![string]::IsNullOrEmpty($MANTISBTPLUGIN)) {
-        Prepare-MantisPluginBuild
+        Set-MantisPluginBuild
     }
     #
     # C project, update main rc file if required
     #
     if (![string]::IsNullOrEmpty($CPROJECTRCFILE)) {
-        Prepare-CprojectBuild
+        Set-CprojectBuild
     }
     #
     # If this is a .NET build, update assemblyinfo file
@@ -6305,17 +6398,17 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and (!$TASKMODE -or $TASKTOUCHVERSIO
     $AssemblyInfoLoc = Get-ChildItem -Name -Recurse -Depth 1 -Filter "assemblyinfo.cs" -File -Path . -ErrorAction SilentlyContinue
     if ($AssemblyInfoLoc -is [system.string] -and ![string]::IsNullOrEmpty($AssemblyInfoLoc))
     {
-        Prepare-DotNetBuild $AssemblyInfoLoc
+        Set-DotNetBuild $AssemblyInfoLoc
     }
     elseif ($AssemblyInfoLoc -is [System.Array] -and $AssemblyInfoLoc.Length -gt 0) {
         foreach ($AssemblyInfoLocFile in $AssemblyInfoLoc) {
-            Prepare-DotNetBuild $AssemblyInfoLocFile
+            Set-DotNetBuild $AssemblyInfoLocFile
         }
     }
     #
     # Version bump specified files in publishrc config 'versionFiles'
     #
-    Prepare-VersionFiles
+    Set-VersionFiles
 }
 
 #endregion
@@ -6324,7 +6417,7 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and (!$TASKMODE -or $TASKTOUCHVERSIO
 # Run custom build scipts if specified
 #
 if (!$TASKMODE) {
-    Run-Scripts "build" $BUILDCOMMAND $true $true
+    RunScripts "build" $BUILDCOMMAND $true $true
 }
 
 #
@@ -6342,12 +6435,12 @@ $NugetLocation = ""
 #
 if ($NPMRELEASE -eq "Y" -and !$TASKMODE) 
 {
-    Log-Message "Starting NPM release"
+    LogMessage "Starting NPM release"
     
     #
     # Run pre npm-release scripts if specified
     #
-    Run-Scripts "preNpmRelease" $NPMRELEASEPRECOMMAND $false $false
+    RunScripts "preNpmRelease" $NPMRELEASEPRECOMMAND $false $false
 
     if (Test-Path("package.json"))
     {
@@ -6358,15 +6451,15 @@ if ($NPMRELEASE -eq "Y" -and !$TASKMODE)
         if ($NPMPACKDIST -eq "Y") 
         {
             & npm pack
-            Check-ExitCode
+            CheckExitCode
 
             if (!(Test-Path($PATHTODIST))) 
             {
-                Log-Message "Creating tarball file directory and adding to version control" "magenta"
+                LogMessage "Creating tarball file directory and adding to version control" "magenta"
                 New-Item -ItemType "directory" -Force -Path "$PATHTODIST" | Out-Null
-                Vc-Changelist-AddNew "$PATHTODIST"
-                Vc-Changelist-AddRemove "$PATHTODIST"
-                Vc-Changelist-Add "$PATHTODIST"
+                VcChangelistAddNew "$PATHTODIST"
+                VcChangelistAddRemove "$PATHTODIST"
+                VcChangelistAdd "$PATHTODIST"
             }
 
             $DestPackedFile = [Path]::Combine($PATHTODIST, "$PROJECTNAME.tgz")
@@ -6381,38 +6474,38 @@ if ($NPMRELEASE -eq "Y" -and !$TASKMODE)
                 $TmpPkgFile = "$PROJECTNAME-$VERSION.tgz"
             }
             #Move-Item  -Force "*$VERSION.*" $PackedFile
-            #Check-PsCmdSuccess
+            #CheckPsCmdSuccess
             [System.Threading.Thread]::Sleep(500)
-            Log-Message "Moving package:"
-            Log-Message "   $TmpPkgFile"
-            Log-Message "To:"
-            Log-Message "   $DestPackedFile"
+            LogMessage "Moving package:"
+            LogMessage "   $TmpPkgFile"
+            LogMessage "To:"
+            LogMessage "   $DestPackedFile"
 
             & cmd /c move /Y "$TmpPkgFile" "$DestPackedFile"
-            Check-ExitCode
+            CheckExitCode
             if($LASTEXITCODE -eq 0) {
-                Vc-Changelist-Add "$DestPackedFile"
-                $TarballVersioned = Vc-IsVersioned $DestPackedFile
+                VcChangelistAdd "$DestPackedFile"
+                $TarballVersioned = VcIsVersioned $DestPackedFile
                 if (!$TarballVersioned) {
-                    Vc-Changelist-AddNew "$DestPackedFile"
-                    Vc-Changelist-AddRemove "$DestPackedFile"
+                    VcChangelistAddNew "$DestPackedFile"
+                    VcChangelistAddRemove "$DestPackedFile"
                 }
             }
         }
         #
         # Publish to npm server
         #
-        Log-Message "Publishing npm package to $NPMREGISTRY"
+        LogMessage "Publishing npm package to $NPMREGISTRY"
         if ($DRYRUN -eq $false) 
         {
             & npm publish --access public --registry $NPMREGISTRY
-            Check-ExitCode
+            CheckExitCode
         }
         else 
         {
-            Log-Message "   Dry run, performing publish dry run only" "magenta"
+            LogMessage "   Dry run, performing publish dry run only" "magenta"
             & npm publish --access public --registry $NPMREGISTRY --dry-run
-            Log-Message "   Dry run, dry run publish finished" "magenta"
+            LogMessage "   Dry run, dry run publish finished" "magenta"
         }
         #
         #
@@ -6430,18 +6523,18 @@ if ($NPMRELEASE -eq "Y" -and !$TASKMODE)
             }
         }
         else {
-            Vc-Revert $true
+            VcRevert $true
             exit 150
         }
     }
     else {
-        Log-Message "Could not find package.json" "darkyellow"
+        LogMessage "Could not find package.json" "darkyellow"
     }
     
     #
     # Run pre npm-release scripts if specified
     #
-    Run-Scripts "postNpmRelease" $NPMRELEASEPOSTCOMMAND $false $false
+    RunScripts "postNpmRelease" $NPMRELEASEPOSTCOMMAND $false $false
 }
 elseif ($NPMRELEASE -eq "Y" -and $TASKMODE)
 {
@@ -6463,8 +6556,8 @@ elseif ($NPMRELEASE -eq "Y" -and $TASKMODE)
 #
 if ($NUGETRELEASE -eq "Y" -and !$TASKMODE) 
 {
-    Log-Message "Starting Nuget release"
-    Log-Message "Nuget release not yet supported" "darkyellow"
+    LogMessage "Starting Nuget release"
+    LogMessage "Nuget release not yet supported" "darkyellow"
 }
 
 #region Network Release
@@ -6474,12 +6567,12 @@ if ($NUGETRELEASE -eq "Y" -and !$TASKMODE)
 #
 if ($DISTRELEASE -eq "Y" -and !$TASKMODE) 
 {
-    Log-Message "Starting Distribution release"
+    LogMessage "Starting Distribution release"
 
     #
     # Run pre distribution-release scripts if specified
     #
-    Run-Scripts "preDistRelease" $DISTRELEASEPRECOMMAND $false $false
+    RunScripts "preDistRelease" $DISTRELEASEPRECOMMAND $false $false
     
     #
     # Copy history file to dist directory
@@ -6489,8 +6582,8 @@ if ($DISTRELEASE -eq "Y" -and !$TASKMODE)
         if (!(Test-Path("$PATHTODIST\$HISTORYFILE")) -and $DistIsVersioned) 
         {
             $HistoryFileName = [Path]::GetFileName($HISTORYFILE);
-            Vc-Changelist-AddRemove "$PATHTODIST\$HistoryFileName"
-            Vc-Changelist-AddNew "$PATHTODIST\$HistoryFileName"
+            VcChangelistAddRemove "$PATHTODIST\$HistoryFileName"
+            VcChangelistAddNew "$PATHTODIST\$HistoryFileName"
         }
         Copy-Item -Path "$HISTORYFILE" -PassThru -Force -Destination "$PATHTODIST" | Out-Null
     }
@@ -6509,8 +6602,8 @@ if ($DISTRELEASE -eq "Y" -and !$TASKMODE)
         #
         if ($DRYRUN -eq $false) 
         {
-            Log-Message "Deploying distribution files to specified location:"
-            Log-Message "   $TargetNetLocation"
+            LogMessage "Deploying distribution files to specified location:"
+            LogMessage "   $TargetNetLocation"
             #
             # SoftwareImages Upload
             #
@@ -6518,16 +6611,16 @@ if ($DISTRELEASE -eq "Y" -and !$TASKMODE)
             # TargetNetLocation is defined above as it is needed for email notification fn as well
             #
             if (!(Test-Path($TargetNetLocation))) {
-                Log-Message "Create directory $TargetNetLocation"
+                LogMessage "Create directory $TargetNetLocation"
                 New-Item -Path "$TargetNetLocation" -ItemType "directory" | Out-Null
-                Check-PsCmdSuccess
+                CheckPsCmdSuccess
             }
             #
             # Copy all files in 'dist' directory that start with $PROJECTNAME, and the history file
             #
-            Log-Message "Deploying files to $TargetNetLocation"
+            LogMessage "Deploying files to $TargetNetLocation"
             Copy-Item "$PATHTODIST\*" -Destination "$TargetNetLocation" -Recurse | Out-Null
-            Check-PsCmdSuccess
+            CheckPsCmdSuccess
             #
             # DOC
             #
@@ -6537,7 +6630,7 @@ if ($DISTRELEASE -eq "Y" -and !$TASKMODE)
                 # Create directory on doc share
                 #
                 New-Item -Path "$TargetDocLocation" -ItemType "directory" | Out-Null
-                Check-PsCmdSuccess
+                CheckPsCmdSuccess
                 #
                 # Copy all pdf files in 'dist' and 'doc' and 'documentation' directories
                 #
@@ -6568,24 +6661,24 @@ if ($DISTRELEASE -eq "Y" -and !$TASKMODE)
                 }
                 if (![string]::IsNullOrEmpty($DocDirSrc)) 
                 {
-                    Log-Message "Deploying pdf documentation to $TargetDocLocation"
+                    LogMessage "Deploying pdf documentation to $TargetDocLocation"
                     Copy-Item "$DocDirSrc\*.pdf" -Destination "$TargetDocLocation" | Out-Null
-                    Check-PsCmdSuccess
-                    #Log-Message "Deploying txt documentation to $TargetDocLocation"
+                    CheckPsCmdSuccess
+                    #LogMessage "Deploying txt documentation to $TargetDocLocation"
                     #Copy-Item "$DocDirSrc\*.txt" -Destination "$TargetDocLocation" | Out-Null
-                    #Check-PsCmdSuccess
+                    #CheckPsCmdSuccess
                 }
                 else {
-                    Log-Message "Skipping documentation network push, doc direcory not found" "darkyellow"
+                    LogMessage "Skipping documentation network push, doc direcory not found" "darkyellow"
                 }
             }
         }
         else {
-            Log-Message "Dry run, skipping basic push to network drive" "magenta"
+            LogMessage "Dry run, skipping basic push to network drive" "magenta"
         }
     }
     else {
-        Log-Message "Skipped network release push (user specified)" "magenta"
+        LogMessage "Skipped network release push (user specified)" "magenta"
     }
 
     #
@@ -6594,16 +6687,16 @@ if ($DISTRELEASE -eq "Y" -and !$TASKMODE)
     if ($DISTADDALLTOVC -eq "Y")
     {
         Get-ChildItem "$PATHTODIST" -Recurse -Filter *.* | Foreach-Object {  # Bracket must stay same line as ForEach-Object
-            $DistIsVersioned = Vc-IsVersioned $_.FullName
-            Log-Message $_.FullName "magenta"
+            $DistIsVersioned = VcIsVersioned $_.FullName
+            LogMessage $_.FullName "magenta"
             if (!$DistIsVersioned) 
             {
                 $fullName = $_.FullName.Replace("`${VERSION}", $VERSION).Replace("`${NEWVERSION}", $VERSION).Replace("`${CURRENTVERSION}", $CURRENTVERSION).Replace("`${LASTVERSION}", $CURRENTVERSION);
-                Log-Message "Adding unversioned $($_.Name) to vc addition list" "magenta"
-                # Vc-Changelist-AddNew "$PATHTODIST\$_.Name"
-                # Vc-Changelist-AddRemove "$PATHTODIST\$_.Name"
-                Vc-Changelist-AddNew $fullName $true
-                Vc-Changelist-AddRemove $fullName $true
+                LogMessage "Adding unversioned $($_.Name) to vc addition list" "magenta"
+                # VcChangelistAddNew "$PATHTODIST\$_.Name"
+                # VcChangelistAddRemove "$PATHTODIST\$_.Name"
+                VcChangelistAddNew $fullName $true
+                VcChangelistAddRemove $fullName $true
             }
         }
     }
@@ -6611,7 +6704,7 @@ if ($DISTRELEASE -eq "Y" -and !$TASKMODE)
     #
     # Run pre distribution-release scripts if specified
     #
-    Run-Scripts "postDistRelease" $DISTRELEASEPOSTCOMMAND $false $false
+    RunScripts "postDistRelease" $DISTRELEASEPOSTCOMMAND $false $false
 }
 elseif ($DISTRELEASE -eq "Y" -and $TASKEMAIL) 
 {
@@ -6625,7 +6718,7 @@ elseif ($DISTRELEASE -eq "Y" -and $TASKEMAIL)
 # Run post build scripts if specified
 #
 if (!$TASKMODE) {
-    Run-Scripts "postBuild" $POSTBUILDCOMMAND $false $false
+    RunScripts "postBuild" $POSTBUILDCOMMAND $false $false
 }
 
 #
@@ -6644,12 +6737,12 @@ $GithubReleaseId = "";
 
 if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y" -and !$TASKMODE) 
 {
-    Log-Message "Creating GitHub v$VERSION release"
+    LogMessage "Creating GitHub v$VERSION release"
 
     #
     # Run pre msntis-release scripts if specified
     #
-    Run-Scripts "preGithubRelease" $GITHUBRELEASEPRECOMMAND $false $false
+    RunScripts "preGithubRelease" $GITHUBRELEASEPRECOMMAND $false $false
 
     #
     # Create changelog content
@@ -6659,12 +6752,12 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y" -and !$TASKMODE)
     $GithubChangelogParts = @()
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
-        Log-Message "   Converting history text to github release changelog html"
+        LogMessage "   Converting history text to github release changelog html"
         $GithubChangelogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $ReleaseVersion, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "", @(), "")
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
-        Log-Message "   Converting changelog markdown to github release changelog html"
+        LogMessage "   Converting changelog markdown to github release changelog html"
         $GithubChangelogParts = $ClsHistoryFile.getChangelog($PROJECTNAME, $ReleaseVersion, 1, $VERSIONTEXT, "parts", $CHANGELOGFILE, "", "", "", "", "", "", "", @(), "", $false, $IsAppPublisher)
     }
 
@@ -6683,7 +6776,7 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y" -and !$TASKMODE)
         {
             $TmpFile = "${Env:Temp}\changelog.tmp.html"
             Set-Content -NoNewline -Path $TmpFile -Value $GithubChangelog
-            Check-PsCmdSuccess
+            CheckPsCmdSuccess
             [System.Threading.Thread]::Sleep(750)
             $TextEditorProcess = Start-Process -filepath "notepad" -args $TmpFile -PassThru
             $TextEditorProcess.WaitForInputIdle() | Out-Null
@@ -6727,7 +6820,7 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y" -and !$TASKMODE)
         #
         $url = "https://api.github.com/repos/$GITHUBUSER/$encPrjName/releases"
         $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
-        Check-PsCmdSuccess
+        CheckPsCmdSuccess
         #
         # Make sure an upload_url value exists on the response object to check for success
         #
@@ -6735,16 +6828,16 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y" -and !$TASKMODE)
         {
             $GithubReleaseId = $Response.id;
 
-            Log-Message "Successfully created GitHub release v$VERSION" "darkgreen"
-            Log-Message "   ID         : $($Response.id)" "darkgreen"
-            Log-Message "   Tarball URL: $($Response.zipball_url)" "darkgreen"
-            Log-Message "   Zipball URL: $($Response.tarball_url)" "darkgreen"
+            LogMessage "Successfully created GitHub release v$VERSION" "darkgreen"
+            LogMessage "   ID         : $($Response.id)" "darkgreen"
+            LogMessage "   Tarball URL: $($Response.zipball_url)" "darkgreen"
+            LogMessage "   Zipball URL: $($Response.tarball_url)" "darkgreen"
             #
             # Creating the release was successful, upload assets if any were specified
             #
             if ($GITHUBASSETS.Length -gt 0)
             {
-                Log-Message "Uploading GitHub assets"
+                LogMessage "Uploading GitHub assets"
                 foreach ($Asset in $GITHUBASSETS)
                 {
                     if (Test-Path($Asset))
@@ -6763,7 +6856,7 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y" -and !$TASKMODE)
                         #
                         $Request = [System.IO.File]::ReadAllBytes($Asset)
                         #$Request = Get-Content -Path $asset -Encoding Byte
-                        Check-PsCmdSuccess
+                        CheckPsCmdSuccess
                         if ($? -eq $true)
                         {
                             #
@@ -6772,49 +6865,49 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y" -and !$TASKMODE)
                             $url = $Response.upload_url
                             $url = $url.Replace("{?name,label}", "") + "?name=$AssetName"
                             $Response2 = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
-                            Check-PsCmdSuccess
+                            CheckPsCmdSuccess
                             #
                             # Make sure an id value exists on the response object to check for success
                             #
                             if ($? -eq $true -and $Response2.id) {
-                                Log-Message "Successfully uploaded GitHub asset $AssetName" "darkgreen"
-                                Log-Message "   ID          : $($Response2.id)" "darkgreen"
-                                Log-Message "   Download URL: $($Response2.browser_download_url)" "darkgreen"
+                                LogMessage "Successfully uploaded GitHub asset $AssetName" "darkgreen"
+                                LogMessage "   ID          : $($Response2.id)" "darkgreen"
+                                LogMessage "   Download URL: $($Response2.browser_download_url)" "darkgreen"
                             }
                             else {
-                                Log-Message "Failed to upload GitHub asset $AssetName" "red"
+                                LogMessage "Failed to upload GitHub asset $AssetName" "red"
                             }
                         }
                         else {
-                            Log-Message "Failed to upload GitHub asset $AssetName - could not read input file" "red"
+                            LogMessage "Failed to upload GitHub asset $AssetName - could not read input file" "red"
                         }
                     }
                     else {
                         $AssetName = [Path]::GetFileName($Asset)
-                        Log-Message "Failed to upload GitHub asset $AssetName - input file does not exist" "red"
+                        LogMessage "Failed to upload GitHub asset $AssetName - input file does not exist" "red"
                     }
                 }
             }
         }
         else {
-            Log-Message "Failed to create GitHub v$VERSION release" "red"
+            LogMessage "Failed to create GitHub v$VERSION release" "red"
         }
     }
     else {
         if ($null -ne $GithubChangelog) {
-            Log-Message "Dry run, skipping GitHub release"
-            Log-Message "Dry run has generated an html changelog from previous version to test functionality:"
-            Log-Message $GithubChangelog
+            LogMessage "Dry run, skipping GitHub release"
+            LogMessage "Dry run has generated an html changelog from previous version to test functionality:"
+            LogMessage $GithubChangelog
         }
         else {
-            Log-Message "Failed to create GitHub v$VERSION release" "red"
+            LogMessage "Failed to create GitHub v$VERSION release" "red"
         }
     }
 
     #
     # Run pre msntis-release scripts if specified
     #
-    Run-Scripts "postGithubRelease" $GITHUBRELEASEPOSTCOMMAND $false $false
+    RunScripts "postGithubRelease" $GITHUBRELEASEPOSTCOMMAND $false $false
 }
 
 #endregion
@@ -6826,19 +6919,19 @@ if ($_RepoType -eq "git" -and $GITHUBRELEASE -eq "Y" -and !$TASKMODE)
 #
 if ($MANTISBTRELEASE -eq "Y" -and (!$TASKMODE -or $TASKMANTISBT)) 
 {
-    Log-Message "Starting MantisBT release"
-    Log-Message "Creating MantisBT v$VERSION release"
+    LogMessage "Starting MantisBT release"
+    LogMessage "Creating MantisBT v$VERSION release"
 
     #
     # Run pre msntis-release scripts if specified
     #
-    Run-Scripts "preMantisRelease" $MANTISRELEASEPRECOMMAND $false $false
+    RunScripts "preMantisRelease" $MANTISRELEASEPRECOMMAND $false $false
 
     $dry_run = 0;
     $ReleaseVersion = $VERSION;
     if ($DRYRUN -eq $true) 
     {
-        Log-Message "Dry run only, will pass 'dryrun' flag to Mantis Releases API"
+        LogMessage "Dry run only, will pass 'dryrun' flag to Mantis Releases API"
         $dry_run = 1;
     }
 
@@ -6848,12 +6941,12 @@ if ($MANTISBTRELEASE -eq "Y" -and (!$TASKMODE -or $TASKMANTISBT))
     
     if (![string]::IsNullOrEmpty($HISTORYFILE)) 
     {
-        Log-Message "   Converting history text to mantisbt release changelog html"
+        LogMessage "   Converting history text to mantisbt release changelog html"
         $MantisChangeLogParts = $ClsHistoryFile.getHistory($PROJECTNAME, $ReleaseVersion, 1, $VERSIONTEXT, "parts", $HISTORYFILE, "", "", "", "", "", "", "", @(), "")
     }
     elseif (![string]::IsNullOrEmpty($CHANGELOGFILE)) 
     {
-        Log-Message "   Converting changelog markdown to mantisbt release changelog html"
+        LogMessage "   Converting changelog markdown to mantisbt release changelog html"
         $MantisChangelogParts = $ClsHistoryFile.getChangelog($PROJECTNAME, $ReleaseVersion, 1, $VERSIONTEXT, "parts", $CHANGELOGFILE, "", "", "", "", "", "", "", @(), "", $false, $IsAppPublisher)
     }
 
@@ -6871,8 +6964,8 @@ if ($MANTISBTRELEASE -eq "Y" -and (!$TASKMODE -or $TASKMANTISBT))
         #
         if ($DRYRUN -eq $true)
         {
-            Log-Message "Dry run has generated an html changelog to test functionality:"
-            Log-Message $MantisChangelog
+            LogMessage "Dry run has generated an html changelog to test functionality:"
+            LogMessage $MantisChangelog
         }
 
         #
@@ -6882,7 +6975,7 @@ if ($MANTISBTRELEASE -eq "Y" -and (!$TASKMODE -or $TASKMANTISBT))
         {
             $TmpFile = "${Env:Temp}\changelog.tmp.html"
             Set-Content -NoNewline -Path $TmpFile -Value $MantisChangelog
-            Check-PsCmdSuccess
+            CheckPsCmdSuccess
             [System.Threading.Thread]::Sleep(750)
             $TextEditorProcess = Start-Process -filepath "notepad" -args $TmpFile -PassThru
             $TextEditorProcess.WaitForInputIdle() | Out-Null
@@ -6905,7 +6998,7 @@ if ($MANTISBTRELEASE -eq "Y" -and (!$TASKMODE -or $TASKMANTISBT))
         #
         if ($MANTISBTASSETS.Length -gt 0)
         {
-            Log-Message "Building MantisBT assets list"
+            LogMessage "Building MantisBT assets list"
             foreach ($MbtAsset in $MANTISBTASSETS)
             {
                 $Asset = $MbtAsset;
@@ -6924,9 +7017,9 @@ if ($MANTISBTRELEASE -eq "Y" -and (!$TASKMODE -or $TASKMANTISBT))
                     #
                     # The format to upload an asset is the base64 encoded binary file data
                     #
-                    Log-Message "Reading file $Asset"
+                    LogMessage "Reading file $Asset"
                     $FileData = [System.IO.File]::ReadAllBytes($Asset)
-                    Check-PsCmdSuccess
+                    CheckPsCmdSuccess
                     if ($? -eq $true)
                     {
                         # Base 64 encode file data
@@ -6945,12 +7038,12 @@ if ($MANTISBTRELEASE -eq "Y" -and (!$TASKMODE -or $TASKMANTISBT))
                         $Request.assets += $AssetData
                     }
                     else {
-                        Log-Message "Partially failed to build MantisBT asset $AssetName - could not read input file" "red"
+                        LogMessage "Partially failed to build MantisBT asset $AssetName - could not read input file" "red"
                     }
                 }
                 else {
                     $AssetName = [Path]::GetFileName($Asset)
-                    Log-Message "Partially failed to build MantisBT asset $AssetName - input file does not exist" "red"
+                    LogMessage "Partially failed to build MantisBT asset $AssetName - input file does not exist" "red"
                 }
             }
         }
@@ -6983,9 +7076,9 @@ if ($MANTISBTRELEASE -eq "Y" -and (!$TASKMODE -or $TASKMANTISBT))
             # Send the REST POST to create the release w/ assets
             #
             $url = $MANTISBTURL[$i] + "/plugins/Releases/api/releases/$encPrjName"
-            Log-Message "Sending Add-Release REST request to $url"
+            LogMessage "Sending Add-Release REST request to $url"
             $Response = Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
-            Check-PsCmdSuccess
+            CheckPsCmdSuccess
             #
             # Check response object for success
             #
@@ -6993,30 +7086,30 @@ if ($MANTISBTRELEASE -eq "Y" -and (!$TASKMODE -or $TASKMANTISBT))
             {
                 if ($Response -is [System.String])
                 {
-                    Log-Message "Partial error creating MantisBT release v$VERSION" "red"
-                    Log-Message $Response "red"
+                    LogMessage "Partial error creating MantisBT release v$VERSION" "red"
+                    LogMessage $Response "red"
                 }
                 else {
-                    Log-Message "Successfully created MantisBT release v$VERSION" "darkgreen"
-                    Log-Message "   ID         : $($Response.id)" "darkgreen"
-                    Log-Message "   Message    : $($Response.msg)" "darkgreen"
-                    Log-Message "   URL        : $($MANTISBTURL[$i])" "darkgreen"
-                    Log-Message "   Token      : $($MANTISBTAPITOKEN[$i])" "darkgreen"
+                    LogMessage "Successfully created MantisBT release v$VERSION" "darkgreen"
+                    LogMessage "   ID         : $($Response.id)" "darkgreen"
+                    LogMessage "   Message    : $($Response.msg)" "darkgreen"
+                    LogMessage "   URL        : $($MANTISBTURL[$i])" "darkgreen"
+                    LogMessage "   Token      : $($MANTISBTAPITOKEN[$i])" "darkgreen"
                 }
             }
             else {
-                Log-Message "Failed to create MantisBT v$VERSION release" "red"
+                LogMessage "Failed to create MantisBT v$VERSION release" "red"
             }
         }
     }
     else {
-        Log-Message "Failed to create MantisBT v$VERSION release" "red"
+        LogMessage "Failed to create MantisBT v$VERSION release" "red"
     }
 
     #
     # Run pre msntis-release scripts if specified
     #
-    Run-Scripts "postMantisRelease" $MANTISRELEASEPOSTCOMMAND $false $false
+    RunScripts "postMantisRelease" $MANTISRELEASEPOSTCOMMAND $false $false
 }
 
 #endregion
@@ -7028,10 +7121,10 @@ if (!$TASKMODE)
 {
     if ($SKIPDEPLOYPUSH -ne "Y" -and $DRYRUN -eq $false)
     {
-        Run-Scripts "deploy" $DEPLOYCOMMAND $false $false
+        RunScripts "deploy" $DEPLOYCOMMAND $false $false
     }
     else {
-        Log-Message "Skipped running custom deploy script" "magenta"
+        LogMessage "Skipped running custom deploy script" "magenta"
     }
 }
 
@@ -7046,7 +7139,7 @@ if (!$TASKCHANGELOG -and !$TASKTOUCHVERSIONS -and !$TASKMANTISBT -and !$TASKCIEN
 # Run pre commit scripts if specified
 #
 if (!$TASKMODE) {
-    Run-Scripts "preCommit" $PRECOMMITCOMMAND $false $false
+    RunScripts "preCommit" $PRECOMMITCOMMAND $false $false
 }
 
 #region Commit / Tag VC
@@ -7082,19 +7175,19 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
                         if ($VCCHANGELISTADD -ne "")
                         {
                             $cl = $VCCHANGELISTADD.Replace("|", " ");
-                            Log-Message "Adding unversioned touched files to GIT version control"
-                            Log-Message "   $cl"
+                            LogMessage "Adding unversioned touched files to GIT version control"
+                            LogMessage "   $cl"
                             if (![string]::IsNullOrEmpty($svnUser) -and ![string]::IsNullOrEmpty($svnToken)) {
                                 Invoke-Expression -Command "svn add $cl --non-interactive --no-auth-cache --username `"$svnUser`" --password `"$svnToken`""
                             }
                             else {
                                 Invoke-Expression -Command "svn add $cl --non-interactive"
                             }
-                            Check-ExitCode $false
+                            CheckExitCode $false
                         }
                         $cl = $VCCHANGELIST.Replace("|", " ");
-                        Log-Message "Committing touched files to SVN version control"
-                        Log-Message "   $cl"
+                        LogMessage "Committing touched files to SVN version control"
+                        LogMessage "   $cl"
                         #
                         # SVN commit
                         #
@@ -7104,13 +7197,13 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
                         else {
                             Invoke-Expression -Command "svn commit $cl -m `"chore(release): $VERSION [skip ci]`" --non-interactive"
                         }
-                        Check-ExitCode $false
+                        CheckExitCode $false
                     }
                     elseif (![string]::IsNullOrEmpty($VCCHANGELISTMLT)) 
                     {
                         $cl = $VCCHANGELISTMLT.Replace("|", " ");
-                        Log-Message "Committing touched multi-publish files to SVN version control"
-                        Log-Message "   $cl"
+                        LogMessage "Committing touched multi-publish files to SVN version control"
+                        LogMessage "   $cl"
                         #
                         # SVN commit
                         #
@@ -7121,20 +7214,20 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
                         else {
                             Invoke-Expression -Command "svn commit $cl -m `"chore(release-mlt): $VERSION [skip ci]`" --non-interactive"
                         }
-                        Check-ExitCode $false
+                        CheckExitCode $false
                     }
                     else {
-                        Log-Message "Skipping touched file SVN commit, user specified" "darkyellow"
+                        LogMessage "Skipping touched file SVN commit, user specified" "darkyellow"
                     }
                 }
                 else 
                 {
                     if ($DRYRUNVCREVERT -eq "Y") {
-                        Log-Message "Dry run, reverting changes" "magenta"
-                        Vc-Revert
+                        LogMessage "Dry run, reverting changes" "magenta"
+                        VcRevert
                     }
                     if ($DRYRUN -eq $true) {
-                        Log-Message "   Dry run, skipping touched file SVN commit" "magenta"
+                        LogMessage "   Dry run, skipping touched file SVN commit" "magenta"
                     }
                 }
             }
@@ -7148,9 +7241,9 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
                 if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($VCTAGPREFIX))
                 {
 
-                    Log-Message "Skipping version tag, 'vcTagPrefix' must be set for subprojects" "darkyellow"
-                    Log-Message "The project must be tagged manually using the following command:" "magenta"
-                    Log-Message "   svn copy `"$_Repo`" `"$TagLocation/prefix-v$VERSION`" -m `"chore(release): tag v$VERSION [skip ci]`"" "magenta"
+                    LogMessage "Skipping version tag, 'vcTagPrefix' must be set for subprojects" "darkyellow"
+                    LogMessage "The project must be tagged manually using the following command:" "magenta"
+                    LogMessage "   svn copy `"$_Repo`" `"$TagLocation/prefix-v$VERSION`" -m `"chore(release): tag v$VERSION [skip ci]`"" "magenta"
                 }
                 else 
                 {
@@ -7164,7 +7257,7 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
                         $TagLocation = "$TagLocation/$VCTAGPREFIX-v$VERSION"
                         $TagMessage = "chore(release): tag $VCTAGPREFIX version $VERSION [skip ci]"
                     }
-                    Log-Message "Tagging SVN version at $TagLocation"
+                    LogMessage "Tagging SVN version at $TagLocation"
                     if ($DRYRUN -eq $false) 
                     {   #
                         # Call svn copy to create 'tag'
@@ -7176,19 +7269,19 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
                         else {
                             & svn copy "$_Repo" "$TagLocation" -m "$TagMessage" --non-interactive
                         }
-                        Check-ExitCode $false
+                        CheckExitCode $false
                     }
                     else {
-                        Log-Message "Dry run, skipping create version tag" "magenta"
+                        LogMessage "Dry run, skipping create version tag" "magenta"
                     }
                 }
             }
             else {
-                Log-Message "Skipping version tag, user specified" "darkyellow"
+                LogMessage "Skipping version tag, user specified" "darkyellow"
             }
         }
         else {
-            Log-Message "Could not find .svn folder, skipping commit and version tag" "red"
+            LogMessage "Could not find .svn folder, skipping commit and version tag" "red"
         }
     }
 
@@ -7214,47 +7307,47 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
                         if ($VCCHANGELISTADD -ne "")
                         {
                             $cl = $VCCHANGELISTADD.Replace("|", " ");
-                            Log-Message "Adding unversioned touched files to GIT version control"
-                            Log-Message "   $cl"
+                            LogMessage "Adding unversioned touched files to GIT version control"
+                            LogMessage "   $cl"
                             Invoke-Expression -Command "git add -- $cl"
-                            Check-ExitCode $false
+                            CheckExitCode $false
                         }
                         #
                         # GIT commit and GIT push
                         #
-                        Log-Message "Committing touched files to GIT version control"
+                        LogMessage "Committing touched files to GIT version control"
                         $cl = $VCCHANGELIST.Replace("|", " ");
-                        Log-Message "   $cl"
+                        LogMessage "   $cl"
                         Invoke-Expression -Command "git commit --quiet -m `"chore(release): $VERSION [skip ci]`" -- $cl"
-                        Check-ExitCode $false
+                        CheckExitCode $false
                         Invoke-Expression -Command "git push origin master:master"
-                        Check-ExitCode $false
+                        CheckExitCode $false
                     }
                     elseif (![string]::IsNullOrEmpty($VCCHANGELISTMLT))
                     {
                         $cl = $VCCHANGELISTMLT.Replace("|", " ");
-                        Log-Message "Committing touched multi-publish files to SVN version control"
-                        Log-Message "   $cl"
+                        LogMessage "Committing touched multi-publish files to SVN version control"
+                        LogMessage "   $cl"
                         #
                         # GIT commit
                         #
                         Invoke-Expression -Command "git commit --quiet -m `"chore(release-mlt): $VERSION [skip ci]`" -- $cl"
-                        Check-ExitCode $false
+                        CheckExitCode $false
                         Invoke-Expression -Command "git push origin master:master"
-                        Check-ExitCode $false
+                        CheckExitCode $false
                     }
                     else {
-                        Log-Message "Skipping touched file GIT commit, user specified" "darkyellow"
+                        LogMessage "Skipping touched file GIT commit, user specified" "darkyellow"
                     }
                 }
                 else 
                 {
                     if ($DRYRUNVCREVERT -eq "Y") {
-                        Log-Message "Dry run, reverting changes" "magenta"
-                        Vc-Revert
+                        LogMessage "Dry run, reverting changes" "magenta"
+                        VcRevert
                     }
                     if ($DRYRUN -eq $true) {
-                        Log-Message "Dry run, skipping touched file GIT commit" "magenta"
+                        LogMessage "Dry run, skipping touched file GIT commit" "magenta"
                     }
                 }
             }
@@ -7266,9 +7359,9 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
             {
                 if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($VCTAGPREFIX))
                 {
-                    Log-Message "Skipping version tag, 'vcTagPrefix' must be set for subprojects" "darkyellow"
-                    Log-Message "The project must be tagged manually using the following command:" "magenta"
-                    Log-Message "   git tag -a prefix-v$VERSION -m `"chore(release): tag v$VERSION [skip ci]`"" "magenta"
+                    LogMessage "Skipping version tag, 'vcTagPrefix' must be set for subprojects" "darkyellow"
+                    LogMessage "The project must be tagged manually using the following command:" "magenta"
+                    LogMessage "   git tag -a prefix-v$VERSION -m `"chore(release): tag v$VERSION [skip ci]`"" "magenta"
                 }
                 else 
                 {
@@ -7279,7 +7372,7 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
                         $TagLocation = "${VCTAGPREFIX}-v$VERSION"
                         $TagMessage = "chore(release): tag $VCTAGPREFIX version $VERSION [skip ci]"
                     }
-                    Log-Message "Tagging GIT version $TagLocation"
+                    LogMessage "Tagging GIT version $TagLocation"
                     if ($DRYRUN -eq $false) 
                     {
                         #
@@ -7290,19 +7383,19 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
                             & git tag -a $TagLocation -m "$TagMessage"
                         }
                         else {
-                            Log-Message "Re-tagging after release"
+                            LogMessage "Re-tagging after release"
                             & git push origin :refs/tags/$TagLocation
-                            Check-ExitCode $false
+                            CheckExitCode $false
                             & git tag -fa $TagLocation -m "$TagMessage"
                         }
 
-                        Check-ExitCode $false
+                        CheckExitCode $false
                         & git push --tags
-                        Check-ExitCode $false
+                        CheckExitCode $false
 
                         if ($GITHUBRELEASE -eq "Y" -and ![string]::IsNullOrEmpty($GithubReleaseId))
                         {
-                            Log-Message "Marking release as published"
+                            LogMessage "Marking release as published"
                             #
                             # Mark release published
                             # Set up the request body for the 'create release' request
@@ -7326,30 +7419,30 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
                             #
                             $url = "https://api.github.com/repos/$GITHUBUSER/$PROJECTNAME/releases/" + $GithubReleaseId;
                             $Response = Invoke-RestMethod $url -UseBasicParsing -Method PATCH -Body $Request -Headers $Header
-                            Check-PsCmdSuccess
+                            CheckPsCmdSuccess
                             #
                             # Make sure an upload_url value exists on the response object to check for success
                             #
                             if ($? -eq $true -and $Response.upload_url)
                             {
-                                Log-Message "Successfully patched/published GitHub release v$VERSION" "darkgreen"
+                                LogMessage "Successfully patched/published GitHub release v$VERSION" "darkgreen"
                             }
                             else {
-                                Log-Message "Failed to publish/patch GitHub v$VERSION release" "red"
+                                LogMessage "Failed to publish/patch GitHub v$VERSION release" "red"
                             }
                         }
                     }
                     else {
-                        Log-Message "Dry run, skipping create version tag" "magenta"
+                        LogMessage "Dry run, skipping create version tag" "magenta"
                     }
                 }
             }
             else {
-                Log-Message "Skipping version tag, user specified" "darkyellow"
+                LogMessage "Skipping version tag, user specified" "darkyellow"
             }
         }
         else {
-            Log-Message "Could not find .git folder, skipping commit and version tag" "red"
+            LogMessage "Could not find .git folder, skipping commit and version tag" "red"
         }
     }
 
@@ -7360,23 +7453,23 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
     #
     # Run pre commit scripts if specified
     #
-    Run-Scripts "postCommit" $POSTCOMMITCOMMAND $false $false
+    RunScripts "postCommit" $POSTCOMMITCOMMAND $false $false
 
     #
     # Run post build scripts if specified
     #
-    Run-Scripts "postRelease" $POSTRELEASECOMMAND $false $false
+    RunScripts "postRelease" $POSTRELEASECOMMAND $false $false
 
     if ($DRYRUN -eq $true) {
-        Log-Message "Dry run completed"
+        LogMessage "Dry run completed"
         if ($DRYRUNVCREVERT -ne "Y") {
-            Log-Message "   You should manually revert any auto-touched files via SCM" "magenta"
+            LogMessage "   You should manually revert any auto-touched files via SCM" "magenta"
         }
     }
 }
 else  # SINGLETASKMODE
 {
-    Log-Message "Single task mode run completed"
+    LogMessage "Single task mode run completed"
 }
 
 #endregion
@@ -7386,7 +7479,7 @@ else  # SINGLETASKMODE
 #
 if ($TASKCIENVSET)
 {
-    Log-Message "Write CI environment to file 'ap.env'"
+    LogMessage "Write CI environment to file 'ap.env'"
     if (Test-Path("ap.env")) {
         Remove-Item -Force -Path "ap.env" | Out-Null
     }
@@ -7404,7 +7497,7 @@ if ($TASKCIENVSET)
 #
 if ($TASKCIENVINFO)
 {
-    Log-Message "Output CI environment info"
+    LogMessage "Output CI environment info"
     if (![string]::IsNullOrEmpty($HISTORYFILE)) {
         Write-Host "$CURRENTVERSION|$VERSION|$HISTORYFILE"
     }
@@ -7416,8 +7509,8 @@ if ($TASKCIENVINFO)
     }
 }
 
-Log-Message "Completed"
-Log-Message "Finished successfully" "darkgreen"
+LogMessage "Completed"
+LogMessage "Finished successfully" "darkgreen"
 
 } # end xRun
 
