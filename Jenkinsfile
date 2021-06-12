@@ -136,7 +136,7 @@ pipeline {
     //
     // Run regardless of the completion status of the pipeline
     //
-    always {
+    always { 
       script {
         mantisIssueRegister keepTicketPrivate: false, threshold: 'failureOrUnstable'
         mantisIssueUpdater keepNotePrivate: false, recordChangelog: true, setStatusResolved: true, threshold: 'failureOrUnstable'
@@ -146,7 +146,7 @@ pipeline {
         //
         //env.ForEmailPlugin = env.WORKSPACE      
         emailext body: '${JELLY_SCRIPT,template="html"}', 
-                //body: '''${SCRIPT, template="groovy-html.template"}''',
+                //body: '''${SCRIPT, template="groovy-html.template"}''', 
                 attachLog: true,
                 compressLog: true,
                 //attachmentsPattern: "$reportZipFile",
