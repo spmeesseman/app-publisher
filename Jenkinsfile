@@ -138,8 +138,8 @@ pipeline {
     //
     always { 
       script {
-        mantisIssueRegister keepTicketPrivate: false, threshold: 'failureOrUnstable'
-        mantisIssueUpdater keepNotePrivate: false, recordChangelog: true, setStatusResolved: true, threshold: 'failureOrUnstable'
+        mantisIssueAdd keepTicketPrivate: false, threshold: 'failureOrUnstable'
+        mantisIssueUpdate keepNotePrivate: false, recordChangelog: true, setStatusResolved: true, threshold: 'failureOrUnstable'
         //
         // send email
         // email template to be loaded from managed files
