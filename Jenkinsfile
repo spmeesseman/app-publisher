@@ -143,20 +143,13 @@ pipeline {
         //
         // send email
         // email template to be loaded from managed files
-        //
-        //env.ForEmailPlugin = env.WORKSPACE      
+        //  
         emailext body: '${JELLY_SCRIPT,template="html"}', 
-                //body: '''${SCRIPT, template="groovy-html.template"}''', 
                 attachLog: true,
                 compressLog: true,
-                //attachmentsPattern: "$reportZipFile",
                 mimeType: 'text/html',
                 subject: "Build ${BUILD_NUMBER} : " + currentBuild.currentResult + " : " + env.JOB_NAME,
                 to: "smeesseman@pjats.com" // "${params.EMAIL_RECIPIENTS}"
-        //
-        // clean up workspace
-        //
-        //deleteDir()
       }
     }
   }
