@@ -798,22 +798,6 @@ export const publishRcOpts =
         }
     ],
 
-    taskVersionPreReleaseId: [
-        true,
-        "string",
-        "",
-        [ "--version-pre-release-get-id" ],
-        {
-            help: "Gets the identifier denoting a pre-release from a version string.\n" +
-                  "For example, the version string 2.20.11-alpha.3 has a pre-release\n" +
-                  "identifier of 'alpha'.",
-            usage: [
-                "--task-version-pre-release-id 2.0.1-alpha.1",
-                "--task-version-pre-release-id 2.0.1-beta.3"
-            ]
-        }
-    ],
-
     taskVersionInfo: [
         true,
         "boolean",
@@ -836,6 +820,22 @@ export const publishRcOpts =
             help: "Calculates the next version to be released based on versioned files\n" +
                   "and commit messages. and outputs that version string to stdout.\n" +
                   "Ignored if the --task-version-info switch is used."
+        }
+    ],
+
+    taskVersionPreReleaseId: [
+        true,
+        "string",
+        "",
+        [ "-tvpri", "--task-version-pre-release-id" ],
+        {
+            help: "Gets the identifier denoting a pre-release from a version string.\n" +
+                  "For example, the version string 2.20.11-alpha.3 has a pre-release\n" +
+                  "identifier of 'alpha'.",
+            usage: [
+                "--task-version-pre-release-id 2.0.1-alpha.1",
+                "--task-version-pre-release-id 2.0.1-beta.3"
+            ]
         }
     ],
 

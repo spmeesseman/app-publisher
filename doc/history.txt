@@ -4363,7 +4363,7 @@ June 15th, 2021
     Add new command line option to specify a pre-release identifier to use when
     calculating the next version:
     
-        --version-pre-release-tag
+        --version-pre-release-id
     
     Using this option instructs the process to use the provided pre-release
     identifier while calculating the new version.
@@ -4421,4 +4421,36 @@ June 15th, 2021
 1.  Documentation:  Readme
     
     Remove reference to Jenkins token value.
+
+
+Version 2.6.0
+June 15th, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+    
+    Add new 'task mode' command line switch:
+    
+        --task-version-pre-release-id
+    
+    Using this option instructs the process to output the pre-release identifier
+    from a specified branch name or version string.
 
