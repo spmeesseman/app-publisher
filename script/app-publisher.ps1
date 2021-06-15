@@ -2286,12 +2286,17 @@ function Set-VersionFiles()
 }
 
 function Set-ExtJsBuild()
-{
-    #
+{   #
     # Replace version in app.json
+    # Unfortunately Sencha Cmd does not support the pre-release identifier so replace any
+    # '-' chars in the version string with a '.'.  The app.json version is primarily only
+    # a visual and any change in its textual representation triggers a 'new build' as far
+    # as the ExtJs bootloader is concerned, there's no concept of new/old version.
     #
-    ReplaceVersion "app.json" "appVersion`"[ ]*:[ ]*[`"]$CURRENTVERSION" "appVersion`": `"$VERSION" $true
-    ReplaceVersion "app.json" "version`"[ ]*:[ ]*[`"]$CURRENTVERSION" "version`": `"$VERSION" $true
+    $ExtJsVersion = $VERSION.Replace("-", ".");
+    $ExtJsCurrentVersion = $CURRENTVERSION.Replace("-", ".");
+    ReplaceVersion "app.json" "appVersion`"[ ]*:[ ]*[`"]$ExtJsCurrentVersion" "appVersion`": `"$ExtJsVersion" $true
+    ReplaceVersion "app.json" "version`"[ ]*:[ ]*[`"]$ExtJsCurrentVersion" "version`": `"$ExtJsVersion" $true
     #
     # Allow manual modifications to app.json
     #
@@ -4520,6 +4525,13 @@ if ($options.versionFilesScrollDown) {
     $VERSIONFILESSCROLLDOWN = $options.versionFilesScrollDown
 }
 #
+# Version pre-release identifier
+#
+$VERSIONPRERELEASEID = ""
+if (![string]::IsNullOrEmpty($options.versionPreReleaseId)) {
+    $VERSIONPRERELEASEID = $options.versionPreReleaseId
+}
+#
 # Whether or not to tag the new version in SVN.  Default is Yes.
 #
 $VERSIONFORCECURRENT = $false
@@ -5329,6 +5341,7 @@ LogMessage "   Test email       : $TESTEMAILRECIP"
 LogMessage "   Version files    : $VERSIONFILES"
 LogMessage "   Vers.files alw.ed: $VERSIONFILESEDITALWAYS"
 LogMessage "   Vers.files scroll: $VERSIONFILESSCROLLDOWN"
+LogMessage "   Version pre id   : $VERSIONPRERELEASEID"
 LogMessage "   Vers.replace tags: $VERSIONREPLACETAGS"
 LogMessage "   Version text     : $VERSIONTEXT"
 
@@ -5464,23 +5477,12 @@ if ($CURRENTVERSION -eq "" -or ($VERSIONFORCECURRENT -and $RUN -eq 1))
     #
     if (Test-Path("package.json"))
     {
-        if (Test-Path("package.json"))
-        {
-            LogMessage "Using node to obtain next version number"
-            #
-            # use package.json properties to retrieve current version
-            #
-            if (!$VERSIONFORCECURRENT) {
-                $CURRENTVERSION = & node -e "console.log(require('./package.json').version);"
-            }
-            $VERSIONSYSTEM = "semver"
-        } 
-        else {
-            LogMessage "Npm based project found, but package.json is missing" "red"
-            if ($TASKMODESTDOUT) {
-                Write-Host "0.0.0"
-            }
-            exit 127
+        LogMessage "Using node to obtain next version number"
+        #
+        # use package.json properties to retrieve current version
+        #
+        if (!$VERSIONFORCECURRENT) {
+            $CURRENTVERSION = & node -e "console.log(require('./package.json').version);"
         }
         $VERSIONSYSTEM = "semver"
     }
@@ -5754,21 +5756,41 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
             $VersionInteractive = "N"
             #
             if ($VERSIONSYSTEM -eq "semver")
-            {
-                #
+            {   #
                 # use semver to retrieve next version
                 # Analyze the commits to determine major, minor, patch release
                 #
                 $RELEASELEVEL = $ClsCommitAnalyzer.get($COMMITS)
+                if ($VERSIONPRERELEASEID -ne "") {
+                    $RELEASELEVEL = "pre" + $RELEASELEVEL
+                }
+                
                 #
                 # Get next version
+                # NOte that pre-release identifier will auto-bump minor revision
                 #
-                if ($RUN -eq 1 -or $DRYRUN -eq $true) {
-                    if (!$IsAppPublisher) {
-                        $VERSION = & app-publisher-semver -i $RELEASELEVEL $CURRENTVERSION
+                if ($RUN -eq 1 -or $DRYRUN -eq $true)
+                {
+                    if ($VERSIONPRERELEASEID -eq "")
+                    {
+                        if (!$IsAppPublisher) {
+                            $VERSION = & app-publisher-semver -i $RELEASELEVEL $CURRENTVERSION
+                        }
+                        else {
+                            $VERSION = & semver -i $RELEASELEVEL $CURRENTVERSION
+                        }
                     }
-                    else {
-                        $VERSION = & semver -i $RELEASELEVEL $CURRENTVERSION
+                    #
+                    # Pre-release identifier
+                    #
+                    else
+                    {
+                        if (!$IsAppPublisher) {
+                            $VERSION = & app-publisher-semver -i $RELEASELEVEL $CURRENTVERSION --preid $VERSIONPRERELEASEID
+                        }
+                        else {
+                            $VERSION = & semver -i $RELEASELEVEL $CURRENTVERSION --preid $VERSIONPRERELEASEID
+                        }
                     }
                 }
                 else {
@@ -5786,6 +5808,10 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
                 # Whole # incremental versioning, i.e. 100, 101, 102...
                 #
                 LogMessage "Using legacy incremental versioning"
+                if ($VERSIONPRERELEASEID -ne "")
+                {
+                    LogMessage "Incremental versioning does not support a pre-release identifier" "yellow"
+                }
                 if ($RUN -eq 1 -or $DRYRUN -eq $true) {
                     try {
                         $VERSION = ([System.Int32]::Parse($CURRENTVERSION) + 1).ToString()
@@ -5888,8 +5914,8 @@ else
 #
 # Output some calculated info to console
 #
-LogMessage "Current Version     : $CURRENTVERSION"
-LogMessage "Next Version        : $VERSION"
+LogMessage "Current Version         : $CURRENTVERSION"
+LogMessage "Next Version            : $VERSION"
 
 #endregion
 

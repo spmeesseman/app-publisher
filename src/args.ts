@@ -886,10 +886,11 @@ export const publishRcOpts =
         "",
         [ "--version-force-next", "--version-force" ],
         {
-            help: "A version number to use as the 'next version'.  Version calculation will not be" +
-                  "performed other than for reading in the current version, skipping an SCM step.",
+            help: "A version number to use as the 'next version'.  Version calculation will\n" +
+                  "not be performed other than for reading in the current version, skipping\n" +
+                  "an SCM step.",
             usage: [
-                "--version-force 300", "--version-force 2.0.0"
+                "--version-force-next 300", "--version-force-next 2.0.0"
             ]
         }
     ],
@@ -925,6 +926,21 @@ export const publishRcOpts =
         "",
         "A tag or list of tags to use for performing version string replacement in files",
         "specified by 'versionFiles', and default versioned files (e.g. package.json)."
+    ],
+
+    versionPreReleaseId: [
+        true,
+        "string",
+        "",
+        [ "--version-pre-release-id" ],
+        {
+            help: "An identifier denoting a pre-release can to be appenended to the next\n" +
+                  "version number to produce the final version string, e.g. 'alpha'\n" +
+                  "produces the final version string of x.y.z-alpha.",
+            usage: [
+                "--version-pre-release-id alpha", "--version-pre-release-id pre1"
+            ]
+        }
     ],
 
     versionText: [
