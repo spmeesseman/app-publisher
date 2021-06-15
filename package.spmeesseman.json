@@ -1,0 +1,126 @@
+{
+    "name": "@spmeesseman/app-publisher",
+    "version": "2.5.0",
+    "displayName": "App Publisher",
+    "description": "App Publisher",
+    "license": "MIT",
+    "author": {
+        "name": "Scott Meesseman",
+        "email": "spmeesseman@gmail.com"
+    },
+    "bugs": {
+        "url": "https://github.com/spmeesseman/app-publisher/issues"
+    },
+    "homepage": "https://github.com/spmeesseman/app-publisher",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/spmeesseman/app-publisher.git"
+    },
+    "dependencies": {
+        "@spmeesseman/arg-parser": "^1.1.2",
+        "@spmeesseman/env-ci": "^1.0.3",
+        "@types/env-ci": "*",
+        "@types/glob": "^7.1.1",
+        "@types/gradient-string": "^1.1.0",
+        "@types/lodash": "^4.14.136",
+        "@types/marked-terminal": "^3.1.1",
+        "@types/semver": "^6.0.1",
+        "aggregate-error": "^3.0.0",
+        "chalk": "^2.4.2",
+        "conventional-changelog-spm": "^1.2.3",
+        "cosmiconfig": "^5.2.1",
+        "debug": "^4.1.1",
+        "execa": "^1.0.0",
+        "figures": "^3.0.0",
+        "get-stream": "^5.1.0",
+        "git-log-parser": "^1.2.0",
+        "glob": "^7.1.4",
+        "gradient-string": "^1.2.0",
+        "hook-std": "^2.0.0",
+        "json": "^9.0.6",
+        "jsonc-parser": "^2.1.0",
+        "lodash": "^4.17.15",
+        "marked": "^0.7.0",
+        "marked-terminal": "^3.2.0",
+        "minimatch": "^3.0.4",
+        "nodemailer": "^6.6.1",
+        "p-locate": "^4.1.0",
+        "p-reduce": "^2.1.0",
+        "read-pkg-up": "^6.0.0",
+        "resolve-from": "^5.0.0",
+        "semver": "^6.3.0",
+        "signale": "^1.4.0"
+    },
+    "devDependencies": {
+        "@types/istanbul": "^0.4.30",
+        "@types/mocha": "^5.2.7",
+        "@types/node": "^12.6.8",
+        "@types/signale": "^1.2.1",
+        "codecov": "^3.5.0",
+        "eslint": "^5.16.0",
+        "eslint-plugin-prettier": "^3.1.0",
+        "istanbul": "^0.4.5",
+        "mocha": "^6.2.0",
+        "mocha-junit-reporter": "^1.23.1",
+        "mocha-multi-reporters": "^1.1.7",
+        "prettier": "^1.18.2",
+        "remap-istanbul": "^0.13.0",
+        "tslint": "^5.18.0",
+        "typescript": "^3.5.3"
+    },
+    "bundleDependencies": [
+        "json",
+        "marked",
+        "semver"
+    ],
+    "scripts": {
+        "build": "npx tsc -p ./",
+        "help": "npx ./build/bin/app-publisher.js --help",
+        "version_ap": "npx ./build/bin/app-publisher.js --version",
+        "full_run": "npx ./build/bin/app-publisher.js --no-ci",
+        "dry_run": "npx ./build/bin/app-publisher.js --no-ci --dry-run",
+        "task-rt-email": "npx ./build/bin/app-publisher.js --no-ci --task-email",
+        "task-dry-email_dry": "npx ./build/bin/app-publisher.js --no-ci --task-email --dry-run",
+        "task-rt-changelog": "npx ./build/bin/app-publisher.js --no-ci --task-changelog",
+        "task-rt-changelog_view": "npx ./build/bin/app-publisher.js --no-ci --task-changelog-view",
+        "task-rt-changelog_file": "npx ./build/bin/app-publisher.js --no-ci --task-changelog-file test/changelog.test",
+        "task-rt-ci_env": "npx ./build/bin/app-publisher.js --no-ci --task-ci-env",
+        "task-rt-ci_info": "npx ./build/bin/app-publisher.js --no-ci --task-ci-env-info",
+        "task-rt-ci_env_set": "npx ./build/bin/app-publisher.js --no-ci --task-ci-env-set",
+        "task-rt-config": "npx ./build/bin/app-publisher.js --no-ci --config",
+        "task-dry-mantis_release": "npx ./build/bin/app-publisher.js --no-ci --task-mantisbt-release --dry-run",
+        "task-dry-mantis_release_noedit": "npx ./build/bin/app-publisher.js --no-ci --task-mantisbt-release --dry-run --skip-changelog-edits",
+        "task-rt-touch_versions": "npx ./build/bin/app-publisher.js --no-ci -task-touch-versions",
+        "task-dry-touch_versions": "npx ./build/bin/app-publisher.js --no-ci --task-touch-versions --dry-run",
+        "task-rt-touch_versions_commit": "npx ./build/bin/app-publisher.js --no-ci -ttvc",
+        "task-dry-touch_versions_commit": "npx ./build/bin/app-publisher.js --no-ci -ttvc --dry-run",
+        "task-rt-version_current": "npx ./build/bin/app-publisher.js --no-ci --task-version-current",
+        "task-rt-version_info": "npx ./build/bin/app-publisher.js --no-ci --task-version-info",
+        "task-rt-version_next": "npx ./build/bin/app-publisher.js --no-ci --task-version-next",
+        "republish": "npx ./build/bin/app-publisher.js --republish"
+    },
+    "main": "./build/bin/app-publisher.js",
+    "bin": {
+        "app-publisher": "./build/bin/app-publisher.js",
+        "app-publisher-json": "./node_modules/json/lib/json.js",
+        "app-publisher-marked": "./node_modules/marked/bin/marked",
+        "app-publisher-semver": "./node_modules/semver/bin/semver.js"
+    },
+    "files": [
+        "build/*.js",
+        "build/lib",
+        "build/bin",
+        "script",
+        "res"
+    ],
+    "keywords": [
+        "release",
+        "publish",
+        "svn",
+        "git",
+        "mantisbt"
+    ],
+    "publishConfig": {
+        "access": "public"
+    }
+}
