@@ -253,9 +253,9 @@ For more details, see the [Internal NPM Registry](https://app1.development.pjats
 
 ## Jenkins Token
 
-I order to run the VSCode task *Validate Jenkinsfile*, the following environment variable must be set:
+In order to run the VSCode task *Validate Jenkinsfile*, the following environment variable must be set:
 
-    c21lZXNzZW1hbjoxMTU5NzgyYTBmNDE5OTI2M2VkYTY0ZTVlZjViYzIzZDY4
+    JENKINS_TOKEN
 
 This *token* is the base64 encoded version of http basic auth using an API token, i.e. username:token
 
