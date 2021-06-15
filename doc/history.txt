@@ -4335,3 +4335,36 @@ June 14th, 2021
     Add support for version control and replacement in Maven pom.xml project
     files.
 
+
+Version 2.5.0
+June 15th, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+    
+    Add new command line option to specify a pre-release identifier to use when
+    calculating the next version:
+    
+        --version-pre-release-tag
+    
+    Using this option instructs the process to use the provided pre-release
+    identifier while calculating the new version.
+
