@@ -26,7 +26,7 @@ export = async () =>
          // If opts.verbose s set, then the ArgumentParser will have diplayed the banner already
         // For stdout type tasks, then we dont display the banner or anything else for that matter.
         //
-        if (!opts.taskVersionCurrent && !opts.taskVersionNext && !opts.taskVersionInfo && !opts.taskCiEvInfo && !opts.verbose) {
+        if (!opts.taskVersionCurrent && !opts.taskVersionNext && !opts.taskVersionInfo && !opts.taskCiEvInfo && !opts.taskVersionPreReleaseId && !opts.verbose) {
             displayIntro(banner);
         }
 

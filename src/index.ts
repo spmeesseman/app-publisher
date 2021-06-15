@@ -93,7 +93,8 @@ async function run(context, plugins)
     options.appPublisherVersion = pkg.version;
     // tslint:disable-next-line: quotemark
     options.isNodeJsEnv = typeof module !== 'undefined' && module.exports;
-    options.taskModeStdOut = options.taskVersionCurrent || options.taskVersionNext || options.taskVersionInfo || options.taskCiEvInfo;
+    options.taskModeStdOut = !!(options.taskVersionCurrent || options.taskVersionNext || options.taskVersionInfo ||
+                                options.taskCiEvInfo || options.taskVersionPreReleaseId);
 
     if (!options.taskModeStdOut)
     {

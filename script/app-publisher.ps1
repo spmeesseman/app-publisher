@@ -1624,8 +1624,8 @@ function LogMessage($msg, $color, $noTag = $false)
         return
     }
 
-    #if (!$TASKMODESTDOUT -or $color -eq "red")
-    #{
+    if (!$TASKMODESTDOUT -or $color -eq "red")
+    {
         if ($color) 
         {
             $msgTag = ""
@@ -1647,7 +1647,7 @@ function LogMessage($msg, $color, $noTag = $false)
         else {
             write-host $msg
         }
-    #}
+    }
 
     if ($WRITELOG -eq "Y") 
     {
@@ -4755,6 +4755,14 @@ $TASKVERSIONNEXT = $false
 if ($options.taskVersionNext) {
     $TASKVERSIONNEXT = $true
 }
+
+#
+# Version pre-release identifier
+#
+$TASKVERSIONPRERELEASEID = ""
+if (![string]::IsNullOrEmpty($options.taskVersionPreReleaseId)) {
+    $TASKVERSIONPRERELEASEID = $options.taskVersionPreReleaseId
+}
 #
 # Get current and next version.  Gets output to stdout inthe form 'current|next'
 #
@@ -4781,7 +4789,7 @@ if ($options.taskTouchVersionsCommit) {
 # the particular task that is going to be ran.
 #
 $TASKMODE = $TASKCHANGELOG -or $TASKEMAIL -or $TASKTOUCHVERSIONS -or $TASKMANTISBT -or $TASKVERSIONCURRENT -or 
-            $TASKVERSIONNEXT -or $TASKCIENVSET -or $TASKVERSIONINFO -or $TASKCIENVINFO
+            $TASKVERSIONNEXT -or $TASKCIENVSET -or $TASKVERSIONINFO -or $TASKCIENVINFO -or $TASKVERSIONPRERELEASEID
 $TASKMODESTDOUT = $options.taskModeStdOut
 
 #endregion
@@ -5330,6 +5338,7 @@ LogMessage "   Task CI set env  : $TASKCIENVSET"
 LogMessage "   Task Version Cur : $TASKVERSIONCURRENT"
 LogMessage "   Task Version Next: $TASKVERSIONNEXT"
 LogMessage "   Task Version Info: $TASKVERSIONINFO"
+LogMessage "   Task Vers. Pre.Re: $TASKVERSIONPRERELEASEID"
 LogMessage "   Skip chglog edit : $SKIPCHANGELOGEDITS"
 LogMessage "   Skip deploy/push : $SKIPDEPLOYPUSH"
 LogMessage "   Skip version edit: $SKIPVERSIONEDITS"
@@ -5920,8 +5929,7 @@ LogMessage "Next Version            : $VERSION"
 #endregion
 
 #
-# If task mode 'get current version' or 'get next version', then output version string
-# to stdout and exit
+# If task mode is a version type task, then output required info to stdout and exit
 #
 if ($TASKVERSIONINFO) {
     Write-Host "$CURRENTVERSION|$VERSION" 
@@ -5933,6 +5941,18 @@ if ($TASKVERSIONCURRENT) {
 }
 elseif ($TASKVERSIONNEXT) {
     Write-Host $VERSION
+    exit 0
+}
+elseif (![string]::IsNullOrEmpty($TASKVERSIONPRERELEASEID))
+{
+    $preRelId = "error"
+    $match = [Regex]::Match($TASKVERSIONPRERELEASEID, "^(?:v|V){0,1}[0-9.]+\-([a-z]+)\.{0,1}[0-9]*$");
+    if ($match.Success -and $match.Groups.Length -gt 1)
+    {
+        $preRelId = $match.Groups[1].Value;
+        
+    }
+    Write-Host $preRelId
     exit 0
 }
 

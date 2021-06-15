@@ -781,8 +781,8 @@ export const publishRcOpts =
         [ "-ttvc", "--task-touch-versions-commit" ],
         {
             help: "Commits the changes made when using the --touch-versions option,\n" +
-                  "using the 'chore: vX.X.X' format for the commit message.  Then creates\n" +
-                  "a tag using the 'vX.X.X' format for the tag name."
+                  "using the 'chore: vX.X.X' format for the commit message.   Then\n" +
+                  "creates a tag using the 'vX.X.X' format for the tag name."
         }
     ],
 
@@ -795,6 +795,22 @@ export const publishRcOpts =
             help: "Finds the current/latest version released and outputs that version\n" +
                   "string to stdout.\n" +
                   "Ignored if the --task-version-info switch is used."
+        }
+    ],
+
+    taskVersionPreReleaseId: [
+        true,
+        "string",
+        "",
+        [ "--version-pre-release-get-id" ],
+        {
+            help: "Gets the identifier denoting a pre-release from a version string.\n" +
+                  "For example, the version string 2.20.11-alpha.3 has a pre-release\n" +
+                  "identifier of 'alpha'.",
+            usage: [
+                "--task-version-pre-release-id 2.0.1-alpha.1",
+                "--task-version-pre-release-id 2.0.1-beta.3"
+            ]
         }
     ],
 
