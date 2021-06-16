@@ -242,7 +242,8 @@ class Vc
             $toAddAtEnd = @();
             foreach ($comment in $comments)
             {
-                if ($comment.IndexOf("build:") -ne -1 -or $comment.IndexOf("build(") -ne -1)
+                if ($comment.IndexOf("build:") -ne -1 -or $comment.IndexOf("build(") -ne -1 -or 
+                    $comment.IndexOf("ci:") -ne -1 -or $comment.IndexOf("ci(") -ne -1)
                 {
                     $toAddAtEnd += $comment;
                 }
@@ -390,6 +391,7 @@ class CommitAnalyzer
         {
             "build"   { $FormattedSubject = "Build System"; break }
             "chore"   { $FormattedSubject = "Chores"; break }
+            "ci"      { $FormattedSubject = "Continuous Integration"; break }
             "docs"    { $FormattedSubject = "Documentation"; break }
             "doc"     { $FormattedSubject = "Documentation"; break }
             "feat"    { $FormattedSubject = "Features"; break }
@@ -443,7 +445,8 @@ class HistoryFile
             $LineText.Contains("Feature") -or $LineText.Contains("Bug Fix") -or $LineText.Contains("Performance") -or
             $LineText.Contains("Ongoing Progress") -or $LineText.Contains("Refactoring") -or $LineText.Contains("Code Styling") -or
             $LineText.Contains("Tests") -or $LineText.Contains("Project Structure") -or $LineText.Contains("Project Layout") -or
-            $LineText.Contains("Visual") -or $LineText.StartsWith("Fix") -or $LineText.StartsWith("General"))
+            $LineText.Contains("Visual") -or $LineText.StartsWith("Fix") -or $LineText.StartsWith("General") -or
+            $LineText.StartsWith("Continuous Integration"))
 
         if (!$valid -and $this.CommitMap)
         {
@@ -497,7 +500,7 @@ class HistoryFile
                 continue;
             }
 
-            if ($null -ne $msg -and $msg -ne "" -and !$msgLwr.StartsWith("chore") -and 
+            if ($null -ne $msg -and $msg -ne "" -and !$msgLwr.StartsWith("chore") -and
                 !$msgLwr.StartsWith("progress") -and !$msgLwr.StartsWith("style") -and !$msgLwr.StartsWith("project"))
             {   #
                 # Remove CI related tags
@@ -519,6 +522,7 @@ class HistoryFile
                 #
                 $msg = $msg.Replace("build: ", "Build System`r`n`r`n")
                 $msg = $msg.Replace("chore: ", "Chore`r`n`r`n")
+                $msg = $msg.Replace("ci: ", "Continuous Integration`r`n`r`n")
                 $msg = $msg.Replace("docs: ", "Documentation`r`n`r`n")
                 $msg = $msg.Replace("doc: ", "Documentation`r`n`r`n")
                 $msg = $msg.Replace("minfeat: ", "Feature`r`n`r`n")
@@ -546,6 +550,7 @@ class HistoryFile
                 #
                 $msg = $msg.Replace("build(", "Build System(")
                 $msg = $msg.Replace("chore(", "Chore(")
+                $msg = $msg.Replace("ci(", "Continuous Integration(")
                 $msg = $msg.Replace("docs(", "Documentation(")
                 $msg = $msg.Replace("doc(", "Documentation(")
                 $msg = $msg.Replace("featmin(", "Feature(")
