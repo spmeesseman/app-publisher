@@ -871,7 +871,7 @@ export const publishRcOpts =
     ],
 
     vcWebPath: [
-        false,
+        true,
         "string",
         "",
         "Web path to version control repository, if WebSVN is available"
@@ -898,7 +898,7 @@ export const publishRcOpts =
     ],
 
     versionForceNext: [
-        false,
+        true,
         "string",
         "",
         [ "--version-force-next", "--version-force" ],
