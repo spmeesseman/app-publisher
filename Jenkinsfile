@@ -105,7 +105,7 @@ pipeline {
             if (status != 0) {
               error("Powershell not found, cannot run app-publisher")
             }
-            def apRcExists = fileExists 'publishrc.json'
+            def apRcExists = fileExists '.publishrc.json'
             if (apRcExists == false) {
               error(".publishrc.json not found, cannot run app-publisher")
             }
