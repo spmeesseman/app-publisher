@@ -885,7 +885,7 @@ export const publishRcOpts =
     ],
 
     versionForceCurrent: [
-        false,
+        true,
         "string",
         "",
         [ "--version-force-current" ],
