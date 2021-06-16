@@ -77,13 +77,14 @@ pipeline {
             }
           }
           if (env.BRANCH_NAME != null) {
-            echo "Current branch is ${env.BRANCH_NAME}"
+            echo "Current branch      : ${env.BRANCH_NAME}"
           }
           if (env.TAG_NAME != null) {
-            echo "Current tag is ${env.TAG_NAME}"
+            echo "Current tag         : ${env.TAG_NAME}"
             env.PRODUCTIONRELEASE = "0"
           }
         }
+        echo "Production release  : ${env.PRODUCTIONRELEASE}"
       }
     }
 
