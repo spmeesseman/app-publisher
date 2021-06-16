@@ -336,43 +336,46 @@ class CommitAnalyzer
                 LogMessage "Performance enhancement found";
                 $ReleaseLevel = "minor";
             }
-            
-            if ($ReleaseLevel -eq "major") {
-                break;
-            }
-        }
-
-        if ($this.CommitMap -and $ReleaseLevel -ne "major" -and ![string]::IsNullOrEmpty($linefmt))
-        {
-            $this.CommitMap.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
-                if ($ReleaseLevel -eq "major") {
-                    return;
+            elseif ($linefmt.StartsWith("fix:") -or $linefmt.StartsWith("fix("))
+            {
+                LogMessage "Fix found";
+                if ($ReleaseLevel -ne "minor") {
+                    $ReleaseLevel = "patch";
                 }
-                LogMessage ("Processing custom commit message map property '" + $_.Name + "'")
-                if ($linefmt.StartsWith($_.Name + ":") -or $linefmt.StartsWith($_.Name + "("))
-                {
-                    LogMessage ($_.Value.formatText + " found")
-                    if ($_.Value.versionBump -ne "none" -and $_.Value.include -ne $false)
+            }
+            elseif ($null -ne $this.CommitMap)
+            {
+                $this.CommitMap.psobject.Properties | ForEach-Object { # Bracket must stay same line as ForEach-Object
+                    LogMessage ("Processing custom commit message map property '" + $_.Name + "'")
+                    if ($linefmt.StartsWith($_.Name + ":") -or $linefmt.StartsWith($_.Name + "("))
                     {
-                        if ($_.Value.versionBump -eq 'patch' -or $_.Value.versionBump -eq 'minor' -or $_.Value.versionBump -eq 'major')
+                        LogMessage ($_.Value.formatText + " found")
+                        if ($_.Value.versionBump -ne "none" -and $_.Value.include -ne $false)
                         {
-                            LogMessage ("Found '" + $_.Value.versionBump + "' custom version bump")
-                            $ReleaseLevel = $_.Value.versionBump
-                            if ($_.Value.versionBump -eq "patch") {
-                                if ($ReleaseLevel -ne "minor" -and $ReleaseLevel -ne "major") {
-                                    $ReleaseLevel = "patch";
+                            if ($_.Value.versionBump -eq 'patch' -or $_.Value.versionBump -eq 'minor' -or $_.Value.versionBump -eq 'major')
+                            {
+                                LogMessage ("Found '" + $_.Value.versionBump + "' custom version bump")
+                                $ReleaseLevel = $_.Value.versionBump
+                                if ($_.Value.versionBump -eq "patch") {
+                                    if ($ReleaseLevel -ne "minor" -and $ReleaseLevel -ne "major") {
+                                        $ReleaseLevel = "patch";
+                                    }
+                                }
+                                else {
+                                    $ReleaseLevel = $_.Value.versionBump;
                                 }
                             }
                             else {
-                                $ReleaseLevel = $_.Value.versionBump;
+                                LogMessage ("Found '" + $_.Value.versionBump + "' custom version bump", "red")
+                                LogMessage "Invalid custom version bump", "red"
                             }
-                        }
-                        else {
-                            LogMessage ("Found '" + $_.Value.versionBump + "' custom version bump", "red")
-                            LogMessage "Invalid custom version bump", "red"
                         }
                     }
                 }
+            }
+            
+            if ($ReleaseLevel -eq "major") {
+                break;
             }
         }
 
