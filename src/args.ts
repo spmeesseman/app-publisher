@@ -687,12 +687,13 @@ export const publishRcOpts =
         {
             help: "Export the next release's current changelog to the specified file.\n" +
                   "The specified file can be a relative or an absolute path.\n" +
-                  "  Examples:\n" +
-                  "    app-publisher -cf install/dist/history.txt\n" +
-                  "    app-publisher -cf build/doc/changelog/changelog.md\n" +
-                  "    app-publisher -cf c:\\projects\\changelogs\\projectname\n" +
-                  "    app-publisher --changelog-only-file build/tmp/version_notes.txt\n" +
-                  "Ignored if the option '--task-changelog-view' is used."
+                  "Ignored if the option '--task-changelog-view' is used.",
+            usage: [
+                "app-publisher -tcf install/dist/history.txt",
+                "app-publisher -tcf build/doc/changelog/changelog.md",
+                "app-publisher -tcf c:\\projects\\changelogs\\projectname",
+                "app-publisher --task-changelog-file build/tmp/version_notes.txt"
+            ]
         }
     ],
 
