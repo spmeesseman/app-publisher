@@ -4662,15 +4662,12 @@ if ($options.taskChangelogView) {
     $TASKCHANGELOG = $true
     $TASKCHANGELOGVIEW = $true
 }
-if (!$options.taskChangelogFile -is [system.string])
+if (![string]::IsNullOrEmpty($options.taskChangelogFile))
 {
     if (!$TASKCHANGELOGVIEW)
     {
-        if (![string]::IsNullOrEmpty($options.taskChangelogFile))
-        {
-            $TASKCHANGELOG = $true
-            $TASKCHANGELOGFILE = $options.taskChangelogFile
-        }
+        $TASKCHANGELOG = $true
+        $TASKCHANGELOGFILE = $options.taskChangelogFile
     }
     else {
         LogMessage "The '--task-changelog-view' option overrides '--task-changelog-file'" "yellow"
