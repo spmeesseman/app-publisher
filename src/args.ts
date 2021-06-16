@@ -701,7 +701,7 @@ export const publishRcOpts =
         true,
         "boolean",
         false,
-        [ "-tc", "--task-changelog-view" ],
+        [ "-tcv", "--task-changelog-view" ],
         {
             help: "Export the next release's current changelog and view using the editor\n" +
                   "specified in the .publishrc file. The created file is a copy stored in\n" +
@@ -741,6 +741,17 @@ export const publishRcOpts =
         }
     ],
 
+    taskCommit: [
+        true,
+        "boolean",
+        false,
+        [ "-tcm", "--task-commit" ],
+        {
+            help: "Commits the changes made when using the --touch-versions option,\n" +
+                  "using the 'chore: vX.X.X' format for the commit message."
+        }
+    ],
+
     taskEmail: [
         true,
         "boolean",
@@ -761,6 +772,26 @@ export const publishRcOpts =
         }
     ],
 
+    taskTag: [
+        true,
+        "string",
+        "auto",
+        [ "-tt", "--task-tag" ],
+        {
+            help: "Creates a tag using the 'vX.X.X' format for the tag name.\n" +
+                  "The 'taskTouchVersions' and 'taskTouchVersionsCommit' tasks should\n" +
+                  "always precede this task.\n" +
+                  "If 'auto' is specified as the positional argument, the version # used\n" +
+                  "will be the current version as calculated using the current state of\n" +
+                  "the workspace 'version' files (as defined in .publishrc).\n" +
+                  "Defaults to 'auto'",
+            usage: [
+                "app-publisher --task-tag auto",
+                "app-publisher --task-tag v2.0.1"
+            ]
+        }
+    ],
+
     taskTouchVersions: [
         true,
         "boolean",
@@ -772,18 +803,6 @@ export const publishRcOpts =
                   "app.json.\n" +
                   "Additional versioned files are specified in the .publishrc file\n" +
                   "using the 'versionFiles' and cProjectRcFile' properties."
-        }
-    ],
-
-    taskTouchVersionsCommit: [
-        true,
-        "boolean",
-        false,
-        [ "-ttvc", "--task-touch-versions-commit" ],
-        {
-            help: "Commits the changes made when using the --touch-versions option,\n" +
-                  "using the 'chore: vX.X.X' format for the commit message.   Then\n" +
-                  "creates a tag using the 'vX.X.X' format for the tag name."
         }
     ],
 
@@ -834,8 +853,8 @@ export const publishRcOpts =
                   "For example, the version string 2.20.11-alpha.3 has a pre-release\n" +
                   "identifier of 'alpha'.",
             usage: [
-                "--task-version-pre-release-id 2.0.1-alpha.1",
-                "--task-version-pre-release-id 2.0.1-beta.3"
+                "app-publisher --task-version-pre-release-id 2.0.1-alpha.1",
+                "app-publisher --task-version-pre-release-id 2.0.1-beta.3"
             ]
         }
     ],
@@ -892,7 +911,7 @@ export const publishRcOpts =
         {
             help: "A version number to use as the 'current version'.",
             usage: [
-                "--version-force-current 300", "--version-force-current 3.0.0"
+                "app-publisher --version-force-current 300", "app-publisher --version-force-current 3.0.0"
             ]
         }
     ],
@@ -907,7 +926,7 @@ export const publishRcOpts =
                   "not be performed other than for reading in the current version, skipping\n" +
                   "an SCM step.",
             usage: [
-                "--version-force-next 300", "--version-force-next 2.0.0"
+                "app-publisher --version-force-next 300", "app-publisher --version-force-next 2.0.0"
             ]
         }
     ],
@@ -955,7 +974,7 @@ export const publishRcOpts =
                   "version number to produce the final version string, e.g. 'alpha'\n" +
                   "produces the final version string of x.y.z-alpha.",
             usage: [
-                "--version-pre-release-id alpha", "--version-pre-release-id pre1"
+                "app-publisher --version-pre-release-id alpha", "app-publisher --version-pre-release-id pre1"
             ]
         }
     ],

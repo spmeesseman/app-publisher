@@ -2933,7 +2933,7 @@ function Edit-File($editFile, $SeekToEnd = $false, $skipEdit = $false, $async = 
     {
         $script:VersionFilesEdited += $nFile
         
-        if (!$TASKMODE) {
+        if (!$TASKMODE -or $TASKCOMMIT) {
             VcChangelistAdd $nFile
         }
 
@@ -4776,24 +4776,36 @@ if ($options.taskVersionInfo) {
     $TASKVERSIONINFO= $true
 }
 #
+# Need to check TASKCOMMIT with TASKTOUCHVERSIONS
 # Touch version files w/ new/next version
 #
 $TASKTOUCHVERSIONS = $false
-$TASKTOUCHVERSIONSCOMMIT = $false
+$TASKCOMMIT = $false
 if ($options.taskTouchVersions) {
     $TASKTOUCHVERSIONS = $true
 }
-if ($options.taskTouchVersionsCommit) {
-    $TASKTOUCHVERSIONSCOMMIT = $true
+if ($options.taskCommit) {
+    $TASKCOMMIT = $true
     $TASKTOUCHVERSIONS = $true
 }
-
+#
+# Task TAG
+# Need to check TASKTAG with TASKTOUCHVERSIONS
+#
+$TASKTAG = $false
+if (![string]::IsNullOrEmpty($options.taskTag)) {
+    $TASKTAG = $true
+    if ($options.taskTag -ne "auto") {
+        $CURRENTVERSION = $options.taskTag
+        $VERSION = $options.taskTag
+    }
+}
 
 #
 # Single task mode flag to skip most of the functionality in the publisher chain except for
 # the particular task that is going to be ran.
 #
-$TASKMODE = $TASKCHANGELOG -or $TASKEMAIL -or $TASKTOUCHVERSIONS -or $TASKMANTISBT -or $TASKVERSIONCURRENT -or 
+$TASKMODE = $TASKCHANGELOG -or $TASKEMAIL -or $TASKTOUCHVERSIONS -or $TASKMANTISBT -or $TASKVERSIONCURRENT -or $TASKTAG -or
             $TASKVERSIONNEXT -or $TASKCIENVSET -or $TASKVERSIONINFO -or $TASKCIENVINFO -or $TASKVERSIONPRERELEASEID
 $TASKMODESTDOUT = $options.taskModeStdOut
 
@@ -5239,7 +5251,7 @@ if ($ExecutionPolicy -ne "RemoteSigned")
 #
 $objMembers = $options.psobject.Members | where-object membertype -like 'noteproperty'
 foreach ($option in $objMembers) {
-    if ($option.Value -eq $null) {
+    if ($null -eq $option.Value) {
         continue;
     }
     if ($option.Value -is [system.array])
@@ -5483,7 +5495,7 @@ if ($TESTEMAILRECIP -is [system.string] -and ![string]::IsNullOrEmpty($TESTEMAIL
 #     1. Incremental (100, 101, 102)
 #     2. Semantic (major.minor.patch)
 #
-if ($CURRENTVERSION -eq "" -or ($VERSIONFORCECURRENT -and $RUN -eq 1)) 
+if ($CURRENTVERSION -eq "" -or ($VERSIONFORCECURRENT -and $RUN -eq 1) -or ($TASKTAG -and $RUN -eq 1))
 {
     LogMessage "Retrieve current version and calculate next version number"
     #
@@ -5723,7 +5735,7 @@ if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0)
 
     if (!$TASKEMAIL)
     {
-        if (!$VERSIONFORCENEXT)
+        if (!$VERSIONFORCENEXT -and !$TASKTAG)
         {
             #
             # Get commit messages since last version
@@ -5961,8 +5973,10 @@ elseif (![string]::IsNullOrEmpty($TASKVERSIONPRERELEASEID))
     exit 0
 }
 
+#region History File Processing
+
 #
-# Get formatted date in the form:
+# Get formatted date in the form used in history.txt:
 #
 #     May 6th, 1974
 #     October 3rd, 2003
@@ -5991,12 +6005,10 @@ if ($TDATE -eq "") {
 
 LogMessage "Date                : $TDATE"
 
-#region History File Processing
-
 #
 # Process $HISTORYFILE
 #
-if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$TASKTOUCHVERSIONS -and !$TASKCIENVSET -and !$TASKMODESTDOUT)
+if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and (!$TASKTOUCHVERSIONS -or $TASKCOMMIT) -and !$TASKCIENVSET -and !$TASKMODESTDOUT -and !$TASKTAG)
 {
     if ($TASKCHANGELOGVIEW -or $TASKCHANGELOGFILE)
     {
@@ -6123,16 +6135,17 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
     #
     # Allow manual modifications to history file
     #
-    if (!$TASKCHANGELOG)
+    if (!$TASKCHANGELOG -and !$TASKCOMMIT)
     {   
         Edit-File $HISTORYFILE $true ($SKIPCHANGELOGEDITS -eq "Y")
-        #
-        # Add to changelist for scm check in.  This would be the first file modified so just
-        # set changelist equal to history file
-        #
-        VcChangelistAdd $HISTORYFILE
+    }
+    elseif ($TASKCOMMIT) {
+        Edit-File $HISTORYFILE $false $true
     }
     else {
+        #
+        # TODO - Cut just the version from the content, remove all the *** garb
+        #
         $FileSpec = ![string]::IsNullOrEmpty($TASKCHANGELOGFILE);
         Edit-File $HISTORYFILE $false $FileSpec $true
     }
@@ -6145,7 +6158,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
 #
 # Process $CHANGELOGFILE
 #
-if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and !$TASKTOUCHVERSIONS -and !$TASKCIENVSET -and !$TASKMODESTDOUT)
+if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and (!$TASKTOUCHVERSIONS -or $TASKCOMMIT) -and !$TASKCIENVSET -and !$TASKMODESTDOUT -and !$TASKTAG)
 {
     if ($TASKCHANGELOGVIEW -or $TASKCHANGELOGFILE)
     {
@@ -6349,18 +6362,16 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!
     #
     # Allow manual modifications to changelog file
     #
-    if (!$TASKCHANGELOG)
+    if (!$TASKCHANGELOG -and !$TASKCOMMIT)
     {
         Edit-File $CHANGELOGFILE $true ($SKIPCHANGELOGEDITS -eq "Y")
-        #
-        # Add to changelist for svn check in.  This would be the first file modified so just
-        # set changelist equal to history file
-        #
-        VcChangelistAdd $CHANGELOGFILE
+    }
+    elseif ($TASKCOMMIT) {
+        Edit-File $CHANGELOGFILE $false $true
     }
     else {
         #
-        # TODO - Cut just the version from the content
+        # TODO - Cut just the version from the content, remove all the *** garb
         #
         $FileSpec = ![string]::IsNullOrEmpty($TASKCHANGELOGFILE);
         Edit-File $CHANGELOGFILE $false $FileSpec $true
@@ -7195,7 +7206,7 @@ if (!$TASKMODE) {
 
 #region Commit / Tag VC
 
-if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
+if (!$TASKMODE -or $TASKCOMMIT -or $TASKTAG)
 {
     #
     # Change dircetory to svn/git root that contains the .svn/.git folder to isse SVN commands,
@@ -7215,7 +7226,7 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
             #
             # Check version changes in to SVN if there's any touched files
             #
-            if ($VCCHANGELIST -ne "") 
+            if ($VCCHANGELIST -ne "" -and !$TASKTAG) 
             {
                 if ($DRYRUN -eq $false) 
                 {
@@ -7286,7 +7297,7 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
             #
             # Create version tag
             #
-            if ($VCTAG -eq "Y")
+            if (!$TASKCOMMIT -and ($VCTAG -eq "Y" -or $TASKTAG))
             {
                 $TagLocation = $_Repo.Replace("trunk", "tags").Replace("branches/" + $BRANCH, "tags")
                 if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($VCTAGPREFIX))
@@ -7347,7 +7358,7 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
             #
             # Check version changes in to SVN if there's any touched files
             #
-            if ($VCCHANGELIST -ne "") 
+            if ($VCCHANGELIST -ne "" -and !$TASKTAG) 
             {
                 if ($DRYRUN -eq $false) 
                 {
@@ -7406,7 +7417,7 @@ if (!$TASKMODE -or $TASKTOUCHVERSIONSCOMMIT)
             #
             # Create version tag
             #
-            if ($VCTAG -eq "Y")
+            if (!$TASKCOMMIT -and ($VCTAG -eq "Y" -or $TASKTAG))
             {
                 if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($VCTAGPREFIX))
                 {
