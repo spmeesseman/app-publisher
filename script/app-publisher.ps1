@@ -7226,7 +7226,7 @@ if (!$TASKMODE -or $TASKCOMMIT -or $TASKTAG)
             #
             # Check version changes in to SVN if there's any touched files
             #
-            if ($VCCHANGELIST -ne "" -and !$TASKTAG) 
+            if ($VCCHANGELIST -ne "" -and (!$TASKTAG -or $TASKCOMMIT)) 
             {
                 if ($DRYRUN -eq $false) 
                 {
@@ -7297,7 +7297,7 @@ if (!$TASKMODE -or $TASKCOMMIT -or $TASKTAG)
             #
             # Create version tag
             #
-            if (!$TASKCOMMIT -and ($VCTAG -eq "Y" -or $TASKTAG))
+            if ((!$TASKCOMMIT -and $VCTAG -eq "Y") -or $TASKTAG)
             {
                 $TagLocation = $_Repo.Replace("trunk", "tags").Replace("branches/" + $BRANCH, "tags")
                 if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($VCTAGPREFIX))
@@ -7358,7 +7358,7 @@ if (!$TASKMODE -or $TASKCOMMIT -or $TASKTAG)
             #
             # Check version changes in to SVN if there's any touched files
             #
-            if ($VCCHANGELIST -ne "" -and !$TASKTAG) 
+            if ($VCCHANGELIST -ne "" -and (!$TASKTAG -or $TASKCOMMIT)) 
             {
                 if ($DRYRUN -eq $false) 
                 {
@@ -7417,7 +7417,7 @@ if (!$TASKMODE -or $TASKCOMMIT -or $TASKTAG)
             #
             # Create version tag
             #
-            if (!$TASKCOMMIT -and ($VCTAG -eq "Y" -or $TASKTAG))
+            if ((!$TASKCOMMIT -and $VCTAG -eq "Y") -or $TASKTAG)
             {
                 if (![string]::IsNullOrEmpty($PATHPREROOT) -and [string]::IsNullOrEmpty($VCTAGPREFIX))
                 {
