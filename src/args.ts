@@ -768,7 +768,9 @@ export const publishRcOpts =
         false,
         [ "-tmr", "--task-mantisbt-release" ],
         {
-            help: "Perform a 'Mantis' release."
+            help: "Perform a 'Mantis' release.\n" +
+                  "The changelog produced for the Mantis release will be created from the\n" +
+                  "most recent entry of the changelog/jistory file."
         }
     ],
 

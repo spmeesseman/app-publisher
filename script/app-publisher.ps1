@@ -6004,7 +6004,7 @@ if ($TDATE -eq "") {
 }
 LogMessage "Date                 : $TDATE"
 
-$doChangelog = $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG -or $TASKCHANGELOGVIEW -or $TASKCHANGELOGFILE -or $TASKMANTISBT -or !$TASKMODE)
+$doChangelog = $REPUBLISH.Count -eq 0 -and ($TASKCHANGELOG -or $TASKCHANGELOGVIEW -or $TASKCHANGELOGFILE -or !$TASKMODE)
 LogMessage "Do cl / history file : $doChangelog"
 
 #
