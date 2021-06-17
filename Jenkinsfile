@@ -182,13 +182,14 @@ pipeline {
       steps {
         script {
           historyEntry = ""
+          echo "Approval needed for Version ${env.NEXTVERSION} History File Changelog"
           //
           // Populate and open history.txt in Notepad, then will wait for user intervention
           //
           dir("src/ui") {
             nodejs("Node 12") {
-              bat "app-publisher --task-changelog --version-force-current ${env.NEXTVERSION}" 
-              bat "app-publisher --task-changelog-file doc\\tmp_history.txt --version-force-current ${env.NEXTVERSION}" 
+              bat "app-publisher --task-changelog --version-force-next ${env.NEXTVERSION}" 
+              bat "app-publisher --task-changelog-file doc\\tmp_history.txt --version-force-next ${env.NEXTVERSION}" 
               historyEntry = bat(returnStdout: true,
                                  script: """
                                    @echo off
@@ -200,6 +201,7 @@ pipeline {
           //
           // Notify of input required
           //
+          echo "Notify approvers of pending approval wait"
           emailext body: 'App-Publisher Jenkins build requires user input',
                 attachLog: false,
                 mimeType: 'text/html',
@@ -212,6 +214,7 @@ pipeline {
           //
           // Wait for user intervention, approval of new version # and history entry
           //
+          echo "Waiting for user approval..."
           def inputMessage = "Approve Version ${env.NEXTVERSION} History File Changelog"
           def userInput = input id: 'history_file_approval',
                                 message: inputMessage,
