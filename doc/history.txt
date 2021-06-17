@@ -4583,3 +4583,38 @@ June 16th, 2021
     
     Add detailed logging.
 
+
+Version 2.7.1
+June 16th, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+    
+    An unnecessary history file entry is being created in a tmp directory and
+    is scheduled to be added to version control when both the --task-commit and
+    --task-tag command line switches are used.
+
+2.  Bug Fix
+    
+    When using the --task-changelog-view or --task-changelog-file command line
+    switches together with the --task-commit switch, the temporary file created
+    is being added to version control.
+
