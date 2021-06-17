@@ -4796,7 +4796,6 @@ $TASKTAG = $false
 if (![string]::IsNullOrEmpty($options.taskTag)) {
     $TASKTAG = $true
     if ($options.taskTag -ne "auto") {
-        $CURRENTVERSION = $options.taskTag
         $VERSION = $options.taskTag
     }
 }
@@ -5346,19 +5345,21 @@ LogMessage "   Project name     : $PROJECTNAME"
 LogMessage "   Prompt version   : $PROMPTVERSION"
 LogMessage "   Repo             : $_Repo"
 LogMessage "   RepoType         : $_RepoType"
+LogMessage "   Skip chglog edit : $SKIPCHANGELOGEDITS"
+LogMessage "   Skip deploy/push : $SKIPDEPLOYPUSH"
+LogMessage "   Skip version edit: $SKIPVERSIONEDITS"
 LogMessage "   Task mode        : $TASKMODE"
 LogMessage "   Task stdout mode : $TASKMODESTDOUT"
 LogMessage "   Task Chglog      : $TASKCHANGELOG"
 LogMessage "   Task Chglog file : $TASKCHANGELOGFILE"
 LogMessage "   Task CI info out : $TASKCIENVINFO"
 LogMessage "   Task CI set env  : $TASKCIENVSET"
+LogMessage "   Task Commit      : $TASKCOMMIT"
+LogMessage "   Task Tag         : $TASKTAG"
 LogMessage "   Task Version Cur : $TASKVERSIONCURRENT"
 LogMessage "   Task Version Next: $TASKVERSIONNEXT"
 LogMessage "   Task Version Info: $TASKVERSIONINFO"
 LogMessage "   Task Vers. Pre.Re: $TASKVERSIONPRERELEASEID"
-LogMessage "   Skip chglog edit : $SKIPCHANGELOGEDITS"
-LogMessage "   Skip deploy/push : $SKIPDEPLOYPUSH"
-LogMessage "   Skip version edit: $SKIPVERSIONEDITS"
 LogMessage "   Tag version      : $VCTAG"
 LogMessage "   Tag format       : $VCTAGFORMAT"
 LogMessage "   Tag prefix       : $VCTAGPREFIX"
@@ -5713,7 +5714,6 @@ elseif ($VERSIONSYSTEM -eq 'incremental')
         exit 134
     }
 }
-
 LogMessage "Current version has been validated" "darkgreen"
 
 #
@@ -6002,23 +6002,19 @@ if ($TDATE -eq "") {
     }
     $TDATE = "$Month $Day, $Year"
 }
+LogMessage "Date                 : $TDATE"
 
-LogMessage "Date                : $TDATE"
+$doChangelog = $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG -or $TASKCHANGELOGVIEW -or $TASKCHANGELOGFILE -or $TASKMANTISBT -or !$TASKMODE)
+LogMessage "Do cl / history file : $doChangelog"
 
 #
 # Process $HISTORYFILE
 #
-if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and (!$TASKTOUCHVERSIONS -or $TASKCOMMIT) -and !$TASKCIENVSET -and !$TASKMODESTDOUT -and !$TASKTAG)
+if (![string]::IsNullOrEmpty($HISTORYFILE) -and $doChangelog)
 {
-    if ($TASKCHANGELOGVIEW -or $TASKCHANGELOGFILE)
+    if (![string]::IsNullOrEmpty($TASKCHANGELOGFILE))
     {
-        if ([string]::IsNullOrEmpty($TASKCHANGELOGFILE))
-        {
-            $HISTORYFILE = "${Env:Temp}\history.$VERSION.txt"
-        }
-        else {
-            $HISTORYFILE= $TASKCHANGELOGFILE
-        }
+        $HISTORYFILE = $TASKCHANGELOGFILE
         if (Test-Path($HISTORYFILE))
         {
             Remove-Item -Force -Path "$HISTORYFILE" | Out-Null
@@ -6158,25 +6154,19 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $REPUBLISH.Count -eq 0 -and (!$T
 #
 # Process $CHANGELOGFILE
 #
-if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $REPUBLISH.Count -eq 0 -and (!$TASKEMAIL -or $TASKCHANGELOG) -and (!$TASKTOUCHVERSIONS -or $TASKCOMMIT) -and !$TASKCIENVSET -and !$TASKMODESTDOUT -and !$TASKTAG)
+if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $doChangelog)
 {
-    if ($TASKCHANGELOGVIEW -or $TASKCHANGELOGFILE)
+    if (![string]::IsNullOrEmpty($TASKCHANGELOGFILE))
     {
-        if ([string]::IsNullOrEmpty($TASKCHANGELOGFILE))
-        {
-            $CHANGELOGFILE = "${Env:Temp}\changelog.$VERSION.txt"
-        }
-        else {
-            $CHANGELOGFILE = $TASKCHANGELOGFILE
-        }
-        if (Test-Path($CHANGELOGFILE))
+        $CHANGELOGFILE = $TASKCHANGELOGFILE
+        if (Test-Path($HISTORYFILE))
         {
             Remove-Item -Force -Path "$CHANGELOGFILE" | Out-Null
         }
     }
     elseif ($TASKMODE -and !$TASKCHANGELOG)
     {
-        $CHANGELOGFILE = "${Env:Temp}\changelog.$VERSION.txt"
+        $CHANGELOGFILE = "${Env:Temp}\history.$VERSION.txt"
         if (Test-Path($CHANGELOGFILE))
         {
             Remove-Item -Force -Path "$CHANGELOGFILE" | Out-Null
