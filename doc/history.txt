@@ -4618,3 +4618,32 @@ June 16th, 2021
     switches together with the --task-commit switch, the temporary file created
     is being added to version control.
 
+
+Version 2.7.2
+June 17th, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+    
+    An unnecessary history file entry is still being created in a tmp directory
+    and scheduled to be added to version control when the --task-commit command
+    line switch is used.
+
