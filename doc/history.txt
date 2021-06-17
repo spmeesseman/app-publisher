@@ -4516,3 +4516,70 @@ June 15th, 2021
     The '--version-force-next' command line switch is not accepted by the
     argument parser.
 
+
+Version 2.7.0
+June 16th, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+    
+    Add new 'task mode' command line switch:
+    
+        --task-commit
+    
+    Using this option instructs the process to commit the current modified file
+    set.  This includes the history/changelog file and any version files that
+    were updated.
+
+    Note that the --task-touch-versions switche should precede or accompany this
+    switch.
+
+2.  Feature
+    
+    Add new 'task mode' command line switch:
+    
+        --task-tag <version>
+    
+    Using this option instructs the process to tag the current state of the
+    workspace.  To auto-calculate the version to be used in the tag name,
+    specify 'auto' as the positional parameter 'version', e.g.:
+
+        app-publisher --task-tag auto
+
+    Note that the --task-touch-versions and --task-commit switches should
+    precede or accompany this switch.
+
+3.  Bug Fix
+    
+    The commit map defined by the publishrc property 'commitMsgMap' only works
+    if there are no 'patch' level commit messages in the changeset used to
+    build the the history file entry.
+
+4.  Refactoring
+    
+    Handle commit messages with subject 'ci' (continuous integration).  Does not
+    participate in version calculation, but participates in the construction of
+    the history file entry.
+
+5.  Continuous Integration:  Script
+    
+    Add detailed logging.
+

@@ -237,7 +237,7 @@ class Vc
         {
             $comments = $comments | Sort-Object -Unique
             #
-            # Re-sort comments array and put 'build' comments last
+            # Re-sort comments array and put 'build' and 'ci' comments last
             #
             $toAddAtEnd = @();
             foreach ($comment in $comments)
