@@ -6039,7 +6039,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $doChangelog)
     {
         LogMessage "Creating history file directory and adding to version control" "magenta"
         New-Item -ItemType "directory" -Force -Path "$HistoryPath" | Out-Null
-        if (!$TASKCHANGELOG)
+        if (!$TASKMODE -or $TASKCHANGELOG)
         {
             VcChangelistAddNew "$HistoryPath"
             VcChangelistAddRemove "$HistoryPath"
@@ -6059,7 +6059,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $doChangelog)
             New-Item -ItemType "file" -Force -Path "$HISTORYFILE" -Value "" | Out-Null
         }
         $IsNewHistoryFile = $true;
-        if (!$TASKCHANGELOG)
+        if (!$TASKMODE -or $TASKCHANGELOG)
         {
             VcChangelistAddRemove "$HISTORYFILE"
             VcChangelistAddNew "$HISTORYFILE"
@@ -6089,7 +6089,7 @@ if (![string]::IsNullOrEmpty($HISTORYFILE) -and $doChangelog)
     #
     # Add the 'Version X' line, date, and commit content
     # 
-    if (($CURRENTVERSION -ne $VERSION -or $IsNewHistoryFile) -and ($RUN -eq 1 -or $DRYRUN -eq $true))
+    if (($CURRENTVERSION -ne $VERSION -or $IsNewHistoryFile -or $TASKMODE) -and ($RUN -eq 1 -or $DRYRUN -eq $true))
     {
         $TmpCommits = $ClsHistoryFile.createSectionFromCommits($COMMITS, $HISTORYLINELEN)
 
@@ -6182,7 +6182,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $doChangelog)
     {
         LogMessage "Creating changelog file directory and adding to version control" "magenta"
         New-Item -ItemType "directory" -Path "$ChangeLogPath" | Out-Null
-        if (!$TASKCHANGELOG)
+        if (!$TASKMODE -or $TASKCHANGELOG)
         {
             VcChangelistAddNew "$ChangeLogPath"
             VcChangelistAddRemove "$ChangeLogPath"
@@ -6194,7 +6194,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $doChangelog)
         LogMessage "Creating new changelog file and adding to version control" "magenta"
         New-Item -ItemType "file" -Path "$CHANGELOGFILE" -Value "$ChangeLogTitle`r`n`r`n" | Out-Null
         $NewChangelog = $true
-        if (!$TASKCHANGELOG)
+        if (!$TASKMODE -or $TASKCHANGELOG)
         {
             VcChangelistAddRemove $CHANGELOGFILE
             VcChangelistAddNew $CHANGELOGFILE
@@ -6207,7 +6207,7 @@ if (![string]::IsNullOrEmpty($CHANGELOGFILE) -and $doChangelog)
         exit 141
     }
 
-    if (($CURRENTVERSION -ne $VERSION -or $NewChangelog) -and ($RUN -eq 1 -or $DRYRUN -eq $true))
+    if (($CURRENTVERSION -ne $VERSION -or $NewChangelog -or $TASKMODE) -and ($RUN -eq 1 -or $DRYRUN -eq $true))
     {
         $TextInfo = (Get-Culture).TextInfo
         $TmpCommits = ""
