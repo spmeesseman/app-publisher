@@ -7,11 +7,7 @@ async function getReleaseLevel({ options, commits, logger })
 {
     let level: string;
 
-    //
-    // TODO - read in user defined release levels from options
-    //
-
-    logger.log(`Analyze ${commits.length} commit messages for release level`)
+    logger.log(`Analyze ${commits.length} commit messages for release level`);
 
     for (const c in commits)
     {
@@ -41,22 +37,22 @@ async function getReleaseLevel({ options, commits, logger })
         else if (msg.startsWith("featmin:") || msg.startsWith("minfeat:")) // bump patch on minor feature
         {
             logger.log("   Patch (minor feature)");
-            if (level === "") { level = "patch"; }
+            if (!level) { level = "patch"; }
         }
         else if (msg.startsWith("perfmin:") || msg.startsWith("minperf:")) // bump patch on minor performance enh.
         {
             logger.log("   Patch (minor performance enhancement)");
-            if (level === "") { level = "patch"; }
+            if (!level) { level = "patch"; }
         }
         else if (msg.startsWith("fix:")) // bump patch on fix
         {
             logger.log("   Patch (fix)");
-            if (level === "") { level = "patch"; }
+            if (!level) { level = "patch"; }
         }
         else if (msg.startsWith("refactor:")) // bump patch on refactoring
         {
             logger.log("   Patch (refactoring)");
-            if (level === "") { level = "patch"; }
+            if (!level) { level = "patch"; }
         }
         else if (options.commitMsgMap)
         {

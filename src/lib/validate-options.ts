@@ -390,6 +390,10 @@ function validateOptions({cwd, env, logger, options}): boolean
         options.vcTagPrefix = "v";
     }
 
+    if (!options.versionText) {
+        options.versionText = "Version";
+    }
+
     //
     // Check for environment vars that did not get set.  Env vars are wrapped in ${} and will
     // have been replaced by the nodejs config parser if they exist in the env.  Provide a warning

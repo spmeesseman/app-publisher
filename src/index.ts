@@ -1,6 +1,6 @@
 
 import { visit, JSONVisitor } from "jsonc-parser";
-import * as util from "./util";
+import * as util from "./lib/utils";
 import * as fs from "fs";
 import * as path from "path";
 import gradient from "gradient-string";
@@ -13,13 +13,13 @@ const envCi = require("@spmeesseman/env-ci");
 import hookStd from "hook-std";
 import hideSensitive = require("./lib/hide-sensitive");
 import getConfig = require("./lib/get-config");
+import { createSectionFromCommits } from "./lib/changelog-file";
 import getReleaseLevel = require("./lib/commit-analyzer");
 import verify = require("./lib/verify");
 import getCommits = require("./lib/get-commits");
 import getCurrentVersion = require("./lib/get-current-version");
 import getNextVersion = require("./lib/get-next-version");
 import getLastRelease = require("./lib/get-last-release");
-import { extractErrors } from "./lib/utils";
 import { sendEmail } from "./lib/email";
 import getGitAuthUrl = require("./lib/get-git-auth-url");
 import getLogger = require("./lib/get-logger");
@@ -317,6 +317,7 @@ async function runNodeScript(context: any, plugins: any)
     // await plugins.verifyRelease(context);
 
     // nextRelease.notes = await plugins.generateNotes(context);
+    nextRelease.notes = createSectionFromCommits(context);
 
     // await plugins.prepare(context);
 
@@ -352,7 +353,8 @@ async function runNodeScript(context: any, plugins: any)
         logger.log(`Release notes for version ${nextRelease.version}:`);
         if (nextRelease.notes)
         {
-            context.stdout.write(marked(nextRelease.notes));
+            // context.stdout.write(marked(nextRelease.notes));
+            context.stdout.write(nextRelease.notes.replace(/\r\n/g, "\n"));
         }
     }
 
@@ -561,7 +563,7 @@ function logPowershell(data: string, logger: any, isStdOutCmd: boolean)
 
 function logErrors({ logger, stderr }, err)
 {
-    const errors = extractErrors(err).sort(error => (error.semanticRelease ? -1 : 0));
+    const errors = util.extractErrors(err).sort(error => (error.semanticRelease ? -1 : 0));
     for (const error of errors)
     {
         if (error.semanticRelease)
@@ -581,7 +583,7 @@ function logErrors({ logger, stderr }, err)
 
 async function callFail(context, plugins, err)
 {
-    const errors = extractErrors(err).filter(err => err.semanticRelease);
+    const errors = util.extractErrors(err).filter(err => err.semanticRelease);
     if (errors.length > 0)
     {
         try
