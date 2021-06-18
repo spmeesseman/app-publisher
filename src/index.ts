@@ -182,6 +182,13 @@ async function runNodeScript(context: any, plugins: any)
 {
     const { cwd, env, options, logger } = context;
 
+    if (options.taskVersionCurrent)
+    {
+        const versionInfo = getCurrentVersion(context);
+        console.log(versionInfo.version);
+        return;
+    }
+
     //
     // Validate options / cmd line arguments
     //
