@@ -282,10 +282,7 @@ export async function verifyAuth(repositoryUrl: any, branch: any, execaOpts: any
             await execa("git", ["push", "--dry-run", repositoryUrl, `HEAD:${branch}`], execaOpts);
         }
         else if (repoType === "svn") {
-            //
-            // TODO
-            //
-            await execa("svn", ["push", "--dry-run", repositoryUrl, `HEAD:${branch}`], execaOpts);
+            await execa("svn", ["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
         }
         else {
             throw new Error("Invalid repository type");

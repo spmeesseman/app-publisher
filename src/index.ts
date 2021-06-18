@@ -182,13 +182,6 @@ async function runNodeScript(context: any, plugins: any)
 {
     const { cwd, env, options, logger } = context;
 
-    if (options.taskVersionCurrent)
-    {
-        const versionInfo = getCurrentVersion(context);
-        console.log(versionInfo.version);
-        return;
-    }
-
     //
     // Validate options / cmd line arguments
     //
@@ -197,17 +190,33 @@ async function runNodeScript(context: any, plugins: any)
         return false;
     }
 
+    //
+    // If a task is processed, we'll be done
+    //
+    const taskDone = await processTask(context);
+    if (taskDone !== false) {
+        return taskDone;
+    }
+
+    //
+    // No task, proceed with publish run...
+    //
+
+    //
+    // Verify
+    //
     await verify(context);
 
+    //
+    // Authentication
+    //
     if (options.repoType === "git")
     {
         options.repositoryUrl = await getGitAuthUrl(context);
 
-        try
-        {
-            try
-            {
-                await verifyAuth(options.repositoryUrl, options.branch, { cwd, env });
+        try {
+            try {
+                await verifyAuth(options.repositoryUrl, options.branch, { cwd, env }, "git");
             }
             catch (error)
             {
@@ -216,7 +225,7 @@ async function runNodeScript(context: any, plugins: any)
                     logger.log(
                         `The local branch ${
                         options.branch
-                        } is behind the remote one, therefore a new version won't be published.`
+                        } is behind the remote one, can't publish a new version.`
                     );
                     return;
                 }
@@ -234,19 +243,35 @@ async function runNodeScript(context: any, plugins: any)
     }
     else
     {
-        //
-        // TODO - Check permissions on svn repo
-        //
+        try {
+            await verifyAuth(options.repositoryUrl, options.branch, { cwd, env }, "svn");
+        }
+        catch (error) {
+            throw error;
+        }
         logger.success(`Allowed to push to the Subversion repository`);
     }
 
     // await plugins.verifyConditions(context);
 
+    //
+    // Fetch tags (git only)
+    //
     await fetch(options.repo, { cwd, env }, options.repoType);
 
+    //
+    // Populate context with last release info
+    //
     context.lastRelease = await getLastRelease(context); // calls getTags()
+
+    //
+    // Populate context with commits
+    //
     context.commits = await getCommits(context);
 
+    //
+    // Populate next release info
+    //
     const nextRelease = {
         type: await getReleaseLevel(context),
         head: await getHead({ cwd, env }),
@@ -255,14 +280,24 @@ async function runNodeScript(context: any, plugins: any)
         notes: undefined
     };
 
+    //
+    // If there wer eno commits that set the release level to 'patch', 'minor', or 'major',
+    // then we're done
+    //
     if (!nextRelease.type)
     {
         logger.log("There are no relevant changes, so no new version is released.");
         return false;
     }
 
+    //
+    // Populate context with next release info
+    //
     context.nextRelease = nextRelease;
 
+    //
+    // Version
+    //
     const versionInfo = getNextVersion(context);
     if (!versionInfo.versionInfo) {
         nextRelease.version = versionInfo.version;
@@ -274,6 +309,9 @@ async function runNodeScript(context: any, plugins: any)
         //
     }
 
+    //
+    // Tag name for next release
+    //
     nextRelease.tag = template(options.tagFormat)({ version: nextRelease.version });
 
     // await plugins.verifyRelease(context);
@@ -282,6 +320,9 @@ async function runNodeScript(context: any, plugins: any)
 
     // await plugins.prepare(context);
 
+    //
+    // Tag
+    //
     if (options.dryRun)
     {
         logger.warn(`Skip ${nextRelease.tag} tag creation in dry-run mode`);
@@ -298,8 +339,14 @@ async function runNodeScript(context: any, plugins: any)
 
     // await plugins.success(context);
 
+    //
+    // Success
+    //
     logger.success((options.dryRun ? "Dry Run: " : "") + `Published release ${nextRelease.version}`);
 
+    //
+    // Display cjangelog notes if thisis a dry run
+    //
     if (options.dryRun)
     {
         logger.log(`Release notes for version ${nextRelease.version}:`);
@@ -310,6 +357,18 @@ async function runNodeScript(context: any, plugins: any)
     }
 
     return pick(context, [ "lastRelease", "commits", "nextRelease", "releases" ]);
+}
+
+
+async function processTask({ options, logger }): Promise<boolean>
+{
+    if (options.taskVersionCurrent)
+    {
+        const versionInfo = getCurrentVersion(context);
+        console.log(versionInfo.version);
+        return true;
+    }
+    return false;
 }
 
 

@@ -5,7 +5,7 @@ export = getReleaseLevel;
 
 async function getReleaseLevel({ options, commits, logger })
 {
-    let level = "";
+    let level: string;
 
     //
     // TODO - read in user defined release levels from options
@@ -60,29 +60,35 @@ async function getReleaseLevel({ options, commits, logger })
         }
         else if (options.commitMsgMap)
         {
-            Object.entries(options.commitMsgMap).forEach((property, value: any) =>
+            Object.entries(options.commitMsgMap).forEach((keys) =>
             {
-                logger.log("Processing custom commit message map property '" + property + "'");
+                const property = keys[0],
+                      value: any = keys[1];
                 if (msg.startsWith(property + ":") || msg.startsWith(property + "("))
                 {
-                    logger.log(value.formatText + " found");
-                    if (value.versionBump !== "none" && value.include !== false)
+                    if (value.versionBump !== "none")
                     {
-                        if (value.versionBump === "patch" || value.versionBump === "minor" || value.versionBump === "major")
+                        if (value.include !== false)
                         {
-                            logger.log("Found '" + value.versionBump + "' custom version bump");
-                            // if (value.versionBump === "patch") {
-                            //     if (level !== "minor" && level !== "major") {
-                            //         level = "patch";
-                            //     }
-                            // }
-                            // else {
-                            if (value.versionBump !== "patch") {
-                                level = value.versionBump;
+                            if (value.versionBump === "patch" || value.versionBump === "minor" || value.versionBump === "major")
+                            {
+                                logger.log(`   ${value.versionBump} (${value.formatText})(custom map)`);
+                                if (value.versionBump === "patch") {
+                                    if (level !== "minor" && level !== "major") {
+                                        level = "patch";
+                                    }
+                                }
+                                else {
+                                    level = value.versionBump;
+                                }
+                            }
+                            else {
+                                logger.warn(`   ${value.versionBump} (Invalid)(custom map) IGNORED`);
+                                logger.warn("      Must be one of 'patch', 'minor', or 'major'");
                             }
                         }
                         else {
-                            logger.warn("Invalid custom version bump: " + value.versionBump);
+                            logger.warn(`      ${value.versionBump} (custom map) IGNORED`);
                         }
                     }
                 }
@@ -94,10 +100,10 @@ async function getReleaseLevel({ options, commits, logger })
         }
     }
 
-    if (!level) {
-        logger.warn("There were no commits found that set the release level, forcing to 'patch'");
-        level = "patch";
-    }
+    // if (!level) {
+    //     logger.warn("There were no commits found that set the release level, forcing to 'patch'");
+    //     level = "patch";
+    // }
 
     return level;
 }
