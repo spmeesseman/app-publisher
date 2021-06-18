@@ -26,7 +26,7 @@ export = getLastRelease;
  *
  * @return {Promise<LastRelease>} The last tagged release or `undefined` if none is found.
  */
-async function getLastRelease({ cwd, env, options: { tagFormat, repoType }, logger })
+async function getLastRelease({ cwd, env, options, logger })
 {
     //
     // Generate a regex to parse tags formatted with `tagFormat`
@@ -34,25 +34,26 @@ async function getLastRelease({ cwd, env, options: { tagFormat, repoType }, logg
     // The `tagFormat` is compiled with space as the `version` as it's an invalid tag character,
     // so it's guaranteed to not be present in the `tagFormat`.
     //
-    const tagRegexp = `^${escapeRegExp(template(tagFormat)({ version: " " })).replace(" ", "(.+)")}`;
+    const tagRegexp = `^${escapeRegExp(template(options.tagFormat)({ version: " " })).replace(" ", "(.+)")}`,
+          tagsRaw = await getTags({ env, options, logger }, options.repoType);
 
-    const tags = (await getTags({ cwd, env }, repoType))
-        .map(tag => ({ tag: tag, version: (tag.match(tagRegexp) || new Array(2))[1] }))
-        .filter(
-            tag => tag.version && semver.valid(semver.clean(tag.version)) && !semver.prerelease(semver.clean(tag.version))
-        )
-        .sort((a, b) => semver.rcompare(a.version, b.version));
+    const tags = tagsRaw
+                 .map((tag: any) => ({ tag, version: (tag.match(tagRegexp) || new Array(2))[1] }))
+                 .filter(
+                     tag => tag.version && semver.valid(semver.clean(tag.version)) && !semver.prerelease(semver.clean(tag.version))
+                 )
+                 .sort((a: any, b: any) => semver.rcompare(a.version, b.version));
 
     debug("found tags: %o", tags);
 
-    const tag: any = await pLocate(tags, tag => isRefInHistory(tag["tag"], { cwd, env }), { preserveOrder: true });
+    const tag: any = await pLocate(tags, (tag: any) => isRefInHistory(tag.tag, { cwd, env }, options, true), { preserveOrder: true });
 
     if (tag)
     {
-        logger.log(`Found git tag ${tag.tag} associated with version ${tag.version}`);
-        return { head: await getTagHead(tag.tag, { cwd, env }), ...tag };
+        logger.log(`Found ${options.repoType} tag ${tag.tag} associated with version ${tag.version}`);
+        return { head: await getTagHead(tag.tag, { cwd, env }, options), ...tag };
     }
 
-    logger.log(`No ${repoType} tag version found`);
+    logger.log(`No ${options.repoType} tag version found`);
     return {};
 }

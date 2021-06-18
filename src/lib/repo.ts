@@ -1,5 +1,7 @@
 const execa = require("execa");
 const debug = require("debug")("app-publisher:git");
+const xml2js = require("xml2js");
+
 
 /**
  * Get the commit sha for a given tag.
@@ -9,7 +11,7 @@ const debug = require("debug")("app-publisher:git");
  *
  * @return {string} The commit sha of the tag in parameter or `null`.
  */
-export async function getTagHead(tagName: any, execaOpts: { cwd: any; env: any; }, repoType = "git")
+export async function getTagHead(tagName: any, execaOpts: { cwd: any; env: any; }, { branch, repo, repoType })
 {
     try
     {
@@ -17,8 +19,18 @@ export async function getTagHead(tagName: any, execaOpts: { cwd: any; env: any; 
         {
             return await execa.stdout("git", ["rev-list", "-1", tagName], execaOpts);
         }
+        else if (repoType === "svn")
+        {
+            const tagLocation = repo.replace("trunk", "tags").replace("branches/" + branch, "tags"),
+                  head = await execa.stdout("svn", ["log", tagLocation + "/" + tagName, "-v", "--stop-on-copy"], execaOpts);
+            let match: RegExpExecArray;
+            if ((match = /^r([0-9]+) \|/m.exec(head)) !== null)
+            {
+                return match[1];
+            }
+        }
         else {
-            return await execa.stdout("svn", ["info", "tags/" + tagName], execaOpts);
+            throw new Error("Invalid repository type");
         }
     } catch (error)
     {
@@ -26,31 +38,83 @@ export async function getTagHead(tagName: any, execaOpts: { cwd: any; env: any; 
     }
 }
 
+
 /**
  * Get all the repository tags.
  *
  * @param {Object} [execaOpts] Options to pass to `execa`.
  *
- * @return {Array<String>} List of git tags.
- * @throws {Error} If the `git` command fails.
+ * @returns {Array<String>} List of git tags.
+ * @throws {Error} If the `git` or `svn` command fails.
  */
-export async function getTags(execaOpts: any, repoType = "svn")
+export async function getTags({env, options, logger}, execaOpts: any)
 {
-    if (repoType === "git")
+    if (options.repoType === "git")
     {
         return (await execa.stdout("git", ["tag"], execaOpts))
             .split("\n")
             .map((tag: { trim: () => void; }) => tag.trim())
             .filter(Boolean);
     }
-    else
+    else if (options.repoType === "svn")
     {
-        return (await execa.stdout("svn", ["info"], execaOpts))
-            .split("\n")
-            .map((tag: { trim: () => void; }) => tag.trim())
-            .filter(Boolean);
+        let xml: string;
+        const tags: string[] = [],
+              svnUser = env.SVN_AUTHOR_NAME,
+              svnToken = env.SVN_TOKEN,
+              parser = new xml2js.Parser(),
+              tagLocation = options.repo.replace("trunk", "tags").replace("branches/" + options.branch, "tags");
+
+        //
+        // TODO - how to pass quotes to execa?  i.e. `"${tagLocation}"` they are encoded as %22 and we get:
+        //   E170000: Illegal repository URL '%22https://svn.development.pjats.com/pja/app-publisher/tags%22'\r\n
+        //
+        if (svnUser && svnToken) {
+            xml = await execa.stdout("svn", ["log", "--xml", `${tagLocation}`, "--verbose", "--limit", "50", "--non-interactive",
+                                             "--no-auth-cache", "--username", svnUser, "--password", `${svnToken}`], execaOpts);
+        }
+        else {
+            xml = await execa.stdout("svn", ["log", "--xml", `${tagLocation}`, "--verbose", "--limit", "50", "--non-interactive",
+                                             "--no-auth-cache"], execaOpts);
+        }
+
+        logger.log("Parsing response from SVN");
+        try {
+            parser.parseString(xml, (err: any, result: any) =>
+            {
+                if (err) {
+                    throw new Error(err);
+                }
+                for (const logEntry of result.log.logentry) {
+                    for (const p of logEntry.paths) {
+                        const pathObj = p.path[0],
+                              regex = new RegExp(`.*/tags/(${options.vcTagPrefix}[0-9\.]+)`),
+                              match = regex.exec(pathObj._);
+                        if (pathObj.$ && pathObj.$.action === "A" && pathObj.$.kind === "dir" && match)
+                        {
+                            // logger.log("Found version tag:");
+                            // logger.log(`   Tag     : ${match[1]}`);
+                            // logger.log(`   Rev     : ${logEntry.$.revision}`);
+                            // logger.log(`   Path    : ${pathObj._}`);
+                            // logger.log(`   Date    : ${logEntry.date[0]}`);
+                            tags.push(match[1]);
+                        }
+                    }
+                }
+            });
+            logger.log("Found " + tags.length + " version tags");
+            return tags;
+        }
+        catch (e) {
+            logger.error("Response could not be parsed, invalid module, no commits found, or no version tag exists");
+            throw e;
+        }
+    }
+    else {
+        throw new Error("Invalid repository type");
     }
 }
+
 
 /**
  * Verify if the `ref` is in the direct history of the current branch.
@@ -60,23 +124,29 @@ export async function getTags(execaOpts: any, repoType = "svn")
  *
  * @return {Boolean} `true` if the reference is in the history of the current branch, falsy otherwise.
  */
-export async function isRefInHistory(ref: any, execaOpts: any, repoType = "git")
+export async function isRefInHistory(ref: any, execaOpts: any, { repo, branch, repoType }, isTags = false)
 {
     try
     {
-        await execa("git", ["merge-base", "--is-ancestor", ref, "HEAD"], execaOpts);
-        return true;
-    } catch (error)
-    {
-        if (error.code === 1)
-        {
-            return false;
+        if (repoType === "git") {
+            await execa("git", ["merge-base", "--is-ancestor", ref, "HEAD"], execaOpts);
         }
-
-        debug(error);
-        throw error;
+        else if (repoType === "svn") {
+            const tagLoc = !isTags ? repo : repo.replace("trunk", "tags").replace("branches/" + branch, "tags");
+            await execa("svn", ["ls", tagLoc + "/" + ref], execaOpts);
+        }
+        else {
+            throw new Error("Invalid repository type");
+        }
+        return true;
     }
+    catch (error) {
+        debug(error);
+    }
+
+    return false;
 }
+
 
 /**
  * Unshallow the git repository if necessary and fetch all the tags.
@@ -97,21 +167,8 @@ export async function fetch(repositoryUrl: any, execaOpts: any, repoType = "git"
             await execa("git", ["fetch", "--tags", repositoryUrl], execaOpts);
         }
     }
-    else if (repoType === "svn")
-    {
-        try
-        {
-            await execa("svn", ["info", "/tags", repositoryUrl], execaOpts);
-        }
-        catch (error)
-        {
-            await execa("svn", ["info", "/tags", repositoryUrl], execaOpts);
-        }
-    }
-    else {
-        throw new Error("No repoo type");
-    }
 }
+
 
 /**
  * Get the HEAD sha.
@@ -125,8 +182,20 @@ export function getHead(execaOpts: any, repoType = "git")
     if (repoType === "git") {
         return execa.stdout("git", ["rev-parse", "HEAD"], execaOpts);
     }
-    return execa.stdout("svn", ["rev-parse", "HEAD"], execaOpts);
+    else if (repoType === "svn")
+    {
+        const head = execa.stdout("svn", ["info", "-r", "HEAD"], execaOpts);
+        let match: RegExpExecArray;
+        if ((match = /^Revision: ([0-9]+)$/m.exec(head)) !== null)
+        {
+            return match[1];
+        }
+    }
+    else {
+        throw new Error("Invalid repository type");
+    }
 }
+
 
 /**
  * Get the repository remote URL.
@@ -142,8 +211,16 @@ export async function repoUrl(execaOpts: any, repoType = "git")
         if (repoType === "git") {
             return await execa.stdout("git", ["config", "--get", "remote.origin.url"], execaOpts);
         }
-        return await execa.stdout("svn", ["config", "--get", "remote.origin.url"], execaOpts);
-    } 
+        else if (repoType === "svn") {
+            //
+            // TODO
+            //
+            return await execa.stdout("svn", ["config", "--get", "remote.origin.url"], execaOpts);
+        }
+        else {
+            throw new Error("Invalid repository type");
+        }
+    }
     catch (error)
     {
         debug(error);
@@ -204,8 +281,14 @@ export async function verifyAuth(repositoryUrl: any, branch: any, execaOpts: any
         if (repoType === "git") {
             await execa("git", ["push", "--dry-run", repositoryUrl, `HEAD:${branch}`], execaOpts);
         }
-        else {
+        else if (repoType === "svn") {
+            //
+            // TODO
+            //
             await execa("svn", ["push", "--dry-run", repositoryUrl, `HEAD:${branch}`], execaOpts);
+        }
+        else {
+            throw new Error("Invalid repository type");
         }
     }
     catch (error)
@@ -228,8 +311,14 @@ export async function tag(tagName: any, execaOpts: any, repoType = "git")
     if (repoType === "git") {
         await execa("git", ["tag", tagName], execaOpts);
     }
-    else {
+    else if (repoType === "svn") {
+        //
+        // TODO
+        //
         await execa("svn", ["tag", tagName], execaOpts);
+    }
+    else {
+        throw new Error("Invalid repository type");
     }
 }
 
@@ -246,10 +335,17 @@ export async function push(repositoryUrl: any, execaOpts: any, repoType = "git")
     if (repoType === "git") {
         await execa("git", ["push", "--tags", repositoryUrl], execaOpts);
     }
-    else {
+    else if (repoType === "svn") {
+        //
+        // TODO
+        //
         await execa("svn", ["push", "--tags", repositoryUrl], execaOpts);
     }
+    else {
+        throw new Error("Invalid repository type");
+    }
 }
+
 
 /**
  * Verify a tag name is a valid Git reference.
@@ -266,11 +362,18 @@ export async function verifyTagName(tagName: string, execaOpts: any, repoType = 
         if (repoType === "git") {
             return (await execa("git", ["check-ref-format", `refs/tags/${tagName}`], execaOpts)).code === 0;
         }
-        return (await execa("svn", ["check-ref-format", `refs/tags/${tagName}`], execaOpts)).code === 0;
+        else if (repoType === "svn") {
+            //
+            // TODO
+            //
+            return (await execa("svn", ["check-ref-format", `refs/tags/${tagName}`], execaOpts)).code === 0;
+        }
+        throw new Error("Invalid repository type");
     }
     catch (error)
     {
         debug(error);
+        throw error;
     }
 }
 
@@ -282,18 +385,25 @@ export async function verifyTagName(tagName: string, execaOpts: any, repoType = 
  *
  * @return {Boolean} `true` is the HEAD of the current local branch is the same as the HEAD of the remote branch, falsy otherwise.
  */
-export async function isBranchUpToDate(branch: any, execaOpts: any, repoType = "git")
+export async function isBranchUpToDate(branch: any, execaOpts: any, options: any)
 {
     const remoteHead = await execa.stdout("git", ["ls-remote", "--heads", "origin", branch], execaOpts);
     try
     {
-        if (repoType === "git") {
-            return await isRefInHistory(remoteHead.match(/^(\w+)?/)[1], execaOpts);
+        if (options.repoType === "git") {
+            return await isRefInHistory(remoteHead.match(/^(\w+)?/)[1], execaOpts, options);
         }
-        return await isRefInHistory(remoteHead.match(/^(\w+)?/)[1], execaOpts);
+        else if (options.repoType === "svn") {
+            //
+            // TODO
+            //
+            return await isRefInHistory(remoteHead.match(/^(\w+)?/)[1], execaOpts, options);
+        }
+        throw new Error("Invalid repository type");
     }
     catch (error)
     {
         debug(error);
+        throw error;
     }
 }

@@ -1,5 +1,5 @@
 
-import { existsSync, readFileSync } from "fs";
+import { readFileSync } from "fs";
 
 export = getPomVersion;
 
@@ -24,7 +24,7 @@ function getPomVersion({logger}): { version: string, versionSystem: string, vers
     logger.log("Retrieving Maven plugin version from $AssemblyInfoLocation");
 
     const fileContent = readFileSync("pom.xml").toString(),
-            regexp = new RegExp("\\$\\{(.+?)\\}(?=\<\\/version|\\$\\{\\w+\\})", "g");
+            regexp = new RegExp("\\$\\{(.+?)\\}(?=\<\\/version|\\$\\{\\w+\\})", "gm");
 
     let match: RegExpExecArray;
     while ((match = regexp.exec(fileContent)) !== null)
@@ -45,8 +45,7 @@ function getPomVersion({logger}): { version: string, versionSystem: string, vers
 
     if (version === "")
     {
-        const regexp3 = new RegExp("<version>([0-9]+[.]{1}[0-9]+[.]{1}[0-9]+)<\/version>");
-        if ((match = regexp3.exec(fileContent)) !== null)
+        if ((match = /<version>([0-9]+[.]{1}[0-9]+[.]{1}[0-9]+)<\/version>/m.exec(fileContent)) !== null)
         {
             mavenVersionInfo.push("version");
             mavenVersionInfo.push(match[1]);

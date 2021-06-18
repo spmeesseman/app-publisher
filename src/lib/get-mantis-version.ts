@@ -10,7 +10,7 @@ function getMantisVersion({logger, options}): { version: string, versionSystem: 
     logger.log("Retrieving MantisBT plugin version from $MANTISBTPLUGIN");
 
     const fileContent = readFileSync(options.mantisBtPlugin).toString(),
-            regexp = new RegExp("this->version[ ]*=[ ]*(\"|')[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+", "g"),
+            regexp = new RegExp("this->version[ ]*=[ ]*(\"|')[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+", "gm"),
             found = fileContent.match(regexp);
     if (found)
     {

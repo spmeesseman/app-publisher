@@ -5,12 +5,12 @@ import { existsSync, readFileSync } from "fs";
 export = getAppPublisherVersion;
 
 
-function getAppPublisherVersion({logger}): { version: string, versionSystem: string, versionInfo: any }
+function getAppPublisherVersion({cwd, logger}): { version: string, versionSystem: string, versionInfo: any }
 {
     let version = "";
     logger.log("Retrieving MantisBT plugin version from $MANTISBTPLUGIN");
 
-    const fileContent = readFileSync(path.join(process.cwd(), ".publishrc.json")).toString(),
+    const fileContent = readFileSync(path.join(cwd, ".publishrc.json")).toString(),
             regexp = new RegExp("version\"[ ]*:[ ]*\"[0-9]+[.]{0,1}[0-9]+[.]{0,1}[0-9]+[.]{0,1}[0-9]{0,}", "g"),
             found = fileContent.match(regexp);
     if (found)

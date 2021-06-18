@@ -11,8 +11,10 @@ function error(logger: any, err: string)
     return false;
 }
 
-function validateOptions({logger, options}): boolean
+function validateOptions({cwd, env, logger, options}): boolean
 {
+    const environ = { ...process.env, ...env };
+
     //
     // If root path is empty then set to "." , by default its "." but just in case
     // user sets to empty string in config
@@ -35,7 +37,7 @@ function validateOptions({logger, options}): boolean
     {   //
         // Define log folder name
         //
-        const logFolder = path.join(process.env.LOCALAPPDATA, "app-publisher", "log");
+        const logFolder = path.join(environ.LOCALAPPDATA, "app-publisher", "log");
         //
         // Define log file name
         //
@@ -52,18 +54,18 @@ function validateOptions({logger, options}): boolean
     //
     // Set repository and repository type
     //
-    if (existsSync(path.join(process.cwd(), "package.json")))
+    if (existsSync(path.join(cwd, "package.json")))
     {
         if (!options.repo)
         {
             logger.log("Reading repository in package.json");
-            options.repo = require(path.join(process.cwd(), "package.json")).repository.url;
+            options.repo = require(path.join(cwd, "package.json")).repository.url;
             logger.log("Repository: " + options.repo);
         }
         if (!options.repoType)
         {
             logger.log("Reading repository type from package.json");
-            options.repo = require(path.join(process.cwd(), "package.json")).repository.type;
+            options.repo = require(path.join(cwd, "package.json")).repository.type;
             logger.log("Repository Type: options.repoType");
         }
     }
@@ -140,7 +142,7 @@ function validateOptions({logger, options}): boolean
         if (!existsSync(options.textEditor))
         {
             let found = false;
-            const paths = process.env.Path.split(";");
+            const paths = environ.Path.split(";");
             for (const p of paths)
             {
                 let fullPath = path.join(p, options.textEditor);
@@ -184,7 +186,7 @@ function validateOptions({logger, options}): boolean
     // Ensure version control directory exists
     // options.repoType is either git or svn
     //
-    if (!options.pathPreRoot && !(existsSync(path.join(process.cwd(), "." + options.repoType))))
+    if (!options.pathPreRoot && !(existsSync(path.join(cwd, "." + options.repoType))))
     {
         logger.error(`The .${options.repoType} directory was not found`);
         logger.error("Set pathToPreRoot, or ensure a branch (i.e. trunk) is the root directory");
@@ -203,9 +205,9 @@ function validateOptions({logger, options}): boolean
         //
         //     Check to ensire this holds true
         //
-        const path1 = process.cwd();
+        const path1 = cwd;
         process.chdir(path.join(path1, options.pathToMainRoot));
-        const path2 = path.join(process.cwd(), options.pathPreRoot);
+        const path2 = path.join(cwd, options.pathPreRoot);
         if (path1 !== path2) {
             logger.error("Invalid values specified for pathToMainRoot and pathPreRoot");
             logger.error("    pathToMainRoot indicates the path to the root project folder with respect to the initial working directory");
@@ -255,7 +257,7 @@ function validateOptions({logger, options}): boolean
                 logger.error("You must specify githubUser for a GitHub release type");
                 return false;
             }
-            if (!process.env.GITHUB_TOKEN) {
+            if (!environ.GITHUB_TOKEN) {
                 logger.error("You must have GITHUB_TOKEN defined in the environment for a GitHub release type");
                 logger.error("Set the environment variable GITHUB_TOKEN using the token value created on the GitHub website");
                 return false;
@@ -361,7 +363,7 @@ function validateOptions({logger, options}): boolean
         }
         if (options.dryRun === true && !options.taskMode) {
             options.skipChangelogEdits = "N";
-            logger.error("Overriding skipChangelogEdits on dry run, auto set to 'N'");
+            logger.warn("Overriding skipChangelogEdits on dry run, auto set to 'N'");
         }
     }
     if (options.skipVersionEdits) {
@@ -372,7 +374,7 @@ function validateOptions({logger, options}): boolean
         }
         if (options.dryRun === true) {
             options.skipVersionEdits = "N";
-            logger.log("Overriding skipVersionEdits on dry run, auto set to 'N'");
+            logger.warn("Overriding skipVersionEdits on dry run, auto set to 'N'");
         }
     }
 
@@ -382,6 +384,10 @@ function validateOptions({logger, options}): boolean
     if (options.distRelease === "Y" && !options.pathToDist) {
         logger.error("pathToDist must be specified for dist release");
         return false;
+    }
+
+    if (!options.vcTagPrefix) {
+        options.vcTagPrefix = "v";
     }
 
     //

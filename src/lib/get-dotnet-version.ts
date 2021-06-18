@@ -1,5 +1,5 @@
 
-import { existsSync, readFileSync } from "fs";
+import { readFileSync } from "fs";
 import glob = require("glob");
 
 export = getDotNetVersion;
@@ -25,7 +25,7 @@ function getDotNetVersion({logger}): { version: string, versionSystem: string, v
     if (fileNames && fileNames.length === 1)
     {
         const fileContent = readFileSync(fileNames[0]).toString(),
-            regexp = new RegExp("AssemblyVersion[ ]*[(][ ]*[\"][0-9]+[.]{1}[0-9]+[.]{1}[0-9]+", "g"),
+            regexp = new RegExp("AssemblyVersion[ ]*[(][ ]*[\"][0-9]+[.]{1}[0-9]+[.]{1}[0-9]+", "gm"),
             found = fileContent.match(regexp);
         if (found)
         {

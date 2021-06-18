@@ -895,7 +895,7 @@ export const publishRcOpts =
     vcTagPrefix: [
         true,
         "string",
-        "",
+        "v",
         "Tag prefix for the version tag.  Labels the created tag in the form prefix-vX.X.X."
     ],
 

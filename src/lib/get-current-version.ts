@@ -15,7 +15,8 @@ function getCurrentVersion(context: any):
                            { version: string | undefined, versionSystem: string | undefined, versionInfo: string | undefined }
 {
     const options = context.options,
-          logger = context.logger;
+          logger = context.logger,
+          cwd = context.cwd;
     let versionInfo = {
         version: undefined,
         versionSystem: undefined,
@@ -29,14 +30,14 @@ function getCurrentVersion(context: any):
     //
     // If node_modules dir exists, use package.json to obtain cur version
     //
-    else if (existsSync(path.join(process.cwd(), "package.json")))
+    else if (existsSync(path.join(cwd, "package.json")))
     {
-        versionInfo.version = require(path.join(process.cwd(), "package.json")).version;
+        versionInfo.version = require(path.join(cwd, "package.json")).version;
     }
     //
     // Maven pom.xml based Plugin
     //
-    else if (existsSync(path.join(process.cwd(), "pom.xml")))
+    else if (existsSync(path.join(cwd, "pom.xml")))
     {
         versionInfo = getPomVersion(context);
     }
@@ -44,22 +45,22 @@ function getCurrentVersion(context: any):
     // MantisBT Plugin
     // mantisBtPlugin specifies the main class file, containing version #
     //
-    else if (options.mantisBtPlugin && existsSync(path.join(process.cwd(), options.mantisBtPlugin)))
+    else if (options.mantisBtPlugin && existsSync(path.join(cwd, options.mantisBtPlugin)))
     {
         versionInfo = getMantisVersion(context);
     }
     //
     // .NET with AssemblyInfo.cs file
     //
-    else if (options.historyFile && (existsSync(path.join(process.cwd(), "AssemblyInfo.cs")) ||
-                                     existsSync(path.join(process.cwd(), "properties", "AssemblyInfo.cs"))))
+    else if (options.historyFile && (existsSync(path.join(cwd, "AssemblyInfo.cs")) ||
+                                     existsSync(path.join(cwd, "properties", "AssemblyInfo.cs"))))
     {
         versionInfo = getDotNetVersion(context);
     }
     //
     // Test style History file
     //
-    else if (options.historyFile && existsSync(path.join(process.cwd(), options.historyFile)))
+    else if (options.historyFile && existsSync(path.join(cwd, options.historyFile)))
     {
         versionInfo = getIncrementalVersion(context);
     }
@@ -67,7 +68,7 @@ function getCurrentVersion(context: any):
     //
     // Check .publishrc if no version was found
     //
-    if ((!versionInfo || !versionInfo.version) && existsSync(path.join(process.cwd(), ".publishrc.json")))
+    if ((!versionInfo || !versionInfo.version) && existsSync(path.join(cwd, ".publishrc.json")))
     {
         versionInfo = getAppPublisherVersion(context);
     }

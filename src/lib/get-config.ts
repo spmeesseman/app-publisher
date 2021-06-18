@@ -78,12 +78,16 @@ async function getConfig(context: any, opts: any)
         };
     }
 
+    if (!options.vcTagPrefix) {
+        options.vcTagPrefix = "v";
+    }
+
     // Set default options values if not defined yet
     options = {
         branch: (await defBranch({ normalize: false, cwd })),
         repo: (await pkgRepoUrl({ normalize: false, cwd })) || (await repoUrl({ cwd, env })),
         repoType: (await pkgRepoType({ normalize: false, cwd })),
-        tagFormat: `v\${version}`,
+        tagFormat: `${options.vcTagPrefix}\${version}`,
         plugins: [
             // "@app-publisher/commit-analyzer",
             // "@app-publisher/release-notes-generator",

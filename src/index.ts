@@ -97,13 +97,6 @@ async function run(context: any, plugins: any): Promise<boolean>
     options.isNodeJsEnv = typeof module !== 'undefined' && module.exports;
     options.taskModeStdOut = !!(options.taskVersionCurrent || options.taskVersionNext || options.taskVersionInfo ||
                                 options.taskCiEvInfo || options.taskVersionPreReleaseId);
-    //
-    // Validate options / cmd line arguments
-    //
-    if (!validateOptions(context))
-    {
-        return false;
-    }
 
     if (!options.taskModeStdOut)
     {
@@ -189,11 +182,12 @@ async function runNodeScript(context: any, plugins: any)
 {
     const { cwd, env, options, logger } = context;
 
-    if (options.taskVersionCurrent)
+    //
+    // Validate options / cmd line arguments
+    //
+    if (!validateOptions(context))
     {
-        const versionInfo = getCurrentVersion(context);
-        console.log(versionInfo.version);
-        return;
+        return false;
     }
 
     await verify(context);
@@ -210,7 +204,7 @@ async function runNodeScript(context: any, plugins: any)
             }
             catch (error)
             {
-                if (!(await isBranchUpToDate(options.branch, { cwd, env })))
+                if (!(await isBranchUpToDate(options.branch, context, options)))
                 {
                     logger.log(
                         `The local branch ${
@@ -239,11 +233,11 @@ async function runNodeScript(context: any, plugins: any)
         logger.success(`Allowed to push to the Subversion repository`);
     }
 
-    await plugins.verifyConditions(context);
+    // await plugins.verifyConditions(context);
 
-    await fetch(options.repositoryUrl, { cwd, env });
+    await fetch(options.repo, { cwd, env }, options.repoType);
 
-    context.lastRelease = await getLastRelease(context);
+    context.lastRelease = await getLastRelease(context); // calls getTags()
     context.commits = await getCommits(context);
 
     const nextRelease = {
@@ -261,42 +255,54 @@ async function runNodeScript(context: any, plugins: any)
     }
 
     context.nextRelease = nextRelease;
-    nextRelease.version = getNextVersion(context);
+
+    const versionInfo = getNextVersion(context);
+    if (!versionInfo.versionInfo) {
+        nextRelease.version = versionInfo.version;
+    }
+    else {
+        nextRelease.version = versionInfo.version;
+        //
+        // TODO - process versionInfo (maven builds)
+        //
+    }
+
     nextRelease.tag = template(options.tagFormat)({ version: nextRelease.version });
 
-    await plugins.verifyRelease(context);
+    // await plugins.verifyRelease(context);
 
-    nextRelease.notes = await plugins.generateNotes(context);
+    // nextRelease.notes = await plugins.generateNotes(context);
 
-    await plugins.prepare(context);
+    // await plugins.prepare(context);
 
     if (options.dryRun)
     {
         logger.warn(`Skip ${nextRelease.tag} tag creation in dry-run mode`);
-    } else
+    }
+    else
     {
         // Create the tag before calling the publish plugins as some require the tag to exists
-        await tag(nextRelease.tag, { cwd, env });
-        await push(options.repositoryUrl, { cwd, env });
+        await tag(nextRelease.tag, { cwd, env }, options.repoType);
+        await push(options.repo, { cwd, env }, options.repoType);
         logger.success(`Created tag ${nextRelease.tag}`);
     }
 
-    context.releases = await plugins.publish(context);
+    // context.releases = await plugins.publish(context);
 
-    await plugins.success(context);
+    // await plugins.success(context);
 
-    logger.success(`Published release ${nextRelease.version}`);
+    logger.success((options.dryRun ? "Dry Run: " : "") + `Published release ${nextRelease.version}`);
 
     if (options.dryRun)
     {
-        logger.log(`Release note for version ${nextRelease.version}:`);
+        logger.log(`Release notes for version ${nextRelease.version}:`);
         if (nextRelease.notes)
         {
             context.stdout.write(marked(nextRelease.notes));
         }
     }
 
-    return pick(context, ["lastRelease", "commits", "nextRelease", "releases"]);
+    return pick(context, [ "lastRelease", "commits", "nextRelease", "releases" ]);
 }
 
 
