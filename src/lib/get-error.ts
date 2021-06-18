@@ -1,5 +1,5 @@
-import AppPublisherError from './plugins/error';
-import ERROR_DEFINITIONS from './definitions/errors';
+import AppPublisherError from "./plugins/error";
+import ERROR_DEFINITIONS from "./definitions/errors";
 
 export = getError;
 

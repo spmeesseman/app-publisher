@@ -86,13 +86,30 @@ export async function isRefInHistory(ref: any, execaOpts: any, repoType = "git")
  */
 export async function fetch(repositoryUrl: any, execaOpts: any, repoType = "git")
 {
-    try
+    if (repoType === "git")
     {
-        await execa("git", ["fetch", "--unshallow", "--tags", repositoryUrl], execaOpts);
-    } 
-    catch (error)
+        try
+        {
+            await execa("git", ["fetch", "--unshallow", "--tags", repositoryUrl], execaOpts);
+        }
+        catch (error)
+        {
+            await execa("git", ["fetch", "--tags", repositoryUrl], execaOpts);
+        }
+    }
+    else if (repoType === "svn")
     {
-        await execa("git", ["fetch", "--tags", repositoryUrl], execaOpts);
+        try
+        {
+            await execa("svn", ["info", "/tags", repositoryUrl], execaOpts);
+        }
+        catch (error)
+        {
+            await execa("svn", ["info", "/tags", repositoryUrl], execaOpts);
+        }
+    }
+    else {
+        throw new Error("No repoo type");
     }
 }
 
@@ -105,7 +122,10 @@ export async function fetch(repositoryUrl: any, execaOpts: any, repoType = "git"
  */
 export function getHead(execaOpts: any, repoType = "git")
 {
-    return execa.stdout("git", ["rev-parse", "HEAD"], execaOpts);
+    if (repoType === "git") {
+        return execa.stdout("git", ["rev-parse", "HEAD"], execaOpts);
+    }
+    return execa.stdout("svn", ["rev-parse", "HEAD"], execaOpts);
 }
 
 /**
@@ -119,7 +139,10 @@ export async function repoUrl(execaOpts: any, repoType = "git")
 {
     try
     {
-        return await execa.stdout("git", ["config", "--get", "remote.origin.url"], execaOpts);
+        if (repoType === "git") {
+            return await execa.stdout("git", ["config", "--get", "remote.origin.url"], execaOpts);
+        }
+        return await execa.stdout("svn", ["config", "--get", "remote.origin.url"], execaOpts);
     } 
     catch (error)
     {
@@ -134,17 +157,36 @@ export async function repoUrl(execaOpts: any, repoType = "git")
  *
  * @return {Boolean} `true` if the current working directory is in a git repository, falsy otherwise.
  */
-export async function isGitRepo(execaOpts: { cwd: any; env: any; }, repoType = "git")
+export async function isGitRepo(execaOpts: { cwd: any; env: any; })
 {
     try
     {
         return (await execa("git", ["rev-parse", "--git-dir"], execaOpts)).code === 0;
-    } 
-    catch (error)
-    {
+    }
+    catch (error) {
         debug(error);
     }
 }
+
+
+/**
+ * Test if the current working directory is a Git repository.
+ *
+ * @param {Object} [execaOpts] Options to pass to `execa`.
+ *
+ * @return {Boolean} `true` if the current working directory is in a git repository, falsy otherwise.
+ */
+export async function isSvnRepo(execaOpts: { cwd: any; env: any; })
+{
+    try
+    {
+        return (await execa("svn", ["info"], execaOpts)).code === 0;
+    }
+    catch (error) {
+        debug(error);
+    }
+}
+
 
 /**
  * Verify the write access authorization to remote repository with push dry-run.
@@ -159,8 +201,13 @@ export async function verifyAuth(repositoryUrl: any, branch: any, execaOpts: any
 {
     try
     {
-        await execa("git", ["push", "--dry-run", repositoryUrl, `HEAD:${branch}`], execaOpts);
-    } 
+        if (repoType === "git") {
+            await execa("git", ["push", "--dry-run", repositoryUrl, `HEAD:${branch}`], execaOpts);
+        }
+        else {
+            await execa("svn", ["push", "--dry-run", repositoryUrl, `HEAD:${branch}`], execaOpts);
+        }
+    }
     catch (error)
     {
         debug(error);
@@ -178,7 +225,12 @@ export async function verifyAuth(repositoryUrl: any, branch: any, execaOpts: any
  */
 export async function tag(tagName: any, execaOpts: any, repoType = "git")
 {
-    await execa("git", ["tag", tagName], execaOpts);
+    if (repoType === "git") {
+        await execa("git", ["tag", tagName], execaOpts);
+    }
+    else {
+        await execa("svn", ["tag", tagName], execaOpts);
+    }
 }
 
 /**
@@ -191,7 +243,12 @@ export async function tag(tagName: any, execaOpts: any, repoType = "git")
  */
 export async function push(repositoryUrl: any, execaOpts: any, repoType = "git")
 {
-    await execa("git", ["push", "--tags", repositoryUrl], execaOpts);
+    if (repoType === "git") {
+        await execa("git", ["push", "--tags", repositoryUrl], execaOpts);
+    }
+    else {
+        await execa("svn", ["push", "--tags", repositoryUrl], execaOpts);
+    }
 }
 
 /**
@@ -206,8 +263,11 @@ export async function verifyTagName(tagName: string, execaOpts: any, repoType = 
 {
     try
     {
-        return (await execa("git", ["check-ref-format", `refs/tags/${tagName}`], execaOpts)).code === 0;
-    } 
+        if (repoType === "git") {
+            return (await execa("git", ["check-ref-format", `refs/tags/${tagName}`], execaOpts)).code === 0;
+        }
+        return (await execa("svn", ["check-ref-format", `refs/tags/${tagName}`], execaOpts)).code === 0;
+    }
     catch (error)
     {
         debug(error);
@@ -227,8 +287,11 @@ export async function isBranchUpToDate(branch: any, execaOpts: any, repoType = "
     const remoteHead = await execa.stdout("git", ["ls-remote", "--heads", "origin", branch], execaOpts);
     try
     {
+        if (repoType === "git") {
+            return await isRefInHistory(remoteHead.match(/^(\w+)?/)[1], execaOpts);
+        }
         return await isRefInHistory(remoteHead.match(/^(\w+)?/)[1], execaOpts);
-    } 
+    }
     catch (error)
     {
         debug(error);

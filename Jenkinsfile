@@ -266,8 +266,20 @@ pipeline {
           // Production or nightly release, or not
           //
           if (env.PRODUCTIONRELEASE == "1") {
-            echo "Publish for production release"
-            
+            nodejs("Node 12") {
+              echo "Publish for production release"
+              //
+              // MantisBT -> Releases Plugin
+              //
+              echo "Perform MantisBT Releases"
+              bat "app-publisher --task-mantisbt-release"
+              //
+              // NPM Release
+              //
+              echo "Perform NPM Releases"
+              // bat "app-publisher --task-npm-release"
+              bat "npm publish"
+            }
           }
         }
       }

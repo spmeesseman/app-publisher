@@ -1,7 +1,7 @@
 
 import { template } from "lodash";
 import AggregateError from "aggregate-error";
-import { isGitRepo, verifyTagName } from "./repo";
+import { isGitRepo, isSvnRepo, verifyTagName } from "./repo";
 import getError from "./get-error";
 
 export = verify;
@@ -10,11 +10,22 @@ async function verify({ cwd, env, options: { repo, repoType, tagFormat } })
 {
     const errors = [];
 
-    if (!(await isGitRepo({ cwd, env })))
+    if (repoType === "git")
     {
-        errors.push(getError("ENOGITREPO", { cwd }));
+        if (!(await isGitRepo({ cwd, env })))
+        {
+            errors.push(getError("ENOGITREPO", { cwd }));
+        }
     }
-    else if (!repo)
+    else
+    {
+        if (!(await isSvnRepo({ cwd, env })))
+        {
+            errors.push(getError("ENOGITREPO", { cwd }));
+        }
+    }
+
+    if (!repo)
     {
         errors.push(getError("ENOREPOURL"));
     }
@@ -23,7 +34,7 @@ async function verify({ cwd, env, options: { repo, repoType, tagFormat } })
         errors.push(getError("ENOREPOTYPE"));
     }
 
-    // Verify that compiling the `tagFormat` produce a valid Git tag
+    // Verify that compiling the `tagFormat` produce a valid vcs tag
     if (!(await verifyTagName(template(tagFormat)({ version: "0.0.0" }), undefined)))
     {
         errors.push(getError("EINVALIDTAGFORMAT", { tagFormat }));

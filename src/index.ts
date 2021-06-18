@@ -1,37 +1,39 @@
 
-// import { visit, JSONVisitor } from "jsonc-parser";
+import { visit, JSONVisitor } from "jsonc-parser";
 import * as util from "./util";
-// import * as fs from "fs";
-// import * as path from "path";
+import * as fs from "fs";
+import * as path from "path";
 import gradient from "gradient-string";
 import chalk from "chalk";
 import * as child_process from "child_process";
-// import { template, pick } from "lodash";
+import { template, pick } from "lodash";
 import marked from "marked";
 import TerminalRenderer from "marked-terminal";
 const envCi = require("@spmeesseman/env-ci");
-// import envCi from "env-ci";
 import hookStd from "hook-std";
 import hideSensitive = require("./lib/hide-sensitive");
 import getConfig = require("./lib/get-config");
-// import getReleaseLevel = require("./lib/commit-analyzer");
-// import verify = require("./lib/verify");
-// import getCommits = require("./lib/get-commits");
-// import getNextVersion = require("./lib/get-next-version");
-// import getLastRelease = require("./lib/get-last-release");
+import getReleaseLevel = require("./lib/commit-analyzer");
+import verify = require("./lib/verify");
+import getCommits = require("./lib/get-commits");
+import getCurrentVersion = require("./lib/get-current-version");
+import getNextVersion = require("./lib/get-next-version");
+import getLastRelease = require("./lib/get-last-release");
 import { extractErrors } from "./lib/utils";
-// import { sendEmail } from "./lib/email";
-// import getGitAuthUrl = require("./lib/get-git-auth-url");
+import { sendEmail } from "./lib/email";
+import getGitAuthUrl = require("./lib/get-git-auth-url");
 import getLogger = require("./lib/get-logger");
-// import { fetch, verifyAuth, isBranchUpToDate, getHead, tag, push } from "./lib/repo";
-// import getError = require("./lib/get-error");
+import validateOptions = require("./lib/validate-options");
+import { fetch, verifyAuth, isBranchUpToDate, getHead, tag, push } from "./lib/repo";
+import getError = require("./lib/get-error");
 import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
 
 const pkg = require("../package.json");
 
 marked.setOptions({ renderer: new TerminalRenderer() });
 
-async function run(context, plugins)
+
+async function run(context: any, plugins: any): Promise<boolean>
 {
     const { cwd, env, options, logger } = context;
     const runTxt = !options.dryRun ? "run" : "test run";
@@ -95,6 +97,13 @@ async function run(context, plugins)
     options.isNodeJsEnv = typeof module !== 'undefined' && module.exports;
     options.taskModeStdOut = !!(options.taskVersionCurrent || options.taskVersionNext || options.taskVersionInfo ||
                                 options.taskCiEvInfo || options.taskVersionPreReleaseId);
+    //
+    // Validate options / cmd line arguments
+    //
+    if (!validateOptions(context))
+    {
+        return false;
+    }
 
     if (!options.taskModeStdOut)
     {
@@ -166,21 +175,26 @@ async function run(context, plugins)
         logger.log(JSON.stringify(options, undefined, 3));
     }
 
-    // if (options.emailOnly)
-    // {
-    //     // await sendEmail(logger);
-    //     await runPowershellScript(options, logger);
-    //     // await runNodeScript(context, plugins);
-    // }
-    // else {
-         await runPowershellScript(options, logger);
-    // }
+    if (options.node)
+    {
+        await runNodeScript(context, plugins);
+    }
+    else {
+        await runPowershellScript(options, logger);
+    }
 }
 
-/*
+
 async function runNodeScript(context: any, plugins: any)
 {
     const { cwd, env, options, logger } = context;
+
+    if (options.taskVersionCurrent)
+    {
+        const versionInfo = getCurrentVersion(context);
+        console.log(versionInfo.version);
+        return;
+    }
 
     await verify(context);
 
@@ -284,7 +298,7 @@ async function runNodeScript(context: any, plugins: any)
 
     return pick(context, ["lastRelease", "commits", "nextRelease", "releases"]);
 }
-*/
+
 
 async function runPowershellScript(options: any, logger: any)
 {

@@ -411,9 +411,17 @@ export const publishRcOpts =
         false,
         [ "-nci", "--no-ci" ],
         {
-            dest: "noCi",
-            action: "storeTrue",
             help: "Run in a local, non-CI environment."
+        }
+    ],
+
+    node: [
+        true,
+        "boolean",
+        false,
+        [ "-n", "--node" ],
+        {
+            help: "Run in nodejs mode (alpha)."
         }
     ],
 
