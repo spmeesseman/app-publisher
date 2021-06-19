@@ -3,7 +3,7 @@ import { getHistory, getChangelog } from "./changelog-file";
 import { properCase } from "./utils";
 
 // async..await is not allowed in global scope, must use a wrapper
-export async function sendNotificationEmail({options, commits, logger, lastRelease}): Promise<boolean>
+export async function sendNotificationEmail({options, logger, lastRelease}): Promise<boolean>
 {
     //
     // Check to make sure all necessary parameters are set
@@ -26,12 +26,12 @@ export async function sendNotificationEmail({options, commits, logger, lastRelea
     if (options.historyFile)
     {
         logger.log("   Converting history text to html");
-        emailBody = getHistory({options, commits, logger, lastRelease}, 1) as string;
+        emailBody = getHistory({options, logger, lastRelease}, 1) as string;
     }
     else if (options.changelogFile)
     {
         logger.log("   Converting changelog markdown to html");
-        emailBody = await getChangelog({options, commits, logger, lastRelease}, 1) as string;
+        emailBody = await getChangelog({options, logger, lastRelease}, 1) as string;
     }
     else {
         logger.error("   Notification could not be sent, history file not specified");

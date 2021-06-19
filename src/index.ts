@@ -390,7 +390,7 @@ async function processTasks1(context: any): Promise<boolean>
 
     if (options.taskVersionCurrent)
     {
-        const versionInfo = getCurrentVersion(context);
+        const versionInfo = await getCurrentVersion(context);
         console.log(versionInfo.version);
         return true;
     }

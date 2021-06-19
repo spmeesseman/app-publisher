@@ -11,8 +11,8 @@ import getPomVersion = require("./get-pom-version");
 export = getCurrentVersion;
 
 
-function getCurrentVersion(context: any):
-                           { version: string | undefined, versionSystem: string | undefined, versionInfo: string | undefined }
+async function getCurrentVersion(context: any):
+                           Promise<{ version: string | undefined, versionSystem: string | undefined, versionInfo: string | undefined }>
 {
     const options = context.options,
           logger = context.logger,
@@ -62,7 +62,7 @@ function getCurrentVersion(context: any):
     //
     else if (options.historyFile && existsSync(path.join(cwd, options.historyFile)))
     {
-        versionInfo = getIncrementalVersion(context);
+        versionInfo = await getIncrementalVersion(context);
     }
 
     //

@@ -1,21 +1,19 @@
 
 export = getIncrementalVersion;
 
-function getIncrementalVersion({logger, options}): { version: string, versionSystem: string, versionInfo: any }
-{
-    let version,
-        versionSystem,
-        historyFile = options.historyFile,
-        versionText = options.versionText;
+import { getVersion } from "./changelog-file";
 
-    version = "000";
-    // $ClsHistoryFile.getVersion($HISTORYFILE, $VERSIONTEXT);
+
+async function getIncrementalVersion({logger, options}): Promise<{ version: string, versionSystem: string, versionInfo: any }>
+{
+    const version = await getVersion({logger, options});
+    let versionSystem: string;
 
     if (!version)
     {
         versionSystem = "manual";
     }
-    else if (!version.Contains("."))
+    else if (!version.includes("."))
     {
         versionSystem = "incremental";
     }
