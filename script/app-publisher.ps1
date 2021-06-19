@@ -3865,11 +3865,11 @@ if ($options.republish -and $options.republish.Count -gt 0)
     if ($options.postCommitCommand) {
         $options.postCommitCommand = @()
     }
-    if ($options.mantisReleasePreCommand) {
-        $options.mantisReleasePreCommand = @()
+    if ($options.mantisbtReleasePreCommand) {
+        $options.mantisbtReleasePreCommand = @()
     }
-    if ($options.mantisReleasePostCommand) {
-        $options.mantisReleasePostCommand = @()
+    if ($options.mantisbtReleasePostCommand) {
+        $options.mantisbtReleasePostCommand = @()
     }
     if ($options.npmReleasePreCommand) {
         $options.npmReleasePreCommand = @()
@@ -4337,16 +4337,16 @@ if ($options.distReleasePostCommand) {
 #
 # The build command(s) to before a mantis release is made
 #
-$MANTISRELEASEPRECOMMAND = @()
-if ($options.mantisReleasePreCommand) {
-    $MANTISRELEASEPRECOMMAND = $options.mantisReleasePreCommand
+$mantisbtReleasePreCommand = @()
+if ($options.mantisbtReleasePreCommand) {
+    $mantisbtReleasePreCommand = $options.mantisbtReleasePreCommand
 }
 #
 # The build command(s) to after a mantis release is made
 #
-$MANTISRELEASEPOSTCOMMAND = @()
-if ($options.mantisReleasePostCommand) {
-    $MANTISRELEASEPOSTCOMMAND = $options.mantisReleasePostCommand
+$mantisbtReleasePostCommand = @()
+if ($options.mantisbtReleasePostCommand) {
+    $mantisbtReleasePostCommand = $options.mantisbtReleasePostCommand
 }
 #
 # The build command(s) to before a npm release is made
@@ -5332,14 +5332,14 @@ LogMessage "   Post Build cmd   : $POSTBUILDCOMMAND"
 LogMessage "   Post Commit cmd  : $POSTCOMMITCOMMAND"
 LogMessage "   Post Dist cmd    : $DISTRELEASEPOSTCOMMAND"
 LogMessage "   Post Github cmd  : $GITHUBRELEASEPOSTCOMMAND"
-LogMessage "   Post Mantis cmd  : $MANTISRELEASEPOSTCOMMAND"
+LogMessage "   Post Mantis cmd  : $mantisbtReleasePostCommand"
 LogMessage "   Post Npm cmd     : $NPMRELEASEPOSTCOMMAND"
 LogMessage "   Post Release cmd : $POSTRELEASECOMMAND"
 LogMessage "   Pre Build cmd    : $PREBUILDCOMMAND"
 LogMessage "   Pre Commit cmd   : $PRECOMMITCOMMAND"
 LogMessage "   Pre Dist cmd     : $DISTRELEASEPRECOMMAND"
 LogMessage "   Pre Github cmd   : $GITHUBRELEASEPRECOMMAND"
-LogMessage "   Pre Mantis cmd   : $MANTISRELEASEPRECOMMAND"
+LogMessage "   Pre Mantis cmd   : $mantisbtReleasePreCommand"
 LogMessage "   Pre Npm cmd      : $NPMRELEASEPRECOMMAND"
 LogMessage "   Project name     : $PROJECTNAME"
 LogMessage "   Prompt version   : $PROMPTVERSION"
@@ -5439,13 +5439,13 @@ if ($GITHUBRELEASEPOSTCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty(
 {
     $GITHUBRELEASEPOSTCOMMAND = @($GITHUBRELEASEPOSTCOMMAND); #convert to array
 }
-if ($MANTISRELEASEPRECOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($MANTISRELEASEPRECOMMAND))
+if ($mantisbtReleasePreCommand -is [system.string] -and ![string]::IsNullOrEmpty($mantisbtReleasePreCommand))
 {
-    $MANTISRELEASEPRECOMMAND = @($MANTISRELEASEPRECOMMAND); #convert to array
+    $mantisbtReleasePreCommand = @($mantisbtReleasePreCommand); #convert to array
 }
-if ($MANTISRELEASEPOSTCOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($MANTISRELEASEPOSTCOMMAND))
+if ($mantisbtReleasePostCommand -is [system.string] -and ![string]::IsNullOrEmpty($mantisbtReleasePostCommand))
 {
-    $MANTISRELEASEPOSTCOMMAND = @($MANTISRELEASEPOSTCOMMAND); #convert to array
+    $mantisbtReleasePostCommand = @($mantisbtReleasePostCommand); #convert to array
 }
 if ($NPMRELEASEPRECOMMAND -is [system.string] -and ![string]::IsNullOrEmpty($NPMRELEASEPRECOMMAND))
 {
@@ -6977,7 +6977,7 @@ if ($MANTISBTRELEASE -eq "Y" -and (!$TASKMODE -or $TASKMANTISBT))
     #
     # Run pre msntis-release scripts if specified
     #
-    RunScripts "preMantisRelease" $MANTISRELEASEPRECOMMAND $false $false
+    RunScripts "preMantisRelease" $mantisbtReleasePreCommand $false $false
 
     $dry_run = 0;
     $ReleaseVersion = $VERSION;
@@ -7161,7 +7161,7 @@ if ($MANTISBTRELEASE -eq "Y" -and (!$TASKMODE -or $TASKMANTISBT))
     #
     # Run pre msntis-release scripts if specified
     #
-    RunScripts "postMantisRelease" $MANTISRELEASEPOSTCOMMAND $false $false
+    RunScripts "postMantisRelease" $mantisbtReleasePostCommand $false $false
 }
 
 #endregion

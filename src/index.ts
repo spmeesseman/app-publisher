@@ -87,20 +87,45 @@ async function run(context: any, plugins: any): Promise<boolean>
     }
 
     //
-    // Set some additional options specific to powershell script
+    // Set some additional options
     //
     options.appPublisherVersion = pkg.version;
-    // tslint:disable-next-line: quotemark
-    options.isNodeJsEnv = typeof module !== 'undefined' && module.exports;
+    options.isNodeJsEnv = typeof module !== "undefined" && module.exports;
+
+    //
+    // Set task mode flag on the options object
+    //
+    for (const o in options)
+    {
+        if (o.startsWith("task")) {
+            if (options[o] === true) {
+                options.taskMode = true;
+                break;
+            }
+        }
+    }
+
+    if (options.taskMode) {
+        options.verbose = false;
+    }
+
+    //
+    // Set task mode stdout flag on the options object
+    //
     options.taskModeStdOut = !!(options.taskVersionCurrent || options.taskVersionNext || options.taskVersionInfo ||
                                 options.taskCiEvInfo || options.taskVersionPreReleaseId);
-
+    //
+    // Display mode - bin mode, or node env
+    //
     if (!options.taskModeStdOut)
     {
         const mode = options.isNodeJsEnv ? "Node.js" : "bin mode";
         logger.log(`Running ${pkg.name} version ${pkg.version} in ${mode}`);
     }
 
+    //
+    // Check CI environment
+    //
     if (!isCi && !options.dryRun && !options.noCi)
     {
         logger.error("This run was not triggered in a known CI environment, use --no-ci flag for local publish.");
@@ -216,6 +241,9 @@ async function runNodeScript(context: any, plugins: any)
     //
     await verify(context);
 
+    //
+    // If theres not a git url specified in .publishrc or cmd line, get remote origin url
+    //
     if (options.repoType === "git" && !options.repo)
     {
         options.repo = await getGitAuthUrl(context);
@@ -230,7 +258,7 @@ async function runNodeScript(context: any, plugins: any)
     catch (error) {
         throw error;
     }
-    logger.success(`Allowed to push to the Subversion repository`);
+    logger.success(`Allowed to push to the ${options.repoType} repository`);
 
 
     // await plugins.verifyConditions(context);

@@ -1,6 +1,7 @@
 
 import * as path from "path";
 import { existsSync, mkdirSync } from "fs";
+import { isString } from "./utils";
 
 export = validateOptions;
 
@@ -424,6 +425,115 @@ function validateOptions({cwd, env, logger, options}): boolean
             }
         }
     });
+
+    if (!options.noCi)
+    {
+        options.skipChangelogEdits = "Y";
+        options.skipVersionEdits = "Y";
+        options.versionFilesEditAlways = "";
+        options.promptVersion = "N";
+        logger.warn("CI environment detected, the following flags/properties have been cleared:");
+        logger.warn("   skipChangelogEdits");
+        logger.warn("   skipVersionEdits");
+        logger.warn("   promptVersion");
+        logger.warn("   versionFilesEditAlways");
+    }
+
+    //
+    // Convert array params to arrays, if specified as string on cmdline or publishrc
+    //
+    if (options.deployCommand && isString(options.deployCommand))
+    {
+        options.deployCommand = [ options.deployCommand ]; // convert to array
+    }
+    if (options.buildCommand && isString(options.buildCommand))
+    {
+        options.buildCommand = [ options.buildCommand ]; // convert to array
+    }
+    if (options.postBuildCommand && isString(options.postBuildCommand))
+    {
+        options.postBuildCommand = [ options.postBuildCommand ]; // convert to array
+    }
+    if (options.preBuildCommand && isString(options.preBuildCommand))
+    {
+        options.preBuildCommand = [ options.preBuildCommand ]; // convert to array
+    }
+    if (options.postReleaseCommand && isString(options.postReleaseCommand))
+    {
+        options.postReleaseCommand = [ options.postReleaseCommand ]; // convert to array
+    }
+    if (options.postCommitCommand && isString(options.postCommitCommand))
+    {
+        options.postCommitCommand = [ options.postCommitCommand ]; // convert to array
+    }
+    if (options.preCommitCommand &&  isString(options.preCommitCommand))
+    {
+        options.preCommitCommand = [ options.preCommitCommand ]; // convert to array
+    }
+    if (options.distReleasePreCommand && isString(options.distReleasePreCommand))
+    {
+        options.distReleasePreCommand = [ options.distReleasePreCommand ]; // convert to array
+    }
+    if (options.distReleasePostCommand && isString(options.distReleasePostCommand))
+    {
+        options.distReleasePostCommand = [ options.distReleasePostCommand ]; // convert to array
+    }
+    if (options.githubAssets && isString(options.githubAssets))
+    {
+        options.githubAssets = [ options.githubAssets ]; // convert to array
+    }
+    if (options.githubReleasePreCommand && isString(options.githubReleasePreCommand))
+    {
+        options.githubReleasePreCommand = [ options.githubReleasePreCommand ]; // convert to array
+    }
+    if (options.githubReleasePostCommand && isString(options.githubReleasePostCommand))
+    {
+        options.githubReleasePostCommand = [ options.githubReleasePostCommand ]; // convert to array
+    }
+    if (options.mantisbtAssets && isString(options.mantisbtAssets))
+    {
+        options.mantisbtAssets = [ options.mantisbtAssets ]; // convert to array
+    }
+    if (options.mantisbtReleasePreCommand && isString(options.mantisbtReleasePreCommand))
+    {
+        options.mantisbtReleasePreCommand = [ options.mantisbtReleasePreCommand ]; // convert to array
+    }
+    if (options.mantisbtReleasePostCommand && isString(options.mantisbtReleasePostCommand))
+    {
+        options.mantisbtReleasePostCommand = [ options.mantisbtReleasePostCommand ]; // convert to array
+    }
+    if (options.npmReleasePreCommand && isString(options.npmReleasePreCommand))
+    {
+        options.npmReleasePreCommand = [ options.npmReleasePreCommand ]; // convert to array
+    }
+    if (options.npmReleasePostCommand && isString(options.npmReleasePostCommand))
+    {
+        options.npmReleasePostCommand = [ options.npmReleasePostCommand ]; // convert to array
+    }
+    if (options.versionFiles && isString(options.versionFiles))
+    {
+        options.versionFiles = [ options.versionFiles ]; // convert to array
+    }
+    if (options.versionFilesEditAlways && isString(options.versionFilesEditAlways))
+    {
+        options.versionFilesEditAlways = [ options.versionFilesEditAlways ]; // convert to array
+    }
+    if (options.versionFilesScrollDown && isString(options.versionFilesScrollDown))
+    {
+        options.versionFilesScrollDown = [ options.versionFilesScrollDown ]; // convert to array
+    }
+    if (options.versionReplaceTags && isString(options.versionReplaceTags))
+    {
+        options.versionReplaceTags = [ options.versionReplaceTags ]; // convert to array
+    }
+    if (options.emailRecip && isString(options.emailRecip))
+    {
+        options.emailRecip = [ options.emailRecip ]; // convert to array
+    }
+    if (options.testEmailRecip && isString(options.testEmailRecip))
+    {
+        options.testEmailRecip = [ options.testEmailRecip ]; // convert to array
+    }
 
     return true;
 }
