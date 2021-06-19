@@ -1,7 +1,7 @@
 
 export = getIncrementalVersion;
 
-import { getVersion } from "./changelog-file";
+import { getVersion } from "../changelog-file";
 
 
 async function getIncrementalVersion({logger, options}): Promise<{ version: string, versionSystem: string, versionInfo: any }>

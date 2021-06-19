@@ -203,7 +203,7 @@ export function pathExists(path: string)
 }
 
 
-export async function readFile(file: string): Promise<string | Error>
+export async function readFile(file: string): Promise<string>
 {
     return new Promise<string>((resolve, reject) => {
         fs.readFile(file, (err, data) => {
@@ -216,7 +216,7 @@ export async function readFile(file: string): Promise<string | Error>
 }
 
 
-export async function writeFile(file: string, data: string): Promise<void | Error>
+export async function writeFile(file: string, data: string): Promise<void>
 {
     return new Promise<void>((resolve, reject) => {
         fs.writeFile(file, data, (err) => {

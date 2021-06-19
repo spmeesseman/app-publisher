@@ -1,31 +1,31 @@
 
 import * as util from "./lib/utils";
+import * as child_process from "child_process";
 import gradient from "gradient-string";
 import chalk from "chalk";
-import * as child_process from "child_process";
-import { template, pick, isString } from "lodash";
 import marked from "marked";
 import TerminalRenderer from "marked-terminal";
-const envCi = require("@spmeesseman/env-ci");
 import hookStd from "hook-std";
 import hideSensitive = require("./lib/hide-sensitive");
 import getConfig = require("./lib/get-config");
-import { createSectionFromCommits } from "./lib/changelog-file";
 import getReleaseLevel = require("./lib/commit-analyzer");
 import verify = require("./lib/verify");
 import getCommits = require("./lib/get-commits");
-import getCurrentVersion = require("./lib/get-current-version");
-import getNextVersion = require("./lib/get-next-version");
+import getCurrentVersion = require("./lib/version/get-current-version");
+import getNextVersion = require("./lib/version/get-next-version");
 import getLastRelease = require("./lib/get-last-release");
-import { sendNotificationEmail } from "./lib/email";
 import getGitAuthUrl = require("./lib/get-git-auth-url");
 import getLogger = require("./lib/get-logger");
 import validateOptions = require("./lib/validate-options");
-import { fetch, verifyAuth, isBranchUpToDate, getHead, tag, push } from "./lib/repo";
 import getError = require("./lib/get-error");
+import { template, pick, isString } from "lodash";
 import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
-
+import { sendNotificationEmail } from "./lib/email";
+import { createSectionFromCommits } from "./lib/changelog-file";
+import { fetch, verifyAuth, getHead, tag, push } from "./lib/repo";
+const envCi = require("@spmeesseman/env-ci");
 const pkg = require("../package.json");
+
 
 marked.setOptions({ renderer: new TerminalRenderer() });
 

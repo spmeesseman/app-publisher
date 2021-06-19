@@ -1,15 +1,15 @@
 
-import { existsSync, readFileSync } from "fs";
+import { readFile } from "../utils";
 
 export = getMantisVersion;
 
 
-function getMantisVersion({logger, options}): { version: string, versionSystem: string, versionInfo: any }
+async function getMantisVersion({logger, options}): Promise<{ version: string, versionSystem: string, versionInfo: any }>
 {
     let version = "";
     logger.log("Retrieving MantisBT plugin version from $MANTISBTPLUGIN");
 
-    const fileContent = readFileSync(options.mantisBtPlugin).toString(),
+    const fileContent = await readFile(options.mantisBtPlugin),
             regexp = new RegExp("this->version[ ]*=[ ]*(\"|')[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+", "gm"),
             found = fileContent.match(regexp);
     if (found)

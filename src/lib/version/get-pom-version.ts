@@ -1,6 +1,6 @@
 
 import { readFileSync, existsSync } from "fs";
-import { replaceVersion, readFile, editFile } from "./utils";
+import { replaceVersion, readFile, editFile } from "../utils";
 export = getPomVersion;
 
 
@@ -23,7 +23,7 @@ async function getPomVersion({logger}): Promise<{ version: string, versionSystem
 
     logger.log("Retrieving Maven plugin version from $AssemblyInfoLocation");
 
-    const fileContent = (await readFile("pom.xml")).toString(),
+    const fileContent = await readFile("pom.xml"),
           regexp = new RegExp("\\$\\{(.+?)\\}(?=\<\\/version|\\$\\{\\w+\\})", "gm");
 
     let match: RegExpExecArray;
@@ -68,6 +68,6 @@ async function setPomVersion({nextRelease, options})
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
-        editFile({options}, "pom.xml", false, (options.skipVersionEdits === " Y" || options.taskTouchVersions);
+        editFile({options}, "pom.xml", false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
     }
 }

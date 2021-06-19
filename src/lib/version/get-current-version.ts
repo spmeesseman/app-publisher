@@ -39,7 +39,7 @@ async function getCurrentVersion(context: any):
     //
     else if (existsSync(path.join(cwd, "pom.xml")))
     {
-        versionInfo = getPomVersion(context);
+        versionInfo = await getPomVersion(context);
     }
     //
     // MantisBT Plugin
@@ -47,7 +47,7 @@ async function getCurrentVersion(context: any):
     //
     else if (options.mantisBtPlugin && existsSync(path.join(cwd, options.mantisBtPlugin)))
     {
-        versionInfo = getMantisVersion(context);
+        versionInfo = await getMantisVersion(context);
     }
     //
     // .NET with AssemblyInfo.cs file
@@ -55,7 +55,7 @@ async function getCurrentVersion(context: any):
     else if (options.historyFile && (existsSync(path.join(cwd, "AssemblyInfo.cs")) ||
                                      existsSync(path.join(cwd, "properties", "AssemblyInfo.cs"))))
     {
-        versionInfo = getDotNetVersion(context);
+        versionInfo = await getDotNetVersion(context);
     }
     //
     // Test style History file
@@ -70,7 +70,7 @@ async function getCurrentVersion(context: any):
     //
     if ((!versionInfo || !versionInfo.version) && existsSync(path.join(cwd, ".publishrc.json")))
     {
-        versionInfo = getAppPublisherVersion(context);
+        versionInfo = await getAppPublisherVersion(context);
     }
 
     if (!versionInfo || !versionInfo.version)

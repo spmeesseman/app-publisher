@@ -1,11 +1,11 @@
 
-import { readFileSync } from "fs";
+import { readFile } from "../utils";
 import glob = require("glob");
 
 export = getDotNetVersion;
 
 
-function getDotNetVersion({logger}): { version: string, versionSystem: string, versionInfo: any }
+async function getDotNetVersion({logger}): Promise<{ version: string, versionSystem: string, versionInfo: any }>
 {
     let version = "",
         fileNames: string[];
@@ -24,7 +24,7 @@ function getDotNetVersion({logger}): { version: string, versionSystem: string, v
 
     if (fileNames && fileNames.length === 1)
     {
-        const fileContent = readFileSync(fileNames[0]).toString(),
+        const fileContent = await readFile(fileNames[0]),
             regexp = new RegExp("AssemblyVersion[ ]*[(][ ]*[\"][0-9]+[.]{1}[0-9]+[.]{1}[0-9]+", "gm"),
             found = fileContent.match(regexp);
         if (found)

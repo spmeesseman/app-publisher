@@ -1,6 +1,6 @@
 
 import * as semver from "semver";
-import { FIRST_RELEASE } from "./definitions/constants";
+import { FIRST_RELEASE } from "../definitions/constants";
 
 export = getNextVersion;
 
