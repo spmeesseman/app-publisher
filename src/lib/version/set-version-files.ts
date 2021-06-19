@@ -1,6 +1,70 @@
 import { editFile, pathExists, replaceInFile } from "../utils";
+import { setAppPublisherVersion } from "./app-publisher";
+import { setDotNetVersion } from "./dotnet";
+import { setExtJsVersion } from "./extjs";
+import { setMakefileVersion } from "./makefile";
+import { setMantisBtVersion } from "./mantisbt";
+import { setPackageJson } from "./npm";
+import { setPomVersion } from "./pom";
+export { setVersions };
 
-export { setVersionFiles };
+
+async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}): Promise<void>
+{
+    //
+    // AppPublisher publishrc version
+    //
+    await setAppPublisherVersion({options, logger, nextRelease});
+    //
+    // ExtJs build
+    //
+    if (await pathExists("app.json") && await pathExists("package.json")) {
+        setExtJsVersion({options, nextRelease});
+    }
+    //
+    // NPM managed project, update package.json if required
+    //
+    if (await pathExists("package.json")) {
+        setPackageJson({options, logger, lastRelease, nextRelease, cwd, env});
+    }
+    //
+    // Maven managed project, update pom.xml if required
+    //
+    if (await pathExists("pom.xml")) {
+        setPomVersion({options, nextRelease});
+    }
+    //
+    // Mantisbt plugin project, update main plugin file if required
+    //
+    if (options.mantisbtPlugin) {
+        setMantisBtVersion({options, nextRelease});
+    }
+    //
+    // C project, update main rc file if required
+    //
+    if (options.cProjectRcFile) {
+        setMakefileVersion({options, nextRelease});
+    }
+    //
+    // If this is a .NET build, update assemblyinfo file
+    // Search root dir and one level deep.  If the assembly file is located deeper than 1 dir
+    // from the root dir, it should be specified using the versionFiles arry of .publishrc
+    //
+    // $AssemblyInfoLoc = Get-ChildItem -Name -Recurse -Depth 1 -Filter "assemblyinfo.cs" -File -Path . -ErrorAction SilentlyContinue
+    // if ($AssemblyInfoLoc -is [system.string] && ![string]::IsNullOrEmpty($AssemblyInfoLoc))
+    // {
+    setDotNetVersion({options, logger, nextRelease});
+    // }
+    // else if ($AssemblyInfoLoc -is [System.Array] && $AssemblyInfoLoc.Length -gt 0) {
+    //    foreach ($AssemblyInfoLocFile in $AssemblyInfoLoc) {
+    //        Set-DotNetBuild $AssemblyInfoLocFile
+    //    }
+    // }
+    //
+    // Version bump specified files in publishrc config 'versionFiles'
+    //
+    setVersionFiles({options, logger, lastRelease, nextRelease});
+}
 
 
 async function setVersionFiles({options, logger, lastRelease, nextRelease}): Promise<void>

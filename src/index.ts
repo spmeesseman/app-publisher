@@ -17,6 +17,11 @@ import getLastRelease = require("./lib/get-last-release");
 import getGitAuthUrl = require("./lib/get-git-auth-url");
 import getLogger = require("./lib/get-logger");
 import validateOptions = require("./lib/validate-options");
+import doGithubRelease = require("./lib/releases/github");
+import doMantisbtRelease = require("./lib/releases/mantisbt");
+import doNpmRelease = require("./lib/releases/npm");
+import setVersions = require("./lib/version/set-versions");
+import * as npm from "./lib/version/npm";
 import getError = require("./lib/get-error");
 import { template, pick, isString } from "lodash";
 import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
@@ -332,11 +337,120 @@ async function runNodeScript(context: any, plugins: any)
     // await plugins.prepare(context);
 
     //
-    // If a l1 task is processed, we'll be done
+    //
+    //
+    if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and (!$TASKMODE -or $TASKTOUCHVERSIONS))
+    {
+        setVersions(context);
+    }
+
+    //
+    // Build scipts (.publishrc)
+    //
+    if (!options.taskMode) {
+        await util.runScripts({ options, logger }, "build", options.buildCommand, true, true);
+    }
+
+    //
+    // NPM release
+    //
+    // Store location paths depending on publish types, these will be used to set links to
+    // locations in the release email
+    //
+    // $TargetNetLocation = ""
+    // $NpmLocation = ""
+    // $NugetLocation = ""
+    //
+    if (options.npmRelease === "Y" && !options.taskMode)
+    {
+        await doNpmRelease(context, defaultScope);
+    }
+
+    //
+    // Post-build scripts (.publishrc)
+    //
+    if (!options.taskMode) {
+        await util.runScripts({ options, logger }, "postBuild", options.postBuildCommand);
+    }
+
+    //
+    // Restore any configured package.json values to the original values
+    //
+    if (util.pathExists("package.json") && (!options.taskMode || options.taskTouchVersions)) {
+        npm.restorePackageJson(context);
+    }
+
+    //
+    // If a l2 task is processed, we'll be done
     //
     taskDone = await processTasks2(context);
     if (taskDone !== false) {
         return taskDone;
+    }
+
+    //
+    // Github release
+    //
+    if (options.repo === "git" && options.githubRelease === "Y" && (!options.taskMode || options.taskGithubRelease))
+    {   //
+        // Pre-github release (.publishrc)
+        //
+        await util.runScripts({ options, logger }, "preGithubRelease", options.githubReleasePreCommand);
+        //
+        // Perform Github release
+        //
+        await doGithubRelease(context);
+        //
+        // Post-github release (.publishrc)
+        //
+        await util.runScripts({ options, logger }, "postGithubRelease", options.githubReleasePostCommand);
+    }
+
+    //
+    // MantisBT release
+    //
+    if (options.mantisbtRelease === "Y" && (!options.taskMode || options.taskMantisbtRelease))
+    {   //
+        // Pre-mantis release (.publishrc)
+        //
+        await util.runScripts({ options, logger }, "preMantisRelease", options.mantisbtReleasePreCommand);
+        //
+        // Perform MantisBT release
+        //
+        await doMantisbtRelease(context);
+        //
+        // Post-mantis release scripts (.publishrc)
+        //
+        await util.runScripts({ options, logger }, "postMantisRelease", options.mantisbtReleasePostCommand);
+    }
+
+    //
+    // Deployment scripts
+    //
+    if (!options.taskMode)
+    {
+        if (options.skipDeployPush !== "Y" && !options.dryRun)
+        {
+            await util.runScripts(context, "deploy", options.deployCommand); // (.publishrc)
+        }
+        else {
+            logger.log("Skipped running custom deploy script");
+        }
+    }
+
+    //
+    // Notifiation email
+    //
+    if (!options.taskChangelog && !options.taskTouchVersions && !options.taskMantisbtRelease && !options.taskCiEnvSet &&
+        !options.taskModeStdOut && (options.emailNotification === "Y" || options.taskEmail)) {
+        await sendNotificationEmail(context);
+    }
+
+    //
+    // Pre-commit scripts
+    //
+    if (!options.taskMode) {
+        await util.runScripts(context, "preCommit", options.preCommitCommand); // (.publishrc)
     }
 
     //
@@ -345,13 +459,25 @@ async function runNodeScript(context: any, plugins: any)
     if (options.dryRun)
     {
         logger.warn(`Skip ${nextRelease.tag} tag creation in dry-run mode`);
+        //
+        // TODO - Revert
+        //
+        if (options.dryRunVcRevert) // && options.noCi)
+        {
+            // Revert
+        }
     }
-    else
+    else if (!options.taskMode || options.taskCommit || options.taskTag)
     {
         // Create the tag before calling the publish plugins as some require the tag to exists
-        await tag(nextRelease.tag, { cwd, env }, options.repoType);
-        await push(options.repo, { cwd, env }, options.repoType);
-        logger.success(`Created tag ${nextRelease.tag}`);
+        if (!options.taskCommit) {
+            await tag(nextRelease.tag, { cwd, env }, options.repoType);
+            logger.success(`Created tag ${nextRelease.tag}`);
+        }
+        if (!options.taskTag) {
+            await push(options.repo, { cwd, env }, options.repoType);
+            logger.success(`Successfully pushed changes for v${nextRelease.version}`);
+        }
     }
 
     // context.releases = await plugins.publish(context);

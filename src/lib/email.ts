@@ -58,7 +58,7 @@ export async function sendNotificationEmail({options, logger, lastRelease}): Pro
     logger.log("Sending release notification email");
     try
     {
-        let to;
+        let to: string;
         let projectNameFmt = options.projectName.Replace("-", " ");
         //
         // If all lower case project name, then title case the project name
@@ -116,8 +116,7 @@ export async function sendNotificationEmail({options, logger, lastRelease}): Pro
         //
         const info = await transporter.sendMail({
             from: options.emailSender,
-            to: options.emailRecip,
-            subject,
+            to, subject,
             html: emailBody
         });
 

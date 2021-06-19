@@ -353,16 +353,13 @@ export async function tag(tagName: any, execaOpts: any, repoType = "git")
  *
  * @throws {Error} if the push failed.
  */
-export async function push(repo: any, execaOpts: any, repoType = "git")
+export async function push(repo: any, execaOpts: any, version: string, repoType = "git")
 {
     if (repoType === "git") {
         await execa("git", ["push", "--tags", repo], execaOpts);
     }
     else if (repoType === "svn") {
-        //
-        // TODO
-        //
-        await execa("svn", ["push", "--tags", repo], execaOpts);
+        await execa("svn", ["commit", "-m", "chore: v" + version + " [skip ci]"], execaOpts);
     }
     else {
         throw new Error("Invalid repository type");

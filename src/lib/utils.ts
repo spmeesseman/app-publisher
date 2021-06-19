@@ -378,7 +378,7 @@ export function existsInArray(arr: any[], item: any)
 
 export async function runScripts({options, logger}, scriptType: string, scripts: string[], throwOnError = false, runInTestMode = false)
 {
-    if (scripts.length > 0) // && !$script:BuildCmdsRun.Contains($ScriptType))
+    if (scripts && scripts.length > 0) // && !$script:BuildCmdsRun.Contains($ScriptType))
     {   //
         // Run custom script
         //
