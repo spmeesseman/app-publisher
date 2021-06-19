@@ -6,7 +6,9 @@ import { setMakefileVersion } from "./makefile";
 import { setMantisBtVersion } from "./mantisbt";
 import { setPackageJson } from "./npm";
 import { setPomVersion } from "./pom";
-export { setVersions };
+
+
+export = setVersions;
 
 
 async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}): Promise<void>

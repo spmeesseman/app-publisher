@@ -26,7 +26,7 @@ import getError = require("./lib/get-error");
 import { template, pick, isString } from "lodash";
 import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
 import { sendNotificationEmail } from "./lib/email";
-import { createSectionFromCommits } from "./lib/changelog-file";
+import { createSectionFromCommits, doChangelogFileEdit, doHistoryFileEdit } from "./lib/changelog-file";
 import { fetch, verifyAuth, getHead, tag, push } from "./lib/repo";
 import { EOL } from "os";
 const envCi = require("@spmeesseman/env-ci");
@@ -225,7 +225,7 @@ async function runNodeScript(context: any, plugins: any)
     //
     // Validate options / cmd line arguments
     //
-    if (!validateOptions(context))
+    if (!(await validateOptions(context)))
     {
         return false;
     }
@@ -337,11 +337,32 @@ async function runNodeScript(context: any, plugins: any)
     // await plugins.prepare(context);
 
     //
+    // Changelog / history file
     //
-    //
-    if ($RUN -eq 1 -and $REPUBLISH.Count -eq 0 -and (!$TASKMODE -or $TASKTOUCHVERSIONS))
+    const doChangelog = options.taskChangelog || options.taskChangelogView || options.taskChangelogFile || !options.taskMode;
+    logger.log("Do cl / history file : " + doChangelog);
+    if (options.historyFile && doChangelog)
     {
-        setVersions(context);
+        doHistoryFileEdit(context);
+    }
+    if (options.changelogFile && doChangelog)
+    {
+        doChangelogFileEdit(context);
+    }
+
+    //
+    // Pre-build scipts (.publishrc)
+    //
+    if (!options.taskMode) {
+        await util.runScripts({ options, logger }, "preBuild", options.preBuildCommand, true, true);
+    }
+
+    //
+    // Update relevant files with new version #
+    //
+    if (!options.taskMode || options.taskTouchVersions)
+    {
+        await setVersions(context);
     }
 
     //

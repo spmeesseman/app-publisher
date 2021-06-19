@@ -1,7 +1,7 @@
 
 import * as path from "path";
 import { existsSync, mkdirSync } from "fs";
-import { isString } from "./utils";
+import { createDir, isString, pathExists } from "./utils";
 
 export = validateOptions;
 
@@ -12,7 +12,7 @@ function error(logger: any, err: string)
     return false;
 }
 
-function validateOptions({cwd, env, logger, options}): boolean
+async function validateOptions({cwd, env, logger, options}): Promise<boolean>
 {
     const environ = { ...process.env, ...env };
 
@@ -216,6 +216,16 @@ function validateOptions({cwd, env, logger, options}): boolean
             return false;
         }
         process.chdir(path1);
+    }
+
+    //
+    // Create dist directory if it doesnt exist
+    //
+    if (options.pathToDist && !(await pathExists(options.pathToDist)))
+    {
+        logger.log("Creating dist directory");
+        await createDir(options.pathToDist);
+        // VcChangelistAddRemove "$PATHTODIST";
     }
 
     //
