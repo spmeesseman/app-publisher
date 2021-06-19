@@ -17,8 +17,8 @@ export = getGitAuthUrl;
 
 /**
  * Determine the the git repository URL to use to push, either:
- * - The `repositoryUrl` as is if allowed to push
- * - The `repositoryUrl` converted to `https` or `http` with Basic Authentication
+ * - The `repo` as is if allowed to push
+ * - The `repo` converted to `https` or `http` with Basic Authentication
  *
  * In addition, expand shortcut URLs (`owner/repo` => `https://github.com/owner/repo.git`) and transform `git+https` / `git+http` URLs to `https` / `http`.
  *
@@ -26,26 +26,26 @@ export = getGitAuthUrl;
  *
  * @return {String} The formatted Git repository URL.
  */
-async function getGitAuthUrl({ cwd, env, options: { repositoryUrl, branch } })
+async function getGitAuthUrl({ cwd, env, options: { repo, branch } })
 {
-    const info = hostedGitInfo.fromUrl(repositoryUrl, { noGitPlus: true });
-    const { protocol, ...parsed } = parse(repositoryUrl);
+    const info = hostedGitInfo.fromUrl(repo, { noGitPlus: true });
+    const { protocol, ...parsed } = parse(repo);
 
     if (info && info.getDefaultRepresentation() === "shortcut")
     {
         // Expand shorthand URLs (such as `owner/repo` or `gitlab:owner/repo`)
-        repositoryUrl = info.https();
+        repo = info.https();
     } 
     else if (protocol && protocol.includes("http"))
     {
         // Replace `git+https` and `git+http` with `https` or `http`
-        repositoryUrl = format({ ...parsed, protocol: protocol.includes("https") ? "https" : "http", href: null });
+        repo = format({ ...parsed, protocol: protocol.includes("https") ? "https" : "http", href: null });
     }
 
     // Test if push is allowed without transforming the URL (e.g. is ssh keys are set up)
     try
     {
-        await verifyAuth(repositoryUrl, branch, { cwd, env });
+        await verifyAuth(repo, branch, { cwd, env });
     }
     catch (error)
     {
@@ -54,15 +54,15 @@ async function getGitAuthUrl({ cwd, env, options: { repositoryUrl, branch } })
 
         if (gitCredentials)
         {
-            // If credentials are set via environment variables, convert the URL to http/https and add basic auth, otherwise return `repositoryUrl` as is
-            const [match, auth, host, path ] = /^(?!.+:\/\/)(?:(.*)@)?(.*?):(.*)$/.exec(repositoryUrl) || [undefined, undefined, undefined, undefined];
+            // If credentials are set via environment variables, convert the URL to http/https and add basic auth, otherwise return `repo` as is
+            const [match, auth, host, path ] = /^(?!.+:\/\/)(?:(.*)@)?(.*?):(.*)$/.exec(repo) || [undefined, undefined, undefined, undefined];
             return format({
-                ...parse(match ? `ssh://${auth ? `${auth}@` : ""}${host}/${path}` : repositoryUrl),
+                ...parse(match ? `ssh://${auth ? `${auth}@` : ""}${host}/${path}` : repo),
                 auth: gitCredentials,
                 protocol: protocol && /http[^s]/.test(protocol) ? "http" : "https",
             });
         }
     }
 
-    return repositoryUrl;
+    return repo;
 }

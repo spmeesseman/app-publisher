@@ -1,8 +1,5 @@
 
-import { visit, JSONVisitor } from "jsonc-parser";
 import * as util from "./lib/utils";
-import * as fs from "fs";
-import * as path from "path";
 import gradient from "gradient-string";
 import chalk from "chalk";
 import * as child_process from "child_process";
@@ -20,7 +17,7 @@ import getCommits = require("./lib/get-commits");
 import getCurrentVersion = require("./lib/get-current-version");
 import getNextVersion = require("./lib/get-next-version");
 import getLastRelease = require("./lib/get-last-release");
-import { sendEmail } from "./lib/email";
+import { sendNotificationEmail } from "./lib/email";
 import getGitAuthUrl = require("./lib/get-git-auth-url");
 import getLogger = require("./lib/get-logger");
 import validateOptions = require("./lib/validate-options");
@@ -168,6 +165,18 @@ async function run(context: any, plugins: any): Promise<boolean>
         logger.log(JSON.stringify(options, undefined, 3));
     }
 
+    //
+    // If we're running a task only, then set the logger to empty methods
+    //
+    if (options.taskModeStdOut) {
+        context.logger = {
+            log: () => { /* */ },
+            warn: () => { /* */ },
+            success: () => { /* */ },
+            error: () => { /* */ }
+        };
+    }
+
     if (options.node)
     {
         await runNodeScript(context, plugins);
@@ -191,9 +200,9 @@ async function runNodeScript(context: any, plugins: any)
     }
 
     //
-    // If a task is processed, we'll be done
+    // If a l1 task is processed, we'll be done
     //
-    const taskDone = await processTask(context);
+    let taskDone = await processTasks1(context);
     if (taskDone !== false) {
         return taskDone;
     }
@@ -207,57 +216,29 @@ async function runNodeScript(context: any, plugins: any)
     //
     await verify(context);
 
+    if (options.repoType === "git" && !options.repo)
+    {
+        options.repo = await getGitAuthUrl(context);
+    }
+
     //
     // Authentication
     //
-    if (options.repoType === "git")
-    {
-        options.repositoryUrl = await getGitAuthUrl(context);
-
-        try {
-            try {
-                await verifyAuth(options.repositoryUrl, options.branch, { cwd, env }, "git");
-            }
-            catch (error)
-            {
-                if (!(await isBranchUpToDate(options.branch, context, options)))
-                {
-                    logger.log(
-                        `The local branch ${
-                        options.branch
-                        } is behind the remote one, can't publish a new version.`
-                    );
-                    return;
-                }
-
-                throw error;
-            }
-        }
-        catch (error)
-        {
-            logger.error(`The command "${error.cmd}" failed with the error message ${error.stderr}.`);
-            throw getError("EGITNOPERMISSION", { options });
-        }
-
-        logger.success(`Allowed to push to the Git repository`);
+    try {
+        await verifyAuth(context, { cwd, env });
     }
-    else
-    {
-        try {
-            await verifyAuth(options.repositoryUrl, options.branch, { cwd, env }, "svn");
-        }
-        catch (error) {
-            throw error;
-        }
-        logger.success(`Allowed to push to the Subversion repository`);
+    catch (error) {
+        throw error;
     }
+    logger.success(`Allowed to push to the Subversion repository`);
+
 
     // await plugins.verifyConditions(context);
 
     //
     // Fetch tags (git only)
     //
-    await fetch(options.repo, { cwd, env }, options.repoType);
+    await fetch(options, { cwd, env });
 
     //
     // Populate context with last release info
@@ -273,7 +254,7 @@ async function runNodeScript(context: any, plugins: any)
     // Populate next release info
     //
     const nextRelease = {
-        type: await getReleaseLevel(context),
+        level: await getReleaseLevel(context),
         head: await getHead({ cwd, env }),
         version: undefined,
         tag: undefined,
@@ -284,7 +265,7 @@ async function runNodeScript(context: any, plugins: any)
     // If there wer eno commits that set the release level to 'patch', 'minor', or 'major',
     // then we're done
     //
-    if (!nextRelease.type)
+    if (!nextRelease.level)
     {
         logger.log("There are no relevant changes, so no new version is released.");
         return false;
@@ -320,6 +301,14 @@ async function runNodeScript(context: any, plugins: any)
     nextRelease.notes = createSectionFromCommits(context);
 
     // await plugins.prepare(context);
+
+    //
+    // If a l1 task is processed, we'll be done
+    //
+    taskDone = await processTasks2(context);
+    if (taskDone !== false) {
+        return taskDone;
+    }
 
     //
     // Tag
@@ -362,14 +351,46 @@ async function runNodeScript(context: any, plugins: any)
 }
 
 
-async function processTask({ options, logger }): Promise<boolean>
+async function processTasks1(context: any): Promise<boolean>
 {
+    const options = context.options;
+
     if (options.taskVersionCurrent)
     {
         const versionInfo = getCurrentVersion(context);
         console.log(versionInfo.version);
         return true;
     }
+    else if (options.taskEmail)
+    {
+        sendNotificationEmail(context);
+        return true;
+    }
+
+    // if (szOutputFile) {
+    //     writeFileSync(szOutputFile, szFinalContents);
+    //     logger.log("   Saved release history output to $szOutputFile");
+    // }
+
+    return false;
+}
+
+
+async function processTasks2(context: any): Promise<boolean>
+{
+    const options = context.options;
+
+    if (options.taskVersionNext)
+    {
+        console.log(context.nextRelease.version);
+        return true;
+    }
+
+    // if (szOutputFile) {
+    //     writeFileSync(szOutputFile, szFinalContents);
+    //     logger.log("   Saved release history output to $szOutputFile");
+    // }
+
     return false;
 }
 
@@ -603,8 +624,10 @@ export = async (opts = {}, { cwd = process.cwd(), env = process.env, stdout = un
         { silent: false, streams: [process.stdout, process.stderr, stdout, stderr].filter(Boolean) },
         hideSensitive(env)
     );
+
     const context = { cwd, env, stdout: stdout || process.stdout, stderr: stderr || process.stderr, logger: undefined, options: undefined };
     context.logger = getLogger(context);
+
     try
     {
         const { plugins, options } = await getConfig(context, opts);
@@ -614,12 +637,14 @@ export = async (opts = {}, { cwd = process.cwd(), env = process.env, stdout = un
             const result = await run(context, plugins);
             unhook();
             return result;
-        } catch (error)
+        }
+        catch (error)
         {
             await callFail(context, plugins, error);
             throw error;
         }
-    } catch (error)
+    }
+    catch (error)
     {
         logErrors(context, error);
         unhook();

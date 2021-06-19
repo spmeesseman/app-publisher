@@ -45,12 +45,12 @@ Please make sure to add the \`repoType\` to the [app-publisher configuration] ($
         message: "The push permission to the Git repository is required.",
         details: `**app-publisher** cannot push the version tag to the branch \`${
             options.branch
-            }\` on remote Git repository with URL \`${options.repositoryUrl}\`.
+            }\` on remote Git repository with URL \`${options.repo}\`.
 
 Please refer to the [authentication configuration documentation](${linkify(
                 "docs/usage/ci-configuration.md#authentication"
-            )}) to configure the Git credentials on your CI environment and make sure the [repositoryUrl](${linkify(
-                "docs/usage/configuration.md#repositoryurl"
+            )}) to configure the Git credentials on your CI environment and make sure the [repo](${linkify(
+                "docs/usage/configuration.md#repo"
             )}) is configured with a [valid Git URL](https://git-scm.com/book/en/v2/Git-on-the-Server-The-Protocols).`,
     }),
 

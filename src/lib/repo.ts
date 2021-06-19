@@ -151,20 +151,20 @@ export async function isRefInHistory(ref: any, execaOpts: any, { repo, branch, r
 /**
  * Unshallow the git repository if necessary and fetch all the tags.
  *
- * @param {String} repositoryUrl The remote repository URL.
- * @param {Object} [execaOpts] Options to pass to `execa`.
+ * @param context context
+ * @param execaOpts execa options
  */
-export async function fetch(repositoryUrl: any, execaOpts: any, repoType = "git")
+export async function fetch({ repo, repoType }, execaOpts: any)
 {
     if (repoType === "git")
     {
         try
         {
-            await execa("git", ["fetch", "--unshallow", "--tags", repositoryUrl], execaOpts);
+            await execa("git", ["fetch", "--unshallow", "--tags", repo], execaOpts);
         }
         catch (error)
         {
-            await execa("git", ["fetch", "--tags", repositoryUrl], execaOpts);
+            await execa("git", ["fetch", "--tags", repo], execaOpts);
         }
     }
 }
@@ -232,7 +232,7 @@ export async function repoUrl(execaOpts: any, repoType = "git")
  *
  * @param {Object} [execaOpts] Options to pass to `execa`.
  *
- * @return {Boolean} `true` if the current working directory is in a git repository, falsy otherwise.
+ * @returns `true` if the current working directory is in a git repository, falsy otherwise.
  */
 export async function isGitRepo(execaOpts: { cwd: any; env: any; })
 {
@@ -249,9 +249,9 @@ export async function isGitRepo(execaOpts: { cwd: any; env: any; })
 /**
  * Test if the current working directory is a Git repository.
  *
- * @param {Object} [execaOpts] Options to pass to `execa`.
+ * @param execaOpts Options to pass to `execa`
  *
- * @return {Boolean} `true` if the current working directory is in a git repository, falsy otherwise.
+ * @return `true` if the current working directory is in a git repository, falsy otherwise.
  */
 export async function isSvnRepo(execaOpts: { cwd: any; env: any; })
 {
@@ -268,21 +268,47 @@ export async function isSvnRepo(execaOpts: { cwd: any; env: any; })
 /**
  * Verify the write access authorization to remote repository with push dry-run.
  *
- * @param {String} repositoryUrl The remote repository URL.
- * @param {String} branch The repositoru branch for which to verify write access.
- * @param {Object} [execaOpts] Options to pass to `execa`.
+ * @param context context
+ * @param execaOpts Options to pass to `execa`.
  *
  * @throws {Error} if not authorized to push.
  */
-export async function verifyAuth(repositoryUrl: any, branch: any, execaOpts: any, repoType = "git")
+export async function verifyAuth({ options, logger }, execaOpts: any)
 {
     try
     {
-        if (repoType === "git") {
-            await execa("git", ["push", "--dry-run", repositoryUrl, `HEAD:${branch}`], execaOpts);
+        if (options.repoType === "git") {
+            try {
+                await execa("git", ["push", "--dry-run", options.repo, `HEAD:${options.branch}`], execaOpts);
+            }
+            catch (error) {
+                if (!(await isBranchUpToDate(options.branch, context, options)))
+                {
+                    logger.log(
+                        `The local branch ${
+                        options.branch
+                        } is behind the remote one, can't publish a new version.`
+                    );
+                    return;
+                }
+                throw error;
+            }
         }
-        else if (repoType === "svn") {
-            await execa("svn", ["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
+        else if (options.repoType === "svn")
+        {
+            try {
+                await execa("svn", ["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
+            }
+            catch (error) {
+                if (!error.toString().includes("E195020")) { // Cannot merge into mixed-revision working copy
+                    logger.log(
+                        `The remote branch ${
+                        options.branch
+                        } is behind the local one, won't publish a new version.`
+                    );
+                    return;
+                }
+            }
         }
         else {
             throw new Error("Invalid repository type");
@@ -298,8 +324,8 @@ export async function verifyAuth(repositoryUrl: any, branch: any, execaOpts: any
 /**
  * Tag the commit head on the local repository.
  *
- * @param {String} tagName The name of the tag.
- * @param {Object} [execaOpts] Options to pass to `execa`.
+ * @param tagName The name of the tag.
+ * @param execaOpts Options to pass to `execa`.
  *
  * @throws {Error} if the tag creation failed.
  */
@@ -322,21 +348,21 @@ export async function tag(tagName: any, execaOpts: any, repoType = "git")
 /**
  * Push to the remote repository.
  *
- * @param {String} repositoryUrl The remote repository URL.
+ * @param {String} repo The remote repository URL.
  * @param {Object} [execaOpts] Options to pass to `execa`.
  *
  * @throws {Error} if the push failed.
  */
-export async function push(repositoryUrl: any, execaOpts: any, repoType = "git")
+export async function push(repo: any, execaOpts: any, repoType = "git")
 {
     if (repoType === "git") {
-        await execa("git", ["push", "--tags", repositoryUrl], execaOpts);
+        await execa("git", ["push", "--tags", repo], execaOpts);
     }
     else if (repoType === "svn") {
         //
         // TODO
         //
-        await execa("svn", ["push", "--tags", repositoryUrl], execaOpts);
+        await execa("svn", ["push", "--tags", repo], execaOpts);
     }
     else {
         throw new Error("Invalid repository type");

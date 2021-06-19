@@ -3,11 +3,11 @@ import { FIRST_RELEASE } from "./definitions/constants";
 
 export = getNextVersion;
 
-function getNextVersion({nextRelease: {type}, lastRelease, logger})
+function getNextVersion({nextRelease: {level}, lastRelease, logger})
 {
     let version;
     if (lastRelease.version) {
-        version = semver.inc(lastRelease.version, type);
+        version = semver.inc(lastRelease.version, level);
         logger.log(`The next release version is ${version}`);
     }
     else {

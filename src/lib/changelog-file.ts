@@ -6,7 +6,7 @@ const execa = require("execa");
 import { EOL } from "os";
 
 
-export function containsValidSubject(options, line: string): boolean
+function containsValidSubject(options, line: string): boolean
 {
     let valid = false;
 
@@ -38,10 +38,14 @@ export function containsValidSubject(options, line: string): boolean
 }
 
 
+/**
+ * Gets version from changelog file by looking at the 'title' of the lastentry
+ * @param param0 context
+ */
 export function getVersion({ options, commits, logger })
 {
-    const contents = getHistory({ options, commits, logger }, "", 1);
-    const index1 = contents.indexOf(">$options.versionText&nbsp;", 0) + options.versionText.length + 7;
+    const contents = getHistory({ options, commits, logger, lastRelease: {} }, 1);
+    const index1 = contents.indexOf(`>${options.versionText}&nbsp;`, 0) + options.versionText.length + 7;
     const index2 = contents.indexOf("<br>", index1);
     const curversion = (contents as string).substring(index1, index2 - index1);
     logger.log(`   Found version ${curversion}`);
@@ -49,6 +53,10 @@ export function getVersion({ options, commits, logger })
 }
 
 
+/**
+ * Creates a changelog entry for the history/changelog file using the commits list
+ * @param param0 context
+ */
 export function createSectionFromCommits({ options, commits, logger })
 {
     let comments = "";
@@ -163,7 +171,7 @@ export function createSectionFromCommits({ options, commits, logger })
                 {
                     const property = keys[0],
                             value: any = keys[1];
-                    msg = msg.replace(value.name + ": ", value.formatText + "${EOL}${EOL}");
+                    msg = msg.replace(value.name + ": ", value.formatText + EOL + EOL);
                     msg = msg.replace(value.name + "(", value.formatText + "(");
                 });
             }
@@ -455,7 +463,7 @@ export function createSectionFromCommits({ options, commits, logger })
 }
 
 
-export function getEmailHeader(options: any, version: string)
+function getEmailHeader(options: any, version: string)
 {
     let szHrefs = "";
 
@@ -529,7 +537,7 @@ export function getEmailHeader(options: any, version: string)
 }
 
 
-export function getChangelogTypes(changeLog: string)
+function getChangelogTypes(changeLog: string)
 {
     const changelogTypes = [];
 
@@ -564,7 +572,7 @@ export function getChangelogTypes(changeLog: string)
 }
 
 
-export async function getChangelog({ options, commits, logger }, version: string, numsections: number, listOnly: boolean | string = false, out = "", includeEmailHdr = false)
+export async function getChangelog({ options, commits, logger, lastRelease }, numsections: number, listOnly: boolean | string = false, includeEmailHdr = false)
 {
     //
     // Make sure user entered correct cmd line params
@@ -581,7 +589,6 @@ export async function getChangelog({ options, commits, logger }, version: string
     logger.log("Extract from changelog markdown file");
     logger.log(`   Input File         : '${options.changelogFile}'`);
     logger.log(`   Num Sections       : '${numsections}'`);
-    logger.log(`   Version            : '${version}'`);
     logger.log(`   Version string     : '${options.versionText}'`);
     logger.log(`   List only          : '${listOnly}'`);
     logger.log(`   Target Location    : '${options.distReleasePath}'`);
@@ -627,12 +634,12 @@ export async function getChangelog({ options, commits, logger }, version: string
     //
     let index1 = 0, index2 = 0;
 
-    index1 = contents.indexOf(`## ${options.versionText} ${version}`);
+    index1 = contents.indexOf(`## ${options.versionText} ${lastRelease.version}`);
     if (index1 === -1) {
         logger.log("Section could not be found, exit");
         throw new Error("165");
     }
-    index2 = contents.indexOf("//// $options.versionText ", index1 + 1);
+    index2 = contents.indexOf(`## ${options.versionText} `, index1 + 1);
     if (index2 === -1) {
         index2 = contents.length;
     }
@@ -647,8 +654,8 @@ export async function getChangelog({ options, commits, logger }, version: string
         const msgParts = [];
 
         contents = contents.replace(EOL, "<br>");
-        contents = contents.replace("`n", "<br>");
-        contents = contents.replace("`t", "&nbsp;&nbsp;&nbsp;&nbsp;");
+        contents = contents.replace("\n", "<br>");
+        contents = contents.replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
 
         typeParts.push(...getChangelogTypes(contents));
         if (typeParts.length === 0) {
@@ -718,20 +725,19 @@ export async function getChangelog({ options, commits, logger }, version: string
 
     if (includeEmailHdr === true)
     {
-        const szHrefs = getEmailHeader(options, version);
+        const szHrefs = getEmailHeader(options, lastRelease.version);
         contents = szHrefs + contents;
     }
 
-    logger.success("   Successful");
+    logger.success("Successful");
 
     return contents;
 }
 
 
-export function getHistory({ options, commits, logger }, version: string, numsections: number, listOnly: boolean | string = false, out = "", includeEmailHdr = false)
+export function getHistory({ options, commits, logger, lastRelease }, numsections: number, listOnly: boolean | string = false, includeEmailHdr = false)
 {
     const szInputFile = options.historyFile;
-    let szOutputFile = out;
     const iNumberOfDashesInVersionLine = 20;
     let szFinalContents = "";
     //
@@ -742,15 +748,9 @@ export function getHistory({ options, commits, logger }, version: string, numsec
         return szFinalContents;
     }
 
-    if (!szOutputFile) {
-        szOutputFile = "";
-    }
-
     logger.log("Extract from history.txt file");
     logger.log(`   Input File         : '${szInputFile}'`);
-    logger.log(`   Output File        : '${szOutputFile}'`);
     logger.log(`   Num Sections       : '${numsections}'`);
-    logger.log(`   Version            : '${version}'`);
     logger.log(`   Version string     : '${options.versionText}'`);
     logger.log(`   List only          : '${listOnly}'`);
     logger.log(`   Target Location    : '${options.distReleasePath}'`);
@@ -795,7 +795,7 @@ export function getHistory({ options, commits, logger }, version: string, numsec
     {
         // Get index of field name
         //
-        index1 = contents.lastIndexOf("$options.versionText ", index1);
+        index1 = contents.lastIndexOf(`${options.versionText} `, index1);
         //
         // make sure the field name was found
         //
@@ -805,7 +805,7 @@ export function getHistory({ options, commits, logger }, version: string, numsec
             throw new Error("170");
         }
 
-        if (contents[index1 - 1] !== "`n")
+        if (contents[index1 - 1] !== "\n")
         {
             index1--;
             continue;
@@ -814,7 +814,7 @@ export function getHistory({ options, commits, logger }, version: string, numsec
         // Check to make sure this is the beginning line, if it is then 2 lines underneath
         // will be a dashed line consisting of $NumberOfDashesInVersionLine dash characters
         //
-        index2 = contents.indexOf("`n", index1);
+        index2 = contents.indexOf("\n", index1);
         // make sure the newline was found
         if (index2 === -1)
         {
@@ -822,7 +822,7 @@ export function getHistory({ options, commits, logger }, version: string, numsec
             throw new Error("171");
         }
 
-        index2 = contents.indexOf("`n", index2 + 1);
+        index2 = contents.indexOf("\n", index2 + 1);
         //
         // Make sure the newline was found
         //
@@ -888,8 +888,7 @@ export function getHistory({ options, commits, logger }, version: string, numsec
     contents = "<font face=\"Courier New\">" + contents + "</font>";
 
     // index1 is our start index
-    // if version is empty, then the script is to return the version
-    if (version)
+    if (lastRelease.version)
     {
         logger.log("   Write header text to message");
 
@@ -1083,14 +1082,9 @@ export function getHistory({ options, commits, logger }, version: string, numsec
         }
     }
 
-    if (szOutputFile) {
-        writeFileSync(szOutputFile, szFinalContents);
-        logger.log("   Saved release history output to $szOutputFile");
-    }
-
     if (includeEmailHdr === true)
     {
-        const szHrefs = getEmailHeader(options, version);
+        const szHrefs = getEmailHeader(options, lastRelease.version);
         contents = szHrefs + contents;
     }
 
