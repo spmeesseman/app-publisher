@@ -53,7 +53,7 @@
 
 ## Description
 
-This package provides a multi-release publishing mechanism.
+This package provides a multi-release publishing mechanism similar to semantic-release using a more integrated approach, with support for **Subversion** as well as **Git**.  The code base for this package was started from the [semantic-release project](https://github.com/semantic-release/semantic-release), to give credit where it's due.
 
 The steps performed during an app-publisher run are:
 

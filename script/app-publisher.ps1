@@ -7002,7 +7002,7 @@ if ($MANTISBTRELEASE -eq "Y" -and (!$TASKMODE -or $TASKMANTISBT))
         $MantisChangelogParts = $ClsHistoryFile.getChangelog($PROJECTNAME, $ReleaseVersion, 1, $VERSIONTEXT, "parts", $CHANGELOGFILE, "", "", "", "", "", "", "", @(), "", $false, $IsAppPublisher)
     }
 
-    if ($null -eq $MantisChangelogParts -or $MantisChangelogParts.Length -eq 0 -or $MantisChangelogParts[0] -eq "error") {
+    if ($null -eq $MantisChangeLogParts -or $MantisChangeLogParts.Length -eq 0 -or $MantisChangeLogParts[0] -eq "error") {
         $MantisChangelog = $null
     }
     else {

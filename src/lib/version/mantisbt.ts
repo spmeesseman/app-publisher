@@ -1,10 +1,8 @@
 
-import { readFile } from "../utils";
-
-export = getMantisVersion;
+import { replaceInFile, readFile, editFile, pathExists } from "../utils";
 
 
-async function getMantisVersion({logger, options}): Promise<{ version: string, versionSystem: string, versionInfo: any }>
+export async function getMantisBtVersion({logger, options}): Promise<{ version: string, versionSystem: string, versionInfo: any }>
 {
     let version = "";
     logger.log("Retrieving MantisBT plugin version from $MANTISBTPLUGIN");
@@ -22,4 +20,19 @@ async function getMantisVersion({logger, options}): Promise<{ version: string, v
     }
 
     return { version, versionSystem: "semver", versionInfo: undefined };
+}
+
+
+export async function setMantisBtVersion({nextRelease, options})
+{
+    if (options.mantisBtPlugin && await pathExists(options.mantisBtPlugin))
+    {   //
+        // Replace version in defined main mantisbt plugin file
+        //
+        await replaceInFile(options.mantisBtPlugin, `this->version[ ]*[=][ ]*['"][0-9a-z.\-]+`, `this->version = '${nextRelease.version}`);
+        //
+        // Allow manual modifications to mantisbt main plugin file and commit to modified list
+        //
+        editFile({options}, options.mantisBtPlugin, false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
+    }
 }

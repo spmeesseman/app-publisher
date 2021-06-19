@@ -1,8 +1,10 @@
-import { isFunction } from "lodash";
+
+import * as fs from "fs";
+import * as path from "path";
 import hideSensitive = require("./hide-sensitive");
 import chalk from "chalk";
-import * as fs from "fs";
 import minimatch from "minimatch";
+import { isFunction } from "lodash";
 import { setOptions } from "marked";
 const execa = require("execa");
 const find = require("find-process");
@@ -45,6 +47,20 @@ export function camelCase(name: string, indexUpper: number)
 }
 
 
+export function checkExitCode(code: number, logger: any, throwOnError = false)
+{
+    if (code !== 0) {
+        logger.success("Exit Code 0");
+    }
+    else {
+        logger.error("Exit Code " + code);
+        if (throwOnError) {
+            throw new Error("Sub-process failed with exit code" + code);
+        }
+    }
+}
+
+
 export function editFile({ options }, editFile: string, seekToEnd = false, skipEdit = false, async = false)
 {
     if (editFile && fs.existsSync(editFile))
@@ -81,16 +97,16 @@ export function editFile({ options }, editFile: string, seekToEnd = false, skipE
 }
 
 
-export function getPsScriptLocation(scriptFile: string)
+export async function getPsScriptLocation(scriptFile: string)
 {
     let ps1Script;
-    if (pathExists(`.\\node_modules\\@spmeesseman\\${scriptFile}.ps1`)) {
+    if (await pathExists(`.\\node_modules\\@spmeesseman\\${scriptFile}.ps1`)) {
         ps1Script = `.\\node_modules\\@spmeesseman\\${scriptFile}\\script\\${scriptFile}.ps1`;
     }
-    else if (pathExists(`.\\node_modules\\@perryjohnson\\${scriptFile}`)) {
+    else if (await pathExists(`.\\node_modules\\@perryjohnson\\${scriptFile}`)) {
         ps1Script = `.\\node_modules\\@perryjohnson\\${scriptFile}\\script\\${scriptFile}.ps1`;
     }
-    else if (pathExists(`.\\script\\${scriptFile}.ps1`)) {
+    else if (await pathExists(`.\\script\\${scriptFile}.ps1`)) {
         ps1Script = `.\\script\\${scriptFile}.ps1`;
     }
     else
@@ -100,10 +116,10 @@ export function getPsScriptLocation(scriptFile: string)
             // Check global node_modules
             //
             const gModuleDir = process.env.CODE_HOME + "\\nodejs\\node_modules";
-            if (pathExists(gModuleDir + `\\@perryjohnson\\${scriptFile}\\script\\${scriptFile}.ps1`)) {
+            if (await pathExists(gModuleDir + `\\@perryjohnson\\${scriptFile}\\script\\${scriptFile}.ps1`)) {
                 ps1Script = gModuleDir + `\\@perryjohnson\\${scriptFile}\\script\\${scriptFile}.ps1`;
             }
-            else if (pathExists(gModuleDir + `\\@spmeesseman\\${scriptFile}\\script\\${scriptFile}.ps1`)) {
+            else if (await pathExists(gModuleDir + `\\@spmeesseman\\${scriptFile}\\script\\${scriptFile}.ps1`)) {
                 ps1Script = gModuleDir + `\\@spmeesseman\\${scriptFile}\\script\\${scriptFile}.ps1`;
             }
         }
@@ -111,7 +127,7 @@ export function getPsScriptLocation(scriptFile: string)
         //
         else if (process.env.APP_PUBLISHER_HOME)
         {
-            if (pathExists(process.env.APP_PUBLISHER_HOME + `\\${scriptFile}.ps1`)) {
+            if (await pathExists(process.env.APP_PUBLISHER_HOME + `\\${scriptFile}.ps1`)) {
                 ps1Script = `.\\${scriptFile}.ps1`;
             }
         }
@@ -192,19 +208,75 @@ export function timeout(ms: number)
 }
 
 
-export function pathExists(path: string)
+export async function copyFile(src: string, dst: string)
 {
-    try {
-        fs.accessSync(path);
-    } catch (err) {
-        return false;
+    if (!src.includes(path.delimiter)) {
+        src = path.join(process.cwd(), src);
     }
-    return true;
+    return new Promise<boolean>((resolve, reject) => {
+        fs.copyFile(src, dst, (err) => {
+            if (err) {
+                reject(err);
+            }
+            resolve(true);
+        });
+    });
+}
+
+
+export async function copyDir(src: string, dst: string)
+{
+    if (!src.includes(path.delimiter)) {
+        src = path.join(process.cwd(), src);
+    }
+    return new Promise<boolean>((resolve, reject) => {
+        fs.mkdir(dst, { mode: 0o777 }, (err) => {
+            if (err) {
+                reject(err);
+            }
+            resolve(true);
+        });
+    });
+}
+
+
+export async function createDir(dir: string)
+{
+    if (!dir.includes(path.delimiter)) {
+        dir = path.join(process.cwd(), dir);
+    }
+    return new Promise<boolean>((resolve, reject) => {
+        fs.mkdir(dir, { mode: 0o777 }, (err) => {
+            if (err) {
+                reject(err);
+            }
+            resolve(true);
+        });
+    });
+}
+
+
+export async function pathExists(file: string): Promise<boolean>
+{
+    if (!file.includes(path.delimiter)) {
+        file = path.join(process.cwd(), file);
+    }
+    return new Promise<boolean>((resolve, reject) => {
+        fs.access(file, (err) => {
+            if (err) {
+                reject(err);
+            }
+            resolve(true);
+        });
+    });
 }
 
 
 export async function readFile(file: string): Promise<string>
 {
+    if (!file.includes(path.delimiter)) {
+        file = path.join(process.cwd(), file);
+    }
     return new Promise<string>((resolve, reject) => {
         fs.readFile(file, (err, data) => {
             if (err) {
@@ -216,6 +288,12 @@ export async function readFile(file: string): Promise<string>
 }
 
 
+/**
+ * Overwrites file if it exists
+ *
+ * @param file The file path to write to
+ * @param data The data to write
+ */
 export async function writeFile(file: string, data: string): Promise<void>
 {
     return new Promise<void>((resolve, reject) => {
@@ -254,10 +332,18 @@ export function removeFromArray(arr: any[], item: any)
 }
 
 
-export async function replaceVersion(file: string, old: string, nu: string, caseSensitive = false)
+/**
+ * Replace text in a file, for use with version # replacement
+ *
+ * @param file The file
+ * @param old Text or regex pattern to replace
+ * @param nu Text to insert in place of 'old'
+ * @param caseSensitive `true` to make the replacement case sensitive
+ */
+export async function replaceInFile(file: string, old: string, nu: string, caseSensitive = false)
 {
     const content = (await readFile(file)).toString(),
-          regex = new RegExp(old, caseSensitive ? "" : "i");
+          regex = new RegExp(old, caseSensitive ? undefined : "i");
     let contentNew = "";
     if (!caseSensitive) {
         contentNew = content.replace(regex, nu);
@@ -287,6 +373,31 @@ export function existsInArray(arr: any[], item: any)
     }
 
     return exists;
+}
+
+
+export async function runScripts({options, logger}, scriptType: string, scripts: string[], throwOnError = false, runInTestMode = false)
+{
+    if (scripts.length > 0) // && !$script:BuildCmdsRun.Contains($ScriptType))
+    {   //
+        // Run custom script
+        //
+        logger.log("Running custom $ScriptType script(s)");
+
+        if (!options.dryRun || runInTestMode)
+        {
+            for (const script of scripts)
+            {
+                const proc = await execa.shell(script);
+                checkExitCode(proc.code, logger, throwOnError);
+            }
+        }
+        else {
+            logger.log("   Dry run, skipping script run");
+        }
+
+        // $script:BuildCmdsRun += $ScriptType
+    }
 }
 
 

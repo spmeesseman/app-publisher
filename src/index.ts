@@ -23,6 +23,7 @@ import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
 import { sendNotificationEmail } from "./lib/email";
 import { createSectionFromCommits } from "./lib/changelog-file";
 import { fetch, verifyAuth, getHead, tag, push } from "./lib/repo";
+import { EOL } from "os";
 const envCi = require("@spmeesseman/env-ci");
 const pkg = require("../package.json");
 
@@ -427,15 +428,47 @@ async function processTasks1(context: any): Promise<boolean>
  */
 async function processTasks2(context: any): Promise<boolean>
 {
-    const options = context.options;
+    const options = context.options,
+          logger = context.logger,
+          lastRelease = context.lastRelease,
+          nextRelease = context.nextRelease;
 
     if (options.taskVersionNext)
     {
         console.log(context.nextRelease.version);
         return true;
     }
+
     if (options.taskVersionInfo) {
-        console.log(context.lastRelease.version + "|" + context.nextRelease.version);
+        console.log(lastRelease.version + "|" + nextRelease.version);
+        return true;
+    }
+
+    if (options.taskCiEnvSet)
+    {
+        logger.log("Write CI environment to file 'ap.env'");
+        let fileContent = lastRelease.version + EOL + nextRelease.version + EOL;
+        if (options.historyFile) {
+            fileContent += (options.historyFile + EOL);
+        }
+        else if (options.changelogFile) {
+            fileContent += (options.changelogFile + EOL);
+        }
+        util.writeFile("ap.env", fileContent);
+        return true;
+    }
+
+    if (options.taskCiEnvInfo)
+    {
+        if (options.historyFile) {
+            console.log(`${lastRelease.version}|${nextRelease.version}|${options.historyFile}`);
+        }
+        else if (options.changelogFile) {
+            console.log(`${lastRelease.version}|${nextRelease.version}|${options.changelogFile}`);
+        }
+        else {
+            console.log(`${lastRelease.version}|${nextRelease.version}`);
+        }
         return true;
     }
 

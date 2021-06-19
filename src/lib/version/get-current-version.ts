@@ -1,11 +1,11 @@
 
 import * as path from "path";
 import { existsSync } from "fs";
-import getAppPublisherVersion = require("./get-app-publisher-version");
-import getDotNetVersion = require("./get-dotnet-version");
-import getIncrementalVersion = require("./get-incremental-version");
-import getMantisVersion = require("./get-mantis-version");
-import getPomVersion = require("./get-pom-version");
+import { getAppPublisherVersion } from "./app-publisher";
+import { getDotNetVersion } from "./dotnet";
+import { getIncrementalVersion } from "./incremental";
+import { getMantisBtVersion } from "./mantisbt";
+import { getPomVersion } from "./pom";
 
 
 export = getCurrentVersion;
@@ -47,7 +47,7 @@ async function getCurrentVersion(context: any):
     //
     else if (options.mantisBtPlugin && existsSync(path.join(cwd, options.mantisBtPlugin)))
     {
-        versionInfo = await getMantisVersion(context);
+        versionInfo = await getMantisBtVersion(context);
     }
     //
     // .NET with AssemblyInfo.cs file

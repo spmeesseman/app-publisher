@@ -41,7 +41,7 @@ function containsValidSubject(options, line: string): boolean
 
 /**
  * Gets version from changelog file by looking at the 'title' of the lastentry
- * @param param0 context
+ * @param context context
  */
 export async function getVersion({ options, logger })
 {
@@ -53,6 +53,121 @@ export async function getVersion({ options, logger })
     const curversion = (contents as string).substring(index1, index2 - index1);
     logger.log(`   Found version ${curversion}`);
     return curversion;
+}
+
+
+export async function createReleaseChangelog({ options, logger, lastRelease }, useFaIcons = true, includeStyling = true)
+{
+    let changeLog = "",
+        changeLogParts: string | any[];
+
+    if (options.historyFile)
+    {
+        logger.log("Converting history text to mantisbt release changelog html");
+        changeLogParts = getHistory({ options, logger, lastRelease }, 1, "parts");
+    }
+    else if (options.changelogFile)
+    {
+        logger.log("Converting changelog markdown to mantisbt release changelog html");
+        changeLogParts = await getChangelog({ options, logger, lastRelease }, 1, "parts");
+    }
+
+    if (!changeLogParts || changeLogParts.length === 0 || changeLogParts[0] === "error") {
+        return changeLog;
+    }
+
+    if (includeStyling === true)
+    {
+        changeLog += "<span><style type=\"text/css\" scoped>";
+        changeLog += ".changelog-table td { padding-top: 5px; padding-bottom: 5px; }";
+        changeLog += ".changelog-table tr { display: tr; border-collapse: separate; border-style: solid; border-color: rgb(211, 208, 208); border-width: 0px; border-spacing: 2px; border-bottom-width: 1px !important; }";
+        changeLog += "</style>";
+    }
+
+    changeLog += "<span class=\"changelog-table\">";
+    changeLog += "<table width=\"100%\" style=\"display:inline\">";
+
+    for (const commit of changeLogParts)
+    {
+        changeLog += "<tr>";
+        if (useFaIcons === true)
+        {
+            changeLog += "<td nowrap valign=\"top\" style=\"font-weight:bold;color:#5090c1\"><b>";
+            if (commit.subject.includes("Fix")) {
+                changeLog += "<i class=\"fa fa-bug\"></i> ";
+            }
+            else if (commit.subject.includes("Feature")) {
+                changeLog += "<i class=\"fa fa-plus\"></i> ";
+            }
+            else if (commit.subject.includes("Refactor")) {
+                changeLog += "<i class=\"fa fa-recycle\"></i> ";
+            }
+            else if (commit.subject.includes("Visual")) {
+                changeLog += "<i class=\"fa fa-eye\"></i> ";
+            }
+            else if (commit.subject.includes("Documentation")) {
+                changeLog += "<i class=\"fa fa-book\"></i> ";
+            }
+            else if (commit.subject.includes("Progress")) {
+                changeLog += "<i class=\"fa fa-tasks\"></i> ";
+            }
+            else if (commit.subject.includes("Build")) {
+                changeLog += "<i class=\"fa fa-cog\"></i> ";
+            }
+            else {
+                let iconSet = false;
+                if (options.commitMsgMap)
+                {
+                    Object.entries(options.commitMsgMap).forEach((keys) =>
+                    {
+                        const property = keys[0],
+                                value: any = keys[1];
+                        if (!iconSet && commit.subject.includes(value.formatText) && value.iconCls)
+                        {
+                            changeLog += "<i class=\"fa ";
+                            changeLog += value.iconCls;
+                            changeLog += "\"></i> ";
+                            iconSet = true;
+                        }
+                    });
+                }
+                if (!iconSet) {
+                    changeLog += "<i class=\"fa fa-asterisk\"></i> ";
+                }
+            }
+            changeLog += "</td><td nowrap valign=\"top\" style=\"font-weight:bold;padding-left:3px\">";
+        }
+        else {
+            changeLog += "<td nowrap valign=\"top\" style=\"font-weight:bold\"><b>";
+        }
+
+        changeLog += commit.subject;
+        if (commit.scope) {
+            changeLog += "</b></td><td nowrap valign=\"top\" style=\"padding-left:10px\">";
+            changeLog += commit.scope;
+        }
+        else {
+            changeLog += "</td><td>";
+        }
+        changeLog += "</td><td width=\"100%\" style=\"padding-left:15px\">";
+        changeLog += commit.message;
+        if (commit.tickets) {
+            changeLog += "</td><td nowrap align=\"right\" valign=\"top\" style=\"padding-left:15px;padding-right:10px\">";
+            changeLog += commit.tickets;
+        }
+        else {
+            changeLog += "</td><td>";
+        }
+        changeLog += "</td></tr>";
+    }
+
+    changeLog += "</table></span>";
+    if (includeStyling === true)
+    {
+        changeLog += "</span>";
+    }
+
+    return changeLog;
 }
 
 
@@ -1312,7 +1427,7 @@ export function doChangelogFileEdit({ options, commits, logger, lastRelease, nex
                 //
                 // FOr multi-line comments, do some special processing
                 //
-                if (tmpCommit.Contains(EOL))
+                if (tmpCommit.includes(EOL))
                 {
                     const tmpCommitParts = tmpCommit.Split(EOL);
                     tmpCommits += tmpCommitParts[0];
@@ -1348,7 +1463,7 @@ export function doChangelogFileEdit({ options, commits, logger, lastRelease, nex
             // Perform spell checking (currently the projectoxford has been taken down after the
             // Microsoft deal with the facial rec api)
             //
-            // tmpCommits = CheckSpelling tmpCommits $false
+            // tmpCommits = CheckSpelling tmpCommits false
             //
             // Write the formatted commits text to the top of options.changelogFile, but underneath the
             // changelog title
@@ -1388,6 +1503,7 @@ export function doChangelogFileEdit({ options, commits, logger, lastRelease, nex
         }
     }
 }
+
 
 export function doHistoryFileEdit({ options, commits, logger, lastRelease, nextRelease, env })
 {

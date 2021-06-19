@@ -1,10 +1,8 @@
 
-import { readFileSync, existsSync } from "fs";
-import { replaceVersion, readFile, editFile } from "../utils";
-export = getPomVersion;
+import { pathExists, replaceInFile, readFile, editFile } from "../utils";
 
 
-async function getPomVersion({logger}): Promise<{ version: string, versionSystem: string, versionInfo: any }>
+export async function getPomVersion({logger}): Promise<{ version: string, versionSystem: string, versionInfo: any }>
 {
     //
     // POM can be a preporty replacement version within the file itself:
@@ -59,12 +57,12 @@ async function getPomVersion({logger}): Promise<{ version: string, versionSystem
 }
 
 
-async function setPomVersion({nextRelease, options})
+export async function setPomVersion({nextRelease, options})
 {
-    if (nextRelease.versionInfo.length === 2 && existsSync("pom.xml"))
+    if (nextRelease.versionInfo.length === 2 && await pathExists("pom.xml"))
     {
         const mavenTag = nextRelease.versionInfo;
-        replaceVersion("pom.xml", `<${mavenTag}>[0-9a-z.\-]+</${mavenTag}>`, `<${mavenTag}>${nextRelease.version}</${mavenTag}`);
+        await replaceInFile("pom.xml", `<${mavenTag}>[0-9a-z.\-]+</${mavenTag}>`, `<${mavenTag}>${nextRelease.version}</${mavenTag}`);
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
