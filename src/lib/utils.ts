@@ -203,7 +203,7 @@ export function pathExists(path: string)
 }
 
 
-export async function readFile(file: string): Promise<string>
+export async function readFile(file: string): Promise<string | Error>
 {
     return new Promise<string>((resolve, reject) => {
         fs.readFile(file, (err, data) => {
@@ -211,6 +211,19 @@ export async function readFile(file: string): Promise<string>
                 reject(err);
             }
             resolve(data.toString());
+        });
+    });
+}
+
+
+export async function writeFile(file: string, data: string): Promise<void | Error>
+{
+    return new Promise<void>((resolve, reject) => {
+        fs.writeFile(file, data, (err) => {
+            if (err) {
+                reject(err);
+            }
+            resolve();
         });
     });
 }
@@ -238,6 +251,26 @@ export function removeFromArray(arr: any[], item: any)
     if (idx2 !== -1 && idx2 < arr.length) {
         arr.splice(idx2, 1);
     }
+}
+
+
+export async function replaceVersion(file: string, old: string, nu: string, caseSensitive = false)
+{
+    const content = (await readFile(file)).toString(),
+          regex = new RegExp(old, caseSensitive ? "" : "i");
+    let contentNew = "";
+    if (!caseSensitive) {
+        contentNew = content.replace(regex, nu);
+    }
+    else {
+        contentNew = content.replace(regex, nu);
+    }
+    if (content !== contentNew)
+    {
+        await writeFile(file, contentNew);
+        timeout(500);
+    }
+    return content !== contentNew;
 }
 
 

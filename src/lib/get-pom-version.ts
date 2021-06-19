@@ -1,10 +1,10 @@
 
-import { readFileSync } from "fs";
-
+import { readFileSync, existsSync } from "fs";
+import { replaceVersion, readFile, editFile } from "./utils";
 export = getPomVersion;
 
 
-function getPomVersion({logger}): { version: string, versionSystem: string, versionInfo: any }
+async function getPomVersion({logger}): Promise<{ version: string, versionSystem: string, versionInfo: any }>
 {
     //
     // POM can be a preporty replacement version within the file itself:
@@ -23,8 +23,8 @@ function getPomVersion({logger}): { version: string, versionSystem: string, vers
 
     logger.log("Retrieving Maven plugin version from $AssemblyInfoLocation");
 
-    const fileContent = readFileSync("pom.xml").toString(),
-            regexp = new RegExp("\\$\\{(.+?)\\}(?=\<\\/version|\\$\\{\\w+\\})", "gm");
+    const fileContent = (await readFile("pom.xml")).toString(),
+          regexp = new RegExp("\\$\\{(.+?)\\}(?=\<\\/version|\\$\\{\\w+\\})", "gm");
 
     let match: RegExpExecArray;
     while ((match = regexp.exec(fileContent)) !== null)
@@ -56,4 +56,18 @@ function getPomVersion({logger}): { version: string, versionSystem: string, vers
     }
 
     return { version, versionSystem: "semver", versionInfo: mavenVersionInfo };
+}
+
+
+async function setPomVersion({nextRelease, options})
+{
+    if (nextRelease.versionInfo.length === 2 && existsSync("pom.xml"))
+    {
+        const mavenTag = nextRelease.versionInfo;
+        replaceVersion("pom.xml", `<${mavenTag}>[0-9a-z.\-]+</${mavenTag}>`, `<${mavenTag}>${nextRelease.version}</${mavenTag}`);
+        //
+        // Allow manual modifications to mantisbt main plugin file and commit to modified list
+        //
+        editFile({options}, "pom.xml", false, (options.skipVersionEdits === " Y" || options.taskTouchVersions);
+    }
 }

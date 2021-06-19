@@ -2386,7 +2386,7 @@ function Set-MavenPomBuild($mavenTag)
 {
     if ($MavenTags.Length -eq 2 -and (Test-Path("pom.xml")))
     {
-        ReplaceVersion "pom.xml" "<$MmvenTag>$CURRENTVERSION</$mavenTag>" "<$mavenTag>$VERSION</$mavenTag>"
+        ReplaceVersion "pom.xml" "<$mavenTag>$CURRENTVERSION</$mavenTag>" "<$mavenTag>$VERSION</$mavenTag>"
         #
         # Allow manual modifications to mantisbt main plugin file and commit to modified list
         #
