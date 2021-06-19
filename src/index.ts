@@ -460,40 +460,7 @@ async function runPowershellScript(options: any, logger: any)
     //     3. Global node_modules
     //     4. Windows install
     //
-    let ps1Script;
-    if (util.pathExists(".\\node_modules\\@spmeesseman\\app-publisher")) {
-        ps1Script = ".\\node_modules\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1";
-    }
-    else if (util.pathExists(".\\node_modules\\@perryjohnson\\app-publisher")) {
-        ps1Script = ".\\node_modules\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1";
-    }
-    else if (util.pathExists(".\\script\\app-publisher.ps1")) {
-        ps1Script = ".\\script\\app-publisher.ps1";
-    }
-    else
-    {
-        if (process.env.CODE_HOME)
-        {
-            // Check global node_modules
-            //
-            const gModuleDir = process.env.CODE_HOME + "\\nodejs\\node_modules";
-            if (util.pathExists(gModuleDir + "\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1")) {
-                ps1Script = gModuleDir + "\\@perryjohnson\\app-publisher\\script\\app-publisher.ps1";
-            }
-            else if (util.pathExists(gModuleDir + "\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1")) {
-                ps1Script = gModuleDir + "\\@spmeesseman\\app-publisher\\script\\app-publisher.ps1";
-            }
-        }
-        // Check windows install
-        //
-        else if (process.env.APP_PUBLISHER_HOME)
-        {
-            if (util.pathExists(process.env.APP_PUBLISHER_HOME + "\\app-publisher.ps1")) {
-                ps1Script = ".\\app-publisher.ps1";
-            }
-        }
-    }
-
+    const ps1Script = util.getPsScriptLocation("app-publisher");
     if (!ps1Script) {
         logger.error("Could not find powershell script app-publisher.ps1");
         return;

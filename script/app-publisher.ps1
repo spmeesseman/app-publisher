@@ -61,7 +61,7 @@ class Vc
 
         $TagPre = "v"
         if (![string]::IsNullOrEmpty($TagPrefix) -and $TagPrefix -ne ".") {
-            $TagPre = "$TagPrefix-v"
+            $TagPre = $TagPrefix
         }
 
         LogMessage "   Repo type      :  $RepoType"

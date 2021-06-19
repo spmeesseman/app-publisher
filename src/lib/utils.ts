@@ -3,6 +3,10 @@ import hideSensitive = require("./hide-sensitive");
 import chalk from "chalk";
 import * as fs from "fs";
 import minimatch from "minimatch";
+import { setOptions } from "marked";
+const execa = require("execa");
+const find = require("find-process");
+
 
 const logValueWhiteSpace = 40;
 
@@ -38,6 +42,82 @@ export function camelCase(name: string, indexUpper: number)
             return index !== indexUpper ? letter.toLowerCase() : letter.toUpperCase();
         })
         .replace(/[\s\-]+/g, "");
+}
+
+
+export function editFile({ options }, editFile: string, seekToEnd = false, skipEdit = false, async = false)
+{
+    if (editFile && fs.existsSync(editFile))
+    {
+        if (skipEdit && options.versionFilesEditAlways.includes(editFile))
+        {
+            skipEdit = false;
+        }
+
+        //
+        // publishrc can specify a file should be scrolled to bottom
+        //
+        if (options.versionFilesScrollDown.includes(editFile))
+        {
+            seekToEnd = true;
+        }
+
+        if (!skipEdit && options.textEditor)
+        {   //
+            // Start Notepad process ro edit specified file
+            //
+            if (process.platform === "win32") {
+                const ps1Script = getPsScriptLocation("edit-file");
+                execa.sync("powershell.exe",
+                            [`${ps1Script} '${editFile}' '${options.textEditor}' ${seekToEnd} ${async}`],
+                            { stdio: ["pipe", "pipe", "pipe"], env: process.env}
+                           );
+            }
+            else {
+                execa.sync(options.textEditor, [ editFile ]);
+            }
+        }
+    }
+}
+
+
+export function getPsScriptLocation(scriptFile: string)
+{
+    let ps1Script;
+    if (pathExists(`.\\node_modules\\@spmeesseman\\${scriptFile}.ps1`)) {
+        ps1Script = `.\\node_modules\\@spmeesseman\\${scriptFile}\\script\\${scriptFile}.ps1`;
+    }
+    else if (pathExists(`.\\node_modules\\@perryjohnson\\${scriptFile}`)) {
+        ps1Script = `.\\node_modules\\@perryjohnson\\${scriptFile}\\script\\${scriptFile}.ps1`;
+    }
+    else if (pathExists(`.\\script\\${scriptFile}.ps1`)) {
+        ps1Script = `.\\script\\${scriptFile}.ps1`;
+    }
+    else
+    {
+        if (process.env.CODE_HOME)
+        {
+            // Check global node_modules
+            //
+            const gModuleDir = process.env.CODE_HOME + "\\nodejs\\node_modules";
+            if (pathExists(gModuleDir + `\\@perryjohnson\\${scriptFile}\\script\\${scriptFile}.ps1`)) {
+                ps1Script = gModuleDir + `\\@perryjohnson\\${scriptFile}\\script\\${scriptFile}.ps1`;
+            }
+            else if (pathExists(gModuleDir + `\\@spmeesseman\\${scriptFile}\\script\\${scriptFile}.ps1`)) {
+                ps1Script = gModuleDir + `\\@spmeesseman\\${scriptFile}\\script\\${scriptFile}.ps1`;
+            }
+        }
+        // Check windows install
+        //
+        else if (process.env.APP_PUBLISHER_HOME)
+        {
+            if (pathExists(process.env.APP_PUBLISHER_HOME + `\\${scriptFile}.ps1`)) {
+                ps1Script = `.\\${scriptFile}.ps1`;
+            }
+        }
+    }
+
+    return ps1Script;
 }
 
 

@@ -1,6 +1,6 @@
 
-import { properCase, isString } from "./utils";
-import { existsSync, readFileSync, unlink, writeFileSync } from "fs";
+import { properCase, isString, editFile } from "./utils";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 import * as path from "path";
 const execa = require("execa");
 import { EOL } from "os";
@@ -457,7 +457,7 @@ export function createSectionFromCommits({ options, commits, logger })
     // Perform spell checking (currently the projectoxford has been taken down after the
     // Microsoft deal with the facial rec api)
     //
-    // comments = CheckSpelling comments $false
+    // comments = CheckSpelling comments false
 
     return comments;
 }
@@ -721,7 +721,7 @@ export async function getChangelog({ options, commits, logger, lastRelease }, nu
     contents = contents.replace(EOL, "\n");
     writeFileSync(clFile, contents);
     contents = await execa.stdout("marked", ["--breaks", "--gfm", "--file", clFile]);
-    unlink(clFile, () => { /* */ });
+    unlinkSync(clFile);
 
     if (includeEmailHdr === true)
     {
@@ -1054,7 +1054,7 @@ export function getHistory({ options, commits, logger, lastRelease }, numsection
         //
         if (numsections > 1)
         {
-            logger.log("   Re-ordering " + numsections + " sections newest to oldest");
+            logger.log("   Re||dering " + numsections + " sections newest to oldest");
 
             const sections = [];
 
@@ -1091,4 +1091,175 @@ export function getHistory({ options, commits, logger, lastRelease }, numsection
     logger.success("   Successful");
 
     return [ szFinalContents ];
+}
+
+
+function getFormattedDate()
+{
+    const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+
+    let fmtDate = "";
+    const date = new Date(),
+          month = monthNames[date.getMonth()],
+          year = date.getFullYear();
+    let day = date.getDay().toString();
+
+    if (day === "11" || day === "12" || day === "13")
+    {
+        day = `${day}th`;
+    }
+    else
+    {
+        switch (day[day.length - 1])
+        {
+            case "1": day = `${day}st`; break;
+            case "2": day = `${day}nd`; break;
+            case "3": day = `${day}rd`; break;
+            default: day = `${day}th`; break;
+        }
+    }
+    fmtDate = `${month} ${day}, ${year}`;
+    return fmtDate;
+}
+
+
+export function doHistoryFileEdit({ options, commits, logger, lastRelease, nextRelease, env })
+{
+    const fmtDate = getFormattedDate(),
+          doChangelog = options.taskChangelog || options.taskChangelogView || options.taskChangelogFile || !options.taskMode;
+
+    logger.log("Do cl / history file : " + doChangelog);
+
+    //
+    // Process options.historyFile
+    //
+    if (options.historyFile && doChangelog)
+    {
+        if (options.taskChangelogFile)
+        {
+            options.historyFile = options.taskChangelogFile;
+            if (existsSync(options.historyFile))
+            {
+                unlinkSync(options.historyFile);
+            }
+        }
+        else if (options.taskMode && !options.taskChangelog)
+        {
+            options.historyFile = path.join(env.Temp, `history.${nextRelease.version}.txt`);
+            if (existsSync(options.historyFile))
+            {
+                unlinkSync(options.historyFile);
+            }
+        }
+
+        //
+        // If history file doesnt exist, create one with the project name as a title
+        //
+        let isNewHistoryFile = false,
+            isNewHistoryFileHasContent = false;
+        const historyPath = path.dirname(options.historyFile);
+
+        if (historyPath !== "" && !existsSync(historyPath))
+        {
+            logger.log("Creating history file directory and adding to version control");
+            mkdirSync(historyPath, { mode: 0o777 });
+        }
+
+        if (!existsSync(options.historyFile))
+        {
+            logger.log("Creating new history file and adding to version control");
+            if (!options.taskChangelog)
+            {
+                writeFileSync(options.historyFile, options.projectName + EOL + EOL);
+            }
+            else
+            {
+                writeFileSync(options.historyFile, "");
+            }
+            isNewHistoryFile = true;
+        }
+        else
+        {   //
+            // If the history file already existed, but had no entries, we need to still set the 'new' flag
+            //
+            const contents = readFileSync(options.historyFile).toString();
+            if (contents.indexOf(options.versionText) === -1)
+            {
+                isNewHistoryFile = true;
+                isNewHistoryFileHasContent = true;
+            }
+        }
+        if (!existsSync(options.historyFile))
+        {
+            logger.error("Could not create history file, exiting");
+            throw new Error("140");
+        }
+        if ((lastRelease.version === "1.0.0" || lastRelease.version === "0.0.1") && isNewHistoryFile)
+        {
+            logger.log("It appears this is the first release, resetting version");
+            logger.log("   Reset to Version    : " + options.lastRelease.version);
+        }
+        //
+        // Add the 'Version X' line, date, and commit content
+        //
+        if ((lastRelease.version !== nextRelease.version || isNewHistoryFile || options.taskMode))
+        {
+            const tmpCommits = createSectionFromCommits({ options, commits, logger});
+
+            logger.log("Preparing history file");
+
+            //
+            // New file
+            //
+            if (isNewHistoryFile && !isNewHistoryFileHasContent && !options.taskChangelog) {
+                const historyFileTitle = options.projectName + " History";
+                appendFileSync(options.historyFile, historyFileTitle + EOL + EOL);
+            }
+
+            //
+            // Touch history file with the latest version info, either update existing, or create
+            // a new one if it doesnt exist
+            //
+            // Add lines 'version', 'date', then the header content
+            //
+            // Write the formatted commits text to options.historyFile
+            // Formatted commits are also contained in the temp text file $Env:TEMP\history.txt
+            // Replace all newline pairs with cr/nl pairs as SVN will have sent commit comments back
+            // with newlines only
+            //
+            if (existsSync(options.historyHdrFile))
+            {
+                const historyHeader = readFileSync(options.historyHdrFile).toString();
+                appendFileSync(options.historyFile, `${EOL}${options.versionText} ${nextRelease.version}${EOL}${fmtDate}${EOL}${historyHeader}${EOL}${tmpCommits}`);
+            }
+            else {
+                logger.warn("History header template not found");
+                appendFileSync(options.historyFile, `${EOL}${options.versionText} ${nextRelease.version}${EOL}${fmtDate}${EOL}${EOL}${EOL}${tmpCommits}`);
+            }
+        }
+        else {
+            logger.warn("Version match, not touching history file");
+        }
+
+        //
+        // Allow manual modifications to history file
+        //
+        if (!options.taskChangelog && !options.taskCommit)
+        {
+            editFile({options}, options.historyFile, true, options.skipChangelogEdits === "Y");
+        }
+        else if (options.taskCommit) {
+            editFile({options}, options.historyFile, false, true);
+        }
+        else {
+            //
+            // TODO - Cut just the version from the content, remove all the *** garb
+            //
+            const fileSpec = !!options.taskChangelogFile;
+            editFile({options}, options.historyFile, false, fileSpec, true);
+        }
+    }
 }
