@@ -3,7 +3,7 @@ import * as util from "./lib/utils";
 import gradient from "gradient-string";
 import chalk from "chalk";
 import * as child_process from "child_process";
-import { template, pick } from "lodash";
+import { template, pick, isString } from "lodash";
 import marked from "marked";
 import TerminalRenderer from "marked-terminal";
 const envCi = require("@spmeesseman/env-ci");
@@ -379,6 +379,11 @@ async function runNodeScript(context: any, plugins: any)
 }
 
 
+/**
+ * Tasks that can be processed without retrieving commits and other tag related info
+ *
+ * @param context context
+ */
 async function processTasks1(context: any): Promise<boolean>
 {
     const options = context.options;
@@ -394,6 +399,17 @@ async function processTasks1(context: any): Promise<boolean>
         sendNotificationEmail(context);
         return true;
     }
+    else if (options.taskVersionPreReleaseId && isString(options.taskVersionPreReleaseId))
+    {
+        let preRelId = "error",
+            match: RegExpExecArray;
+        if ((match = /^(?:v|V){0,1}[0-9.]+\-([a-z]+)\.{0,1}[0-9]*$/m.exec(options.taskVersionPreReleaseId)) !== null)
+        {
+            preRelId = match[1];
+        }
+        console.log(preRelId);
+        return true;
+    }
 
     // if (szOutputFile) {
     //     writeFileSync(szOutputFile, szFinalContents);
@@ -404,6 +420,11 @@ async function processTasks1(context: any): Promise<boolean>
 }
 
 
+/**
+ * Tasks that need to be processed "after" retrieving commits and other tag related info
+ *
+ * @param context context
+ */
 async function processTasks2(context: any): Promise<boolean>
 {
     const options = context.options;
@@ -411,6 +432,10 @@ async function processTasks2(context: any): Promise<boolean>
     if (options.taskVersionNext)
     {
         console.log(context.nextRelease.version);
+        return true;
+    }
+    if (options.taskVersionInfo) {
+        console.log(context.lastRelease.version + "|" + context.nextRelease.version);
         return true;
     }
 
