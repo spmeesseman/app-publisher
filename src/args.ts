@@ -619,8 +619,6 @@ export const publishRcOpts =
         false,
         [ "-cfg", "--config" ],
         {
-            dest: "readConfig",
-            action: "storeTrue",
             help: "Display the contents of the configuration file."
         }
     ],
@@ -651,8 +649,6 @@ export const publishRcOpts =
         false,
         [ "-r", "--republish" ],
         {
-            dest: "republish",
-            action: "storeTrue",
             help: "Re-publish the current/latest release."
         }
     ],
@@ -690,13 +686,22 @@ export const publishRcOpts =
         "Skip all version edits in version files."
     ],
 
+    taskBuild: [
+        true,
+        "boolean",
+        false,
+        [ "-tb", "--task-build" ],
+        {
+            help: "Runs all scripts defined by the publishrc property 'buildCommand'"
+        }
+    ],
+
     taskChangelog: [
         true,
         "boolean",
         false,
         [ "-tc", "--task-changelog" ],
         {
-            action: "storeTrue",
             help: "Export the next release's current changelog and view using the editor\n" +
                   "specified in the .publishrc file.\n" +
                   "Note that this opens the actual versioned changelog/history file."

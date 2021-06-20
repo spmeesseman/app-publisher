@@ -198,7 +198,8 @@ async function run(context: any, plugins: any): Promise<boolean>
     }
 
     //
-    // If we're running a task only, then set the logger to empty methods
+    // If we're running a task only, then set the logger to empty methods other
+    // than the error logger
     //
     if (options.taskModeStdOut) {
         context.logger = {
@@ -285,7 +286,7 @@ async function runNodeScript(context: any, plugins: any)
     }
 
     //
-    // Authentication
+    // VCS Authentication
     //
     try {
         await verifyAuth(context, { cwd, env });
@@ -356,7 +357,7 @@ async function runNodeScript(context: any, plugins: any)
     context.nextRelease = nextRelease;
 
     //
-    // Version
+    // Next version
     //
     const versionInfo = getNextVersion(context);
     if (options.versionForceNext) {
@@ -417,7 +418,7 @@ async function runNodeScript(context: any, plugins: any)
     {
         await doHistoryFileEdit(context);
         //
-        // If this is task mode, we're done
+        // If this is task mode, we're done if there aren't any higher lvl tasks left to run
         //
         if (options.taskMode) {
             logTaskResult(true, logger);
@@ -434,7 +435,7 @@ async function runNodeScript(context: any, plugins: any)
     {
         await doChangelogFileEdit(context);
         //
-        // If this is task mode, we're done
+        // If this is task mode, we're done if there aren't any higher lvl tasks left to run
         //
         if (options.taskMode) {
             logTaskResult(true, logger);
@@ -472,8 +473,17 @@ async function runNodeScript(context: any, plugins: any)
     //
     // Build scipts (.publishrc)
     //
-    if (!options.taskMode) {
+    if (!options.taskMode || options.taskBuild) {
         await util.runScripts({ options, logger, cwd, env }, "build", options.buildCommand, true, true);
+        //
+        // If this is task mode, we're done if there aren't any higher lvl tasks left to run
+        //
+        if (options.taskBuild) {
+            logTaskResult(true, logger);
+            if (!hasMoreTasks(options, getTasks5())) {
+                return true;
+            }
+        }
     }
 
     //

@@ -184,6 +184,10 @@ pipeline {
           //
           dir("src/ui") {
             nodejs("Node 12") {
+              //
+              // If we don't use --version-force-next option then ap will bump the version again
+              // since we ran the --task-touch-versions command already
+              //
               bat "app-publisher --node --task-changelog --version-force-next ${env.NEXTVERSION}" 
               bat "app-publisher --node --task-changelog-file doc\\tmp_history.txt --version-force-next ${env.NEXTVERSION}" 
               historyEntry = bat(returnStdout: true,
@@ -265,15 +269,10 @@ pipeline {
             nodejs("Node 12") {
               echo "Publish for production release"
               //
-              // MantisBT -> Releases Plugin
+              // NPM and MantisBT Release
               //
-              echo "Perform MantisBT Releases"
-              bat "app-publisher --node --task-mantisbt-release"
-              //
-              // NPM Release
-              //
-              echo "Perform NPM Releases"
-              bat "app-publisher --node --task-npm-release"
+              echo "Perform NPM and MantisBT Releases"
+              bat "app-publisher --node --task-mantisbt-release --task-npm-release"
               // bat "npm publish"
             }
           }
