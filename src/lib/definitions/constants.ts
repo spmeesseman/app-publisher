@@ -2,6 +2,8 @@ const RELEASE_TYPE = ["prerelease", "prepatch", "patch", "preminor", "minor", "p
 
 const FIRST_RELEASE = "1.0.0";
 
+const FIRST_RELEASE_INC = "100";
+
 const APP_NAME = "app-publisher";
 
 const COMMIT_NAME = APP_NAME + "-bot";
@@ -18,6 +20,7 @@ const constants = {
   APP_NAME,
   RELEASE_TYPE,
   FIRST_RELEASE,
+  FIRST_RELEASE_INC,
   COMMIT_NAME,
   COMMIT_EMAIL,
   RELEASE_NOTES_SEPARATOR,

@@ -1,6 +1,6 @@
 import { editFile, pathExists, replaceInFile } from "../utils/fs";
 import { setAppPublisherVersion } from "./app-publisher";
-import { setDotNetVersion } from "./dotnet";
+import { setDotNetVersion, getDotNetFiles } from "./dotnet";
 import { setExtJsVersion } from "./extjs";
 import { setMakefileVersion } from "./makefile";
 import { setMantisBtVersion } from "./mantisbt";
@@ -77,9 +77,11 @@ async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}
     // $AssemblyInfoLoc = Get-ChildItem -Name -Recurse -Depth 1 -Filter "assemblyinfo.cs" -File -Path . -ErrorAction SilentlyContinue
     // if ($AssemblyInfoLoc -is [system.string] && ![string]::IsNullOrEmpty($AssemblyInfoLoc))
     // {
-    const dotNetFile = await setDotNetVersion({options, logger, nextRelease});
-    if (dotNetFile) {
-        edits.push(dotNetFile);
+    if ((await getDotNetFiles(logger)).length > 0) {
+        const dotNetFile = await setDotNetVersion({options, logger, nextRelease});
+        if (dotNetFile) {
+            edits.push(dotNetFile);
+        }
     }
     // }
     // else if ($AssemblyInfoLoc -is [System.Array] && $AssemblyInfoLoc.Length -gt 0) {

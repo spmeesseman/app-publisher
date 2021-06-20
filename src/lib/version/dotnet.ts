@@ -3,7 +3,7 @@ import glob = require("glob");
 import { replaceInFile, readFile, editFile } from "../utils/fs";
 
 
-async function getFiles(logger)
+export async function getDotNetFiles(logger)
 {
     return new Promise<string[]>((resolve, reject) => {
         glob("**/assemblyinfo.cs", { nocase: true }, (err, files) =>
@@ -21,10 +21,10 @@ async function getFiles(logger)
 
 export async function getDotNetVersion({logger}): Promise<{ version: string, versionSystem: string, versionInfo: any }>
 {
-    let version = "";
-    const fileNames = await getFiles(logger);
+    logger.log("Retrieving assemblyinfo version AssemblyInfo.cs");
 
-    logger.log("Retrieving assemblyinfo version from $AssemblyInfoLocation");
+    let version = "";
+    const fileNames = await getDotNetFiles(logger);
 
     if (fileNames && fileNames.length === 1)
     {
@@ -55,7 +55,7 @@ export async function getDotNetVersion({logger}): Promise<{ version: string, ver
 export async function setDotNetVersion({nextRelease, options, logger}): Promise<string | undefined>
 {
     let semVersion = "";
-    const fileNames = await getFiles(logger);
+    const fileNames = await getDotNetFiles(logger);
 
     if (fileNames)
     {

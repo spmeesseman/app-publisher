@@ -22,11 +22,10 @@ import { doGithubRelease, publishGithubRelease } from "./lib/releases/github";
 import doMantisbtRelease = require("./lib/releases/mantisbt");
 import { doNpmRelease } from "./lib/releases/npm";
 import setVersions = require("./lib/version/set-versions");
-import getError = require("./lib/get-error");
-import { template, pick, isString } from "lodash";
+import { template } from "lodash";
 import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
 import { sendNotificationEmail } from "./lib/email";
-import { pathExists, writeFile } from "./lib/utils/fs";
+import { writeFile } from "./lib/utils/fs";
 import { createSectionFromCommits, doChangelogFileEdit, doHistoryFileEdit } from "./lib/changelog-file";
 import { commit, fetch, verifyAuth, getHead, tag, push, revert } from "./lib/repo";
 import { EOL } from "os";
@@ -222,7 +221,7 @@ async function run(context: any, plugins: any): Promise<boolean>
 
 function logTaskResult(result: boolean | string, logger: any)
 {
-    if (isString(result)) {
+    if (util.isString(result)) {
         logger.error(result);
     }
     else if (result === true) {
@@ -309,12 +308,33 @@ async function runNodeScript(context: any, plugins: any)
     // Populate context with last release info
     //
     context.lastRelease = await getLastRelease(context); // calls getTags()
+    //
+    // Populate context with last release version info
+    //
+    //    version (should be same as context.lastRelease.version)
+    //    versionSystem (semver or incremental)
+    //    versionInfo (for mavn builds and auto constructing version #)
+    //
+    context.lastRelease.versionInfo = await getCurrentVersion(context);
+    //
+    // Check to see if last version found with the latestversion tag matches what was
+    // found by examining the local files for version info.  Give a warning if so.
+    //
+    if (context.lastRelease.versionInfo !== context.lastRelease.versionInfo)
+    {
+        logger.warn("Version mismatch found betw. latest tag and local files version");
+    }
+    //
+    // Can force version with --version-force-current
+    //
     if (options.versionForceCurrent) {
+        logger.log("Forcing current version to " + options.versionForceCurrent);
         context.lastRelease.version = options.versionForceCurrent;
+        context.lastRelease.versionInfo.version = options.versionForceCurrent;
     }
 
     //
-    // If a l1 task is processed, we'll be done
+    // If a l2 task is processed, we'll be done
     //
     taskDone = await processTasks2(context);
     if (taskDone !== false) {
@@ -361,6 +381,7 @@ async function runNodeScript(context: any, plugins: any)
     //
     const versionInfo = getNextVersion(context);
     if (options.versionForceNext) {
+        logger.log("Forcing next version to " + options.versionForceNext);
         nextRelease.version = options.versionForceNext;
     }
     else if (!versionInfo.versionInfo) {

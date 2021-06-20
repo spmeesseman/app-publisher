@@ -2,9 +2,9 @@
 import * as path from "path";
 import { editFile, readFile, pathExists, writeFile, createDir, appendFile, deleteFile } from "./utils/fs";
 import { properCase, isString } from "./utils/utils";
-import { EOL } from "os";
 import { npmLocation } from "./releases/npm";
 const execa = require("execa");
+const os = require("os"), EOL = os.EOL;
 
 
 function containsValidSubject(options, line: string): boolean
@@ -825,7 +825,7 @@ export async function getChangelog({ options, logger }, version: string, numsect
     //
     // Convert to html
     //
-    const clFile = `${process.env.Temp}/changelog.md`;
+    const clFile = path.join(os.tmpdir(), "CHANGELOG.md");
     contents = contents.replace(EOL, "\n");
     await writeFile(clFile, contents);
     contents = await execa.stdout("marked", ["--breaks", "--gfm", "--file", clFile]);
@@ -995,6 +995,17 @@ export async function getHistory({ options, logger }, version: string, numsectio
     //
     contents = "<font face=\"Courier New\">" + contents + "</font>";
 
+    //
+    // If version is empty, then this is a request for the latest version #.  Return version and exit
+    //
+    if (!version)
+    {
+        const idx1 = contents.indexOf(`>${options.versionText}&nbsp;`, 0) + options.versionText.Length + 7,
+              idx2 = idx1 !== -1 ? contents.indexOf("<br>", idx1) : -1,
+              curVersion = idx1 !== -1 && idx2 !== -1 ? contents.substring(idx1, idx2 - idx1) : "";
+        logger.log(`Found version ${curVersion}`);
+        return curVersion;
+    }
 
     // index1 is our start index
     if (version)
@@ -1289,7 +1300,7 @@ export async function doChangelogFileEdit({ options, commits, logger, lastReleas
     }
     else if (options.taskMode && !options.taskChangelog)
     {
-        options.changelogFile = path.join(env.Temp, `history.${nextRelease.version}.txt`);
+        options.changelogFile = path.join(os.tmpdir(), `history.${nextRelease.version}.txt`);
         if (await pathExists(options.changelogFile))
         {
             await deleteFile(options.changelogFile);
@@ -1311,7 +1322,7 @@ export async function doChangelogFileEdit({ options, commits, logger, lastReleas
     if (!(await pathExists(options.changelogFile)))
     {
         logger.log("Creating changelog file directory and adding to version control");
-        if (!options.taskChangelog)
+        if (options.taskChangelog || !options.taskMode)
         {
             await writeFile(options.changelogFile, options.projectName + EOL + EOL);
         }
@@ -1489,7 +1500,7 @@ export async function doHistoryFileEdit({ options, commits, logger, lastRelease,
     }
     else if (options.taskMode && !options.taskChangelog)
     {
-        options.historyFile = path.join(env.Temp, `history.${nextRelease.version}.txt`);
+        options.historyFile = path.join(os.tmpdir(), `history.${nextRelease.version}.txt`);
         if (await pathExists(options.historyFile))
         {
             await deleteFile(options.historyFile);
@@ -1512,7 +1523,7 @@ export async function doHistoryFileEdit({ options, commits, logger, lastRelease,
     if (!(await pathExists(options.historyFile)))
     {
         logger.log("Creating new history file");
-        if (!options.taskChangelog)
+        if (options.taskChangelog || !options.taskMode)
         {
             await writeFile(options.historyFile, options.projectName + EOL + EOL);
         }
@@ -1533,20 +1544,17 @@ export async function doHistoryFileEdit({ options, commits, logger, lastRelease,
             isNewHistoryFileHasContent = true;
         }
     }
+
     if (!(await pathExists(options.historyFile)))
     {
         logger.error("Could not create history file, exiting");
         throw new Error("140");
     }
-    if ((lastRelease.version === "1.0.0" || lastRelease.version === "0.0.1") && isNewHistoryFile)
-    {
-        logger.log("It appears this is the first release, resetting version");
-        logger.log("   Reset to Version    : " + options.lastRelease.version);
-    }
+
     //
     // Add the 'Version X' line, date, and commit content
     //
-    if ((lastRelease.version !== nextRelease.version || isNewHistoryFile || options.taskMode))
+    if (lastRelease.version !== nextRelease.version || isNewHistoryFile || options.taskMode)
     {
         const tmpCommits = createSectionFromCommits({ options, commits, logger});
 
@@ -1555,7 +1563,7 @@ export async function doHistoryFileEdit({ options, commits, logger, lastRelease,
         //
         // New file
         //
-        if (isNewHistoryFile && !isNewHistoryFileHasContent && !options.taskChangelog) {
+        if (isNewHistoryFile && !isNewHistoryFileHasContent && (options.taskChangelog || !options.taskMode)) {
             const historyFileTitle = options.projectName + " History";
             await appendFile(options.historyFile, historyFileTitle + EOL + EOL);
         }
@@ -1571,14 +1579,22 @@ export async function doHistoryFileEdit({ options, commits, logger, lastRelease,
         // Replace all newline pairs with cr/nl pairs as SVN will have sent commit comments back
         // with newlines only
         //
-        if (await pathExists(options.historyHdrFile))
+        if ((options.taskChangelog || !options.taskMode) && await pathExists(options.historyHdrFile))
         {
             const historyHeader = await readFile(options.historyHdrFile);
             await appendFile(options.historyFile, `${EOL}${options.versionText} ${nextRelease.version}${EOL}${fmtDate}${EOL}${historyHeader}${EOL}${tmpCommits}`);
         }
         else {
-            logger.warn("History header template not found");
-            await appendFile(options.historyFile, `${EOL}${options.versionText} ${nextRelease.version}${EOL}${fmtDate}${EOL}${EOL}${EOL}${tmpCommits}`);
+            if (options.taskChangelog || !options.taskMode) {
+                logger.warn("History header template not found");
+                await appendFile(options.historyFile, `${EOL}${options.versionText} ${nextRelease.version}${EOL}${fmtDate}${EOL}${EOL}${EOL}${tmpCommits}`);
+            }
+            else if (!options.taskChangelogFile) {
+                await appendFile(options.historyFile, `${EOL}Pending ${options.versionText} ${nextRelease.version} Changelog:${EOL}${EOL}${EOL}${tmpCommits}`);
+            }
+            else {
+                await appendFile(options.historyFile, tmpCommits.trim());
+            }
         }
     }
     else {

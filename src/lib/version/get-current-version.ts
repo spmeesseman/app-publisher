@@ -1,42 +1,44 @@
 
 import * as path from "path";
-import { existsSync } from "fs";
-import { getDotNetVersion } from "./dotnet";
+import { getDotNetVersion, getDotNetFiles } from "./dotnet";
 import { getIncrementalVersion } from "./incremental";
 import { getMantisBtVersion } from "./mantisbt";
 import { getPomVersion } from "./pom";
+import { isString } from "../utils/utils";
+import { pathExists } from "../utils/fs";
 
 
 export = getCurrentVersion;
 
 
-async function getCurrentVersion(context: any):
-                           Promise<{ version: string | undefined, versionSystem: string | undefined, versionInfo: string | undefined }>
+async function getCurrentVersion(context: any): Promise<{ version: string | undefined, versionSystem: string | undefined, versionInfo: string | undefined }>
 {
     const options = context.options,
           logger = context.logger,
           cwd = context.cwd;
+
     let versionInfo = {
         version: undefined,
-        versionSystem: undefined,
+        versionSystem: "semver",
         versionInfo: undefined
     };
 
-    if (options.versionForceCurrent instanceof String || typeof(options.versionForceCurrent) === "string")
+    if (options.versionForceCurrent && isString(options.versionForceCurrent))
     {
         versionInfo.version = options.versionForceCurrent;
     }
+
     //
     // If node_modules dir exists, use package.json to obtain cur version
     //
-    else if (existsSync(path.join(cwd, "package.json")))
+    else if (await pathExists("package.json"))
     {
         versionInfo.version = require(path.join(cwd, "package.json")).version;
     }
     //
     // Maven pom.xml based Plugin
     //
-    else if (existsSync(path.join(cwd, "pom.xml")))
+    else if (await pathExists("pom.xml"))
     {
         versionInfo = await getPomVersion(context);
     }
@@ -44,22 +46,21 @@ async function getCurrentVersion(context: any):
     // MantisBT Plugin
     // mantisBtPlugin specifies the main class file, containing version #
     //
-    else if (options.mantisBtPlugin && existsSync(path.join(cwd, options.mantisBtPlugin)))
+    else if (options.mantisBtPlugin && await pathExists(options.mantisBtPlugin))
     {
         versionInfo = await getMantisBtVersion(context);
     }
     //
     // .NET with AssemblyInfo.cs file
     //
-    else if (options.historyFile && (existsSync(path.join(cwd, "AssemblyInfo.cs")) ||
-                                     existsSync(path.join(cwd, "properties", "AssemblyInfo.cs"))))
+    else if ((await getDotNetFiles(logger)).length > 0)
     {
         versionInfo = await getDotNetVersion(context);
     }
     //
     // Test style History file
     //
-    else if (options.historyFile && existsSync(path.join(cwd, options.historyFile)))
+    else if (options.historyFile && await pathExists(options.historyFile))
     {
         versionInfo = await getIncrementalVersion(context);
     }
@@ -78,9 +79,13 @@ async function getCurrentVersion(context: any):
 
     if (!versionInfo || !versionInfo.version)
     {
-        logger.error("The current version cannot be determined");
-        logger.error("Provided the current version in .publishrc or on the command line");
-        throw new Error("132");
+        logger.error("The current version cannot be determined from the local files");
+    }
+    else {
+        logger.log("Retrieved local file version info");
+        logger.log(`   Version   : ${versionInfo.version}`);
+        logger.log(`   System    : ${versionInfo.versionSystem}`);
+        logger.log(`   Xtra info : ${versionInfo.versionInfo}`);
     }
 
     return versionInfo;
