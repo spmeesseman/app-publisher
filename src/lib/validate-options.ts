@@ -1,7 +1,7 @@
 
 import * as path from "path";
-import { existsSync, mkdirSync } from "fs";
-import { createDir, isString, pathExists } from "./utils";
+import { isString } from "./utils/utils";
+import { createDir, pathExists } from "./utils/fs";
 
 export = validateOptions;
 
@@ -47,15 +47,15 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
         //
         // Create the log directory
         //
-        if (!existsSync(logFolder)) {
-            mkdirSync(logFolder, { mode: 0o777 });
+        if (!(await pathExists(logFolder))) {
+            await createDir(logFolder);
         }
     }
 
     //
     // Set repository and repository type
     //
-    if (existsSync(path.join(cwd, "package.json")))
+    if (await pathExists(path.join(cwd, "package.json")))
     {
         if (!options.repo)
         {
@@ -140,19 +140,19 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
     //
     if (options.textEditor)
     {
-        if (!existsSync(options.textEditor))
+        if (!(await pathExists(options.textEditor)))
         {
             let found = false;
             const paths = environ.Path.split(";");
             for (const p of paths)
             {
                 let fullPath = path.join(p, options.textEditor);
-                if (existsSync(fullPath)) {
+                if (await pathExists(fullPath)) {
                     found = true;
                     break;
                 }
                 fullPath = path.join(p, options.textEditor + ".exe");
-                if (existsSync(fullPath)) {
+                if (await pathExists(fullPath)) {
                     found = true;
                     break;
                 }
@@ -187,7 +187,7 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
     // Ensure version control directory exists
     // options.repoType is either git or svn
     //
-    if (!options.pathPreRoot && !(existsSync(path.join(cwd, "." + options.repoType))))
+    if (!options.pathPreRoot && !(await pathExists(path.join(cwd, "." + options.repoType))))
     {
         logger.error(`The .${options.repoType} directory was not found`);
         logger.error("Set pathToPreRoot, or ensure a branch (i.e. trunk) is the root directory");
@@ -287,7 +287,7 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
         if (!options.mantisBtPlugin.includes((".php"))) {
             return error(logger, "Invalid value for mantisbtPlugin, file must have a php extension");
         }
-        if (!existsSync(options.mantisBtPlugin)) {
+        if (!(await pathExists(options.mantisBtPlugin))) {
             return error(logger, "Invalid value for mantisbtPlugin, non-existent file specified");
         }
     }
@@ -326,7 +326,7 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
             logger.error("Invalid value for cProjectRcFile, file must have an rc extension");
             return false;
         }
-        if (!(existsSync(options.cProjectRcFile))) {
+        if (!(await pathExists(options.cProjectRcFile))) {
             logger.error("Invalid value for cProjectRcFile, non-existent file specified");
             return false;
         }

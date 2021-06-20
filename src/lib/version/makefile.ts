@@ -1,5 +1,5 @@
 
-import { replaceInFile, editFile, pathExists } from "../utils";
+import { replaceInFile, editFile, pathExists } from "../utils/fs";
 
 
 export async function getMakefileVersion({logger, options}): Promise<{ version: string, versionSystem: string, versionInfo: any }>
@@ -46,7 +46,7 @@ export async function setMakefileVersion({nextRelease, options})
             //
             // Allow manual modifications to mantisbt main plugin file and commit to modified list
             //
-            editFile({options}, options.cProjectRcFile, false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
+            await editFile({options}, options.cProjectRcFile, false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
         }
     }
 }

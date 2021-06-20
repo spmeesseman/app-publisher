@@ -1,6 +1,7 @@
 
 import * as path from "path";
-import { copyDir, createDir, pathExists, copyFile, runScripts } from "../utils";
+import { runScripts } from "../utils/utils";
+import { copyDir, createDir, pathExists, copyFile } from "../utils/fs";
 
 export = doDistRelease;
 

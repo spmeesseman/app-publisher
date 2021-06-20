@@ -1,7 +1,9 @@
 import * as path from "path";
-import { pathExists, timeout, runScripts, writeFile, readFile } from "../utils";
+import { timeout } from "../utils/utils";
+import { pathExists, writeFile, readFile } from "../utils/fs";
 import { createReleaseChangelog } from "../changelog-file";
 import { contentTypeMap } from "./content-type-map";
+import { APP_NAME } from "../definitions/constants";
 const got = require("got");
 
 export { doGithubRelease, publishGithubRelease };
@@ -43,13 +45,9 @@ async function doGithubRelease({ options, logger, lastRelease, nextRelease, env 
             "squirrelAcceptHeader": "application/vnd.github.squirrel-girl-preview",
             "symmetraAcceptHeader": "application/vnd.github.symmetra-preview+json",
             "Authorization": "token " + env.GITHUB_TOKEN,
-            "Content-Type": "application/json; charset=UTF-8"
+            "Content-Type": "application/json; charset=UTF-8",
+            "User-Agent": APP_NAME
         };
-
-        //
-        // Enable TLS1.2
-        //
-        // [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
         //
         // Encode url parts

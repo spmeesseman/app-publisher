@@ -1,6 +1,6 @@
 
 import * as path from "path";
-import { pathExists, editFile, writeFile } from "../utils";
+import { pathExists, editFile, writeFile } from "../utils/fs";
 
 export let defaultBugs: string;
 export let defaultHomePage: string;
@@ -112,7 +112,7 @@ export async function setPackageJson({options, lastRelease, nextRelease, logger,
     editFile({options}, "package.json", false,  (options.skipVersionEdits === " Y" || options.taskTouchVersions));
     if (packageLockFileExists)
     {
-        editFile({options}, "package-lock.json", false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
+        await editFile({options}, "package-lock.json", false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
     }
 }
 

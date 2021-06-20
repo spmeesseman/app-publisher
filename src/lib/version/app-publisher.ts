@@ -1,7 +1,7 @@
 
 import glob = require("glob");
 import { existsSync } from "fs";
-import { replaceInFile, readFile, editFile } from "../utils";
+import { replaceInFile, readFile, editFile } from "../utils/fs";
 
 
 function getFile(logger: any)
@@ -51,6 +51,6 @@ export async function setAppPublisherVersion({nextRelease, options, logger})
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
-        editFile({options}, ".publishrc.json", false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
+        await editFile({options}, ".publishrc.json", false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
     }
 }

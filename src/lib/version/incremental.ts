@@ -1,7 +1,7 @@
 
 import semver from "semver";
 import { getVersion } from "../changelog-file";
-import { replaceInFile, pathExists, editFile } from "../utils";
+import { replaceInFile, pathExists, editFile } from "../utils/fs";
 
 
 async function getChangelogFile(options: any)
@@ -45,6 +45,6 @@ export async function setIncrementalersion({nextRelease, options})
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
-        editFile({options}, clFile, false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
+        await editFile({options}, clFile, false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
     }
 }

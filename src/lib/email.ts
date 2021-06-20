@@ -1,9 +1,9 @@
 import * as nodemailer from "nodemailer";
 import { getHistory, getChangelog } from "./changelog-file";
-import { properCase } from "./utils";
+import { properCase } from "./utils/utils";
 
 // async..await is not allowed in global scope, must use a wrapper
-export async function sendNotificationEmail({options, logger, lastRelease}): Promise<boolean>
+export async function sendNotificationEmail({options, logger}, version: string): Promise<boolean>
 {
     //
     // Check to make sure all necessary parameters are set
@@ -21,17 +21,16 @@ export async function sendNotificationEmail({options, logger, lastRelease}): Pro
         return false;
     }
 
-    // encoding="plain" (from ant)   ps cmd: -Encoding ASCII
     let emailBody = "";
     if (options.historyFile)
     {
         logger.log("   Converting history text to html");
-        emailBody = await getHistory({options, logger, lastRelease}, 1) as string;
+        emailBody = await getHistory({options, logger}, version, 1) as string;
     }
     else if (options.changelogFile)
     {
         logger.log("   Converting changelog markdown to html");
-        emailBody = await getChangelog({options, logger, lastRelease}, 1) as string;
+        emailBody = await getChangelog({options, logger}, version, 1) as string;
     }
     else {
         logger.error("   Notification could not be sent, history file not specified");
@@ -67,7 +66,7 @@ export async function sendNotificationEmail({options, logger, lastRelease}): Pro
         {
             projectNameFmt = properCase(projectNameFmt);
         }
-        let subject = `${projectNameFmt} ${options.versionText} ${lastRelease.version}`;
+        let subject = `${projectNameFmt} ${options.versionText} ${version}`;
         if (!options.dryRun)
         {
             if (options.emailRecip.length > 0)

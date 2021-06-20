@@ -1,5 +1,5 @@
 
-import { pathExists, replaceInFile, readFile, editFile } from "../utils";
+import { pathExists, replaceInFile, readFile, editFile } from "../utils/fs";
 
 
 export async function getPomVersion({logger}): Promise<{ version: string, versionSystem: string, versionInfo: any }>
@@ -66,6 +66,6 @@ export async function setPomVersion({nextRelease, options})
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
-        editFile({options}, "pom.xml", false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
+        await editFile({options}, "pom.xml", false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
     }
 }

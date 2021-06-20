@@ -1,12 +1,11 @@
 
-import {
-    properCase, isString, editFile, readFile, pathExists, writeFile, createDir, appendFile, deleteFile
-} from "./utils";
 import * as path from "path";
-const execa = require("execa");
+import getLogger from "./get-logger";
+import { editFile, readFile, pathExists, writeFile, createDir, appendFile, deleteFile } from "./utils/fs";
+import { properCase, isString } from "./utils/utils";
 import { EOL } from "os";
 import { npmLocation } from "./releases/npm";
-import getLogger from "./get-logger";
+const execa = require("execa");
 
 
 function containsValidSubject(options, line: string): boolean
@@ -1473,17 +1472,17 @@ export async function doChangelogFileEdit({ options, commits, logger, lastReleas
     //
     if (!options.taskChangelog && !options.taskCommit)
     {
-        editFile({options}, options.historyFile, true, options.skipChangelogEdits === "Y");
+        await editFile({options}, options.historyFile, true, options.skipChangelogEdits === "Y");
     }
     else if (options.taskCommit) {
-        editFile({options}, options.historyFile, false, true);
+        await editFile({options}, options.historyFile, false, true);
     }
     else {
         //
         // TODO - Cut just the version from the content, remove all the *** garb
         //
         const fileSpec = !!options.taskChangelogFile;
-        editFile({options}, options.historyFile, false, fileSpec, true);
+        await editFile({options}, options.historyFile, false, fileSpec, true);
     }
 }
 
@@ -1603,16 +1602,16 @@ export async function doHistoryFileEdit({ options, commits, logger, lastRelease,
     //
     if (!options.taskChangelog && !options.taskCommit)
     {
-        editFile({options}, options.historyFile, true, options.skipChangelogEdits === "Y");
+        await editFile({options}, options.historyFile, true, options.skipChangelogEdits === "Y");
     }
     else if (options.taskCommit) {
-        editFile({options}, options.historyFile, false, true);
+        await editFile({options}, options.historyFile, false, true);
     }
     else {
         //
         // TODO - Cut just the version from the content, remove all the *** garb
         //
         const fileSpec = !!options.taskChangelogFile;
-        editFile({options}, options.historyFile, false, fileSpec, true);
+        await editFile({options}, options.historyFile, false, fileSpec, true);
     }
 }

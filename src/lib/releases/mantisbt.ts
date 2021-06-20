@@ -1,9 +1,11 @@
 
 import * as path from "path";
-import { pathExists, timeout, runScripts, writeFile, readFile } from "../utils";
+import { timeout } from "../utils/utils";
+import { pathExists, writeFile, readFile } from "../utils/fs";
 import { createReleaseChangelog } from "../changelog-file";
 import { contentTypeMap } from "./content-type-map";
 import { isString } from "lodash";
+import { APP_NAME } from "../definitions/constants";
 const got = require("got");
 
 export = doMantisRelease;
@@ -116,11 +118,6 @@ async function doMantisRelease({ options, commits, logger, lastRelease, nextRele
             }
         }
 
-        //
-        // Enable TLS1.2 in the case of HTTPS
-        //
-        // [Net.ServicePointManager];::SecurityProtocol = [Net.SecurityProtocolType];::Tls12;
-
         for (let i = 0; i < options.mantisbtUrl.length; i++)
         {   //
             // Set up the request header, this will be used to both create the release and to upload
@@ -129,7 +126,8 @@ async function doMantisRelease({ options, commits, logger, lastRelease, nextRele
             //
             const headers = {
                 "Authorization": options.mantisbtApiToken[i],
-                "Content-Type": "application/json; charset=UTF-8"
+                "Content-Type": "application/json; charset=UTF-8",
+                "User-Agent": APP_NAME
             };
             //
             // Encode url part

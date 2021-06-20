@@ -762,6 +762,17 @@ export const publishRcOpts =
         }
     ],
 
+    taskDevTest: [
+        true,
+        "boolean",
+        false,
+        [ "-tdt", "--task-dev-test" ],
+        {
+            help: "Run temporary tests in the local dev environment.  Note that this\n" +
+                  "does nothing when ran in a production build"
+        }
+    ],
+
     taskEmail: [
         true,
         "boolean",

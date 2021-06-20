@@ -1,5 +1,6 @@
 
-import * as util from "./lib/utils";
+import * as util from "./lib/utils/utils";
+import * as path from "path";
 import * as child_process from "child_process";
 import gradient from "gradient-string";
 import chalk from "chalk";
@@ -24,9 +25,10 @@ import { doNpmRelease } from "./lib/releases/npm";
 import setVersions = require("./lib/version/set-versions");
 import * as npm from "./lib/version/npm";
 import getError = require("./lib/get-error");
-import { template, pick, isString } from "lodash";
+import { template, pick } from "lodash";
 import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
 import { sendNotificationEmail } from "./lib/email";
+import { pathExists, writeFile } from "./lib/utils/fs";
 import { createSectionFromCommits, doChangelogFileEdit, doHistoryFileEdit } from "./lib/changelog-file";
 import { commit, fetch, verifyAuth, getHead, tag, push, revert } from "./lib/repo";
 import { EOL } from "os";
@@ -398,7 +400,7 @@ async function runNodeScript(context: any, plugins: any)
     {   //
         // NPM managed project, update package.json if required
         //
-        if (await util.pathExists("package.json")) {
+        if (await pathExists("package.json")) {
             await npm.setPackageJson(context);
             npmPackageJsonModified = true;
             //
@@ -561,7 +563,7 @@ async function runNodeScript(context: any, plugins: any)
                            !options.taskCiEnvSet && !options.taskModeStdOut &&
                            (options.emailNotification === "Y" || options.taskEmail);
     if (doNotification) {
-        await sendNotificationEmail(context);
+        await sendNotificationEmail(context, nextRelease.version);
     }
 
     //
@@ -645,13 +647,35 @@ async function processTasks1(context: any): Promise<boolean>
 {
     const options = context.options;
 
-    if (options.taskVersionCurrent)
+    if (options.taskDevTest)
+    {
+        const p1 = "../script/test.ps1",
+              p2 = "./node/1/2/3",
+              p3 = "doc/text.txr",
+              p4 = "../../doc/text.txr";
+
+        console.log(1, path.normalize(p1));
+        console.log(2, path.resolve(p1));
+
+        console.log(1, path.normalize(p2));
+        console.log(2, path.resolve(p2));
+
+        console.log(1, path.normalize(p3));
+        console.log(2, path.resolve(p3));
+
+        console.log(1, path.normalize(p4));
+        console.log(2, path.resolve(p4));
+
+
+        return true;
+    }
+    else if (options.taskVersionCurrent)
     {
         const versionInfo = await getCurrentVersion(context);
         console.log(versionInfo.version);
         return true;
     }
-    else if (options.taskVersionPreReleaseId && isString(options.taskVersionPreReleaseId))
+    else if (options.taskVersionPreReleaseId && util.isString(options.taskVersionPreReleaseId))
     {
         let preRelId = "error",
             match: RegExpExecArray;
@@ -674,14 +698,11 @@ async function processTasks1(context: any): Promise<boolean>
  */
 async function processTasks2(context: any): Promise<boolean>
 {
-    const options = context.options;
-
-    if (options.taskEmail)
+    if (context.options.taskEmail)
     {
-        await sendNotificationEmail(context);
+        await sendNotificationEmail(context, context.lastRelease.version);
         return true;
     }
-
     return false;
 }
 
@@ -719,7 +740,7 @@ async function processTasks3(context: any): Promise<boolean>
         else if (options.changelogFile) {
             fileContent += (options.changelogFile + EOL);
         }
-        await util.writeFile("ap.env", fileContent);
+        await writeFile("ap.env", fileContent);
         return true;
     }
 

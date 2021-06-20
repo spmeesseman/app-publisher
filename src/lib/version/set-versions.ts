@@ -1,4 +1,4 @@
-import { editFile, pathExists, replaceInFile } from "../utils";
+import { editFile, pathExists, replaceInFile } from "../utils/fs";
 import { setAppPublisherVersion } from "./app-publisher";
 import { setDotNetVersion } from "./dotnet";
 import { setExtJsVersion } from "./extjs";
@@ -181,7 +181,7 @@ async function setVersionFiles({options, logger, lastRelease, nextRelease}): Pro
             // Edit-File will add this file to options.versionFilesEdited
             //
             vFiles.push(vFile);
-            editFile({options}, vFile, false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
+            await editFile({options}, vFile, false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
         }
     }
 

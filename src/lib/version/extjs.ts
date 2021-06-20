@@ -1,5 +1,5 @@
 
-import { replaceInFile, editFile, pathExists } from "../utils";
+import { replaceInFile, editFile, pathExists } from "../utils/fs";
 
 
 export async function getExtJsVersion({logger, options}): Promise<{ version: string, versionSystem: string, versionInfo: any }>
@@ -19,6 +19,6 @@ export async function setExtJsVersion({nextRelease, options})
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
-        editFile({options}, options.mantisBtPlugin, false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
+        await editFile({options}, options.mantisBtPlugin, false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
     }
 }

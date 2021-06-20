@@ -1,6 +1,6 @@
 
 import glob = require("glob");
-import { replaceInFile, readFile, editFile } from "../utils";
+import { replaceInFile, readFile, editFile } from "../utils/fs";
 
 
 async function getFiles(logger)
@@ -76,7 +76,7 @@ export async function setDotNetVersion({nextRelease, options, logger}): Promise<
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
-        editFile({options}, fileNames[0], false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
+        await editFile({options}, fileNames[0], false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
         //
         // Return the filename
         //

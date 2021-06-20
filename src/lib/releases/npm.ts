@@ -1,6 +1,7 @@
 
 import * as path from "path";
-import { createDir, pathExists, timeout, checkExitCode } from "../utils";
+import { createDir, pathExists } from "../utils/fs";
+import { timeout, checkExitCode } from "../utils/utils";
 const execa = require("execa");
 
 
