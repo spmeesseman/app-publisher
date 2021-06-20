@@ -274,10 +274,6 @@ async function runNodeScript(context: any, plugins: any)
     }
 
     //
-    // No task, proceed with publish run...
-    //
-
-    //
     // Verify
     //
     await verify(context);
@@ -301,6 +297,9 @@ async function runNodeScript(context: any, plugins: any)
     }
     logger.info(`Allowed to push to the ${options.repoType} repository`);
 
+    //
+    // TODO - Plugins maybe?
+    //
     // await plugins.verifyConditions(context);
 
     //
@@ -392,6 +391,9 @@ async function runNodeScript(context: any, plugins: any)
     //
     nextRelease.tag = template(options.tagFormat)({ version: nextRelease.version });
 
+    //
+    // TODO - Plugins maybe?
+    //
     // await plugins.verifyRelease(context);
 
     //
@@ -405,6 +407,9 @@ async function runNodeScript(context: any, plugins: any)
     //
     nextRelease.edits = [];
 
+    //
+    // TODO - Plugins maybe?
+    //
     // await plugins.prepare(context);
 
     //
@@ -503,6 +508,9 @@ async function runNodeScript(context: any, plugins: any)
         await util.runScripts({options, logger, cwd, env}, "postNpmRelease", options.npmReleasePostCommand);
     }
 
+    //
+    // Dist (network share / directory) release
+    //
     if (options.distRelease === "Y" && !options.taskMode)
     {
         logger.log("Starting Distribution release");
@@ -633,7 +641,7 @@ async function runNodeScript(context: any, plugins: any)
     }
 
     //
-    // Tag
+    // Commit / Tag
     //
     if (options.dryRun)
     {
@@ -648,16 +656,24 @@ async function runNodeScript(context: any, plugins: any)
     }
     else if (!options.taskMode || options.taskCommit || options.taskTag)
     {   //
-        // Create the tag before calling the publish plugins as some require the tag to exists
+        // Commit
         //
-        if (!options.taskTag) {
+        if (!options.taskTag || options.taskCommit || !options.taskMode)
+        {
             await commit({options}, { cwd, env }, nextRelease.version);
             logger.success(`Successfully committed changes for v${nextRelease.version}`);
         }
-        if (!options.taskCommit) {
+        //
+        // Create the tag before calling the publish plugins as some require the tag to exists
+        //
+        if (!options.taskCommit || options.taskTag || !options.taskMode)
+        {
             await tag(context, { cwd, env }, options.repoType);
             await push(options.repo, { cwd, env }, options.repoType);
             logger.success(`Created tag ${nextRelease.tag}`);
+            //
+            // If there was a Github release made, then publish it and re-tag
+            //
             if (didGithubRelease)
             {
                 await publishGithubRelease({options, nextRelease, logger});
@@ -666,8 +682,10 @@ async function runNodeScript(context: any, plugins: any)
         }
     }
 
+    //
+    // TODO - Plugins maybe?
+    //
     // context.releases = await plugins.publish(context);
-
     // await plugins.success(context);
 
     //
