@@ -36,6 +36,7 @@
         "get-stream": "^5.1.0",
         "git-log-parser": "^1.2.0",
         "glob": "^7.1.4",
+        "got": "^11.8.2",
         "gradient-string": "^1.2.0",
         "hook-std": "^2.0.0",
         "json": "^9.0.6",

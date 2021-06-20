@@ -48,8 +48,8 @@ function containsValidSubject(options, line: string): boolean
 export async function getVersion({ options, logger })
 {
     const contents = options.historyFile ?
-                        await getHistory({ options, logger, lastRelease: {} }, 1) :
-                        await getChangelog({ options, logger, lastRelease: {} }, 1);
+                        await getHistory({ options, logger }, undefined, 1) :
+                        await getChangelog({ options, logger }, undefined, 1);
     const index1 = contents.indexOf(`>${options.versionText}&nbsp;`, 0) + options.versionText.length + 7;
     const index2 = contents.indexOf("<br>", index1);
     const curversion = (contents as string).substring(index1, index2 - index1);
@@ -58,7 +58,7 @@ export async function getVersion({ options, logger })
 }
 
 
-export async function createReleaseChangelog({ options, logger, lastRelease }, useFaIcons = true, includeStyling = true)
+export async function createReleaseChangelog({ options, logger }, version: string, useFaIcons = false, includeStyling = false)
 {
     let changeLog = "",
         changeLogParts: string | any[];
@@ -66,12 +66,12 @@ export async function createReleaseChangelog({ options, logger, lastRelease }, u
     if (options.historyFile)
     {
         logger.log("Converting history text to mantisbt release changelog html");
-        changeLogParts = await getHistory({ options, logger, lastRelease }, 1, "parts");
+        changeLogParts = await getHistory({ options, logger }, version, 1, "parts");
     }
     else if (options.changelogFile)
     {
         logger.log("Converting changelog markdown to mantisbt release changelog html");
-        changeLogParts = await getChangelog({ options, logger, lastRelease }, 1, "parts");
+        changeLogParts = await getChangelog({ options, logger }, version, 1, "parts");
     }
 
     if (!changeLogParts || changeLogParts.length === 0 || changeLogParts[0] === "error") {
@@ -682,7 +682,7 @@ function getChangelogTypes(changeLog: string)
 }
 
 
-export async function getChangelog({ options, logger, lastRelease }, numsections: number, listOnly: boolean | string = false, includeEmailHdr = false)
+export async function getChangelog({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false, includeEmailHdr = false)
 {
     //
     // Make sure user entered correct cmd line params
@@ -744,7 +744,7 @@ export async function getChangelog({ options, logger, lastRelease }, numsections
     //
     let index1 = 0, index2 = 0;
 
-    index1 = contents.indexOf(`## ${options.versionText} ${lastRelease.version}`);
+    index1 = contents.indexOf(`## ${options.versionText} ${version}`);
     if (index1 === -1) {
         logger.log("Section could not be found, exit");
         throw new Error("165");
@@ -835,7 +835,7 @@ export async function getChangelog({ options, logger, lastRelease }, numsections
 
     if (includeEmailHdr === true)
     {
-        const szHrefs = getEmailHeader(options, lastRelease.version);
+        const szHrefs = getEmailHeader(options, version);
         contents = szHrefs + contents;
     }
 
@@ -845,7 +845,7 @@ export async function getChangelog({ options, logger, lastRelease }, numsections
 }
 
 
-export async function getHistory({ options, logger, lastRelease }, numsections: number, listOnly: boolean | string = false)
+export async function getHistory({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false)
 {
     const iNumberOfDashesInVersionLine = 20;
     let szFinalContents = "";
@@ -999,10 +999,10 @@ export async function getHistory({ options, logger, lastRelease }, numsections: 
 
 
     // index1 is our start index
-    if (lastRelease.version)
+    if (version)
     {
         logger.log("   Write header text to message");
-        const szHrefs = getEmailHeader(options, lastRelease.version);
+        const szHrefs = getEmailHeader(options, version);
         szFinalContents += `${szHrefs}<br>Most Recent History File Entry:<br><br>`;
         logger.log(`   Write ${numsections} history section(s) to message`);
 

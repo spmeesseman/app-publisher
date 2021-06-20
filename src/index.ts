@@ -489,6 +489,7 @@ async function runNodeScript(context: any, plugins: any)
     //
     // Github release
     //
+    let didGithubRelease = false;
     if (options.repo === "git" && options.githubRelease === "Y" && (!options.taskMode || options.taskGithubRelease))
     {   //
         // Pre-github release (.publishrc)
@@ -507,8 +508,11 @@ async function runNodeScript(context: any, plugins: any)
         //
         if (options.taskGithubRelease)
         {
+            publishGithubRelease({options, nextRelease, logger});
+            logger.success(`Published Github release tagged @ ${nextRelease.tag}`);
             return true;
         }
+        didGithubRelease = true;
     }
 
     //
@@ -593,7 +597,7 @@ async function runNodeScript(context: any, plugins: any)
             await tag(context, { cwd, env }, options.repoType);
             await push(options.repo, { cwd, env }, options.repoType);
             logger.success(`Created tag ${nextRelease.tag}`);
-            if ((options.githubRelease === "Y" || options.githubRelease === true))
+            if (didGithubRelease)
             {
                 publishGithubRelease({options, nextRelease, logger});
                 logger.success(`Published Github release tagged @ ${nextRelease.tag}`);

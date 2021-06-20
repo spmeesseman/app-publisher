@@ -4,6 +4,7 @@ import { pathExists, timeout, runScripts, writeFile, readFile } from "../utils";
 import { createReleaseChangelog } from "../changelog-file";
 import { contentTypeMap } from "./content-type-map";
 import { isString } from "lodash";
+const got = require("got");
 
 export = doMantisRelease;
 
@@ -21,7 +22,7 @@ async function doMantisRelease({ options, commits, logger, lastRelease, nextRele
     }
 
     const notesIsMarkdown = 0,
-          mantisChangelog = await createReleaseChangelog({ options, logger, lastRelease }, false, false);
+          mantisChangelog = await createReleaseChangelog({ options, logger }, nextRelease.version, true);
 
     if (mantisChangelog)
     {
@@ -126,7 +127,7 @@ async function doMantisRelease({ options, commits, logger, lastRelease, nextRele
             // any assets.  Note that for each asset, the content-type must be set appropriately
             // according to the type of asset being uploaded
             //
-            const header = {
+            const headers = {
                 "Authorization": options.mantisbtApiToken[i],
                 "Content-Type": "application/json; charset=UTF-8"
             };
@@ -140,10 +141,14 @@ async function doMantisRelease({ options, commits, logger, lastRelease, nextRele
             const url = options.mantisbtUrl[i] + "/plugins/Releases/api/releases/" + encPrjName;
             logger.log("Sending Add-Release REST request to " + url);
             //
-            // TODO
+            // Send it off
             //
-            const response = undefined; // Invoke-RestMethod $url; -UseBasicParsing -Method; POST -Body; $Request -Headers; $Header;
-            // CheckPsCmdSuccess
+            const response = await got(url, {
+                json: request,
+                method: "POST",
+                responseType: "json",
+                headers
+            });
             //
             // Check response object for success
             //
@@ -156,8 +161,8 @@ async function doMantisRelease({ options, commits, logger, lastRelease, nextRele
                 }
                 else {
                     logger.success(`Successfully created MantisBT release v${nextRelease.version}`);
-                    logger.success(`   ID         : ${response.id}`);
-                    logger.success(`   Message    : ${response.msg}`);
+                    logger.success(`   ID         : ${response.body.id}`);
+                    logger.success(`   Message    : ${response.body.msg}`);
                     logger.success(`   URL        : ${options.mantisbtUrl[i]}`);
                 }
             }

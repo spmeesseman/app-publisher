@@ -2,7 +2,7 @@ import * as path from "path";
 import { pathExists, timeout, runScripts, writeFile, readFile } from "../utils";
 import { createReleaseChangelog } from "../changelog-file";
 import { contentTypeMap } from "./content-type-map";
-import { setOptions } from "marked";
+const got = require("got");
 
 export { doGithubRelease, publishGithubRelease };
 
@@ -10,11 +10,11 @@ export { doGithubRelease, publishGithubRelease };
 let githubReleaseId;
 
 
-async function doGithubRelease({ options, logger, lastRelease, env })
+async function doGithubRelease({ options, logger, lastRelease, nextRelease, env })
 {
     logger.log("Creating GitHub v$VERSION release");
 
-    const githubChangelog = await createReleaseChangelog({ options, logger, lastRelease }, false, false);
+    const githubChangelog = await createReleaseChangelog({ options, logger }, nextRelease.version);
     if (githubChangelog && !options.dryRun)
     {   //
         // Allow user to edit html changelog
@@ -33,22 +33,11 @@ async function doGithubRelease({ options, logger, lastRelease, env })
             // $GithubChangelog = Get-Content -path $TmpFile -Raw
         }
         //
-        // Set up the request body for the 'create release' request
-        //
-        const request = {
-            tag_name: "v$VERSION",
-            target_commitish: "$BRANCH",
-            name: "v$VERSION",
-            body: "$GithubChangelog",
-            draft: true,
-            prerelease: false
-        };
-        //
         // Set up the request header, this will be used to both create the release and to upload
         // any assets.  Note that for each asset, the content-type must be set appropriately
         // according to the type of asset being uploaded
         //
-        const header = {
+        const headers = {
             "Accept": "application/vnd.github.v3+json",
             "mediaTypeVersion": "v3",
             "squirrelAcceptHeader": "application/vnd.github.squirrel-girl-preview",
@@ -70,18 +59,30 @@ async function doGithubRelease({ options, logger, lastRelease, env })
         // Send the REST POST to create the release
         //
         let url = `https://api.github.com/repos/${options.githubUser}/${encPrjName}/releases`;
-        const response = undefined; // Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
+        const response = await got(url, {
+            json: {
+                tag_name: nextRelease.tag,
+                target_commitish: options.branch,
+                name: nextRelease.tag,
+                body: githubChangelog,
+                draft: true,
+                prerelease: false,
+                method: "POST"
+            },
+            headers,
+            responseType: "json"
+        });
         //
         // Make sure an upload_url value exists on the response object to check for success
         //
-        if (response && response.upload_url)
+        if (response && response.body.upload_url)
         {
-            githubReleaseId = response.id;
+            githubReleaseId = response.body.id;
 
-            logger.success("Successfully created GitHub release v$VERSION");
-            logger.success("   ID         : $($Response.id)");
-            logger.success("   Tarball URL: $($Response.zipball_url)");
-            logger.success("   Zipball URL: $($Response.tarball_url)");
+            logger.success(`Successfully created GitHub release v${lastRelease.version}`);
+            logger.success(`   ID         : ${response.body.id}`);
+            logger.success(`   Tarball URL: ${response.body.zipball_url}`);
+            logger.success(`   Zipball URL: ${response.body.tarball_url}`);
             //
             // Creating the release was successful, upload assets if any were specified
             //
@@ -100,7 +101,7 @@ async function doGithubRelease({ options, logger, lastRelease, env })
                         //
                         // Set the content-type header value to the mime type of the asset
                         //
-                        header["Content-Type"] = contentTypeMap[extension];
+                        headers["Content-Type"] = contentTypeMap[extension];
                         //
                         // The request to upload an asset is the raw binary file data
                         //
@@ -114,14 +115,20 @@ async function doGithubRelease({ options, logger, lastRelease, env })
                             //
                             // url = $Response.upload_url
                             url = url.replace("{?name,label}", "") + "?name=assetName";
-                            const response2 = undefined; // Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
+                            // Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
+                            const response2 = await got(url, {
+                                body: request,
+                                responseType: "json",
+                                method: "POST",
+                                headers
+                            });
                             //
                             // Make sure an id value exists on the response object to check for success
                             //
-                            if (response2 && response2.id) {
+                            if (response2 && response2.body.id) {
                                 logger.success("Successfully uploaded GitHub asset assetName");
-                                logger.success("   ID          : $($Response2.id)");
-                                logger.success("   Download URL: $($Response2.browser_download_url)");
+                                logger.success(`   ID          : ${response2.body.id}`);
+                                logger.success(`   Download URL: ${response2.body.browser_download_url}`);
                             }
                             else {
                                 logger.error("Failed to upload GitHub asset assetName");
@@ -157,20 +164,16 @@ async function doGithubRelease({ options, logger, lastRelease, env })
 
 async function publishGithubRelease({options, nextRelease, logger})
 {
-    if (githubReleaseId && (options.githubRelease === "Y" || options.githubRelease === true))
+    if (githubReleaseId)
     {
         logger.log("Marking release as published");
         //
         // Mark release published
         // Set up the request body for the 'create release' request
         //
-        const request = {
-            draft: false
-        };
-        //
         // Set up the request header
         //
-        const header = {
+        const headers = {
             "Accept": "application/vnd.github.v3+json",
             "mediaTypeVersion": "v3",
             "squirrelAcceptHeader": "application/vnd.github.squirrel-girl-preview",
@@ -182,12 +185,19 @@ async function publishGithubRelease({options, nextRelease, logger})
         // Send the REST POST to publish the release
         //
         const url = `https://api.github.com/repos/${options.githubUser}/${options.projectName}/releases/${githubReleaseId}`;
-        const response = undefined; // Invoke-RestMethod $url -UseBasicParsing -Method PATCH -Body $Request -Headers $Header
-        // CheckPsCmdSuccess
+        const response = await got(url, {
+            json: {
+                draft: false
+            },
+            method: "PATCH",
+            responseType: "json",
+            headers
+        });
+        // const jso = JSON.parse(response.body);
         //
         // Make sure an upload_url value exists on the response object to check for success
         //
-        if (response && response.upload_url)
+        if (response && response.body.upload_url)
         {
             logger.success(`Successfully patched/published GitHub release v${nextRelease.version}`);
         }
