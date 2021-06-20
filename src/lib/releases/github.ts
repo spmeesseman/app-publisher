@@ -17,18 +17,16 @@ async function doGithubRelease({ options, logger, lastRelease, nextRelease, env 
     logger.log("Creating GitHub v$VERSION release");
 
     const githubChangelog = await createReleaseChangelog({ options, logger }, nextRelease.version);
+
     if (githubChangelog && !options.dryRun)
     {   //
-        // Allow user to edit html changelog
+        // TODO - Allow user to edit html changelog
         //
         if (options.githubChgLogEdit === "Y")
         {
-            const tmpFile = path.join(env.Temp, "changelog.tmp.html");
-            writeFile(tmpFile, githubChangelog);
-            timeout(750);
-            //
-            // TODO
-            //
+            // const tmpFile = path.join(env.Temp, "changelog.tmp.html");
+            // writeFile(tmpFile, githubChangelog);
+            // timeout(750);
             // $TextEditorProcess = Start-Process -filepath "notepad" -args $TmpFile -PassThru
             // $TextEditorProcess.WaitForInputIdle() | Out-Null
             // Wait-Process -Id $TextEditorProcess.Id | Out-Null

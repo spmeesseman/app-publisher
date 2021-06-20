@@ -38,16 +38,13 @@ async function doMantisRelease({ options, commits, logger, lastRelease, nextRele
         }
 
         //
-        // Allow user to edit html changelog
+        // TODO - Allow user to edit html changelog
         //
         if (options.mantisbtChgLogEdit === "Y")
         {
-            const tmpFile = path.join(env.Temp, "changelog.tmp.html");
-            writeFile(tmpFile, mantisChangelog);
-            timeout(750);
-            //
-            // TODO
-            //
+            // const tmpFile = path.join(env.Temp, "changelog.tmp.html");
+            // writeFile(tmpFile, mantisChangelog);
+            // timeout(750);
             // $TextEditorProcess = Start-Process -filepath "notepad" -args $TmpFile -PassThru
             // $TextEditorProcess.WaitForInputIdle() | Out-Null
             // Wait-Process -Id $TextEditorProcess.Id | Out-Null
