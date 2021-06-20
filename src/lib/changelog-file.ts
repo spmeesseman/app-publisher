@@ -1,6 +1,5 @@
 
 import * as path from "path";
-import getLogger from "./get-logger";
 import { editFile, readFile, pathExists, writeFile, createDir, appendFile, deleteFile } from "./utils/fs";
 import { properCase, isString } from "./utils/utils";
 import { EOL } from "os";
@@ -414,7 +413,7 @@ export function createSectionFromCommits({ options, commits, logger })
                 // If this message line is longer than $LineLen - 4, break it up
                 // (allow 4 spaces or numbered item 1.  , 2.  , etc)
                 //
-                const l = options.lineLen - 4;
+                const l = options.historyLineLen - 4;
                 if (msgPart.length > l)
                 {
                     idx = msgPart.lastIndexOf(" ", l);

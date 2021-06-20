@@ -25,7 +25,7 @@ import { doNpmRelease } from "./lib/releases/npm";
 import setVersions = require("./lib/version/set-versions");
 import * as npm from "./lib/version/npm";
 import getError = require("./lib/get-error");
-import { template, pick } from "lodash";
+import { template, pick, isString } from "lodash";
 import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
 import { sendNotificationEmail } from "./lib/email";
 import { pathExists, writeFile } from "./lib/utils/fs";
@@ -221,6 +221,17 @@ async function run(context: any, plugins: any): Promise<boolean>
 }
 
 
+function logTaskResult(result: boolean | string, logger: any)
+{
+    if (isString(result)) {
+        logger.error(result);
+    }
+    else if (result === true) {
+        logger.success("Successfully completed task");
+    }
+}
+
+
 async function runNodeScript(context: any, plugins: any)
 {
     const { cwd, env, options, logger } = context;
@@ -228,18 +239,17 @@ async function runNodeScript(context: any, plugins: any)
     //
     // Validate options / cmd line arguments
     //
-    logger.log("Validating all options...");
     if (!(await validateOptions(context)))
     {
         return false;
     }
-    logger.success("   Success - options validated");
 
     //
     // If a l1 task is processed, we'll be done
     //
     let taskDone = await processTasks1(context);
     if (taskDone !== false) {
+        logTaskResult(taskDone, logger);
         return taskDone;
     }
 
@@ -269,7 +279,7 @@ async function runNodeScript(context: any, plugins: any)
     catch (error) {
         throw error;
     }
-    logger.success(`Allowed to push to the ${options.repoType} repository`);
+    logger.info(`Allowed to push to the ${options.repoType} repository`);
 
 
     // await plugins.verifyConditions(context);
@@ -289,6 +299,7 @@ async function runNodeScript(context: any, plugins: any)
     //
     taskDone = await processTasks2(context);
     if (taskDone !== false) {
+        logTaskResult(taskDone, logger);
         return taskDone;
     }
 
@@ -364,6 +375,7 @@ async function runNodeScript(context: any, plugins: any)
         // If this is task mode, we're done
         //
         if (options.taskMode) {
+            logTaskResult(true, logger);
             return true;
         }
         //
@@ -379,6 +391,7 @@ async function runNodeScript(context: any, plugins: any)
         // If this is task mode, we're done
         //
         if (options.taskMode) {
+            logTaskResult(true, logger);
             return true;
         }
         //
@@ -487,6 +500,7 @@ async function runNodeScript(context: any, plugins: any)
     //
     taskDone = await processTasks3(context);
     if (taskDone !== false) {
+        logTaskResult(taskDone, logger);
         return taskDone;
     }
 
@@ -512,8 +526,8 @@ async function runNodeScript(context: any, plugins: any)
         //
         if (options.taskGithubRelease)
         {
-            publishGithubRelease({options, nextRelease, logger});
-            logger.success(`Published Github release tagged @ ${nextRelease.tag}`);
+            await publishGithubRelease({options, nextRelease, logger});
+            logTaskResult(true, logger);
             return true;
         }
         didGithubRelease = true;
@@ -540,6 +554,7 @@ async function runNodeScript(context: any, plugins: any)
         //
         if (options.taskMantisbtRelease)
         {
+            logTaskResult(true, logger);
             return true;
         }
     }

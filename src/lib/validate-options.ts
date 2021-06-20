@@ -15,6 +15,7 @@ function error(logger: any, err: string)
 async function validateOptions({cwd, env, logger, options}): Promise<boolean>
 {
     const environ = { ...process.env, ...env };
+    logger.log("Validating all options...");
 
     //
     // If root path is empty then set to "." , by default its "." but just in case
@@ -221,6 +222,13 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
         logger.log("Creating dist directory");
         await createDir(options.pathToDist);
         // VcChangelistAddRemove "$PATHTODIST";
+    }
+
+    //
+    // History file line length
+    //
+    if (!options.historyLineLen) {
+        options.historyLineLen = 80;
     }
 
     //
@@ -540,5 +548,6 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
         options.testEmailRecip = [ options.testEmailRecip ]; // convert to array
     }
 
+    logger.success("Success - options validated");
     return true;
 }
