@@ -51,6 +51,6 @@ export async function setAppPublisherVersion({nextRelease, options, logger})
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
-        await editFile({options}, ".publishrc.json", false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
+        await editFile({options}, ".publishrc.json");
     }
 }

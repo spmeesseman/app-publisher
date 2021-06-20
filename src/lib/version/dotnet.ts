@@ -76,7 +76,7 @@ export async function setDotNetVersion({nextRelease, options, logger}): Promise<
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
-        await editFile({options}, fileNames[0], false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
+        await editFile({options}, fileNames[0]);
         //
         // Return the filename
         //

@@ -109,10 +109,10 @@ export async function setPackageJson({options, lastRelease, nextRelease, logger,
     //
     // Allow manual modifications to package.json and package-lock.json
     //
-    editFile({options}, "package.json", false,  (options.skipVersionEdits === " Y" || options.taskTouchVersions));
+    editFile({options}, "package.json");
     if (packageLockFileExists)
     {
-        await editFile({options}, "package-lock.json", false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
+        await editFile({options}, "package-lock.json");
     }
 }
 

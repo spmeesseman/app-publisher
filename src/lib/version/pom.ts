@@ -66,6 +66,6 @@ export async function setPomVersion({nextRelease, options})
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
-        await editFile({options}, "pom.xml", false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
+        await editFile({options}, "pom.xml");
     }
 }

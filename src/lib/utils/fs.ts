@@ -121,28 +121,20 @@ export async function createDir(dir: string)
 }
 
 
-export async function editFile({ options }, editFile: string, seekToEnd = false, skipEdit = false, async = false)
+export async function editFile({ options }, editFile: string)
 {
     if (editFile && await pathExists(editFile))
     {
-        if (skipEdit && options.versionFilesEditAlways.includes(editFile))
-        {
-            skipEdit = false;
-        }
+        const skipEdit = (options.skipVersionEdits === " Y" || options.taskTouchVersions || options.taskChangelogFile) &&
+                         !options.taskChangelogView && (!options.versionFilesEditAlways.includes(editFile) || options.taskMode),
+              async = options.taskMode,
+              seekToEnd = (!options.taskChangelog && !options.taskCommit) || options.versionFilesScrollDown.includes(editFile);
 
-        //
-        // publishrc can specify a file should be scrolled to bottom
-        //
-        if (options.versionFilesScrollDown.includes(editFile))
-        {
-            seekToEnd = true;
-        }
-
-        if (!skipEdit && options.textEditor)
+        if (!skipEdit)
         {   //
             // Start Notepad process ro edit specified file
             //
-            if (process.platform === "win32") {
+            if (process.platform === "win32") {// && !options.taskMode) {
                 const ps1Script = await getPsScriptLocation("edit-file");
                 await execa.sync("powershell.exe",
                                     [`${ps1Script} '${editFile}' '${options.textEditor}' ${seekToEnd} ${async}`],
@@ -150,7 +142,15 @@ export async function editFile({ options }, editFile: string, seekToEnd = false,
                                 );
             }
             else {
-                await execa.sync(options.textEditor, [ editFile ]);
+                if (async) {
+                    //
+                    // unref() so parent doesn't wait
+                    //
+                    execa(options.textEditor, [ editFile ], { detached: true, stdio: "ignore" }).unref();
+                }
+                else {
+                    await execa.sync(options.textEditor, [ editFile ]);
+                }
             }
         }
     }

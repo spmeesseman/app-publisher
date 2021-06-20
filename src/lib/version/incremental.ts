@@ -45,6 +45,6 @@ export async function setIncrementalersion({nextRelease, options})
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
-        await editFile({options}, clFile, false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
+        await editFile({options}, clFile);
     }
 }

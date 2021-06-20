@@ -181,7 +181,7 @@ async function setVersionFiles({options, logger, lastRelease, nextRelease}): Pro
             // Edit-File will add this file to options.versionFilesEdited
             //
             vFiles.push(vFile);
-            await editFile({options}, vFile, false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
+            await editFile({options}, vFile);
         }
     }
 

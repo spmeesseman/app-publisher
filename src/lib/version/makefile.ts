@@ -46,7 +46,7 @@ export async function setMakefileVersion({nextRelease, options})
             //
             // Allow manual modifications to mantisbt main plugin file and commit to modified list
             //
-            await editFile({options}, options.cProjectRcFile, false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
+            await editFile({options}, options.cProjectRcFile);
         }
     }
 }

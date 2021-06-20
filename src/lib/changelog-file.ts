@@ -1208,7 +1208,7 @@ function getFormattedDate()
     const date = new Date(),
           month = monthNames[date.getMonth()],
           year = date.getFullYear();
-    let day = date.getDay().toString();
+    let day = date.getDate().toString();
 
     if (day === "11" || day === "12" || day === "13")
     {
@@ -1277,6 +1277,7 @@ function getFormattedSubject({options}, subject: string)
 export async function doChangelogFileEdit({ options, commits, logger, lastRelease, nextRelease, env })
 {
     const fmtDate = getFormattedDate();
+    logger.log("Start changelog file edit");
 
     if (options.taskChangelogFile)
     {
@@ -1469,26 +1470,14 @@ export async function doChangelogFileEdit({ options, commits, logger, lastReleas
     //
     // Allow manual modifications to history file
     //
-    if (!options.taskChangelog && !options.taskCommit)
-    {
-        await editFile({options}, options.historyFile, true, options.skipChangelogEdits === "Y");
-    }
-    else if (options.taskCommit) {
-        await editFile({options}, options.historyFile, false, true);
-    }
-    else {
-        //
-        // TODO - Cut just the version from the content, remove all the *** garb
-        //
-        const fileSpec = !!options.taskChangelogFile;
-        await editFile({options}, options.historyFile, false, fileSpec, true);
-    }
+    await editFile({options}, options.changelogFile);
 }
 
 
 export async function doHistoryFileEdit({ options, commits, logger, lastRelease, nextRelease, env })
 {
     const fmtDate = getFormattedDate();
+    logger.log("Start history file edit");
 
     if (options.taskChangelogFile)
     {
@@ -1514,15 +1503,15 @@ export async function doHistoryFileEdit({ options, commits, logger, lastRelease,
         isNewHistoryFileHasContent = false;
     const historyPath = path.dirname(options.historyFile);
 
-    if (historyPath !== "" && !(await pathExists(historyPath)))
+    if (historyPath && !(await pathExists(historyPath)))
     {
-        logger.log("Creating history file directory and adding to version control");
+        logger.log("Creating history file directory");
         await createDir(historyPath);
     }
 
     if (!(await pathExists(options.historyFile)))
     {
-        logger.log("Creating new history file and adding to version control");
+        logger.log("Creating new history file");
         if (!options.taskChangelog)
         {
             await writeFile(options.historyFile, options.projectName + EOL + EOL);
@@ -1599,18 +1588,5 @@ export async function doHistoryFileEdit({ options, commits, logger, lastRelease,
     //
     // Allow manual modifications to history file
     //
-    if (!options.taskChangelog && !options.taskCommit)
-    {
-        await editFile({options}, options.historyFile, true, options.skipChangelogEdits === "Y");
-    }
-    else if (options.taskCommit) {
-        await editFile({options}, options.historyFile, false, true);
-    }
-    else {
-        //
-        // TODO - Cut just the version from the content, remove all the *** garb
-        //
-        const fileSpec = !!options.taskChangelogFile;
-        await editFile({options}, options.historyFile, false, fileSpec, true);
-    }
+    await editFile({options}, options.historyFile);
 }

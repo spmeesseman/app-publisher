@@ -281,7 +281,6 @@ async function runNodeScript(context: any, plugins: any)
     }
     logger.info(`Allowed to push to the ${options.repoType} repository`);
 
-
     // await plugins.verifyConditions(context);
 
     //
@@ -293,6 +292,9 @@ async function runNodeScript(context: any, plugins: any)
     // Populate context with last release info
     //
     context.lastRelease = await getLastRelease(context); // calls getTags()
+    if (options.versionForceCurrent) {
+        context.lastRelease.version = options.versionForceCurrent;
+    }
 
     //
     // If a l1 task is processed, we'll be done
@@ -339,7 +341,10 @@ async function runNodeScript(context: any, plugins: any)
     // Version
     //
     const versionInfo = getNextVersion(context);
-    if (!versionInfo.versionInfo) {
+    if (options.versionForceNext) {
+        nextRelease.version = options.versionForceNext;
+    }
+    else if (!versionInfo.versionInfo) {
         nextRelease.version = versionInfo.version;
     }
     else {
@@ -356,20 +361,25 @@ async function runNodeScript(context: any, plugins: any)
 
     // await plugins.verifyRelease(context);
 
+    //
+    // Create release notes / changelog
+    //
     // nextRelease.notes = await plugins.generateNotes(context);
     nextRelease.notes = createSectionFromCommits(context);
 
+    //
+    // Track modified and created files / directories - initialize
+    //
     nextRelease.edits = [];
 
     // await plugins.prepare(context);
 
     //
-    // Changelog / history file
+    // Edit/touch changelog / history file
     //
     const doChangelog = options.taskChangelog || options.taskChangelogView || options.taskChangelogFile || !options.taskMode;
     if (options.historyFile && doChangelog)
     {
-        logger.log("Start history file edit");
         await doHistoryFileEdit(context);
         //
         // If this is task mode, we're done
@@ -385,7 +395,6 @@ async function runNodeScript(context: any, plugins: any)
     }
     else if (options.changelogFile && doChangelog)
     {
-        logger.log("Start changelog file edit");
         await doChangelogFileEdit(context);
         //
         // If this is task mode, we're done
