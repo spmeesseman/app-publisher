@@ -100,12 +100,8 @@ pipeline {
           bat "npm install"
           script {
             //
-            // app-publisher is used so check for powershell and .publishrcfile
+            // app-publisher is used so check for .publishrc file
             //
-            def status = powershell(returnStatus: true, script: 'ipconfig')
-            if (status != 0) {
-              error("Powershell not found, cannot run app-publisher")
-            }
             def apRcExists = fileExists '.publishrc.json'
             if (apRcExists == false) {
               error(".publishrc.json not found, cannot run app-publisher")
@@ -318,7 +314,7 @@ pipeline {
           echo "Successful build"
           echo "    1. Tag version in SVN."
           echo "    2. Send release email."
-          bat "app-publisher --task-touch-versions-commit --task-email"
+          bat "app-publisher --task-commit --task-email"
         }
       }
     }
