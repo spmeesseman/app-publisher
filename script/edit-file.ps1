@@ -9,8 +9,6 @@ param (
 $FirstEditFileDone = $false;
 
 
-Edit-File $file $editor $seek $async
-
 function Edit-File($editFile, $textEditor, $seekToEnd = $false, $async = $false)
 {
     $nFile = $editFile;
@@ -116,3 +114,4 @@ function CheckPsCmdSuccess($ExitOnError = $false)
     }
 }
 
+Edit-File $file $editor $seek $async

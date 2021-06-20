@@ -7,8 +7,8 @@ const execa = require("execa");
 
 export async function copyFile(src: string, dst: string)
 {
-    return new Promise<boolean>(async (resolve, reject) => {
-        //
+    return new Promise<boolean>(async (resolve, reject) =>
+    {   //
         // If dst is a directory, a new file with the same name will be created
         //
         if (await pathExists(dst)) {
@@ -132,21 +132,21 @@ export async function editFile({ options }, editFile: string)
 
         if (!skipEdit)
         {   //
-            // Start Notepad process ro edit specified file
+            // Start Notepad process to edit specified file
+            // If this is win32, and it's a manual edit, then use the super cool ps script
+            // that will scroll the content in the editor to the end
             //
-            if (process.platform === "win32") {// && !options.taskMode) {
+            if (process.platform === "win32" && seekToEnd && !async)
+            {
                 const ps1Script = await getPsScriptLocation("edit-file");
                 await execa.sync("powershell.exe",
-                                    [`${ps1Script} '${editFile}' '${options.textEditor}' ${seekToEnd} ${async}`],
+                                    [ ps1Script, "-f", editFile, "-e", options.textEditor, "-s", seekToEnd, "-a", async ],
                                     { stdio: ["pipe", "pipe", "pipe"], env: process.env}
                                 );
             }
             else {
-                if (async) {
-                    //
-                    // unref() so parent doesn't wait
-                    //
-                    execa(options.textEditor, [ editFile ], { detached: true, stdio: "ignore" }).unref();
+                if (async) { // unref() so parent doesn't wait
+                    await execa(options.textEditor, [ editFile ], { detached: true, stdio: "ignore" }).unref();
                 }
                 else {
                     await execa.sync(options.textEditor, [ editFile ]);
