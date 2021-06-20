@@ -1,3 +1,5 @@
+
+import * as path from "path";
 const execa = require("execa");
 const debug = require("debug")("app-publisher:git");
 const xml2js = require("xml2js");
@@ -6,10 +8,10 @@ const xml2js = require("xml2js");
 /**
  * Get the commit sha for a given tag.
  *
- * @param {String} tagName Tag name for which to retrieve the commit sha.
- * @param {Object} [execaOpts] Options to pass to `execa`.
+ * @param tagName Tag name for which to retrieve the commit sha.
+ * @param execaOpts Options to pass to `execa`.
  *
- * @return {string} The commit sha of the tag in parameter or `null`.
+ * @returns {string} The commit sha of the tag in parameter or `null`.
  */
 export async function getTagHead(tagName: any, execaOpts: { cwd: any; env: any; }, { branch, repo, repoType })
 {
@@ -42,9 +44,9 @@ export async function getTagHead(tagName: any, execaOpts: { cwd: any; env: any; 
 /**
  * Get all the repository tags.
  *
- * @param {Object} [execaOpts] Options to pass to `execa`.
+ * @param execaOpts Options to pass to `execa`.
  *
- * @returns {Array<String>} List of git tags.
+ * @returns List of git tags.
  * @throws {Error} If the `git` or `svn` command fails.
  */
 export async function getTags({env, options, logger}, execaOpts: any)
@@ -119,10 +121,10 @@ export async function getTags({env, options, logger}, execaOpts: any)
 /**
  * Verify if the `ref` is in the direct history of the current branch.
  *
- * @param {String} ref The reference to look for.
- * @param {Object} [execaOpts] Options to pass to `execa`.
+ * @param ref The reference to look for.
+ * @param execaOpts Options to pass to `execa`.
  *
- * @return {Boolean} `true` if the reference is in the history of the current branch, falsy otherwise.
+ * @returns `true` if the reference is in the history of the current branch, falsy otherwise.
  */
 export async function isRefInHistory(ref: any, execaOpts: any, { repo, branch, repoType }, isTags = false)
 {
@@ -158,14 +160,19 @@ export async function fetch({ repo, repoType }, execaOpts: any)
 {
     if (repoType === "git")
     {
-        try
-        {
+        try {
             await execa("git", ["fetch", "--unshallow", "--tags", repo], execaOpts);
         }
-        catch (error)
-        {
+        catch (error) {
             await execa("git", ["fetch", "--tags", repo], execaOpts);
         }
+    }
+    else if (repoType === "svn")
+    {
+        await execSvn([ "update", "--force" ], execaOpts);
+    }
+    else {
+        throw new Error("Invalid repository type");
     }
 }
 
@@ -173,9 +180,9 @@ export async function fetch({ repo, repoType }, execaOpts: any)
 /**
  * Get the HEAD sha.
  *
- * @param {Object} [execaOpts] Options to pass to `execa`.
+ * @param execaOpts Options to pass to `execa`.
  *
- * @return {String} the sha of the HEAD commit.
+ * @returns The sha of the HEAD commit.
  */
 export function getHead(execaOpts: any, repoType = "git")
 {
@@ -200,9 +207,9 @@ export function getHead(execaOpts: any, repoType = "git")
 /**
  * Get the repository remote URL.
  *
- * @param {Object} [execaOpts] Options to pass to `execa`.
+ * @param execaOpts Options to pass to `execa`.
  *
- * @return {string} The value of the remote git URL.
+ * @returns The value of the remote git URL.
  */
 export async function repoUrl(execaOpts: any, repoType = "git")
 {
@@ -230,7 +237,7 @@ export async function repoUrl(execaOpts: any, repoType = "git")
 /**
  * Test if the current working directory is a Git repository.
  *
- * @param {Object} [execaOpts] Options to pass to `execa`.
+ * @param execaOpts Options to pass to `execa`.
  *
  * @returns `true` if the current working directory is in a git repository, falsy otherwise.
  */
@@ -249,9 +256,11 @@ export async function isGitRepo(execaOpts: { cwd: any; env: any; })
 /**
  * Test if the current working directory is a Git repository.
  *
+ * @since 2.8.0
+ *
  * @param execaOpts Options to pass to `execa`
  *
- * @return `true` if the current working directory is in a git repository, falsy otherwise.
+ * @returns `true` if the current working directory is in a git repository, falsy otherwise.
  */
 export async function isSvnRepo(execaOpts: { cwd: any; env: any; })
 {
@@ -262,6 +271,79 @@ export async function isSvnRepo(execaOpts: { cwd: any; env: any; })
     catch (error) {
         debug(error);
     }
+}
+
+
+/**
+ * Executes svn command with credentials if set in the environment.
+ *
+ * @since 2.8.0
+ *
+ * @param execaArgs Arguments to pass to `svn`
+ * @param execaOpts Options to pass to `execa`
+ *
+ * @returns The process object returned by execa()
+ */
+async function execSvn(execaArgs: string[], execaOpts: any)
+{
+    let proc: any;
+    const svnUser = process.env.SVN_AUTHOR_NAME,
+          svnToken = process.env.SVN_TOKEN;
+    if (svnUser && svnToken) {
+        proc = await execa("svn", [...execaArgs, "--non-interactive", "--no-auth-cache", "--username", svnUser, "--password", svnToken ], execaOpts);
+    }
+    else {
+        proc = await execa("svn", [...execaArgs, "--non-interactive" ], execaOpts);
+    }
+    return proc;
+}
+
+
+/**
+ * Determines whether the specifed file or directory is under version control.
+ *
+ * @since 2.8.0
+ *
+ * @param context run context
+ * @param objectPath Path to the file or directory
+ * @param execaOpts Options to pass to `execa`
+ * @param appendPre manipulate cwd
+ * @param changePath manipulate cwd
+ *
+ * @returns `true` if the specifed file or directory is under version control.
+ */
+export async function isVersioned({options, env}, objectPath: string, execaOpts: any, appendPre = false, changePath = false)
+{
+    let vcFile = objectPath,
+        isVersioned = false,
+        proc: any;
+
+    if (appendPre && options.pathPreRoot) {
+        vcFile = path.normalize(path.join(options.pathPreRoot, objectPath));
+    }
+
+    if (changePath && options.pathToMainRoot && options.pathToMainRoot !== ".") {
+        process.chdir(path.normalize(options.pathToMainRoot));
+    }
+    if (options.repoType === "svn")
+    {
+        proc = await execSvn(["info", vcFile], execaOpts);
+    }
+    else {
+        proc = await execa("git", ["ls-files", "--error-unmatch", vcFile ], execaOpts);
+    }
+    if (proc.code === 0) {
+        isVersioned = true;
+    }
+    //
+    // Change directory back to project root
+    // PATHTOPREROOT will be defined if PATHTOMAINROOT is
+    //
+    if (changePath && options.pathToMainRoot && options.pathToMainRoot !== ".") {
+        process.chdir(path.normalize(options.pathPreRoot));
+    }
+
+    return isVersioned;
 }
 
 
@@ -329,16 +411,53 @@ export async function verifyAuth({ options, logger }, execaOpts: any)
  *
  * @throws {Error} if the tag creation failed.
  */
-export async function tag(tagName: any, execaOpts: any, repoType = "git")
+export async function tag({options, logger, nextRelease}, execaOpts: any, repoType = "git")
 {
-    if (repoType === "git") {
-        await execa("git", ["tag", tagName], execaOpts);
+    let tagMessage: string,
+        tagLocation: string;
+
+    if (options.pathPreRoot && !options.vcTagPrefix)
+    {
+        logger.warn("Skipping version tag, 'vcTagPrefix' must be set for subprojects");
+        logger.warn("The project must be tagged manually using the following command:");
+        logger.warn(`   svn copy "${options.repo}" "${tagLocation}/PREFIX-v${nextRelease.version}" -m "chore(release): tag v${nextRelease.version} [skip ci]"`);
+        return;
     }
-    else if (repoType === "svn") {
-        //
-        // TODO
-        //
-        await execa("svn", ["tag", tagName], execaOpts);
+
+    if (repoType === "git")
+    {
+        tagLocation = nextRelease.tag;
+        if (options.vcTagPrefix && options.vcTagPrefix !== ".")
+        {
+            tagLocation = `${nextRelease.vcTagPrefix}-${nextRelease.tag}`;
+            tagMessage = `chore(release): tag ${nextRelease.vcTagPrefix} version ${nextRelease.version} [skip ci]`;
+        }
+        logger.log(`Tagging SVN version at ${tagLocation}`);
+        if (options.githubRelease !== "Y" && options.githubRelease !== true) {
+            await execa("git", ["tag", "-a", tagLocation, "-m", tagMessage], execaOpts);
+        }
+        else {
+            logger.log("Re-tagging after release");
+            const proc = await execa("git", [ "push", "origin", ":refs/tags/" + tagLocation ], execaOpts);
+            if (proc.code === 0) {
+                await execa("git", ["tag", "-fa", tagLocation, "-m", tagMessage], execaOpts);
+            }
+        }
+    }
+    else if (repoType === "svn")
+    {
+        tagLocation = options.repo.replace("trunk", "tags").replace("branches/" + options.branch, "tags");
+        if (!options.vcTagPrefix || options.vcTagPrefix === ".")
+        {
+            tagLocation = `${tagLocation}/${nextRelease.tag}`;
+            tagMessage = `chore(release): tag version ${nextRelease.version} [skip ci]`;
+        }
+        else {
+            tagLocation = `${tagLocation}/${nextRelease.vcTagPrefix}-${nextRelease.tag}`;
+            tagMessage = `chore(release): tag ${nextRelease.vcTagPrefix} version ${nextRelease.version} [skip ci]`;
+        }
+        logger.log(`Tagging SVN version at ${tagLocation}`);
+        await execSvn(["copy", options.repo, tagLocation, "-m", tagMessage], execaOpts);
     }
     else {
         throw new Error("Invalid repository type");
@@ -348,8 +467,8 @@ export async function tag(tagName: any, execaOpts: any, repoType = "git")
 /**
  * Push to the remote repository.
  *
- * @param {String} repo The remote repository URL.
- * @param {Object} [execaOpts] Options to pass to `execa`.
+ * @param repo The remote repository URL.
+ * @param execaOpts Options to pass to `execa`.
  *
  * @throws {Error} if the push failed.
  */
@@ -359,7 +478,62 @@ export async function push(repo: any, execaOpts: any, version: string, repoType 
         await execa("git", ["push", "--tags", repo], execaOpts);
     }
     else if (repoType === "svn") {
-        await execa("svn", ["commit", "-m", "chore: v" + version + " [skip ci]"], execaOpts);
+        // Nothing to do
+    }
+    else {
+        throw new Error("Invalid repository type");
+    }
+}
+
+
+/**
+ * Push to the remote repository.
+ *
+ * @param repo The remote repository URL.
+ * @param execaOpts Options to pass to `execa`.
+ *
+ * @throws {Error} if the commit failed.
+ */
+export async function commit({options}, execaOpts: any, version: string)
+{
+    if (options.repoType === "git") {
+        const proc = await execa("git", ["commit", "--quiet", "-m", `"chore(release): $VERSION [skip ci]` ], execaOpts);
+        if (proc.code === 0) {
+            await execa("git", ["commit", "push", "origin", `${options.branch}:${options.branch}` ], execaOpts);
+        }
+    }
+    else if (options.repoType === "svn") {
+        await execa("svn", ["commit", "-m", `chore: v${version} [skip ci]`], execaOpts);
+    }
+    else {
+        throw new Error("Invalid repository type");
+    }
+}
+
+
+/**
+ * @since 2.8.0
+ * @param changeList Changelist.  If not specified, a recursive revert is done
+ * @param execaOpts Options to pass to `execa`.
+ * @param repoType Repositorytype, one of 'git' or 'svn'
+ */
+export async function revert(changeList: string[] | undefined, execaOpts: any, repoType = "git")
+{
+    if (repoType === "git") {
+        throw new Error("Method not implemented");
+    }
+    else if (repoType === "svn") {
+        if (!changeList) {
+            await execa("svn", [ "revert", "-R", "." ], execaOpts);
+            await execa("svn", [ "cleanup", ".", "--remove-unversioned" ], execaOpts);
+        }
+        else {
+            await execa("svn", [ "revert", "-R", ...changeList ], execaOpts);
+            // for (const change of changeList)
+            // {
+            //     await execa("svn", ["revert", change ], execaOpts);
+            // }
+        }
     }
     else {
         throw new Error("Invalid repository type");
@@ -370,10 +544,10 @@ export async function push(repo: any, execaOpts: any, version: string, repoType 
 /**
  * Verify a tag name is a valid Git reference.
  *
- * @param {String} tagName the tag name to verify.
- * @param {Object} [execaOpts] Options to pass to `execa`.
+ * @param tagName the tag name to verify.
+ * @param execaOpts Options to pass to `execa`.
  *
- * @return {Boolean} `true` if valid, falsy otherwise.
+ * @return `true` if valid, falsy otherwise.
  */
 export async function verifyTagName(tagName: string, execaOpts: any, repoType = "git")
 {
@@ -400,10 +574,10 @@ export async function verifyTagName(tagName: string, execaOpts: any, repoType = 
 /**
  * Verify the local branch is up to date with the remote one.
  *
- * @param {String} branch The repository branch for which to verify status.
- * @param {Object} [execaOpts] Options to pass to `execa`.
+ * @param branch The repository branch for which to verify status.
+ * @param execaOpts Options to pass to `execa`.
  *
- * @return {Boolean} `true` is the HEAD of the current local branch is the same as the HEAD of the remote branch, falsy otherwise.
+ * @returns `true` is the HEAD of the current local branch is the same as the HEAD of the remote branch, falsy otherwise.
  */
 export async function isBranchUpToDate(branch: any, execaOpts: any, options: any)
 {

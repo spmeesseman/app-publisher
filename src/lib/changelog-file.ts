@@ -1,9 +1,11 @@
 
-import { properCase, isString, editFile, readFile } from "./utils";
-import { appendFileSync, existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "fs";
+import {
+    properCase, isString, editFile, readFile, pathExists, writeFile, createDir, appendFile, deleteFile
+} from "./utils";
 import * as path from "path";
 const execa = require("execa");
 import { EOL } from "os";
+import { npmLocation } from "./releases/npm";
 import getLogger from "./get-logger";
 
 
@@ -578,8 +580,11 @@ export function createSectionFromCommits({ options, commits, logger })
 function getEmailHeader(options: any, version: string)
 {
     let szHrefs = "";
-
-    if (options.distRelease || options.npmRelease || options.nugetRelease || options.historyHref || (options.mantisbtRelease === "Y" && options.mantisbtUrl))
+    const incHeader = options.historyHref || (options.distRelease === "Y" || options.distRelease === true) ||
+                      (options.npmRelease === "Y" || options.npmRelease === true) ||
+                      (options.nugetRelease === "Y" || options.nugetRelease === true) ||
+                      ((options.mantisbtRelease === "Y" || options.mantisbtRelease === true) && options.mantisbtUrl);
+    if (incHeader)
     {
         szHrefs = "<table>";
 
@@ -595,22 +600,15 @@ function getEmailHeader(options: any, version: string)
             szHrefs += `<tr><td>Network Location</td><td style="padding-left:10px"><a href="${targetLoc}">Network Drive Location</a></td></tr>`;
         }
 
-        if (options.npmRelease === "Y" || options.npmRelease === true)
+        if (npmLocation && (options.npmRelease === "Y" || options.npmRelease === true))
         {
-            let npmLocation;
-            if (options.npmScope) {
-                npmLocation = `${options.npmRegistry}/-/web/detail/${options.npmScope}/${options.projectName}`;
-            }
-            else {
-                npmLocation = `${options.npmRegistry}/-/web/detail/${options.projectName}`;
-            }
             szHrefs += `<tr><td>NPM Location</td><td style="padding-left:10px"><a href="${npmLocation}">NPM Registry</a></td></tr>`;
         }
 
-        if (options.nugetRelease === "Y" || options.nugetRelease === true)
-        {
-            szHrefs += `<tr><td>Nuget Location</td><td style="padding-left:10px"><a href="${options.nugetRelease}">Nuget Registry</a></td></tr>`;
-        }
+        // if (options.nugetRelease === "Y" || options.nugetRelease === true)
+        // {
+        //     szHrefs += `<tr><td>Nuget Location</td><td style="padding-left:10px"><a href="${options.nugetRelease}">Nuget Registry</a></td></tr>`;
+        // }
 
         //
         // history file
@@ -627,9 +625,9 @@ function getEmailHeader(options: any, version: string)
 
         for (const emailHref of options.emailHrefs)
         {
-            let eLink = emailHref;
-            let eLinkName = emailHref;
-            let eLinkDescrip = "";
+            let eLink = emailHref,
+                eLinkName = emailHref,
+                eLinkDescrip = "";
             if (emailHref.includes("|"))
             {
                 const emailHrefParts = emailHref.split("|");
@@ -689,7 +687,7 @@ export async function getChangelog({ options, logger, lastRelease }, numsections
     //
     // Make sure user entered correct cmd line params
     //
-    if (!options.changelogFile || !existsSync(options.changelogFile)) {
+    if (!options.changelogFile || !(await pathExists(options.changelogFile))) {
         logger.error("Error: No changelog file specified");
         throw new Error("160");
     }
@@ -831,9 +829,9 @@ export async function getChangelog({ options, logger, lastRelease }, numsections
     //
     const clFile = `${process.env.Temp}/changelog.md`;
     contents = contents.replace(EOL, "\n");
-    writeFileSync(clFile, contents);
+    await writeFile(clFile, contents);
     contents = await execa.stdout("marked", ["--breaks", "--gfm", "--file", clFile]);
-    unlinkSync(clFile);
+    await deleteFile(clFile);
 
     if (includeEmailHdr === true)
     {
@@ -854,7 +852,7 @@ export async function getHistory({ options, logger, lastRelease }, numsections: 
     //
     // Make sure user entered correct cmd line params
     //
-    if (!options.historyFile || !existsSync(options.historyFile)) {
+    if (!options.historyFile || !(await pathExists(options.historyFile))) {
         logger.error("History file does not exist");
         return szFinalContents;
     }
@@ -1278,24 +1276,24 @@ function getFormattedSubject({options}, subject: string)
 }
 
 
-export function doChangelogFileEdit({ options, commits, logger, lastRelease, nextRelease, env })
+export async function doChangelogFileEdit({ options, commits, logger, lastRelease, nextRelease, env })
 {
     const fmtDate = getFormattedDate();
 
     if (options.taskChangelogFile)
     {
         options.changelogFile = options.taskChangelogFile;
-        if (existsSync(options.changelogFile))
+        if (await pathExists(options.changelogFile))
         {
-            unlinkSync(options.changelogFile);
+            await deleteFile(options.changelogFile);
         }
     }
     else if (options.taskMode && !options.taskChangelog)
     {
         options.changelogFile = path.join(env.Temp, `history.${nextRelease.version}.txt`);
-        if (existsSync(options.changelogFile))
+        if (await pathExists(options.changelogFile))
         {
-            unlinkSync(options.changelogFile);
+            await deleteFile(options.changelogFile);
         }
     }
 
@@ -1305,22 +1303,22 @@ export function doChangelogFileEdit({ options, commits, logger, lastRelease, nex
     let newChangelog = false;
     const changeLogPath = path.dirname(options.changelogFile);
 
-    if (changeLogPath !== "" && !existsSync(changeLogPath))
+    if (changeLogPath !== "" && !(await pathExists(changeLogPath)))
     {
         logger.log("Creating changeLog file directory");
-        mkdirSync(changeLogPath, { mode: 0o777 });
+        await createDir(changeLogPath);
     }
 
-    if (!existsSync(options.changelogFile))
+    if (!(await pathExists(options.changelogFile)))
     {
         logger.log("Creating changelog file directory and adding to version control");
         if (!options.taskChangelog)
         {
-            writeFileSync(options.changelogFile, options.projectName + EOL + EOL);
+            await writeFile(options.changelogFile, options.projectName + EOL + EOL);
         }
         else
         {
-            writeFileSync(options.changelogFile, "");
+            await writeFile(options.changelogFile, "");
         }
         newChangelog = true;
     }
@@ -1455,7 +1453,7 @@ export function doChangelogFileEdit({ options, commits, logger, lastRelease, nex
         // changelog title
         //
         tmpCommits = tmpCommits.trim();
-        let changeLogContents = readFileSync(options.changelogFile).toString();
+        let changeLogContents = await readFile(options.changelogFile);
         changeLogContents = changeLogContents.replace(changelogTitle, "").trim();
         let changeLogFinal = `${changelogTitle}${EOL}${EOL}`;
         if (tmpCommits) {
@@ -1464,7 +1462,7 @@ export function doChangelogFileEdit({ options, commits, logger, lastRelease, nex
         if (changeLogContents) {
             changeLogFinal = `${changeLogFinal}${changeLogContents}${EOL}`;
         }
-        writeFileSync(options.changelogFile, changeLogFinal);
+        await writeFile(options.changelogFile, changeLogFinal);
     }
     else {
         logger.warn("Version match, not touching changelog file");
@@ -1490,24 +1488,24 @@ export function doChangelogFileEdit({ options, commits, logger, lastRelease, nex
 }
 
 
-export function doHistoryFileEdit({ options, commits, logger, lastRelease, nextRelease, env })
+export async function doHistoryFileEdit({ options, commits, logger, lastRelease, nextRelease, env })
 {
     const fmtDate = getFormattedDate();
 
     if (options.taskChangelogFile)
     {
         options.historyFile = options.taskChangelogFile;
-        if (existsSync(options.historyFile))
+        if (await pathExists(options.historyFile))
         {
-            unlinkSync(options.historyFile);
+            await deleteFile(options.historyFile);
         }
     }
     else if (options.taskMode && !options.taskChangelog)
     {
         options.historyFile = path.join(env.Temp, `history.${nextRelease.version}.txt`);
-        if (existsSync(options.historyFile))
+        if (await pathExists(options.historyFile))
         {
-            unlinkSync(options.historyFile);
+            await deleteFile(options.historyFile);
         }
     }
 
@@ -1518,22 +1516,22 @@ export function doHistoryFileEdit({ options, commits, logger, lastRelease, nextR
         isNewHistoryFileHasContent = false;
     const historyPath = path.dirname(options.historyFile);
 
-    if (historyPath !== "" && !existsSync(historyPath))
+    if (historyPath !== "" && !(await pathExists(historyPath)))
     {
         logger.log("Creating history file directory and adding to version control");
-        mkdirSync(historyPath, { mode: 0o777 });
+        await createDir(historyPath);
     }
 
-    if (!existsSync(options.historyFile))
+    if (!(await pathExists(options.historyFile)))
     {
         logger.log("Creating new history file and adding to version control");
         if (!options.taskChangelog)
         {
-            writeFileSync(options.historyFile, options.projectName + EOL + EOL);
+            await writeFile(options.historyFile, options.projectName + EOL + EOL);
         }
         else
         {
-            writeFileSync(options.historyFile, "");
+            await writeFile(options.historyFile, "");
         }
         isNewHistoryFile = true;
     }
@@ -1541,14 +1539,14 @@ export function doHistoryFileEdit({ options, commits, logger, lastRelease, nextR
     {   //
         // If the history file already existed, but had no entries, we need to still set the 'new' flag
         //
-        const contents = readFileSync(options.historyFile).toString();
+        const contents = await readFile(options.historyFile);
         if (contents.indexOf(options.versionText) === -1)
         {
             isNewHistoryFile = true;
             isNewHistoryFileHasContent = true;
         }
     }
-    if (!existsSync(options.historyFile))
+    if (!(await pathExists(options.historyFile)))
     {
         logger.error("Could not create history file, exiting");
         throw new Error("140");
@@ -1572,7 +1570,7 @@ export function doHistoryFileEdit({ options, commits, logger, lastRelease, nextR
         //
         if (isNewHistoryFile && !isNewHistoryFileHasContent && !options.taskChangelog) {
             const historyFileTitle = options.projectName + " History";
-            appendFileSync(options.historyFile, historyFileTitle + EOL + EOL);
+            await appendFile(options.historyFile, historyFileTitle + EOL + EOL);
         }
 
         //
@@ -1586,14 +1584,14 @@ export function doHistoryFileEdit({ options, commits, logger, lastRelease, nextR
         // Replace all newline pairs with cr/nl pairs as SVN will have sent commit comments back
         // with newlines only
         //
-        if (existsSync(options.historyHdrFile))
+        if (await pathExists(options.historyHdrFile))
         {
-            const historyHeader = readFileSync(options.historyHdrFile).toString();
-            appendFileSync(options.historyFile, `${EOL}${options.versionText} ${nextRelease.version}${EOL}${fmtDate}${EOL}${historyHeader}${EOL}${tmpCommits}`);
+            const historyHeader = await readFile(options.historyHdrFile);
+            await appendFile(options.historyFile, `${EOL}${options.versionText} ${nextRelease.version}${EOL}${fmtDate}${EOL}${historyHeader}${EOL}${tmpCommits}`);
         }
         else {
             logger.warn("History header template not found");
-            appendFileSync(options.historyFile, `${EOL}${options.versionText} ${nextRelease.version}${EOL}${fmtDate}${EOL}${EOL}${EOL}${tmpCommits}`);
+            await appendFile(options.historyFile, `${EOL}${options.versionText} ${nextRelease.version}${EOL}${fmtDate}${EOL}${EOL}${EOL}${tmpCommits}`);
         }
     }
     else {

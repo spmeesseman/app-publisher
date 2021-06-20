@@ -52,7 +52,7 @@ export async function getDotNetVersion({logger}): Promise<{ version: string, ver
 }
 
 
-export async function setDotNetVersion({nextRelease, options, logger})
+export async function setDotNetVersion({nextRelease, options, logger}): Promise<string | undefined>
 {
     let semVersion = "";
     const fileNames = await getFiles(logger);
@@ -72,11 +72,15 @@ export async function setDotNetVersion({nextRelease, options, logger})
         //
         // Replace version in assemblyinfo file
         //
-        await replaceInFile("pom.xml", `AssemblyVersion[ ]*[\\(][ ]*["][0-9a-z.]+`, `AssemblyVersion("${semVersion}`);
+        await replaceInFile(fileNames[0], `AssemblyVersion[ ]*[\\(][ ]*["][0-9a-z.]+`, `AssemblyVersion("${semVersion}`);
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
-        editFile({options}, "pom.xml", false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
+        editFile({options}, fileNames[0], false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
+        //
+        // Return the filename
+        //
+        return fileNames[0];
     }
     else if (fileNames && fileNames.length > 0) {
         logger.error("The current version cannot be written, multiple assemblyinfo files found");

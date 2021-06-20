@@ -2,8 +2,12 @@ import * as path from "path";
 import { pathExists, timeout, runScripts, writeFile, readFile } from "../utils";
 import { createReleaseChangelog } from "../changelog-file";
 import { contentTypeMap } from "./content-type-map";
+import { setOptions } from "marked";
 
-export = doGithubRelease;
+export { doGithubRelease, publishGithubRelease };
+
+
+let githubReleaseId;
 
 
 async function doGithubRelease({ options, logger, lastRelease, env })
@@ -72,6 +76,8 @@ async function doGithubRelease({ options, logger, lastRelease, env })
         //
         if (response && response.upload_url)
         {
+            githubReleaseId = response.id;
+
             logger.success("Successfully created GitHub release v$VERSION");
             logger.success("   ID         : $($Response.id)");
             logger.success("   Tarball URL: $($Response.zipball_url)");
@@ -144,6 +150,49 @@ async function doGithubRelease({ options, logger, lastRelease, env })
         }
         else {
             logger.error("Failed to create GitHub v$VERSION release");
+        }
+    }
+}
+
+
+async function publishGithubRelease({options, nextRelease, logger})
+{
+    if (githubReleaseId && (options.githubRelease === "Y" || options.githubRelease === true))
+    {
+        logger.log("Marking release as published");
+        //
+        // Mark release published
+        // Set up the request body for the 'create release' request
+        //
+        const request = {
+            draft: false
+        };
+        //
+        // Set up the request header
+        //
+        const header = {
+            "Accept": "application/vnd.github.v3+json",
+            "mediaTypeVersion": "v3",
+            "squirrelAcceptHeader": "application/vnd.github.squirrel-girl-preview",
+            "symmetraAcceptHeader": "application/vnd.github.symmetra-preview+json",
+            "Authorization": "token " + process.env.GITHUB_TOKEN,
+            "Content-Type": "application/json; charset=UTF-8"
+        };
+        //
+        // Send the REST POST to publish the release
+        //
+        const url = `https://api.github.com/repos/${options.githubUser}/${options.projectName}/releases/${githubReleaseId}`;
+        const response = undefined; // Invoke-RestMethod $url -UseBasicParsing -Method PATCH -Body $Request -Headers $Header
+        // CheckPsCmdSuccess
+        //
+        // Make sure an upload_url value exists on the response object to check for success
+        //
+        if (response && response.upload_url)
+        {
+            logger.success(`Successfully patched/published GitHub release v${nextRelease.version}`);
+        }
+        else {
+            logger.error(`Failed to publish/patch GitHub v${nextRelease.version} release`);
         }
     }
 }

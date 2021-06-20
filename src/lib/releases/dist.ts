@@ -5,7 +5,7 @@ import { copyDir, createDir, pathExists, copyFile, runScripts } from "../utils";
 export = doDistRelease;
 
 
-async function doDistRelease({ options, commits, logger, nextRelease })
+async function doDistRelease({ options, logger, nextRelease, cwd, env })
 {
     //
     // Create remote paths
@@ -18,7 +18,7 @@ async function doDistRelease({ options, commits, logger, nextRelease })
     //
     // Run pre distribution-release scripts if specified
     //
-    runScripts({ options, logger }, "preDistRelease", options.distReleasePreCommand);
+    runScripts({ options, logger, cwd, env }, "preDistRelease", options.distReleasePreCommand);
 
     //
     // Copy history file to dist directory

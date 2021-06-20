@@ -2,15 +2,10 @@
 import * as fs from "fs";
 import * as path from "path";
 import hideSensitive = require("./hide-sensitive");
-import chalk from "chalk";
-import minimatch from "minimatch";
 import { isFunction } from "lodash";
-import { setOptions } from "marked";
+// import { setOptions } from "marked";
 const execa = require("execa");
-const find = require("find-process");
-
-
-const logValueWhiteSpace = 40;
+// const find = require("find-process");
 
 
 export function extractErrors(err)
@@ -165,43 +160,6 @@ export function properCase(name: string)
 }
 
 
-export function isExcluded(uriPath: string, exclude: string)
-{
-    function testForExclusionPattern(path: string, pattern: string): boolean
-    {
-        return minimatch(path, pattern, { dot: true, nocase: true });
-    }
-
-    this.log("", 2);
-    this.log("Check exclusion", 2);
-    this.logValue("   path", uriPath, 2);
-
-    if (exclude)
-    {
-        if (Array.isArray(exclude))
-        {
-            for (const pattern of exclude) {
-                this.logValue("   checking pattern", pattern, 3);
-                if (testForExclusionPattern(uriPath, pattern)) {
-                    this.log("   Excluded!", 2);
-                    return true;
-                }
-            }
-        }
-        else {
-            this.logValue("   checking pattern", exclude, 3);
-            if (testForExclusionPattern(uriPath, exclude)) {
-              this.log("   Excluded!", 2);
-              return true;
-            }
-        }
-    }
-
-    this.log("   Not excluded", 2);
-    return false;
-}
-
-
 export function timeout(ms: number)
 {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -288,6 +246,22 @@ export async function readFile(file: string): Promise<string>
 }
 
 
+export async function deleteFile(file: string): Promise<void>
+{
+    if (!file.includes(path.delimiter)) {
+        file = path.join(process.cwd(), file);
+    }
+    return new Promise<void>((resolve, reject) => {
+        fs.unlink(file, (err) => {
+            if (err) {
+                reject(err);
+            }
+            resolve();
+        });
+    });
+}
+
+
 /**
  * Overwrites file if it exists
  *
@@ -307,28 +281,22 @@ export async function writeFile(file: string, data: string): Promise<void>
 }
 
 
-export function readFileSync(file: string)
+export async function appendFile(file: string, data: string): Promise<void>
 {
-    return fs.readFileSync(file).toString();
+    return new Promise<void>((resolve, reject) => {
+        fs.appendFile(file, data, (err) => {
+            if (err) {
+                reject(err);
+            }
+            resolve();
+        });
+    });
 }
 
 
-export function removeFromArray(arr: any[], item: any)
+export function readFileSync(file: string)
 {
-    let idx = -1;
-    let idx2 = -1;
-
-    arr.forEach(each => {
-        idx++;
-        if (item === each) {
-            idx2 = idx;
-            return false;
-        }
-    });
-
-    if (idx2 !== -1 && idx2 < arr.length) {
-        arr.splice(idx2, 1);
-    }
+    return fs.readFileSync(file).toString();
 }
 
 
@@ -360,23 +328,10 @@ export async function replaceInFile(file: string, old: string, nu: string, caseS
 }
 
 
-export function existsInArray(arr: any[], item: any)
-{
-    let exists = false;
-    if (arr) {
-        arr.forEach(each => {
-            if (item === each) {
-                exists = true;
-                return false;
-            }
-        });
-    }
-
-    return exists;
-}
+const scriptTypesProcessed = [];
 
 
-export async function runScripts({options, logger}, scriptType: string, scripts: string[], throwOnError = false, runInTestMode = false)
+export async function runScripts({options, logger, cwd, env}, scriptType: string, scripts: string[], throwOnError = false, runInTestMode = false)
 {
     if (scripts && scripts.length > 0) // && !$script:BuildCmdsRun.Contains($ScriptType))
     {   //
@@ -384,68 +339,40 @@ export async function runScripts({options, logger}, scriptType: string, scripts:
         //
         logger.log("Running custom $ScriptType script(s)");
 
+        if (scriptTypesProcessed.includes(scriptType)) {
+            logger.warn(`The script type ${scriptType} has already been ran during this run, skipping`);
+            return;
+        }
+
+        scriptTypesProcessed.push(scriptType);
+
         if (!options.dryRun || runInTestMode)
         {
-            for (const script of scripts)
+            for (let script of scripts)
             {
-                const proc = await execa.shell(script);
-                checkExitCode(proc.code, logger, throwOnError);
+                script = script.trim();
+                if (script)
+                {
+                    let proc: any;
+                    const scriptParts = script.split(" ").filter(a => a !== "");
+                    if (scriptParts.length > 1) {
+                        proc = await execa(scriptParts[0], scriptParts.splice(0, 1), {cwd, env});
+                    }
+                    else if (scriptParts.length === 1) {
+                        proc = await execa(scriptParts[0], [], {cwd, env});
+                    }
+                    else {
+                        logger.warn("Invalid script not processed");
+                    }
+                    checkExitCode(proc.code, logger, throwOnError);
+                }
+                else {
+                    logger.warn("Invalid script not processed");
+                }
             }
         }
         else {
             logger.log("   Dry run, skipping script run");
         }
-
-        // $script:BuildCmdsRun += $ScriptType
     }
-}
-
-
-export async function log(msg: string, level?: number)
-{
-    if (level && level) {
-        return;
-    }
-    console.log("ap " + msg);
-}
-
-
-export async function logError(msg: string)
-{
-    console.log("ap " + chalk.red("[ERROR] ") + msg);
-}
-
-
-export async function logWarning(msg: string)
-{
-    console.log("ap " + chalk.yellow("[WARNING] ") + msg);
-}
-
-
-export async function logSuccess(msg: string)
-{
-    console.log("ap " + chalk.green("[SUCCESS] ") + msg);
-}
-
-
-export async function logValue(msg: string, value: any, level?: number)
-{
-    let logMsg = msg;
-
-    for (let i = msg.length; i < logValueWhiteSpace; i++) {
-        logMsg += " ";
-    }
-
-    if (value || value === 0 || value === "") {
-        logMsg += ": ";
-        logMsg += value.toString();
-    }
-    else if (value === undefined) {
-        logMsg += ": undefined";
-    }
-    else if (value === null) {
-        logMsg += ": null";
-    }
-
-    console.log("ap " + logMsg);
 }

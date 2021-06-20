@@ -130,7 +130,7 @@ export async function sendNotificationEmail({options, logger, lastRelease}): Pro
         //
         const info = await transporter.sendMail({
             from: options.emailSender,
-            to: "smeesseman@pjats.com",
+            to,
             subject,
             html: emailBody
         });

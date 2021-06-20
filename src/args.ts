@@ -141,10 +141,12 @@ export const publishRcOpts =
         true,
         "string",
         "",
-        "The network path to use as the destination directory for a standard",
-        "'dist' release.",
+        "The network path to use as the destination directory for a standard 'dist'",
+        "directory release.",
         "Will be renamed to 'distDestPath' in a future release.",
-        "Ignored if distRelease = N."
+        "Ignored if distRelease = N.",
+        "The final directory created for the release will be:",
+        "   distReleasePath/projectName/nextVersion"
     ],
 
     distReleasePostCommand: [
@@ -178,8 +180,8 @@ export const publishRcOpts =
                   "    3) Commit package/build file changes (svn) are not made\n" +
                   "    4) Version tag (svn) is not made\n" +
                   "Some local files may be changed in test mode (i.e. updated version\n" +
-                  "numbers in build and package files).  These changes should be reverted\n" +
-                  "to original state via SCM"
+                  "numbers in build and package files).  These changes should be\n" +
+                  "reverted to original state via SCM"
         }
     ],
 

@@ -10,8 +10,9 @@ import { setPomVersion } from "./pom";
 export = setVersions;
 
 
-async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}): Promise<void>
+async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}): Promise<string[]>
 {
+    const edits: string[] = [];
     //
     // AppPublisher publishrc version
     //
@@ -20,25 +21,29 @@ async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}
     // ExtJs build
     //
     if (await pathExists("app.json") && await pathExists("package.json")) {
-        setExtJsVersion({options, nextRelease});
+        await setExtJsVersion({options, nextRelease});
+        edits.push("app.json");
     }
     //
     // Maven managed project, update pom.xml if required
     //
     if (await pathExists("pom.xml")) {
         setPomVersion({options, nextRelease});
+        edits.push("pom.xml");
     }
     //
     // Mantisbt plugin project, update main plugin file if required
     //
     if (options.mantisbtPlugin) {
-        setMantisBtVersion({options, nextRelease});
+        await setMantisBtVersion({options, nextRelease});
+        edits.push(options.mantisbtPlugin);
     }
     //
     // C project, update main rc file if required
     //
     if (options.cProjectRcFile) {
-        setMakefileVersion({options, nextRelease});
+        await setMakefileVersion({options, nextRelease});
+        edits.push(options.cProjectRcFile);
     }
     //
     // If this is a .NET build, update assemblyinfo file
@@ -48,7 +53,10 @@ async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}
     // $AssemblyInfoLoc = Get-ChildItem -Name -Recurse -Depth 1 -Filter "assemblyinfo.cs" -File -Path . -ErrorAction SilentlyContinue
     // if ($AssemblyInfoLoc -is [system.string] && ![string]::IsNullOrEmpty($AssemblyInfoLoc))
     // {
-    setDotNetVersion({options, logger, nextRelease});
+    const dotNetFile = await setDotNetVersion({options, logger, nextRelease});
+    if (dotNetFile) {
+        edits.push(dotNetFile);
+    }
     // }
     // else if ($AssemblyInfoLoc -is [System.Array] && $AssemblyInfoLoc.Length -gt 0) {
     //    foreach ($AssemblyInfoLocFile in $AssemblyInfoLoc) {
@@ -58,12 +66,19 @@ async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}
     //
     // Version bump specified files in publishrc config 'versionFiles'
     //
-    setVersionFiles({options, logger, lastRelease, nextRelease});
+    const vFiles = await setVersionFiles({options, logger, lastRelease, nextRelease});
+    if (vFiles.length > 0) {
+        edits.push(...vFiles);
+    }
+
+    return edits;
 }
 
 
-async function setVersionFiles({options, logger, lastRelease, nextRelease}): Promise<void>
+async function setVersionFiles({options, logger, lastRelease, nextRelease}): Promise<string[]>
 {
+    const vFiles: string[] = [];
+
     if (!options.versionFiles || options.versionFiles.length === 0)
     {
         return;
@@ -165,7 +180,10 @@ async function setVersionFiles({options, logger, lastRelease, nextRelease}): Pro
             // Allow manual modifications to vFile and commit to modified list
             // Edit-File will add this file to options.versionFilesEdited
             //
+            vFiles.push(vFile);
             editFile({options}, vFile, false, (options.skipVersionEdits === " Y" || options.taskTouchVersions));
         }
     }
+
+    return vFiles;
 }
