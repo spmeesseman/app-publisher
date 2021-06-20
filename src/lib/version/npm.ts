@@ -28,71 +28,81 @@ export async function setPackageJson({options, lastRelease, nextRelease, logger,
         packageJson.version = nextRelease.version;
         modified = true;
     }
-
-    if (options.repo && options.repo !== packageJson.repository.url)
-    {
-        logger.log("Setting repository in package.json");
-        defaultRepo = packageJson.repository.url;
-        logger.log("Repository: " + defaultRepo);
-        logger.log("Setting repository in package.json: " + options.repo);
-        packageJson.repository.url = options.repo;
-        modified = true;
-    }
-
-    if (options.repoType && options.repoType !== packageJson.repository.type)
-    {
-        logger.log("Setting repository type in package.json");
-        defaultRepoType = packageJson.repository.type;
-        logger.log("Repository Type: " + defaultRepoType);
-        logger.log("Setting repository type in package.json: " + options.repoType);
-        packageJson.repository.type = options.repoType;
-        modified = true;
-    }
-
-    if (options.homePage && options.homePage !== packageJson.homepage)
-    {
-        logger.log("Setting homepage in package.json");
-        defaultHomePage = packageJson.homepage;
-        logger.log("Homepage: " + defaultHomePage);
-        logger.log("Setting homepage in package.json: " + options.homePage);
-        packageJson.homepage = options.homePage;
-        modified = true;
-    }
-
-    if (options.bugs && options.bugs !== packageJson.bugs.url)
-    {
-        logger.log("Setting bugs page in package.json");
-        defaultBugs = packageJson.bugs.url;
-        logger.log("Bugs page: " + defaultBugs);
-        logger.log("Setting bugs page in package.json: " + options.bugs);
-        packageJson.bugs.url = options.bugs;
-        modified = true;
+    else {
+        logger.warn(`Version ${nextRelease.version} already set in package.json`);
     }
 
     //
-    // Scope/name - package.json
+    // A full publish run can modify the npm configs at runtime and have them restored to
+    // the defaults when finished.  In task mode, this isn't possible.
     //
-    defaultName = packageJson.name;
-    if (defaultName.includes("@") && defaultName.includes("/")) {
-        defaultScope = defaultName.substring(0, defaultName.indexOf("/"));
-    }
-
-    if (options.npmScope)
+    if (!options.taskTouchVersions)
     {
-        if (!defaultName.includes(options.npmScope))
+        if (options.repo && options.repo !== packageJson.repository.url)
         {
-            const name = options.npmScope + "/" + options.projectName;
-            logger.log(`Setting package name in package.json: ${name}`);
-            packageJson.name = name;
-            //
-            // package-lock.json
-            //
-            if (packageLockFileExists)
-            {
-                logger.log(`Setting package name in package-lock.json: ${name}`);
-                packageLockJson.name = name;
-            }
+            logger.log("Setting repository in package.json");
+            defaultRepo = packageJson.repository.url;
+            logger.log("Repository: " + defaultRepo);
+            logger.log("Setting repository in package.json: " + options.repo);
+            packageJson.repository.url = options.repo;
             modified = true;
+        }
+
+        if (options.repoType && options.repoType !== packageJson.repository.type)
+        {
+            logger.log("Setting repository type in package.json");
+            defaultRepoType = packageJson.repository.type;
+            logger.log("Repository Type: " + defaultRepoType);
+            logger.log("Setting repository type in package.json: " + options.repoType);
+            packageJson.repository.type = options.repoType;
+            modified = true;
+        }
+
+        if (options.homePage && options.homePage !== packageJson.homepage)
+        {
+            logger.log("Setting homepage in package.json");
+            defaultHomePage = packageJson.homepage;
+            logger.log("Homepage: " + defaultHomePage);
+            logger.log("Setting homepage in package.json: " + options.homePage);
+            packageJson.homepage = options.homePage;
+            modified = true;
+        }
+
+        if (options.bugs && options.bugs !== packageJson.bugs.url)
+        {
+            logger.log("Setting bugs page in package.json");
+            defaultBugs = packageJson.bugs.url;
+            logger.log("Bugs page: " + defaultBugs);
+            logger.log("Setting bugs page in package.json: " + options.bugs);
+            packageJson.bugs.url = options.bugs;
+            modified = true;
+        }
+
+        //
+        // Scope/name - package.json
+        //
+        defaultName = packageJson.name;
+        if (defaultName.includes("@") && defaultName.includes("/")) {
+            defaultScope = defaultName.substring(0, defaultName.indexOf("/"));
+        }
+
+        if (options.npmScope)
+        {
+            if (!defaultName.includes(options.npmScope))
+            {
+                const name = options.npmScope + "/" + options.projectName;
+                logger.log(`Setting package name in package.json: ${name}`);
+                packageJson.name = name;
+                //
+                // package-lock.json
+                //
+                if (packageLockFileExists)
+                {
+                    logger.log(`Setting package name in package-lock.json: ${name}`);
+                    packageLockJson.name = name;
+                }
+                modified = true;
+            }
         }
     }
 
