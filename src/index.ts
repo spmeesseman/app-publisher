@@ -1,6 +1,5 @@
 
 import * as util from "./lib/utils/utils";
-import * as path from "path";
 import * as child_process from "child_process";
 import gradient from "gradient-string";
 import chalk from "chalk";
@@ -23,7 +22,6 @@ import { doGithubRelease, publishGithubRelease } from "./lib/releases/github";
 import doMantisbtRelease = require("./lib/releases/mantisbt");
 import { doNpmRelease } from "./lib/releases/npm";
 import setVersions = require("./lib/version/set-versions");
-import * as npm from "./lib/version/npm";
 import getError = require("./lib/get-error");
 import { template, pick, isString } from "lodash";
 import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
@@ -460,19 +458,8 @@ async function runNodeScript(context: any, plugins: any)
     //
     // Update relevant files with new version #
     //
-    let npmPackageJsonModified = false;
     if (!options.taskMode)
-    {   //
-        // NPM managed project, update package.json if required
-        //
-        if (await pathExists("package.json")) {
-            await npm.setPackageJson(context);
-            npmPackageJsonModified = true;
-            //
-            // Track modified files
-            //
-            nextRelease.edits.push("package.json");
-        }
+    {
         const edits = await setVersions(context);
         //
         // Track modified files
@@ -500,7 +487,7 @@ async function runNodeScript(context: any, plugins: any)
         //
         // Perform dist / network folder release
         //
-        await doNpmRelease(context, npm.defaultScope);
+        await doNpmRelease(context);
         //
         // Run pre npm-release scripts if specified
         //
@@ -532,13 +519,6 @@ async function runNodeScript(context: any, plugins: any)
     //
     if (!options.taskMode) {
         await util.runScripts({ options, logger, cwd, env }, "postBuild", options.postBuildCommand);
-    }
-
-    //
-    // Restore any configured package.json values to the original values
-    //
-    if (npmPackageJsonModified) {
-        await npm.restorePackageJson(context);
     }
 
     //
@@ -802,9 +782,6 @@ async function processTasks3(context: any): Promise<boolean>
 {
     if (context.options.taskTouchVersions)
     {
-        if (await pathExists("package.json")) {
-            await npm.setPackageJson(context);
-        }
         await setVersions(context);
         return true;
     }

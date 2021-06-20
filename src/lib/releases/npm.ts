@@ -8,7 +8,7 @@ const execa = require("execa");
 export let npmLocation: string;
 
 
-export async function doNpmRelease({ options, logger, nextVersion, cwd, env }, defaultScope: string)
+export async function doNpmRelease({ options, logger, nextVersion, cwd, env })
 {
     logger.log("Starting NPM release");
 
@@ -35,9 +35,6 @@ export async function doNpmRelease({ options, logger, nextVersion, cwd, env }, d
             timeout(100);
             if (options.npmScope) {
                 tmpPkgFile = `${options.npmScope}-${options.projectName}-${nextVersion.version}.tgz`.substring(1);
-            }
-            else if (defaultScope) {
-                tmpPkgFile = `${defaultScope}-${options.projectName}-${nextVersion.version}.tgz`.substring(1);
             }
             else {
                 tmpPkgFile = `${options.projectName}-${nextVersion.version}.tgz`;
@@ -92,9 +89,6 @@ export async function doNpmRelease({ options, logger, nextVersion, cwd, env }, d
         {
             if (options.npmScope) {
                 npmLocation = `${options.npmRegistry}/-/web/detail/${options.npmScope}/${options.projectName}`;
-            }
-            else if (defaultScope) {
-                npmLocation = `${options.npmRegistry}/-/web/detail/${defaultScope}/${options.projectName}`;
             }
             else {
                 npmLocation = `${options.npmRegistry}/-/web/detail/${options.projectName}`;

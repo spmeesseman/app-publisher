@@ -599,6 +599,20 @@ export const publishRcOpts =
         "files and the SVN project name."
     ],
 
+    rcFile: [
+        true,
+        "string",
+        ".publishrc.[json/yml/yaml/js]",
+        [ "-rc", "--rc-file" ],
+        {
+            help: "The publishrc file to read the initial configuration from.",
+            usage: [
+                "app-publisher --rc-file .publishrc.custom.json"
+            ]
+        }
+    ],
+
+
     readConfig: [
         true,
         "boolean",

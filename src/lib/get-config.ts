@@ -12,23 +12,35 @@ export = getConfig;
 
 async function getConfig(context: any, opts: any)
 {
-    let CONFIG_NAME = "publishrc";
+    let configName = "publishrc";
     if (opts.configName)
     {
-        CONFIG_NAME = "publishrc." + opts.configName;
+        configName = "publishrc." + opts.configName;
     }
 
-    const CONFIG_FILES = [
-        "package.json",
-        `.${CONFIG_NAME}`,
-        `.${CONFIG_NAME}.json`,
-        `.${CONFIG_NAME}.yaml`,
-        `.${CONFIG_NAME}.yml`,
-        `.${CONFIG_NAME}.js`
-    ];
+    let configFiles: string[];
+
+    if (opts.rcFile)
+    {
+        configFiles = [
+            "package.json",
+            opts.rcFile
+        ];
+    }
+    else
+    {
+        configFiles = [
+            "package.json",
+            `.${configName}`,
+            `.${configName}.json`,
+            `.${configName}.yaml`,
+            `.${configName}.yml`,
+            `.${configName}.js`
+        ];
+    }
 
     const { cwd, env } = context;
-    const { config, filepath } = (await cosmiconfig(CONFIG_NAME, { searchPlaces: CONFIG_FILES }).search(cwd)) || { config: {}, filepath: "" };
+    const { config, filepath } = (await cosmiconfig(configName, { searchPlaces: configFiles }).search(cwd)) || { config: {}, filepath: "" };
 
     debug("load config from: %s", filepath);
 

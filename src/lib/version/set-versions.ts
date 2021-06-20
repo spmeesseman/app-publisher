@@ -5,14 +5,14 @@ import { setExtJsVersion } from "./extjs";
 import { setMakefileVersion } from "./makefile";
 import { setMantisBtVersion } from "./mantisbt";
 import { setPomVersion } from "./pom";
+import { setNpmVersion } from "./npm";
 // import { relative } from "path";
 
 export = setVersions;
 
 
 /**
- * Sets all versions in all fiels with exception to npm package.json.  Version touch
- * for package.json is accomplished via version.npm.setPackageJson
+ * Sets all versions in all fiels.
  *
  * @since 2.8.0
  *
@@ -21,6 +21,16 @@ export = setVersions;
 async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}): Promise<string[]>
 {
     const edits: string[] = [];
+    //
+    // NPM managed project, update package.json if required
+    //
+    if (await pathExists("package.json")) {
+        await setNpmVersion({options, logger, lastRelease, nextRelease, cwd, env});
+        //
+        // Track modified files
+        //
+        edits.push("package.json");
+    }
     //
     // AppPublisher publishrc version
     //
