@@ -632,11 +632,6 @@ async function processTasks2(context: any): Promise<boolean>
         return true;
     }
 
-    // if (szOutputFile) {
-    //     writeFileSync(szOutputFile, szFinalContents);
-    //     logger.log("   Saved release history output to $szOutputFile");
-    // }
-
     return false;
 }
 

@@ -282,8 +282,7 @@ export function createSectionFromCommits({ options, commits, logger })
             {
                 Object.entries(options.commitMsgMap).forEach((keys) =>
                 {
-                    const property = keys[0],
-                            value: any = keys[1];
+                    const value: any = keys[1];
                     msg = msg.replace(value.name + ": ", value.formatText + EOL + EOL);
                     msg = msg.replace(value.name + "(", value.formatText + "(");
                 });
