@@ -1,7 +1,6 @@
 
 import * as path from "path";
 import { existsSync } from "fs";
-import { getAppPublisherVersion } from "./app-publisher";
 import { getDotNetVersion } from "./dotnet";
 import { getIncrementalVersion } from "./incremental";
 import { getMantisBtVersion } from "./mantisbt";
@@ -68,9 +67,13 @@ async function getCurrentVersion(context: any):
     //
     // Check .publishrc if no version was found
     //
-    if ((!versionInfo || !versionInfo.version) && existsSync(path.join(cwd, ".publishrc.json")))
+    if ((!versionInfo || !versionInfo.version) && options.version)
     {
-        versionInfo = await getAppPublisherVersion(context);
+        versionInfo = {
+            version: options.version,
+            versionSystem: "semver",
+            versionInfo: undefined
+        };
     }
 
     if (!versionInfo || !versionInfo.version)
