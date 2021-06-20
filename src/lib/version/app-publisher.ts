@@ -1,7 +1,8 @@
 
+import * as path from "path";
 import glob = require("glob");
 import { existsSync } from "fs";
-import { replaceInFile, readFile, editFile } from "../utils/fs";
+import { replaceInFile, readFile, editFile, writeFile } from "../utils/fs";
 
 
 function getFile(logger: any)
@@ -45,12 +46,18 @@ export async function getAppPublisherVersion({cwd, logger}): Promise<{ version: 
 export async function setAppPublisherVersion({nextRelease, options, logger})
 {
     const fileName = getFile(logger);
-    if (options.appPublisherVersion === true && existsSync(fileName))
+    if (options.version && existsSync(fileName))
     {
-        replaceInFile(".publishrc.json", `version"[ ]*:[ ]*["][0-9a-z.\-]+`, `version": "${nextRelease.version}`);
-        //
-        // Allow manual modifications to mantisbt main plugin file and commit to modified list
-        //
-        await editFile({options}, ".publishrc.json");
+        // const publishrcJson = require(path.join(process.cwd(), ".publishrc.json"));
+        // if (publishrcJson.version)
+        // {
+            // publishrcJson.version = nextRelease.version;
+            // await writeFile("package.json", JSON.stringify(publishrcJson, undefined, 4));
+            await replaceInFile(".publishrc.json", `version"[ ]*:[ ]*["][0-9a-z.\-]+`, `version": "${nextRelease.version}`);
+            //
+            // Allow manual modifications to mantisbt main plugin file and commit to modified list
+            //
+            await editFile({options}, ".publishrc.json");
+        // }
     }
 }

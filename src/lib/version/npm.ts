@@ -13,9 +13,15 @@ export let defaultScope: string;
 export async function setPackageJson({options, lastRelease, nextRelease, logger, cwd, env})
 {
     let modified = false;
-    const packageJson = require(path.join(process.cwd(), "package.json")),
-          packageLockFileExists = await pathExists("package-lock.json"),
+    const packageJsonExists = await pathExists("package.json"),
+          packageJson = packageJsonExists ? require(path.join(process.cwd(), "package.json")) : undefined,
+          packageLockFileExists = packageJsonExists ? await pathExists("package-lock.json") : undefined,
           packageLockJson = packageLockFileExists ? require(path.join(process.cwd(), "package-lock.json")) : undefined;
+
+    if (!packageJsonExists) {
+        return;
+    }
+
     //
     // Replace current version with new version in package.json and package-lock.json
     // 5/25/19 - Use regext text replacement after npm version command, sencha packages will contain
@@ -118,78 +124,76 @@ export async function setPackageJson({options, lastRelease, nextRelease, logger,
 
 export async function restorePackageJson({options, lastRelease, nextRelease, logger, cwd, env})
 {
+    let modified = false;
+    const packageJsonExists = await pathExists("package.json"),
+          packageJson = packageJsonExists ? require(path.join(process.cwd(), "package.json")) : undefined,
+          packageLockFileExists = packageJsonExists ? await pathExists("package-lock.json") : undefined,
+          packageLockJson = packageLockFileExists ? require(path.join(process.cwd(), "package-lock.json")) : undefined;
+
+    if (!packageJsonExists) {
+        return;
+    }
+
     //
     // Set repo
     //
     if (defaultRepo)
     {
-        // proc = & json -I -4 -f package.json -e "this.repository.url='defaultRepo'"
-        // checkExitCode(proc.code, logger);
+        logger.log(`Reset default repo in package.json: ${defaultRepo}`);
+        packageJson.repository.url = options.repo;
+        modified = true;
     }
     //
     // Set repo type
     //
     if (defaultRepoType)
     {
-        // proc = & json -I -4 -f package.json -e "this.repository.type='defaultRepoType'"
-        // checkExitCode(proc.code, logger);
+        logger.log(`Reset default repo in package.json: ${defaultRepoType}`);
+        packageJson.repository.type = defaultRepoType;
+        modified = true;
     }
     //
     // Set bugs
     //
     if (defaultBugs)
     {
-        logger.log("Re-setting default bugs page in package.json: " + defaultBugs);
-        //
-        // A bug in npm module json where writing an ampersand throws an error, if the bugs page contains
-        // one then use powershell replace mechanism for replacement
-        //
-        if (!defaultBugs.includes("&"))
-        {
-            // proc = & json -I -4 -f package.json -e "this.bugs.url='defaultBugs'"
-            // checkExitCode(proc.code, logger);
-        }
-        else {
-            // proc = & json -I -4 -f package.json -e "this.bugs.url='defaultBugs'"
-            // checkExitCode(proc.code, logger);
-        }
+        logger.log(`Reset default bugs page in package.json: ${defaultBugs}`);
+        packageJson.bugs.url = defaultBugs;
+        modified = true;
     }
     //
     // Set homepage
     //
     if (defaultHomePage)
     {
-        logger.log("Re-setting default homepage in package.json: " + defaultHomePage);
-        //
-        // A bug in npm module json where writing an ampersand throws an error, if the bugs page contains
-        // one then use powershell replace mechanism for replacement
-        //
-        if (!defaultHomePage.includes("&"))
-        {
-            // proc = & json -I -4 -f package.json -e "this.homepage='$DefaultHomePage'"
-            // checkExitCode(proc.code, logger);
-        }
-        else {
-            // proc = & json -I -4 -f package.json -e "this.homepage='$DefaultHomePage'"
-            // checkExitCode(proc.code, logger);
-        }
+        logger.log("Reset default home page in package.json: " + defaultHomePage);
+        packageJson.homepage = defaultBugs;
+        modified = true;
     }
     //
     // Scope/name - package.json
     //
     if (options.npmScope && !defaultName.includes(options.npmScope))
     {
-        logger.log("Re-setting default package name in package.json: " + defaultName);
-        // proc = json -I -4 -f package.json -e "this.name='defaultName'"
-        // checkExitCode(proc.code, logger);
+        logger.log("Reset default package name in package.json: " + defaultName);
+        packageJson.name = defaultName;
+        modified = true;
         //
-        // Scope - package-lock.json
+        // package-lock.json
         //
-        if (await pathExists("package-lock.json"))
+        if (packageLockFileExists)
         {
-            logger.log("Re-scoping default package name in package-lock.json: " + defaultName);
-            // proc = json -I -4 -f package-lock.json -e "this.name='defaultName'"
-            // checkExitCode(proc.code, logger);
+            logger.log("Reset default package name in package-lock.json: " + defaultName);
+            packageLockJson.name = defaultName;
+        }
+        modified = true;
+    }
+
+    if (modified) {
+        await writeFile("package.json", JSON.stringify(packageJson));
+        if (packageLockFileExists)
+        {
+            await writeFile("package-lock.json", JSON.stringify(packageLockJson));
         }
     }
 }
