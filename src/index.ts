@@ -232,6 +232,24 @@ function logTaskResult(result: boolean | string, logger: any)
 }
 
 
+function hasMoreTasks(options: any, tasks: string[])
+{
+    let moreTasks = false;
+
+    if (tasks && tasks.length > 0)
+    {
+        for (const task of tasks) {
+            if (options[task] === true) {
+                moreTasks = true;
+                break;
+            }
+        }
+    }
+
+    return moreTasks;
+}
+
+
 async function runNodeScript(context: any, plugins: any)
 {
     const { cwd, env, options, logger } = context;
@@ -250,7 +268,9 @@ async function runNodeScript(context: any, plugins: any)
     let taskDone = await processTasks1(context);
     if (taskDone !== false) {
         logTaskResult(taskDone, logger);
-        return taskDone;
+        if (taskDone !== true || !hasMoreTasks(options, [ ...getTasks3(), ...getTasks4(), ...getTasks5() ])) {
+            return taskDone;
+        }
     }
 
     //
@@ -302,7 +322,9 @@ async function runNodeScript(context: any, plugins: any)
     taskDone = await processTasks2(context);
     if (taskDone !== false) {
         logTaskResult(taskDone, logger);
-        return taskDone;
+        if (taskDone !== true || !hasMoreTasks(options, [ ...getTasks3(), ...getTasks4(), ...getTasks5() ])) {
+            return taskDone;
+        }
     }
 
     //
@@ -360,7 +382,9 @@ async function runNodeScript(context: any, plugins: any)
     taskDone = await processTasks3(context);
     if (taskDone !== false) {
         logTaskResult(taskDone, logger);
-        return taskDone;
+        if (taskDone !== true || !hasMoreTasks(options, [ ...getTasks4(), ...getTasks5() ])) {
+            return taskDone;
+        }
     }
 
     //
@@ -395,7 +419,9 @@ async function runNodeScript(context: any, plugins: any)
         //
         if (options.taskMode) {
             logTaskResult(true, logger);
-            return true;
+            if (!hasMoreTasks(options, getTasks5())) {
+                return true;
+            }
         }
         //
         // Track modified files
@@ -410,7 +436,9 @@ async function runNodeScript(context: any, plugins: any)
         //
         if (options.taskMode) {
             logTaskResult(true, logger);
-            return true;
+            if (!hasMoreTasks(options, getTasks5())) {
+                return true;
+            }
         }
         //
         // Track modified files
@@ -459,13 +487,6 @@ async function runNodeScript(context: any, plugins: any)
 
     //
     // NPM release
-    //
-    // Store location paths depending on publish types, these will be used to set links to
-    // locations in the release email
-    //
-    // $TargetNetLocation = ""
-    // $NpmLocation = ""
-    // $NugetLocation = ""
     //
     if (options.npmRelease === "Y" && !options.taskMode)
     {   //
@@ -519,7 +540,9 @@ async function runNodeScript(context: any, plugins: any)
     taskDone = await processTasks4(context);
     if (taskDone !== false) {
         logTaskResult(taskDone, logger);
-        return taskDone;
+        if (taskDone !== true || !hasMoreTasks(options, getTasks5())) {
+            return taskDone;
+        }
     }
 
     //
@@ -546,7 +569,9 @@ async function runNodeScript(context: any, plugins: any)
         {
             await publishGithubRelease({options, nextRelease, logger});
             logTaskResult(true, logger);
-            return true;
+            if (!hasMoreTasks(options, getTasks5())) {
+                return true;
+            }
         }
         didGithubRelease = true;
     }
@@ -573,7 +598,9 @@ async function runNodeScript(context: any, plugins: any)
         if (options.taskMantisbtRelease)
         {
             logTaskResult(true, logger);
-            return true;
+            if (!hasMoreTasks(options, getTasks5())) {
+                return true;
+            }
         }
     }
 
@@ -704,6 +731,24 @@ async function processTasks1(context: any): Promise<boolean>
     }
 
     return false;
+}
+
+
+function getTasks3()
+{
+    return [ "taskTouchVersions" ];
+}
+
+
+function getTasks4()
+{
+    return [ "taskCiEnvInfo", "taskCiEnvSet", "taskVersionInfo", "taskVersionNext" ];
+}
+
+
+function getTasks5()
+{
+    return [ "taskCommit", "taskTag" ];
 }
 
 

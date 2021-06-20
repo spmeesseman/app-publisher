@@ -51,38 +51,40 @@ export async function doNpmRelease({ options, logger, nextVersion, cwd, env }, d
             logger.log("   " + destPackedFile);
 
             if (process.platform === "win32") {
-                proc = await execa.shell("cmd", [ "/c", "move", "/Y", tmpPkgFile, destPackedFile]);
+                proc = await execa.shell("move", [ "/Y", tmpPkgFile, destPackedFile]);
             }
             else {
-                proc = await execa.shell("sh", [ "mv", "-f", tmpPkgFile, destPackedFile]);
+                proc = await execa.shell("mv", [ "-f", tmpPkgFile, destPackedFile]);
             }
             checkExitCode(proc.code, logger);
-            // if(proc.code === 0) {
-            //     VcChangelistAdd "destPackedFile"
-            //     $TarballVersioned = VcIsVersioned destPackedFile
-            //     if (!$TarballVersioned) {
-            //         VcChangelistAddNew "destPackedFile"
-            //         VcChangelistAddRemove "destPackedFile"
-            //     }
-            // }
             publishFailed = proc.code !== 0;
         }
         //
         // Publish to npm server
         //
-        logger.log("Publishing npm package to " + options.npmRegistry);
         if (!options.dryRun)
         {
-            proc = await execa("npm", [ "--access", "public", "--registry", options.npmRegistry]);
-            checkExitCode(proc.code, logger);
+            if (options.npmRegistry) {
+                logger.log("Publishing npm package to " + options.npmRegistry);
+                proc = await execa("npm", [ "publish", "--registry", options.npmRegistry]);
+            }
+            else {
+                logger.log("Publishing npm package to default registry");
+                proc = await execa("npm", [ "publish" ]);
+            }
         }
         else
         {
-            logger.log("Dry run, performing publish dry run only");
-            proc = await execa("npm", [ "--access", "public", "--registry", options.npmRegistry, "--dry-run"]);
-            checkExitCode(proc.code, logger);
-            logger.log("Dry run, dry run publish finished");
+            if (options.npmRegistry) {
+                logger.log("Dry Run - Publishing npm package to " + options.npmRegistry);
+                proc = await execa("npm", [ "publish", "--registry", options.npmRegistry, "--dry-run"]);
+            }
+            else {
+                logger.log("Dry Run - Publishing npm package to default registry");
+                proc = await execa("npm", [ "publish", "--dry-run"]);
+            }
         }
+        checkExitCode(proc.code, logger);
         //
         //
         //
