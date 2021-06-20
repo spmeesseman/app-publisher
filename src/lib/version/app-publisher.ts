@@ -1,9 +1,10 @@
 
 import glob = require("glob");
+import { relative } from "path";
 import { replaceInFile, editFile, pathExists } from "../utils/fs";
 
 
-async function getFile(logger: any)
+async function getFiles(logger: any)
 {
     return new Promise<string[]>((resolve, reject) =>
     {
@@ -21,31 +22,33 @@ async function getFile(logger: any)
 }
 
 
-export async function setAppPublisherVersion({nextRelease, options, logger})
+export async function setAppPublisherVersion({nextRelease, options, logger, cwd})
 {
-    let fileName: string;
+    let files: string[] = [];
     if (options.version)
     {
-        const files = await getFile(logger);
+        files = await getFiles(logger);
         if (!files || files.length === 0) {
-            return;
+            return files;
         }
-        fileName = files[0];
-        if (await pathExists(fileName))
+        for (const file of files)
         {
-            logger.log("Setting version in .publishrc");
-            // const publishrcJson = require(path.join(process.cwd(), ".publishrc.json"));
-            // if (publishrcJson.version)
-            // {
-                // publishrcJson.version = nextRelease.version;
-                // await writeFile("package.json", JSON.stringify(publishrcJson, undefined, 4));
-                await replaceInFile(".publishrc.json", `version"[ ]*:[ ]*["][0-9a-z.\-]+`, `version": "${nextRelease.version}`);
-                //
-                // Allow manual modifications to mantisbt main plugin file and commit to modified list
-                //
-                await editFile({options}, ".publishrc.json");
-            // }
+            if (await pathExists(file))
+            {
+                logger.log(`Setting version ${nextRelease.version} in ` + relative(cwd, file));
+                // const publishrcJson = require(path.join(process.cwd(), file));
+                // if (publishrcJson.version)
+                // {
+                    // publishrcJson.version = nextRelease.version;
+                    // await writeFile("package.json", JSON.stringify(publishrcJson, undefined, 4));
+                    await replaceInFile(file, `version"[ ]*:[ ]*["][0-9a-z.\-]+`, `version": "${nextRelease.version}`);
+                    //
+                    // Allow manual modifications to mantisbt main plugin file and commit to modified list
+                    //
+                    await editFile({options}, file);
+                // }
+            }
         }
     }
-    return fileName;
+    return files;
 }

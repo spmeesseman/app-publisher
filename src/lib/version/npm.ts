@@ -22,21 +22,16 @@ export async function setPackageJson({options, lastRelease, nextRelease, logger,
         return;
     }
 
-    //
-    // Replace current version with new version in package.json and package-lock.json
-    // 5/25/19 - Use regext text replacement after npm version command, sencha packages will contain
-    // two version tags, on for the main package.json field, and one in the sencha object definition, we
-    // want to replace them both if they match
-    //
-    logger.log(`Setting new version ${nextRelease.version} in package.json`);
-    // let proc = await execa("npm", ["version", "--no-git-tag-version", "--allow-same-version", nextRelease.version], {cwd, env});
-    // checkExitCode(proc.code, logger);
-    // timeout(750);
-    // replaceInFile("package.json", `version"[ ]*:[ ]*["]${lastRelease.version}`, `version": "${nextRelease.version}`);
-
-    if (options.repo)
+    if (nextRelease.version !== packageJson.version)
     {
-        logger.log("Saving repository in package.json");
+        logger.log(`Setting version ${nextRelease.version} in package.json`);
+        packageJson.version = nextRelease.version;
+        modified = true;
+    }
+
+    if (options.repo && options.repo !== packageJson.repository.url)
+    {
+        logger.log("Setting repository in package.json");
         defaultRepo = packageJson.repository.url;
         logger.log("Repository: " + defaultRepo);
         logger.log("Setting repository in package.json: " + options.repo);
@@ -44,9 +39,9 @@ export async function setPackageJson({options, lastRelease, nextRelease, logger,
         modified = true;
     }
 
-    if (options.repoType)
+    if (options.repoType && options.repoType !== packageJson.repository.type)
     {
-        logger.log("Saving repository type in package.json");
+        logger.log("Setting repository type in package.json");
         defaultRepoType = packageJson.repository.type;
         logger.log("Repository Type: " + defaultRepoType);
         logger.log("Setting repository type in package.json: " + options.repoType);
@@ -54,9 +49,9 @@ export async function setPackageJson({options, lastRelease, nextRelease, logger,
         modified = true;
     }
 
-    if (options.homePage)
+    if (options.homePage && options.homePage !== packageJson.homepage)
     {
-        logger.log("Saving homepage in package.json");
+        logger.log("Setting homepage in package.json");
         defaultHomePage = packageJson.homepage;
         logger.log("Homepage: " + defaultHomePage);
         logger.log("Setting homepage in package.json: " + options.homePage);
@@ -64,9 +59,9 @@ export async function setPackageJson({options, lastRelease, nextRelease, logger,
         modified = true;
     }
 
-    if (options.bugs)
+    if (options.bugs && options.bugs !== packageJson.bugs.url)
     {
-        logger.log("Saving bugs page in package.json");
+        logger.log("Setting bugs page in package.json");
         defaultBugs = packageJson.bugs.url;
         logger.log("Bugs page: " + defaultBugs);
         logger.log("Setting bugs page in package.json: " + options.bugs);
@@ -77,12 +72,9 @@ export async function setPackageJson({options, lastRelease, nextRelease, logger,
     //
     // Scope/name - package.json
     //
-    logger.log("Saving package name in package.json");
     defaultName = packageJson.name;
-    logger.log("Package name : " + defaultName);
     if (defaultName.includes("@") && defaultName.includes("/")) {
         defaultScope = defaultName.substring(0, defaultName.indexOf("/"));
-        logger.log("Package scope: " + defaultScope);
     }
 
     if (options.npmScope)
@@ -105,10 +97,10 @@ export async function setPackageJson({options, lastRelease, nextRelease, logger,
     }
 
     if (modified) {
-        await writeFile("package.json", JSON.stringify(packageJson));
+        await writeFile("package.json", JSON.stringify(packageJson, undefined, 4));
         if (packageLockFileExists)
         {
-            await writeFile("package-lock.json", JSON.stringify(packageLockJson));
+            await writeFile("package-lock.json", JSON.stringify(packageLockJson, undefined, 4));
         }
     }
 
@@ -190,10 +182,10 @@ export async function restorePackageJson({options, lastRelease, nextRelease, log
     }
 
     if (modified) {
-        await writeFile("package.json", JSON.stringify(packageJson));
+        await writeFile("package.json", JSON.stringify(packageJson, undefined, 4));
         if (packageLockFileExists)
         {
-            await writeFile("package-lock.json", JSON.stringify(packageLockJson));
+            await writeFile("package-lock.json", JSON.stringify(packageLockJson, undefined, 4));
         }
     }
 }

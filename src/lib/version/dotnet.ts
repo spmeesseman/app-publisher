@@ -57,35 +57,37 @@ export async function setDotNetVersion({nextRelease, options, logger}): Promise<
     let semVersion = "";
     const fileNames = await getFiles(logger);
 
-    if (fileNames && fileNames.length === 1)
+    if (fileNames)
     {
-        if (!nextRelease.version.Contains("."))
+        if (fileNames.length >= 1)
         {
-            for (const c of nextRelease.version) {
-                semVersion = `${semVersion}${c}.`;
+            if (!nextRelease.version.Contains("."))
+            {
+                for (const c of nextRelease.version) {
+                    semVersion = `${semVersion}${c}.`;
+                }
+                semVersion = semVersion.substring(0, semVersion.length - 1);
             }
-            semVersion = semVersion.substring(0, semVersion.length - 1);
+            else {
+                semVersion = nextRelease.version;
+            }
+            //
+            // Replace version in assemblyinfo file
+            //
+            await replaceInFile(fileNames[0], `AssemblyVersion[ ]*[\\(][ ]*["][0-9a-z.]+`, `AssemblyVersion("${semVersion}`);
+            //
+            // Allow manual modifications to mantisbt main plugin file and commit to modified list
+            //
+            await editFile({options}, fileNames[0]);
+            //
+            // Return the filename
+            //
+            return fileNames[0];
         }
-        else {
-            semVersion = nextRelease.version;
+
+        if (fileNames.length > 0) {
+            logger.warning("Multiple assemblyinfo files found");
+            logger.warning("Using: " + fileNames[0]);
         }
-        //
-        // Replace version in assemblyinfo file
-        //
-        await replaceInFile(fileNames[0], `AssemblyVersion[ ]*[\\(][ ]*["][0-9a-z.]+`, `AssemblyVersion("${semVersion}`);
-        //
-        // Allow manual modifications to mantisbt main plugin file and commit to modified list
-        //
-        await editFile({options}, fileNames[0]);
-        //
-        // Return the filename
-        //
-        return fileNames[0];
-    }
-    else if (fileNames && fileNames.length > 0) {
-        logger.error("The current version cannot be written, multiple assemblyinfo files found");
-    }
-    else {
-        logger.error("The current version cannot be written");
     }
 }

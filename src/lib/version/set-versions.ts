@@ -25,10 +25,10 @@ async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}
     // AppPublisher publishrc version
     //
     if (options.version) {
-        const rcFile = await setAppPublisherVersion({options, logger, nextRelease});
-        if (rcFile) {
-            edits.push(rcFile);
-            // edits.push(relative(process.cwd(), rcFile));
+        const rcFiles = await setAppPublisherVersion({options, logger, nextRelease, cwd});
+        if (rcFiles) {
+            edits.push(...rcFiles);
+            // edits.push(relative(process.cwd(), ...rcFiles));
         }
     }
     //
@@ -95,7 +95,7 @@ async function setVersionFiles({options, logger, lastRelease, nextRelease}): Pro
 
     if (!options.versionFiles || options.versionFiles.length === 0)
     {
-        return;
+        return vFiles;
     }
 
     logger.log("Preparing version files");
