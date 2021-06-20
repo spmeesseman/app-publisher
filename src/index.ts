@@ -355,6 +355,15 @@ async function runNodeScript(context: any, plugins: any)
     }
 
     //
+    // If a l3 task is processed, we'll be done
+    //
+    taskDone = await processTasks3(context);
+    if (taskDone !== false) {
+        logTaskResult(taskDone, logger);
+        return taskDone;
+    }
+
+    //
     // Tag name for next release
     //
     nextRelease.tag = template(options.tagFormat)({ version: nextRelease.version });
@@ -420,7 +429,7 @@ async function runNodeScript(context: any, plugins: any)
     // Update relevant files with new version #
     //
     let npmPackageJsonModified = false;
-    if (!options.taskMode || options.taskTouchVersions)
+    if (!options.taskMode)
     {   //
         // NPM managed project, update package.json if required
         //
@@ -505,9 +514,9 @@ async function runNodeScript(context: any, plugins: any)
     }
 
     //
-    // If a l2 task is processed, we'll be done
+    // If a l4 task is processed, we'll be done
     //
-    taskDone = await processTasks3(context);
+    taskDone = await processTasks4(context);
     if (taskDone !== false) {
         logTaskResult(taskDone, logger);
         return taskDone;
@@ -585,10 +594,7 @@ async function runNodeScript(context: any, plugins: any)
     //
     // Notifiation email
     //
-    const doNotification = !options.taskChangelog && !options.taskTouchVersions && !options.taskMantisbtRelease &&
-                           !options.taskCiEnvSet && !options.taskModeStdOut &&
-                           (options.emailNotification === "Y" || options.taskEmail);
-    if (doNotification) {
+    if (!options.taskMode && (options.emailNotification === "Y" || options.taskEmail)) {
         await sendNotificationEmail(context, nextRelease.version);
     }
 
@@ -604,13 +610,13 @@ async function runNodeScript(context: any, plugins: any)
     //
     if (options.dryRun)
     {
-        logger.warn(`Skip ${nextRelease.tag} tag creation in dry-run mode`);
+        logger.warn(`Skip ${nextRelease.tag} tag creation and commits in dry-run mode`);
         //
         // Revert
         //
         if (options.dryRunVcRevert) // && options.noCi)
         {
-            revert(nextRelease.edits, { cwd, env}, options.repoType);
+            await revert(nextRelease.edits, { cwd, env}, options.repoType);
         }
     }
     else if (!options.taskMode || options.taskCommit || options.taskTag)
@@ -627,7 +633,7 @@ async function runNodeScript(context: any, plugins: any)
             logger.success(`Created tag ${nextRelease.tag}`);
             if (didGithubRelease)
             {
-                publishGithubRelease({options, nextRelease, logger});
+                await publishGithubRelease({options, nextRelease, logger});
                 logger.success(`Published Github release tagged @ ${nextRelease.tag}`);
             }
         }
@@ -718,11 +724,31 @@ async function processTasks2(context: any): Promise<boolean>
 
 
 /**
- * Tasks that need to be processed "after" retrieving commits and other tag related info
+ * Tasks that can be processed without retrieving commits, but last and next release info
+ * is required
  *
  * @param context context
  */
 async function processTasks3(context: any): Promise<boolean>
+{
+    if (context.options.taskTouchVersions)
+    {
+        if (await pathExists("package.json")) {
+            await npm.setPackageJson(context);
+        }
+        await setVersions(context);
+        return true;
+    }
+    return false;
+}
+
+
+/**
+ * Tasks that need to be processed "after" retrieving commits and other tag related info
+ *
+ * @param context context
+ */
+async function processTasks4(context: any): Promise<boolean>
 {
     const options = context.options,
           logger = context.logger,

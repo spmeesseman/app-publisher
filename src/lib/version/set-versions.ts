@@ -6,10 +6,17 @@ import { setMakefileVersion } from "./makefile";
 import { setMantisBtVersion } from "./mantisbt";
 import { setPomVersion } from "./pom";
 
-
 export = setVersions;
 
 
+/**
+ * Sets all versions in all fiels with exception to npm package.json.  Version touch
+ * for package.json is accomplished via version.npm.setPackageJson
+ *
+ * @since 2.8.0
+ *
+ * @param context context
+ */
 async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}): Promise<string[]>
 {
     const edits: string[] = [];
