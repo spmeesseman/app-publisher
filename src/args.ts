@@ -829,18 +829,6 @@ export const publishRcOpts =
         }
     ],
 
-    // taskTouchVersionsRestore: [
-    //     true,
-    //     "boolean",
-    //     false,
-    //     [ "-ttv", "--task-touch-versions-restore" ],
-    //     {
-    //         help: "Restores any changes made to package.json with exception of the version\n" +
-    //               "number after the 'taskTouchVersions' command is used.\n" +
-    //               "Has no effect if taskTouchVersions was not previous used"
-    //     }
-    // ],
-
     taskVersionCurrent: [
         true,
         "boolean",
