@@ -4,12 +4,12 @@ import { checkExitCode, pathExists, replaceInFile, readFile, editFile, timeout }
 const json = require("json");
 const execa = require("execa");
 
-let defaultBugs: string;
-let defaultHomePage: string;
-let defaultName: string;
-let defaultRepo: string;
-let defaultRepoType: string;
-let defaultScope: string;
+export let defaultBugs: string;
+export let defaultHomePage: string;
+export let defaultName: string;
+export let defaultRepo: string;
+export let defaultRepoType: string;
+export let defaultScope: string;
 
 
 export async function setPackageJson({options, lastRelease, nextRelease, logger, cwd, env})

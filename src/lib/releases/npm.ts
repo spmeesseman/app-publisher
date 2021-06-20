@@ -9,7 +9,7 @@ export = doNpmRelease;
 let npmLocation;
 
 
-async function doNpmRelease({ options, commits, logger, nextVersion, cwd, env }, defaultScope: string)
+async function doNpmRelease({ options, logger, nextVersion, cwd, env }, defaultScope: string)
 {
     if (options.npmRelease === "Y" && !options.taskMode)
     {

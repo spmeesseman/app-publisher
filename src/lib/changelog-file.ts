@@ -1,5 +1,5 @@
 
-import { properCase, isString, editFile } from "./utils";
+import { properCase, isString, editFile, readFile } from "./utils";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 import * as path from "path";
 const execa = require("execa");
@@ -46,7 +46,7 @@ function containsValidSubject(options, line: string): boolean
 export async function getVersion({ options, logger })
 {
     const contents = options.historyFile ?
-                        getHistory({ options, logger, lastRelease: {} }, 1) :
+                        await getHistory({ options, logger, lastRelease: {} }, 1) :
                         await getChangelog({ options, logger, lastRelease: {} }, 1);
     const index1 = contents.indexOf(`>${options.versionText}&nbsp;`, 0) + options.versionText.length + 7;
     const index2 = contents.indexOf("<br>", index1);
@@ -64,7 +64,7 @@ export async function createReleaseChangelog({ options, logger, lastRelease }, u
     if (options.historyFile)
     {
         logger.log("Converting history text to mantisbt release changelog html");
-        changeLogParts = getHistory({ options, logger, lastRelease }, 1, "parts");
+        changeLogParts = await getHistory({ options, logger, lastRelease }, 1, "parts");
     }
     else if (options.changelogFile)
     {
@@ -218,14 +218,9 @@ export function createSectionFromCommits({ options, commits, logger })
         {   //
             // Remove CI related tags
             //
-            msg = msg.replace("[skip-ci] ", "");
-            msg = msg.replace(" [skip-ci]", "");
-            msg = msg.replace("[skip-ci]", "");
-            msg = msg.replace("[skip ci]", "");
-            msg = msg.replace(" [skip ci]", "");
-            msg = msg.replace("[skip ci]", "");
+            msg = msg.replace(/[ ]*\[skip[\- ]+ci\]/, "");
             //
-            // Replace commit tags with full text (non-scoped)
+            // Replace commitz tags with full text (non-scoped)
             //
             // Commit tags should be at the start of the commit message.
             //
@@ -589,23 +584,23 @@ function getEmailHeader(options: any, version: string)
     {
         szHrefs = "<table>";
 
-        szHrefs += "<tr><td colspan=\"2\"><b>$project $options.versionText version has been released.</b><br><br></td></tr>";
+        szHrefs += `<tr><td colspan=\"2\"><b>${options.projectName} ${options.versionText} ${version} has been released.</b><br><br></td></tr>`;
 
-        if (options.mantisbtRelease === "Y" && options.mantisbtUrl) {
+        if ((options.mantisbtRelease === "Y" || options.mantisbtRelease === true) && options.mantisbtUrl) {
             szHrefs += `<tr><td>Release Page</td><td style="padding-left:10px"><a href="${options.mantisbtUrl}/set_project.php?project=${options.projectName}&make_default=no&ref=plugin.php%3Fpage=Releases%2Freleases\">Releases - Projects Board</a></td></tr>`;
         }
 
-        if (options.distRelease)
+        if (options.distRelease === "Y" || options.distRelease === true)
         {
             const targetLoc = path.join(options.distReleasePath, options.projectName, version);
             szHrefs += `<tr><td>Network Location</td><td style="padding-left:10px"><a href="${targetLoc}">Network Drive Location</a></td></tr>`;
         }
 
-        if (options.npmRelease)
+        if (options.npmRelease === "Y" || options.npmRelease === true)
         {
             let npmLocation;
             if (options.npmScope) {
-                npmLocation = `${options.npmRegistry}/-/web/detail/$NPMSCOPE/${options.projectName}`;
+                npmLocation = `${options.npmRegistry}/-/web/detail/${options.npmScope}/${options.projectName}`;
             }
             else {
                 npmLocation = `${options.npmRegistry}/-/web/detail/${options.projectName}`;
@@ -613,7 +608,7 @@ function getEmailHeader(options: any, version: string)
             szHrefs += `<tr><td>NPM Location</td><td style="padding-left:10px"><a href="${npmLocation}">NPM Registry</a></td></tr>`;
         }
 
-        if (options.nugetRelease)
+        if (options.nugetRelease === "Y" || options.nugetRelease === true)
         {
             szHrefs += `<tr><td>Nuget Location</td><td style="padding-left:10px"><a href="${options.nugetRelease}">Nuget Registry</a></td></tr>`;
         }
@@ -644,7 +639,7 @@ function getEmailHeader(options: any, version: string)
                 if (emailHrefParts.length > 2) {
                     eLinkName = emailHrefParts[2];
                 }
-                szHrefs += `<tr><td>${eLinkDescrip}</td><td style="padding-left:10px"><a href="${eLink}"${eLinkName}</a></td></tr>`;
+                szHrefs += `<tr><td>${eLinkDescrip}</td><td style="padding-left:10px"><a href="${eLink}">${eLinkName}</a></td></tr>`;
             }
         }
 
@@ -745,7 +740,7 @@ export async function getChangelog({ options, logger, lastRelease }, numsections
     //
     // Read in contents of file
     //
-    let contents: string | any[] = readFileSync(options.changelogFile).toString();
+    let contents: string | any[] = await readFile(options.changelogFile);
 
     //
     // Initialize parsing variables
@@ -853,21 +848,20 @@ export async function getChangelog({ options, logger, lastRelease }, numsections
 }
 
 
-export function getHistory({ options, logger, lastRelease }, numsections: number, listOnly: boolean | string = false, includeEmailHdr = false)
+export async function getHistory({ options, logger, lastRelease }, numsections: number, listOnly: boolean | string = false)
 {
-    const szInputFile = options.historyFile;
     const iNumberOfDashesInVersionLine = 20;
     let szFinalContents = "";
     //
     // Make sure user entered correct cmd line params
     //
-    if (!szInputFile || !existsSync(szInputFile)) {
+    if (!options.historyFile || !existsSync(options.historyFile)) {
         logger.error("History file does not exist");
         return szFinalContents;
     }
 
     logger.log("Extract from history.txt file");
-    logger.log(`   Input File         : '${szInputFile}'`);
+    logger.log(`   Input File         : '${options.historyFile}'`);
     logger.log(`   Num Sections       : '${numsections}'`);
     logger.log(`   Version string     : '${options.versionText}'`);
     logger.log(`   List only          : '${listOnly}'`);
@@ -898,7 +892,7 @@ export function getHistory({ options, logger, lastRelease }, numsections: number
     //
     // Read in contents of file
     //
-    contents = readFileSync(szInputFile).toString();
+    contents = await readFile(options.historyFile);
     //
     // Initialize parsing variables
     //
@@ -993,25 +987,27 @@ export function getHistory({ options, logger, lastRelease }, numsections: number
     //
     // Replace special chars
     //
-    contents = contents.replace("&", "&amp;");
+    contents = contents.replace(/&/gm, "&amp;");
     // Replace '<' and '>' with 'lt;' and 'gt;'
-    contents = contents.replace("<", "&lt;");
-    contents = contents.replace(">", "&gt;");
+    contents = contents.replace(/</gm, "&lt;");
+    contents = contents.replace(/>/gm, "&gt;");
     // Replace spaces with &nbsp;
-    contents = contents.replace(" ", "&nbsp;");
-    contents = contents.replace(EOL, "<br>");
+    contents = contents.replace(/ /gm, "&nbsp;");
+    contents = contents.replace(/\r\n/gm, "<br>");
+    contents = contents.replace(/\n/gm, "<br>");
     //
     // Style the contents to monospace font
     //
     contents = "<font face=\"Courier New\">" + contents + "</font>";
 
+
     // index1 is our start index
     if (lastRelease.version)
     {
         logger.log("   Write header text to message");
-
-        szFinalContents += "szHrefs<br>Most Recent History File Entry:<br><br>";
-        logger.log("   Write numsections history section(s) to message");
+        const szHrefs = getEmailHeader(options, lastRelease.version);
+        szFinalContents += `${szHrefs}<br>Most Recent History File Entry:<br><br>`;
+        logger.log(`   Write ${numsections} history section(s) to message`);
 
         if (listOnly === false) {
             szFinalContents += contents;
@@ -1172,7 +1168,7 @@ export function getHistory({ options, logger, lastRelease }, numsections: number
         //
         if (numsections > 1)
         {
-            logger.log("   Re||dering " + numsections + " sections newest to oldest");
+            logger.log("   Re-ordering " + numsections + " sections newest to oldest");
 
             const sections = [];
 
@@ -1198,12 +1194,6 @@ export function getHistory({ options, logger, lastRelease }, numsections: number
             }
             szFinalContents = "<font face=\"Courier New\" style=\"font-size:12px\">" + contents + "</font>";
         }
-    }
-
-    if (includeEmailHdr === true)
-    {
-        const szHrefs = getEmailHeader(options, lastRelease.version);
-        contents = szHrefs + contents;
     }
 
     logger.success("   Successful");

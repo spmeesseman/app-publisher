@@ -4,7 +4,6 @@ import { setDotNetVersion } from "./dotnet";
 import { setExtJsVersion } from "./extjs";
 import { setMakefileVersion } from "./makefile";
 import { setMantisBtVersion } from "./mantisbt";
-import { setPackageJson } from "./npm";
 import { setPomVersion } from "./pom";
 
 
@@ -22,12 +21,6 @@ async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}
     //
     if (await pathExists("app.json") && await pathExists("package.json")) {
         setExtJsVersion({options, nextRelease});
-    }
-    //
-    // NPM managed project, update package.json if required
-    //
-    if (await pathExists("package.json")) {
-        setPackageJson({options, logger, lastRelease, nextRelease, cwd, env});
     }
     //
     // Maven managed project, update pom.xml if required

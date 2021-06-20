@@ -105,35 +105,35 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
     //
     // SVN repo path
     //
-    // if (options.repoType === "svn")
-    // {
-    //     if (options.branch === "trunk")
-    //     {
-    //         if (!options.repo.includes("trunk"))
-    //         {
-    //             if (options.repo.includes("branches/"))
-    //             {
-    //                 options.repo = options.repo.substring(0, options.repo.indexOf("branches/")) + "trunk";
-    //             }
-    //             else {
-    //                 options.repo = (options.repo + "/" + options.branch).replace("//", "/");
-    //             }
-    //         }
-    //     }
-    //     else
-    //     {
-    //         if (options.repo.IndexOf("branches/") === -1)
-    //         {
-    //             if (options.repo.IndexOf("trunk") !== -1)
-    //             {
-    //                 options.repo = options.repo.Replace("trunk", "branches/" + options.branch);
-    //             }
-    //             else {
-    //                 options.repo = (options.repo + "/branches/" + options.branch).replace("//", "/");
-    //             }
-    //         }
-    //     }
-    // }
+    if (options.repoType === "svn")
+    {
+        if (options.branch === "trunk")
+        {
+            if (!options.repo.includes("trunk"))
+            {
+                if (options.repo.includes("branches/"))
+                {
+                    options.repo = options.repo.substring(0, options.repo.indexOf("branches/")) + "trunk";
+                }
+                else {
+                    options.repo = (options.repo + "/" + options.branch).replace("//", "/");
+                }
+            }
+        }
+        else
+        {
+            if (options.repo.indexOf("branches/") === -1)
+            {
+                if (options.repo.indexOf("trunk") !== -1)
+                {
+                    options.repo = options.repo.replace("trunk", "branches/" + options.branch);
+                }
+                else {
+                    options.repo = (options.repo + "/branches/" + options.branch).replace("//", "/");
+                }
+            }
+        }
+    }
 
     //
     // If specified editor doesnt exist, then switch to notepad or pico

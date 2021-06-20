@@ -40,7 +40,7 @@ export = async () =>
             opts.taskTouchVersions = true;
         }
         if (opts.taskEmail || opts.taskTouchVersions || opts.taskMantisbtRelease) {
-            opts.skipChangelogEdits = true;
+            opts.skipChangelogEdits = "Y";
         }
 
         //

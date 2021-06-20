@@ -133,7 +133,7 @@ async function doMantisRelease({ options, commits, logger, lastRelease, nextRele
             //
             // Encode url part
             //
-            const encPrjName = options.mantisbtProject.Replace(" ", "%20");
+            const encPrjName = options.mantisbtProject.replace(/ /g, "%20");
             //
             // Send the REST POST to create the release w/ assets
             //

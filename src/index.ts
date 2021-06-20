@@ -17,6 +17,7 @@ import getLastRelease = require("./lib/get-last-release");
 import getGitAuthUrl = require("./lib/get-git-auth-url");
 import getLogger = require("./lib/get-logger");
 import validateOptions = require("./lib/validate-options");
+import doDistRelease = require("./lib/releases/dist");
 import doGithubRelease = require("./lib/releases/github");
 import doMantisbtRelease = require("./lib/releases/mantisbt");
 import doNpmRelease = require("./lib/releases/npm");
@@ -280,6 +281,14 @@ async function runNodeScript(context: any, plugins: any)
     context.lastRelease = await getLastRelease(context); // calls getTags()
 
     //
+    // If a l1 task is processed, we'll be done
+    //
+    taskDone = await processTasks2(context);
+    if (taskDone !== false) {
+        return taskDone;
+    }
+
+    //
     // Populate context with commits
     //
     context.commits = await getCommits(context);
@@ -340,14 +349,27 @@ async function runNodeScript(context: any, plugins: any)
     // Changelog / history file
     //
     const doChangelog = options.taskChangelog || options.taskChangelogView || options.taskChangelogFile || !options.taskMode;
-    logger.log("Do cl / history file : " + doChangelog);
     if (options.historyFile && doChangelog)
     {
+        logger.log("Start history file edit");
         doHistoryFileEdit(context);
+        //
+        // If this is task mode, we're done
+        //
+        if (options.taskMode) {
+            return true;
+        }
     }
-    if (options.changelogFile && doChangelog)
+    else if (options.changelogFile && doChangelog)
     {
+        logger.log("Start changelog file edit");
         doChangelogFileEdit(context);
+        //
+        // If this is task mode, we're done
+        //
+        if (options.taskMode) {
+            return true;
+        }
     }
 
     //
@@ -361,7 +383,12 @@ async function runNodeScript(context: any, plugins: any)
     // Update relevant files with new version #
     //
     if (!options.taskMode || options.taskTouchVersions)
-    {
+    {   //
+        // NPM managed project, update package.json if required
+        //
+        if (await util.pathExists("package.json")) {
+            npm.setPackageJson(context);
+        }
         await setVersions(context);
     }
 
@@ -384,7 +411,24 @@ async function runNodeScript(context: any, plugins: any)
     //
     if (options.npmRelease === "Y" && !options.taskMode)
     {
-        await doNpmRelease(context, defaultScope);
+        await doNpmRelease(context, npm.defaultScope);
+    }
+
+    if (options.distRelease === "Y" && !options.taskMode)
+    {
+        logger.log("Starting Distribution release");
+        //
+        // Run pre distribution-release scripts if specified
+        //
+        await util.runScripts({ options, logger }, "preDistRelease", options.distReleasePreCommand);
+        //
+        // Perform dist / network folder release
+        //
+        await doDistRelease(context);
+        //
+        // Run pre distribution-release scripts if specified
+        //
+        await util.runScripts({ options, logger }, "postDistRelease", options.distReleasePostCommand);
     }
 
     //
@@ -398,13 +442,13 @@ async function runNodeScript(context: any, plugins: any)
     // Restore any configured package.json values to the original values
     //
     if (util.pathExists("package.json") && (!options.taskMode || options.taskTouchVersions)) {
-        npm.restorePackageJson(context);
+        await npm.restorePackageJson(context);
     }
 
     //
     // If a l2 task is processed, we'll be done
     //
-    taskDone = await processTasks2(context);
+    taskDone = await processTasks3(context);
     if (taskDone !== false) {
         return taskDone;
     }
@@ -425,6 +469,13 @@ async function runNodeScript(context: any, plugins: any)
         // Post-github release (.publishrc)
         //
         await util.runScripts({ options, logger }, "postGithubRelease", options.githubReleasePostCommand);
+        //
+        // If this is task mode, we're done
+        //
+        if (options.taskGithubRelease)
+        {
+            return true;
+        }
     }
 
     //
@@ -443,6 +494,13 @@ async function runNodeScript(context: any, plugins: any)
         // Post-mantis release scripts (.publishrc)
         //
         await util.runScripts({ options, logger }, "postMantisRelease", options.mantisbtReleasePostCommand);
+        //
+        // If this is task mode, we're done
+        //
+        if (options.taskMantisbtRelease)
+        {
+            return true;
+        }
     }
 
     //
@@ -489,8 +547,9 @@ async function runNodeScript(context: any, plugins: any)
         }
     }
     else if (!options.taskMode || options.taskCommit || options.taskTag)
-    {
+    {   //
         // Create the tag before calling the publish plugins as some require the tag to exists
+        //
         if (!options.taskCommit) {
             await tag(nextRelease.tag, { cwd, env }, options.repoType);
             logger.success(`Created tag ${nextRelease.tag}`);
@@ -542,11 +601,6 @@ async function processTasks1(context: any): Promise<boolean>
         console.log(versionInfo.version);
         return true;
     }
-    else if (options.taskEmail)
-    {
-        sendNotificationEmail(context);
-        return true;
-    }
     else if (options.taskVersionPreReleaseId && isString(options.taskVersionPreReleaseId))
     {
         let preRelId = "error",
@@ -556,6 +610,25 @@ async function processTasks1(context: any): Promise<boolean>
             preRelId = match[1];
         }
         console.log(preRelId);
+        return true;
+    }
+
+    return false;
+}
+
+
+/**
+ * Tasks that can be processed without retrieving commits, but last release info is required
+ *
+ * @param context context
+ */
+async function processTasks2(context: any): Promise<boolean>
+{
+    const options = context.options;
+
+    if (options.taskEmail)
+    {
+        await sendNotificationEmail(context);
         return true;
     }
 
@@ -573,7 +646,7 @@ async function processTasks1(context: any): Promise<boolean>
  *
  * @param context context
  */
-async function processTasks2(context: any): Promise<boolean>
+async function processTasks3(context: any): Promise<boolean>
 {
     const options = context.options,
           logger = context.logger,
@@ -601,7 +674,7 @@ async function processTasks2(context: any): Promise<boolean>
         else if (options.changelogFile) {
             fileContent += (options.changelogFile + EOL);
         }
-        util.writeFile("ap.env", fileContent);
+        await util.writeFile("ap.env", fileContent);
         return true;
     }
 

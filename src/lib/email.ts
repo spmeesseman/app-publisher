@@ -26,7 +26,7 @@ export async function sendNotificationEmail({options, logger, lastRelease}): Pro
     if (options.historyFile)
     {
         logger.log("   Converting history text to html");
-        emailBody = getHistory({options, logger, lastRelease}, 1) as string;
+        emailBody = await getHistory({options, logger, lastRelease}, 1) as string;
     }
     else if (options.changelogFile)
     {
@@ -59,23 +59,23 @@ export async function sendNotificationEmail({options, logger, lastRelease}): Pro
     try
     {
         let to: string;
-        let projectNameFmt = options.projectName.Replace("-", " ");
+        let projectNameFmt = options.projectName.replace(/\-/, " ");
         //
         // If all lower case project name, then title case the project name
         //
-        if (projectNameFmt.test("^[a-z]*$"))
+        if (/^[a-z]*$/.test(projectNameFmt))
         {
             projectNameFmt = properCase(projectNameFmt);
         }
         let subject = `${projectNameFmt} ${options.versionText} ${lastRelease.version}`;
         if (!options.dryRun)
         {
-            if (options.emailRecip.Length > 0)
+            if (options.emailRecip.length > 0)
             {
                 to = options.emailRecip;
             }
             else {
-                if (options.testEmailRecip.Length > 0)
+                if (options.testEmailRecip.length > 0)
                 {
                     to = options.testEmailRecip;
                 }
@@ -88,7 +88,7 @@ export async function sendNotificationEmail({options, logger, lastRelease}): Pro
         else {
             emailBody = "<br><b>THIS IS A DRY RUN RELEASE, PLEASE IGNORE</b><br><br>" + emailBody;
             subject = "[DRY RUN] " + subject;
-            if (options.testEmailRecip.Length > 0)
+            if (options.testEmailRecip.length > 0)
             {
                 to = options.testEmailRecip;
             }
@@ -98,32 +98,47 @@ export async function sendNotificationEmail({options, logger, lastRelease}): Pro
             }
         }
 
+        if (!to)
+        {
+            logger.error("Notification could not be sent, invalid 'to' configuration");
+            return false;
+        }
+
         //
         // Create reusable transporter object using the default SMTP transport
         //
-        const transporter = nodemailer.createTransport({
+        const transportCfg = {
             host: options.emailServer,
             port: options.emailMode === "ssl" ? 465 : 25,  // 587
             secure: options.emailMode === "ssl", // true for 465, false for other ports
             auth: {
-                user: "",
-                pass: ""
-            },
-        });
+                user: "", // TODO
+                pass: ""  // TODO
+            }
+        };
+        const transporter = nodemailer.createTransport(transportCfg);
+
+        logger.log("Sending email");
+        logger.log("   Port      : " + transportCfg.port);
+        logger.log("   Server    : " + transportCfg.host);
+        logger.log("   Is secure : " + transportCfg.secure);
+        logger.log("   To        : " + to);
+        logger.log("   Sender    : " + options.emailSender);
 
         //
         // Send mail with defined transport object
         //
         const info = await transporter.sendMail({
             from: options.emailSender,
-            to, subject,
+            to: "smeesseman@pjats.com",
+            subject,
             html: emailBody
         });
 
         logger.success("Message sent: %s", info.messageId);
     }
     catch (e) {
-        logger.error("Delivery failure");
+        logger.error("Delivery failure: " + e.toString());
         return false;
     }
 }
