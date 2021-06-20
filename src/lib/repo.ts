@@ -395,6 +395,8 @@ export async function verifyAuth({ options, logger }, execaOpts: any)
         else {
             throw new Error("Invalid repository type");
         }
+
+        logger.log(`Allowed to push to the ${options.repoType} repository`);
     }
     catch (error)
     {

@@ -295,7 +295,6 @@ async function runNodeScript(context: any, plugins: any)
     catch (error) {
         throw error;
     }
-    logger.info(`Allowed to push to the ${options.repoType} repository`);
 
     //
     // TODO - Plugins maybe?
