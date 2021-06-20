@@ -348,7 +348,7 @@ async function runNodeScript(context: any, plugins: any)
     //
     if (!nextRelease.level)
     {
-        logger.log("There are no relevant changes, so no new version is released.");
+        logger.log("There are no relevant commits, no new version is released.");
         return false;
     }
 
@@ -492,7 +492,7 @@ async function runNodeScript(context: any, plugins: any)
     //
     // NPM release
     //
-    if (options.npmRelease === "Y" && !options.taskMode)
+    if (options.npmRelease === "Y" && (!options.taskMode || options.taskNpmRelease))
     {   //
         // Run pre npm-release scripts if specified
         //
@@ -510,7 +510,7 @@ async function runNodeScript(context: any, plugins: any)
     //
     // Dist (network share / directory) release
     //
-    if (options.distRelease === "Y" && !options.taskMode)
+    if (options.distRelease === "Y" && (!options.taskMode || options.taskDistRelease))
     {
         logger.log("Starting Distribution release");
         //
@@ -642,41 +642,47 @@ async function runNodeScript(context: any, plugins: any)
     //
     // Commit / Tag
     //
-    if (options.dryRun)
-    {
-        logger.warn(`Skip ${nextRelease.tag} tag creation and commits in dry-run mode`);
-        //
-        // Revert
-        //
-        if (options.dryRunVcRevert) // && options.noCi)
-        {
-            await revert(nextRelease.edits, { cwd, env}, options.repoType);
-        }
-    }
-    else if (!options.taskMode || options.taskCommit || options.taskTag)
+    // if (options.dryRun)
+    // {
+    //     logger.warn(`Skip ${nextRelease.tag} tag creation and commits in dry-run mode`);
+    //     //
+    //     // Revert
+    //     //
+    //     if (options.dryRunVcRevert) // && options.noCi)
+    //     {
+    //         await revert(nextRelease.edits, { cwd, env}, options.repoType);
+    //     }
+    // }
+    // else
+    if (!options.taskMode || options.taskCommit || options.taskTag)
     {   //
         // Commit
         //
         if (!options.taskTag || options.taskCommit || !options.taskMode)
         {
-            await commit({options}, { cwd, env }, nextRelease.version);
-            logger.success(`Successfully committed changes for v${nextRelease.version}`);
+            await commit({options, nextRelease}, { cwd, env });
+            logger.success((options.dryRun ? "Dry run - " : "") + `Successfully committed changes for v${nextRelease.version}`);
         }
         //
         // Create the tag before calling the publish plugins as some require the tag to exists
         //
         if (!options.taskCommit || options.taskTag || !options.taskMode)
         {
-            await tag(context, { cwd, env }, options.repoType);
-            await push(options.repo, { cwd, env }, options.repoType);
-            logger.success(`Created tag ${nextRelease.tag}`);
+            await tag(context, { cwd, env });
+            await push({options}, { cwd, env });
+            logger.success((options.dryRun ? "Dry run - " : "") + `Created tag ${nextRelease.tag}`);
             //
             // If there was a Github release made, then publish it and re-tag
             //
             if (didGithubRelease)
             {
-                await publishGithubRelease({options, nextRelease, logger});
-                logger.success(`Published Github release tagged @ ${nextRelease.tag}`);
+                if (!options.dryRun) {
+                    await publishGithubRelease({options, nextRelease, logger});
+                    logger.success(`Published Github release tagged @ ${nextRelease.tag}`);
+                }
+                else {
+                    logger.success(`Dry run - Published Github release tagged @ ${nextRelease.tag}`);
+                }
             }
         }
     }
@@ -765,7 +771,8 @@ function getTasks4()
 
 function getTasks5()
 {
-    return [ "taskCommit", "taskTag" ];
+    return [ "taskCommit", "taskDistRelease", "taskGithubRelease", "taskMantisbtRelease",
+             "taskNpmRelease", "taskNugetRelease", "taskTag" ];
 }
 
 

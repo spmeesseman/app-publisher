@@ -413,7 +413,7 @@ export async function verifyAuth({ options, logger }, execaOpts: any)
  *
  * @throws {Error} if the tag creation failed.
  */
-export async function tag({options, logger, nextRelease}, execaOpts: any, repoType = "git")
+export async function tag({options, logger, nextRelease}, execaOpts: any)
 {
     let tagMessage: string,
         tagLocation: string;
@@ -426,7 +426,7 @@ export async function tag({options, logger, nextRelease}, execaOpts: any, repoTy
         return;
     }
 
-    if (repoType === "git")
+    if (options.repoType === "git")
     {
         tagLocation = nextRelease.tag;
         if (options.vcTagPrefix && options.vcTagPrefix !== ".")
@@ -434,19 +434,34 @@ export async function tag({options, logger, nextRelease}, execaOpts: any, repoTy
             tagLocation = `${nextRelease.vcTagPrefix}-${nextRelease.tag}`;
             tagMessage = `chore(release): tag ${nextRelease.vcTagPrefix} version ${nextRelease.version} [skip ci]`;
         }
-        logger.log(`Tagging SVN version at ${tagLocation}`);
-        if (options.githubRelease !== "Y" && options.githubRelease !== true) {
-            await execa("git", ["tag", "-a", tagLocation, "-m", tagMessage], execaOpts);
+        logger.log(`Tagging Git version at ${tagLocation}`);
+        if (options.githubRelease !== "Y") {
+            if (!options.dryRun) {
+                await execa("git", ["tag", "-a", tagLocation, "-m", tagMessage], execaOpts);
+            }
+            else {
+                await execa("git", ["tag", "--dry-run",  "-a", tagLocation, "-m", tagMessage], execaOpts);
+            }
         }
-        else {
+        else { //
+              // Making a github release even if 'unpublished' tags the repo.  Re-tag
+             //
             logger.log("Re-tagging after release");
-            const proc = await execa("git", [ "push", "origin", ":refs/tags/" + tagLocation ], execaOpts);
-            if (proc.code === 0) {
-                await execa("git", ["tag", "-fa", tagLocation, "-m", tagMessage], execaOpts);
+            if (!options.dryRun) {
+                const proc = await execa("git", [ "push", "origin", ":refs/tags/" + tagLocation ], execaOpts);
+                if (proc.code === 0) {
+                    await execa("git", ["tag", "-fa", tagLocation, "-m", tagMessage], execaOpts);
+                }
+            }
+            else if (!options.dryRun) {
+                const proc = await execa("git", [ "push", "--dry-run", "origin", ":refs/tags/" + tagLocation ], execaOpts);
+                if (proc.code === 0) {
+                    await execa("git", ["tag", "--dry-run", "-fa", tagLocation, "-m", tagMessage], execaOpts);
+                }
             }
         }
     }
-    else if (repoType === "svn")
+    else if (options.repoType === "svn")
     {
         tagLocation = options.repo.replace("trunk", "tags").replace("branches/" + options.branch, "tags");
         if (!options.vcTagPrefix || options.vcTagPrefix === ".")
@@ -474,12 +489,17 @@ export async function tag({options, logger, nextRelease}, execaOpts: any, repoTy
  *
  * @throws {Error} if the push failed.
  */
-export async function push(repo: any, execaOpts: any, version: string, repoType = "git")
+export async function push({options}, execaOpts: any)
 {
-    if (repoType === "git") {
-        await execa("git", ["push", "--tags", repo], execaOpts);
+    if (options.repoType === "git") {
+        if (!options.dryRun) {
+            await execa("git", ["push", "--tags", options.repo], execaOpts);
+        }
+        else {
+            await execa("git", ["push", "--dry-run", "--tags", options.repo], execaOpts);
+        }
     }
-    else if (repoType === "svn") {
+    else if (options.repoType === "svn") {
         // Nothing to do
     }
     else {
@@ -496,16 +516,62 @@ export async function push(repo: any, execaOpts: any, version: string, repoType 
  *
  * @throws {Error} if the commit failed.
  */
-export async function commit({options}, execaOpts: any, version: string)
+export async function commit({options, nextRelease}, execaOpts: any)
 {
-    if (options.repoType === "git") {
-        const proc = await execa("git", ["commit", "--quiet", "-m", `"chore(release): $VERSION [skip ci]` ], execaOpts);
+    let proc;
+    const changeList = nextRelease.edits.join(" ");
+    if (options.repoType === "git")
+    {
+        //
+        // TODO - Additions
+        //
+        // if ($VCCHANGELISTADD -ne "")
+        // {
+        //     $cl = $VCCHANGELISTADD.Replace("|", " ");
+        //     LogMessage "Adding unversioned touched files to GIT version control"
+        //     LogMessage "   $cl"
+        //     Invoke-Expression -Command "git add -- $cl"
+        //     CheckExitCode $false
+        // }
+        if (!options.dryRun) {
+            proc = await execa("git", [ "commit", "-m", `"chore(release): v${nextRelease.version} [skip ci]`, "--", changeList ], execaOpts);
+        }
+        else {
+            proc = await execa("git", [ "commit", "--dry-run", "-m", `"chore(release): v${nextRelease.version} [skip ci]`, "--", changeList  ], execaOpts);
+        }
         if (proc.code === 0) {
-            await execa("git", ["commit", "push", "origin", `${options.branch}:${options.branch}` ], execaOpts);
+            if (!options.dryRun) {
+                proc = await execa("git", [ "push", "origin", `${options.branch}:${options.branch}` ], execaOpts);
+            }
+            else {
+                proc = await execa("git", [ "push", "--dry-run", "origin", `${options.branch}:${options.branch}` ], execaOpts);
+            }
         }
     }
-    else if (options.repoType === "svn") {
-        await execa("svn", ["commit", "-m", `chore: v${version} [skip ci]`], execaOpts);
+    else if (options.repoType === "svn")
+    {
+        //
+        // TODO - Additions
+        //
+        // if ($VCCHANGELISTADD -ne "")
+        // {
+        //     $cl = $VCCHANGELISTADD.Replace("|", " ");
+        //     LogMessage "Adding unversioned touched files to GIT version control"
+        //     LogMessage "   $cl"
+        //     if (![string]::IsNullOrEmpty($svnUser) -and ![string]::IsNullOrEmpty($svnToken)) {
+        //         Invoke-Expression -Command "svn add $cl --non-interactive --no-auth-cache --username `"$svnUser`" --password `"$svnToken`""
+        //     }
+        //     else {
+        //         Invoke-Expression -Command "svn add $cl --non-interactive"
+        //     }
+        //     CheckExitCode $false
+        // }
+        if (!options.dryRun) {
+            await execa("svn", ["commit", changeList, "-m", `chore: v${nextRelease.version} [skip ci]` ], execaOpts);
+        }
+        else {
+            await execa("svn", ["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
+        }
     }
     else {
         throw new Error("Invalid repository type");

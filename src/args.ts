@@ -773,6 +773,16 @@ export const publishRcOpts =
         }
     ],
 
+    taskDistRelease: [
+        true,
+        "boolean",
+        false,
+        [ "-tdr", "--task-dist-release" ],
+        {
+            help: "Perform a 'Dist' release."
+        }
+    ],
+
     taskEmail: [
         true,
         "boolean",
@@ -780,6 +790,18 @@ export const publishRcOpts =
         [ "-te", "--task-email" ],
         {
             help: "Re-send the latest notification email."
+        }
+    ],
+
+    taskGithubRelease: [
+        true,
+        "boolean",
+        false,
+        [ "-tgr", "--task-github-release" ],
+        {
+            help: "Perform a 'Github' release.\n" +
+                  "The changelog produced for the Github release will be created from the\n" +
+                  "most recent entry of the changelog/history file."
         }
     ],
 
@@ -791,7 +813,27 @@ export const publishRcOpts =
         {
             help: "Perform a 'Mantis' release.\n" +
                   "The changelog produced for the Mantis release will be created from the\n" +
-                  "most recent entry of the changelog/jistory file."
+                  "most recent entry of the changelog/history file."
+        }
+    ],
+
+    taskNpmRelease: [
+        true,
+        "boolean",
+        false,
+        [ "-tnr", "--task-npm-release" ],
+        {
+            help: "Perform an 'NPM' release (publish)."
+        }
+    ],
+
+    taskNugetRelease: [
+        true,
+        "boolean",
+        false,
+        [ "-tngr", "--task-nuget-release" ],
+        {
+            help: "Perform a 'Nuget' release (not implemented yet)."
         }
     ],
 

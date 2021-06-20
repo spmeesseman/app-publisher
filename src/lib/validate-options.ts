@@ -241,16 +241,8 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
             return false;
         }
     }
-
-    //
-    // Convert any Y/N vars to upper case and check validity
-    //
-    if (options.distRelease) {
-        options.distRelease = options.distRelease.toUpperCase();
-        if (options.distRelease !== "Y" && options.distRelease !== "N") {
-            logger.error("Invalid value specified for distRelease, accepted values are y/n/Y/N");
-            return false;
-        }
+    if (options.taskNpmRelease) {
+        options.npmRelease = "Y";
     }
     if (options.npmRelease) {
         options.npmRelease = options.npmRelease.toUpperCase();
@@ -258,6 +250,27 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
             logger.error("Invalid value specified for npmRelease, accepted values are y/n/Y/N");
             return false;
         }
+    }
+
+    //
+    // Convert any Y/N vars to upper case and check validity
+    //
+    if (options.taskDistRelease) {
+        options.distRelease = "Y";
+    }
+    if (options.distRelease) {
+        options.distRelease = options.distRelease.toUpperCase();
+        if (options.distRelease !== "Y" && options.distRelease !== "N") {
+            logger.error("Invalid value specified for distRelease, accepted values are y/n/Y/N");
+            return false;
+        }
+    }
+
+    //
+    // Github Release
+    //
+    if (options.taskGithubRelease) {
+        options.githubRelease = "Y";
     }
     if (options.githubRelease) {
         options.githubRelease = options.githubRelease.toUpperCase();
@@ -298,14 +311,17 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
     //
     // Mantis Release
     //
-    if (options.mantisBtRelease)
+    if (options.taskMantisbtRelease) {
+        options.mantisbtRelease = "Y";
+    }
+    if (options.mantisbtRelease)
     {
-        options.mantisBtRelease = options.mantisBtRelease.toUpperCase();
-        if (options.mantisBtRelease !== "Y" && options.mantisBtRelease !== "N") {
+        options.mantisbtRelease = options.mantisbtRelease.toUpperCase();
+        if (options.mantisbtRelease !== "Y" && options.mantisbtRelease !== "N") {
             logger.error("Invalid value specified for mantisbtRelease, accepted values are y/n/Y/N");
             return false;
         }
-        if (options.mantisBtRelease === "Y")
+        if (options.mantisbtRelease === "Y")
         {
             if (options.mantisBtUrl.length === 0) {
                 logger.error("You must specify mantisbtUrl for a MantisBT release type");
@@ -324,6 +340,7 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
             }
         }
     }
+
     if (options.cProjectRcFile) {
         if (!options.cProjectRcFile.Contains((".rc"))) {
             logger.error("Invalid value for cProjectRcFile, file must have an rc extension");
@@ -334,6 +351,7 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
             return false;
         }
     }
+
     if (options.skipDeployPush) {
         options.skipDeployPush = options.skipDeployPush.toUpperCase();
         if (options.skipDeployPush !== "Y" && options.skipDeployPush !== "N") {
@@ -341,6 +359,7 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
             return false;
         }
     }
+
     if (options.dryRunVcRevert) {
         options.dryRunVcRevert = options.dryRunVcRevert.toUpperCase();
         if (options.dryRunVcRevert !== "Y" && options.dryRunVcRevert !== "N") {
@@ -348,6 +367,7 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
             return false;
         }
     }
+
     if (options.writeLog) {
         options.writeLog = options.writeLog.toUpperCase();
         if (options.writeLog !== "Y" && options.writeLog !== "N") {
@@ -355,6 +375,7 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
             return false;
         }
     }
+
     if (options.promptVersion) {
         options.promptVersion = options.promptVersion.toUpperCase();
         if (options.promptVersion !== "Y" && options.promptVersion !== "N") {
@@ -362,6 +383,7 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
             return false;
         }
     }
+
     if (options.vcTag) {
         options.vcTag = options.vcTag.toUpperCase();
         if (options.vcTag !== "Y" && options.vcTag !== "N") {
@@ -369,6 +391,7 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
             return false;
         }
     }
+
     if (options.skipChangelogEdits) {
         options.skipChangelogEdits = options.skipChangelogEdits.toUpperCase();
         if (options.skipChangelogEdits !== "Y" && options.skipChangelogEdits !== "N") {
@@ -380,6 +403,7 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
             logger.warn("Overriding skipChangelogEdits on dry run, auto set to 'N'");
         }
     }
+
     if (options.skipVersionEdits) {
         options.skipVersionEdits = options.skipVersionEdits.toUpperCase();
         if (options.skipVersionEdits !== "Y" && options.skipVersionEdits !== "N") {
