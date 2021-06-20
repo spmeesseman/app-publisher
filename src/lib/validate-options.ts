@@ -17,6 +17,112 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
     const environ = { ...process.env, ...env };
     logger.log("Validating all options...");
 
+    
+
+    //
+    // Convert array params to arrays, if specified as string on cmdline or publishrc
+    //
+    if (options.deployCommand && isString(options.deployCommand))
+    {
+        options.deployCommand = [ options.deployCommand ]; // convert to array
+    }
+    if (options.buildCommand && isString(options.buildCommand))
+    {
+        options.buildCommand = [ options.buildCommand ]; // convert to array
+    }
+    if (options.postBuildCommand && isString(options.postBuildCommand))
+    {
+        options.postBuildCommand = [ options.postBuildCommand ]; // convert to array
+    }
+    if (options.preBuildCommand && isString(options.preBuildCommand))
+    {
+        options.preBuildCommand = [ options.preBuildCommand ]; // convert to array
+    }
+    if (options.postReleaseCommand && isString(options.postReleaseCommand))
+    {
+        options.postReleaseCommand = [ options.postReleaseCommand ]; // convert to array
+    }
+    if (options.postCommitCommand && isString(options.postCommitCommand))
+    {
+        options.postCommitCommand = [ options.postCommitCommand ]; // convert to array
+    }
+    if (options.preCommitCommand &&  isString(options.preCommitCommand))
+    {
+        options.preCommitCommand = [ options.preCommitCommand ]; // convert to array
+    }
+    if (options.distReleasePreCommand && isString(options.distReleasePreCommand))
+    {
+        options.distReleasePreCommand = [ options.distReleasePreCommand ]; // convert to array
+    }
+    if (options.distReleasePostCommand && isString(options.distReleasePostCommand))
+    {
+        options.distReleasePostCommand = [ options.distReleasePostCommand ]; // convert to array
+    }
+    if (options.githubAssets && isString(options.githubAssets))
+    {
+        options.githubAssets = [ options.githubAssets ]; // convert to array
+    }
+    if (options.githubReleasePreCommand && isString(options.githubReleasePreCommand))
+    {
+        options.githubReleasePreCommand = [ options.githubReleasePreCommand ]; // convert to array
+    }
+    if (options.githubReleasePostCommand && isString(options.githubReleasePostCommand))
+    {
+        options.githubReleasePostCommand = [ options.githubReleasePostCommand ]; // convert to array
+    }
+    if (options.mantisbtUrl && isString(options.mantisbtUrl))
+    {
+        options.mantisbtUrl = [ options.mantisbtUrl ]; // convert to array
+    }
+    if (options.mantisbtApiToken && isString(options.mantisbtApiToken))
+    {
+        options.mantisbtApiToken = [ options.mantisbtApiToken ]; // convert to array
+    }
+    if (options.mantisbtAssets && isString(options.mantisbtAssets))
+    {
+        options.mantisbtAssets = [ options.mantisbtAssets ]; // convert to array
+    }
+    if (options.mantisbtReleasePreCommand && isString(options.mantisbtReleasePreCommand))
+    {
+        options.mantisbtReleasePreCommand = [ options.mantisbtReleasePreCommand ]; // convert to array
+    }
+    if (options.mantisbtReleasePostCommand && isString(options.mantisbtReleasePostCommand))
+    {
+        options.mantisbtReleasePostCommand = [ options.mantisbtReleasePostCommand ]; // convert to array
+    }
+    if (options.npmReleasePreCommand && isString(options.npmReleasePreCommand))
+    {
+        options.npmReleasePreCommand = [ options.npmReleasePreCommand ]; // convert to array
+    }
+    if (options.npmReleasePostCommand && isString(options.npmReleasePostCommand))
+    {
+        options.npmReleasePostCommand = [ options.npmReleasePostCommand ]; // convert to array
+    }
+    if (options.versionFiles && isString(options.versionFiles))
+    {
+        options.versionFiles = [ options.versionFiles ]; // convert to array
+    }
+    if (options.versionFilesEditAlways && isString(options.versionFilesEditAlways))
+    {
+        options.versionFilesEditAlways = [ options.versionFilesEditAlways ]; // convert to array
+    }
+    if (options.versionFilesScrollDown && isString(options.versionFilesScrollDown))
+    {
+        options.versionFilesScrollDown = [ options.versionFilesScrollDown ]; // convert to array
+    }
+    if (options.versionReplaceTags && isString(options.versionReplaceTags))
+    {
+        options.versionReplaceTags = [ options.versionReplaceTags ]; // convert to array
+    }
+    if (options.emailRecip && isString(options.emailRecip))
+    {
+        options.emailRecip = [ options.emailRecip ]; // convert to array
+    }
+    if (options.testEmailRecip && isString(options.testEmailRecip))
+    {
+        options.testEmailRecip = [ options.testEmailRecip ]; // convert to array
+    }
+
     //
     // If root path is empty then set to "." , by default its "." but just in case
     // user sets to empty string in config
@@ -323,19 +429,19 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
         }
         if (options.mantisbtRelease === "Y")
         {
-            if (options.mantisBtUrl.length === 0) {
+            if (options.mantisbtUrl.length === 0) {
                 logger.error("You must specify mantisbtUrl for a MantisBT release type");
                 return false;
             }
-            if (options.mantisBtApiToken.length === 0) {
+            if (options.mantisbtApiToken.length === 0) {
                 logger.error("You must have MANTISBT_API_TOKEN defined for a MantisBT release type");
                 logger.error("-or- you must have mantisbtApiToken defined in publishrc");
                 logger.error("Set the envvar MANTISBT_API_TOKEN or the config mantisApiToken with the token value created on the MantisBT website");
                 logger.error("To create a token, see the \"Tokens\" section of your Mantis User Preferences page");
                 return false;
             }
-            if (options.mantisBtUrl.length !== options.mantisBtApiToken) {
-                logger.log("You must specify the same number of MantisBT urls and API tokens");
+            if (options.mantisbtUrl.length !== options.mantisbtApiToken.length) {
+                logger.error("You must specify the same number of MantisBT urls and API tokens");
                 return false;
             }
         }
@@ -474,102 +580,6 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
         logger.warn("   skipVersionEdits");
         logger.warn("   promptVersion");
         logger.warn("   versionFilesEditAlways");
-    }
-
-    //
-    // Convert array params to arrays, if specified as string on cmdline or publishrc
-    //
-    if (options.deployCommand && isString(options.deployCommand))
-    {
-        options.deployCommand = [ options.deployCommand ]; // convert to array
-    }
-    if (options.buildCommand && isString(options.buildCommand))
-    {
-        options.buildCommand = [ options.buildCommand ]; // convert to array
-    }
-    if (options.postBuildCommand && isString(options.postBuildCommand))
-    {
-        options.postBuildCommand = [ options.postBuildCommand ]; // convert to array
-    }
-    if (options.preBuildCommand && isString(options.preBuildCommand))
-    {
-        options.preBuildCommand = [ options.preBuildCommand ]; // convert to array
-    }
-    if (options.postReleaseCommand && isString(options.postReleaseCommand))
-    {
-        options.postReleaseCommand = [ options.postReleaseCommand ]; // convert to array
-    }
-    if (options.postCommitCommand && isString(options.postCommitCommand))
-    {
-        options.postCommitCommand = [ options.postCommitCommand ]; // convert to array
-    }
-    if (options.preCommitCommand &&  isString(options.preCommitCommand))
-    {
-        options.preCommitCommand = [ options.preCommitCommand ]; // convert to array
-    }
-    if (options.distReleasePreCommand && isString(options.distReleasePreCommand))
-    {
-        options.distReleasePreCommand = [ options.distReleasePreCommand ]; // convert to array
-    }
-    if (options.distReleasePostCommand && isString(options.distReleasePostCommand))
-    {
-        options.distReleasePostCommand = [ options.distReleasePostCommand ]; // convert to array
-    }
-    if (options.githubAssets && isString(options.githubAssets))
-    {
-        options.githubAssets = [ options.githubAssets ]; // convert to array
-    }
-    if (options.githubReleasePreCommand && isString(options.githubReleasePreCommand))
-    {
-        options.githubReleasePreCommand = [ options.githubReleasePreCommand ]; // convert to array
-    }
-    if (options.githubReleasePostCommand && isString(options.githubReleasePostCommand))
-    {
-        options.githubReleasePostCommand = [ options.githubReleasePostCommand ]; // convert to array
-    }
-    if (options.mantisbtAssets && isString(options.mantisbtAssets))
-    {
-        options.mantisbtAssets = [ options.mantisbtAssets ]; // convert to array
-    }
-    if (options.mantisbtReleasePreCommand && isString(options.mantisbtReleasePreCommand))
-    {
-        options.mantisbtReleasePreCommand = [ options.mantisbtReleasePreCommand ]; // convert to array
-    }
-    if (options.mantisbtReleasePostCommand && isString(options.mantisbtReleasePostCommand))
-    {
-        options.mantisbtReleasePostCommand = [ options.mantisbtReleasePostCommand ]; // convert to array
-    }
-    if (options.npmReleasePreCommand && isString(options.npmReleasePreCommand))
-    {
-        options.npmReleasePreCommand = [ options.npmReleasePreCommand ]; // convert to array
-    }
-    if (options.npmReleasePostCommand && isString(options.npmReleasePostCommand))
-    {
-        options.npmReleasePostCommand = [ options.npmReleasePostCommand ]; // convert to array
-    }
-    if (options.versionFiles && isString(options.versionFiles))
-    {
-        options.versionFiles = [ options.versionFiles ]; // convert to array
-    }
-    if (options.versionFilesEditAlways && isString(options.versionFilesEditAlways))
-    {
-        options.versionFilesEditAlways = [ options.versionFilesEditAlways ]; // convert to array
-    }
-    if (options.versionFilesScrollDown && isString(options.versionFilesScrollDown))
-    {
-        options.versionFilesScrollDown = [ options.versionFilesScrollDown ]; // convert to array
-    }
-    if (options.versionReplaceTags && isString(options.versionReplaceTags))
-    {
-        options.versionReplaceTags = [ options.versionReplaceTags ]; // convert to array
-    }
-    if (options.emailRecip && isString(options.emailRecip))
-    {
-        options.emailRecip = [ options.emailRecip ]; // convert to array
-    }
-    if (options.testEmailRecip && isString(options.testEmailRecip))
-    {
-        options.testEmailRecip = [ options.testEmailRecip ]; // convert to array
     }
 
     logger.success("Success - options validated");

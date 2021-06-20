@@ -205,7 +205,7 @@ async function run(context: any, plugins: any): Promise<boolean>
             log: () => { /* */ },
             warn: () => { /* */ },
             success: () => { /* */ },
-            error: () => { /* */ }
+            error: context.logger.error
         };
     }
 
