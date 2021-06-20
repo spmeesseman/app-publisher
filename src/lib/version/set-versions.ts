@@ -5,6 +5,7 @@ import { setExtJsVersion } from "./extjs";
 import { setMakefileVersion } from "./makefile";
 import { setMantisBtVersion } from "./mantisbt";
 import { setPomVersion } from "./pom";
+// import { relative } from "path";
 
 export = setVersions;
 
@@ -23,11 +24,17 @@ async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}
     //
     // AppPublisher publishrc version
     //
-    await setAppPublisherVersion({options, logger, nextRelease});
+    if (options.version) {
+        const rcFile = await setAppPublisherVersion({options, logger, nextRelease});
+        if (rcFile) {
+            edits.push(rcFile);
+            // edits.push(relative(process.cwd(), rcFile));
+        }
+    }
     //
     // ExtJs build
     //
-    if (await pathExists("app.json") && await pathExists("package.json")) {
+    if (await pathExists("app.json") && (await pathExists("workspace.json") || await pathExists("build.xml"))) {
         await setExtJsVersion({options, nextRelease});
         edits.push("app.json");
     }

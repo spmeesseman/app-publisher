@@ -60,4 +60,5 @@ export async function setAppPublisherVersion({nextRelease, options, logger})
             await editFile({options}, ".publishrc.json");
         // }
     }
+    return fileName;
 }
