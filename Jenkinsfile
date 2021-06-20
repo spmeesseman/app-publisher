@@ -118,20 +118,20 @@ pipeline {
             env.CURRENTVERSION = bat(returnStdout: true,
                                      script: """
                                        @echo off
-                                       app-publisher --task-version-current
+                                       app-publisher --node --task-version-current
                                      """)
             if (env.TAG_NAME == null) {
               echo "No tag found, trunk/branch build set version"
               env.NEXTVERSION = bat(returnStdout: true,
                                     script: """
                                       @echo off
-                                      app-publisher --task-version-next
+                                      app-publisher --node --task-version-next
                                     """)
               //
               // Update version files
               //
               echo "Update version files"
-              bat "app-publisher --task-touch-versions"
+              bat "app-publisher --node --task-touch-versions"
             }
             else {
               echo "Tag found: ${env.TAG_NAME}, set next version to current"
@@ -184,8 +184,8 @@ pipeline {
           //
           dir("src/ui") {
             nodejs("Node 12") {
-              bat "app-publisher --task-changelog --version-force-next ${env.NEXTVERSION}" 
-              bat "app-publisher --task-changelog-file doc\\tmp_history.txt --version-force-next ${env.NEXTVERSION}" 
+              bat "app-publisher --node --task-changelog --version-force-next ${env.NEXTVERSION}" 
+              bat "app-publisher --node --task-changelog-file doc\\tmp_history.txt --version-force-next ${env.NEXTVERSION}" 
               historyEntry = bat(returnStdout: true,
                                  script: """
                                    @echo off
@@ -268,13 +268,13 @@ pipeline {
               // MantisBT -> Releases Plugin
               //
               echo "Perform MantisBT Releases"
-              bat "app-publisher --task-mantisbt-release"
+              bat "app-publisher --node --task-mantisbt-release"
               //
               // NPM Release
               //
               echo "Perform NPM Releases"
-              // bat "app-publisher --task-npm-release"
-              bat "npm publish"
+              bat "app-publisher --node --task-npm-release"
+              // bat "npm publish"
             }
           }
         }
@@ -314,7 +314,7 @@ pipeline {
           echo "Successful build"
           echo "    1. Tag version in SVN."
           echo "    2. Send release email."
-          bat "app-publisher --task-commit --task-email"
+          bat "app-publisher --node --task-commit --task-email"
         }
       }
     }
