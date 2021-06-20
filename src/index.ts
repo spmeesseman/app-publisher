@@ -228,10 +228,12 @@ async function runNodeScript(context: any, plugins: any)
     //
     // Validate options / cmd line arguments
     //
+    logger.log("Validating all options...");
     if (!(await validateOptions(context)))
     {
         return false;
     }
+    logger.success("   Success - options validated");
 
     //
     // If a l1 task is processed, we'll be done
@@ -648,25 +650,9 @@ async function processTasks1(context: any): Promise<boolean>
     const options = context.options;
 
     if (options.taskDevTest)
-    {
-        const p1 = "../script/test.ps1",
-              p2 = "./node/1/2/3",
-              p3 = "doc/text.txr",
-              p4 = "../../doc/text.txr";
-
-        console.log(1, path.normalize(p1));
-        console.log(2, path.resolve(p1));
-
-        console.log(1, path.normalize(p2));
-        console.log(2, path.resolve(p2));
-
-        console.log(1, path.normalize(p3));
-        console.log(2, path.resolve(p3));
-
-        console.log(1, path.normalize(p4));
-        console.log(2, path.resolve(p4));
-
-
+    {   //
+        // For testing code.  ( Run with --node --no-ci --task-dev-test )
+        //
         return true;
     }
     else if (options.taskVersionCurrent)

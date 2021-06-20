@@ -140,7 +140,8 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
     //
     if (options.textEditor)
     {
-        if (!(await pathExists(options.textEditor)))
+        options.textEditor = options.textEditor.trim();
+        if (!options.textEditor.toLowerCase().startsWith("notepad") && !(await pathExists(options.textEditor, false)))
         {
             let found = false;
             const paths = environ.Path.split(";");
@@ -158,14 +159,8 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
                 }
             }
             if (!found) {
-                if (options.textEditor.ToLower() !== "notepad" && options.textEditor.ToLower() !== "notepad.exe") {
-                    logger.log("Text editor not found, falling back to notepad");
-                    options.textEditor = "notepad";
-                }
-                else {
-                    logger.error("Text editor not found");
-                    return false;
-                }
+                logger.log("Text editor not found, falling back to 'notepad'");
+                options.textEditor = "notepad";
             }
         }
     }

@@ -12,16 +12,26 @@ export async function copyFile(src: string, dst: string)
         // If dst is a directory, a new file with the same name will be created
         //
         if (await pathExists(dst)) {
-            if (fs.lstatSync(dst).isDirectory()) {
-                dst = path.join(dst, path.basename(src));
+            try {
+                if (fs.lstatSync(dst).isDirectory()) {
+                    dst = path.join(dst, path.basename(src));
+                }
+            }
+            catch (e) {
+                reject(e);
             }
         }
-        fs.copyFile(path.resolve(src), path.resolve(dst), (err) => {
-            if (err) {
-                reject(err);
-            }
-            resolve(true);
-        });
+        try {
+            fs.copyFile(path.resolve(src), path.resolve(dst), (err) => {
+                if (err) {
+                    reject(err);
+                }
+                resolve(true);
+            });
+        }
+        catch (e) {
+            reject(e);
+        }
     });
 }
 
@@ -96,12 +106,17 @@ export async function copyDir(src: string, dst: string)
 export async function createDir(dir: string)
 {
     return new Promise<boolean>((resolve, reject) => {
-        fs.mkdir(path.resolve(dir), { mode: 0o777 }, (err) => {
-            if (err) {
-                reject(err);
-            }
-            resolve(true);
-        });
+        try {
+            fs.mkdir(path.resolve(dir), { mode: 0o777 }, (err) => {
+                if (err) {
+                    reject(err);
+                }
+                resolve(true);
+            });
+        }
+        catch (e) {
+            reject(e);
+        }
     });
 }
 
@@ -142,15 +157,20 @@ export async function editFile({ options }, editFile: string, seekToEnd = false,
 }
 
 
-export async function pathExists(file: string): Promise<boolean>
+export async function pathExists(file: string, resolve = true): Promise<boolean>
 {
     return new Promise<boolean>((resolve, reject) => {
-        fs.access(path.resolve(file), (err) => {
-            if (err) {
-                reject(err);
-            }
-            resolve(true);
-        });
+        try {
+            fs.access(resolve ? path.resolve(file) : file, (e) => {
+                if (e) {
+                    resolve(false);
+                }
+                resolve(true);
+            });
+        }
+        catch (e) {
+            resolve(false);
+        }
     });
 }
 
@@ -161,12 +181,17 @@ export async function readFile(file: string): Promise<string>
         file = path.join(process.cwd(), file);
     }
     return new Promise<string>((resolve, reject) => {
-        fs.readFile(file, (err, data) => {
-            if (err) {
-                reject(err);
-            }
-            resolve(data.toString());
-        });
+        try {
+            fs.readFile(file, (e, data) => {
+                if (e) {
+                    reject(e);
+                }
+                resolve(data.toString());
+            });
+        }
+        catch (e) {
+            reject(e);
+        }
     });
 }
 
@@ -174,12 +199,17 @@ export async function readFile(file: string): Promise<string>
 export async function deleteFile(file: string): Promise<void>
 {
     return new Promise<void>((resolve, reject) => {
-        fs.unlink(path.resolve(file), (err) => {
-            if (err) {
-                reject(err);
-            }
-            resolve();
-        });
+        try {
+            fs.unlink(path.resolve(file), (e) => {
+                if (e) {
+                    reject(e);
+                }
+                resolve();
+            });
+        }
+        catch (e) {
+            reject(e);
+        }
     });
 }
 
@@ -193,12 +223,17 @@ export async function deleteFile(file: string): Promise<void>
 export async function writeFile(file: string, data: string): Promise<void>
 {
     return new Promise<void>((resolve, reject) => {
-        fs.writeFile(path.resolve(file), data, (err) => {
-            if (err) {
-                reject(err);
-            }
-            resolve();
-        });
+        try {
+            fs.writeFile(path.resolve(file), data, (err) => {
+                if (err) {
+                    reject(err);
+                }
+                resolve();
+            });
+        }
+        catch (e) {
+            reject(e);
+        }
     });
 }
 
@@ -206,12 +241,17 @@ export async function writeFile(file: string, data: string): Promise<void>
 export async function appendFile(file: string, data: string): Promise<void>
 {
     return new Promise<void>((resolve, reject) => {
-        fs.appendFile(path.resolve(file), data, (err) => {
-            if (err) {
-                reject(err);
-            }
-            resolve();
-        });
+        try {
+            fs.appendFile(path.resolve(file), data, (err) => {
+                if (err) {
+                    reject(err);
+                }
+                resolve();
+            });
+        }
+        catch (e) {
+            reject(e);
+        }
     });
 }
 
