@@ -586,20 +586,34 @@ export async function revert({options, nextRelease, logger}, execaOpts: any)
           changeListModify = nextRelease.edits.filter((e: any) => e.type === "M").join(" ");
 
     logger.info("Revert changes");
+    logger.info(`   Total Edits   : ${nextRelease.edits.length}`);
+    logger.info(`   Additions     : ${changeListAdd.length}`);
+    logger.info(`   Modifications : ${changeListModify.length}`);
 
     for (const file of changeListAdd) {
-        await deleteFile(file);
+        try {
+            await deleteFile(file);
+        }
+        catch (e) {
+            logger.warn(`Could not remove file '${file}'`);
+        }
     }
 
-    if (options.repoType === "git") {
-        await execa("git", [ "stash", "push", "--", changeListModify ], execaOpts);
-        await execa("git", [ "stash", "drop" ], execaOpts);
+    try {
+        if (options.repoType === "git") {
+            await execa("git", [ "stash", "push", "--", changeListModify ], execaOpts);
+            await execa("git", [ "stash", "drop" ], execaOpts);
+        }
+        else if (options.repoType === "svn") {
+            await execSvn([ "revert", "-R", changeListModify ], execaOpts);
+        }
+        else {
+            throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
+        }
     }
-    else if (options.repoType === "svn") {
-        await execSvn([ "revert", "-R", changeListModify ], execaOpts);
-    }
-    else {
-        throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
+    catch (e) {
+        logger.warn("Could not revert files:");
+        logger.warn("   " + changeListModify);
     }
 }
 

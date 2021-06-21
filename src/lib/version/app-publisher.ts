@@ -1,6 +1,7 @@
 
 import glob = require("glob");
 import { relative } from "path";
+import { isIgnored } from "../repo";
 import { replaceInFile, editFile, pathExists } from "../utils/fs";
 
 
@@ -22,7 +23,7 @@ async function getFiles(logger: any)
 }
 
 
-export async function setAppPublisherVersion({nextRelease, options, logger, cwd})
+export async function setAppPublisherVersion({nextRelease, options, logger, cwd, env})
 {
     let files: string[] = [];
     if (options.version)
@@ -33,7 +34,7 @@ export async function setAppPublisherVersion({nextRelease, options, logger, cwd}
         }
         for (const file of files)
         {
-            if (await pathExists(file))
+            if (await pathExists(file) && !(await isIgnored({options, logger}, file, {cwd, env})))
             {
                 logger.log(`Setting version ${nextRelease.version} in ` + relative(cwd, file));
                 // const publishrcJson = require(path.join(process.cwd(), file));

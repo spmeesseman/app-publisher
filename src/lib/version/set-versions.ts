@@ -35,7 +35,7 @@ async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}
     // AppPublisher publishrc version
     //
     if (options.version) {
-        const rcFiles = await setAppPublisherVersion({options, logger, nextRelease, cwd});
+        const rcFiles = await setAppPublisherVersion({options, logger, nextRelease, cwd, env});
         if (rcFiles) {
             edits.push(...rcFiles);
             // edits.push(relative(process.cwd(), ...rcFiles));

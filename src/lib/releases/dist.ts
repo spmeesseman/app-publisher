@@ -27,12 +27,6 @@ async function doDistRelease({ options, logger, nextRelease, cwd, env })
     //
     if (options.historyFile)
     {
-        // if (!pathExists("$PATHTODIST\$HISTORYFILE") && $DistIsVersioned)
-        // {
-        //     $HistoryFileName = [Path];::GetFileName($HISTORYFILE);
-        //     VcChangelistAddRemove; "$PATHTODIST\$HistoryFileName";
-        //     VcChangelistAddNew; "$PATHTODIST\$HistoryFileName";
-        // }
         await copyFile(options.historyFile, options.pathToDist);
     }
     //
@@ -135,25 +129,5 @@ async function doDistRelease({ options, logger, nextRelease, cwd, env })
     }
     else {
         logger.log("Skipped Dist push to shared drive / directory (user specified)");
-    }
-
-    //
-    // Check DIST dir for unversioned files, add them if needed
-    //
-    if (options.distAddAllToVc === "Y")
-    {
-        // Get-ChildItem "$PATHTODIST" -Recurse -Filter *.* | Foreach-Object {  # Bracket must stay same line as ForEach-Object
-        //     $DistIsVersioned = VcIsVersioned $_.FullName
-        //     logger.log($_.FullName);
-        //     if (!$DistIsVersioned)
-        //     {
-        //         $fullName = $_.FullName.Replace("`${VERSION}", nextRelease.version).Replace("`${NEWVERSION}", nextRelease.version).Replace("`${CURRENTVERSION}", $CURRENTVERSION).Replace("`${LASTVERSION}", $CURRENTVERSION);
-        //         logger.log("Adding unversioned $($_.Name) to vc addition list");
-        //         # VcChangelistAddNew "$PATHTODIST\$_.Name"
-        //         # VcChangelistAddRemove "$PATHTODIST\$_.Name"
-        //         VcChangelistAddNew $fullName $true
-        //         VcChangelistAddRemove $fullName $true
-        //     }
-        // }
     }
 }
