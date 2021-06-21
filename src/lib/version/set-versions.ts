@@ -104,21 +104,22 @@ async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}
 async function setVersionFiles({options, logger, lastRelease, nextRelease}): Promise<string[]>
 {
     const vFiles: string[] = [];
-
-    if (!options.versionFiles || options.versionFiles.length === 0)
-    {
-        return vFiles;
-    }
+    let incremental = false;
 
     logger.log("Preparing version files");
-    let incremental = false;
+    if (!options.versionFiles || options.versionFiles.length === 0)
+    {
+        logger.log("   # of files : " + options.versionFiles);
+        return vFiles;
+    }
+    logger.log("   # of files : " + options.versionFiles);
 
     //
     // Below is set to handle an assemblyinfo.cs file or other version file in semver format, but the
     // build version type is incremental
     //
     let semVersion = "";
-    if (!nextRelease.version.Contains("."))
+    if (!nextRelease.version.includes("."))
     {
         incremental = true;
         for (const c of nextRelease.version.length) {
@@ -131,7 +132,7 @@ async function setVersionFiles({options, logger, lastRelease, nextRelease}): Pro
     }
 
     let semVersionCUR = "";
-    if (!lastRelease.version.Contains("."))
+    if (!lastRelease.version.includes("."))
     {
         for (const c of lastRelease.version.length) {
             semVersionCUR = `${semVersionCUR}${c}.`;
@@ -149,14 +150,14 @@ async function setVersionFiles({options, logger, lastRelease, nextRelease}): Pro
     {
         let vFile = versionFile;
 
-        vFile = vFile.replace("`\${NEWVERSION}", nextRelease.version);
-        vFile = vFile.replace("`\${VERSION}", nextRelease.version);
-        vFile = vFile.replace("`\${CURRENTVERSION}", lastRelease.version);
-        vFile = vFile.replace("`\${LASTVERSION}", lastRelease.version);
+        vFile = vFile.replace(/\$\{NEWVERSION\}/gi, nextRelease.version);
+        vFile = vFile.replace(/\${VERSION\}/gi, nextRelease.version);
+        vFile = vFile.replace(/\${CURRENTVERSION\}/gi, lastRelease.version);
+        vFile = vFile.replace(/\$\{LASTVERSION\}/gi, lastRelease.version);
 
-        if (await pathExists(vFile) && !options.versionFilesEdited.Contains(vFile))
-        {
-            // replace version in file
+        if (await pathExists(vFile) && !options.versionFilesEdited.includes(vFile))
+        {   //
+            // Replace version in file
             //
             let rc = false;
             logger.log(`Writing new version ${semVersion} to ${vFile}`);

@@ -388,15 +388,14 @@ export async function isGitRepo(execaOpts: { cwd: any; env: any; })
 
 export async function isIgnored({options, logger}, objectPath: string, execaOpts: any)
 {
-    const excapedRegex = escapeRegExp(objectPath);
-
+    // const excapedRegex = escapeRegExp(objectPath);
     logger.info(`Check ignored property for '${objectPath}'`);
 
     if (options.repoType === "svn")
     {
         try {
             const stdout = await execSvn(["propget", "svn:ignore", path.dirname(objectPath) ], execaOpts, true);
-            if (new RegExp(`^${excapedRegex}$`).test(stdout)) {
+            if (new RegExp(`^${objectPath}$`, "gm").test(stdout)) {
                 logger.info("   This file is being ignored from version control");
                 return true;
             }
@@ -414,7 +413,7 @@ export async function isIgnored({options, logger}, objectPath: string, execaOpts
         {
             const fileData = await readFile(".gitignore");
             if (fileData && fileData.length > 0) {
-                if (new RegExp(`^${excapedRegex}$`).test(fileData)) {
+                if (new RegExp(`^${objectPath}$`, "gm").test(fileData)) {
                     logger.info("   This file is being ignored from version control");
                     return true;
                 }
