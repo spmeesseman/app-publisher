@@ -2,5 +2,5 @@ build
 node_modules
 .svn
 ap.env
-.publishrc.json
 README.md
+.publishrc.*.json
