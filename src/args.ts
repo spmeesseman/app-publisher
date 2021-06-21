@@ -961,7 +961,7 @@ export const publishRcOpts =
         true,
         "string",
         "notepad.exe",
-        "The editor program to use when opening version files."
+        "The editor program to use when opening version files for manual editing."
     ],
 
     vcTag: [
@@ -969,7 +969,7 @@ export const publishRcOpts =
         "flag",
         "Y",
         "Tag the version in Version Control when the final release process has finished",
-        "successfully.  Tags in the form: vX.X.X."
+        "successfully.  Tags in the form: vX.X.X"
     ],
 
     vcTagPrefix: [

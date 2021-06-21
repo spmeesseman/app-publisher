@@ -119,7 +119,7 @@ export async function getTags({env, options, logger}, execaOpts: any)
                                              "--no-auth-cache"], execaOpts);
         }
 
-        logger.log("Parsing response from SVN");
+        logger.info("Parsing response from SVN");
         try {
             parser.parseString(xml, (err: any, result: any) =>
             {
@@ -133,17 +133,17 @@ export async function getTags({env, options, logger}, execaOpts: any)
                               match = regex.exec(pathObj._);
                         if (pathObj.$ && pathObj.$.action === "A" && pathObj.$.kind === "dir" && match)
                         {
-                            // logger.log("Found version tag:");
-                            // logger.log(`   Tag     : ${match[1]}`);
-                            // logger.log(`   Rev     : ${logEntry.$.revision}`);
-                            // logger.log(`   Path    : ${pathObj._}`);
-                            // logger.log(`   Date    : ${logEntry.date[0]}`);
+                            // logger.info("Found version tag:");
+                            // logger.info(`   Tag     : ${match[1]}`);
+                            // logger.info(`   Rev     : ${logEntry.$.revision}`);
+                            // logger.info(`   Path    : ${pathObj._}`);
+                            // logger.info(`   Date    : ${logEntry.date[0]}`);
                             tags.push(match[1]);
                         }
                     }
                 }
             });
-            logger.log("Found " + tags.length + " version tags");
+            logger.info("Found " + tags.length + " version tags");
             return tags;
         }
         catch (e) {
@@ -390,7 +390,7 @@ export async function verifyAuth({ options, logger }, execaOpts: any)
             catch (error) {
                 if (!(await isBranchUpToDate(options.branch, context, options)))
                 {
-                    logger.log(
+                    logger.info(
                         `The local branch ${
                         options.branch
                         } is behind the remote one, can't publish a new version.`
@@ -407,7 +407,7 @@ export async function verifyAuth({ options, logger }, execaOpts: any)
             }
             catch (error) {
                 if (!error.toString().includes("E195020")) { // Cannot merge into mixed-revision working copy
-                    logger.log(
+                    logger.info(
                         `The remote branch ${
                         options.branch
                         } is behind the local one, won't publish a new version.`
@@ -420,7 +420,7 @@ export async function verifyAuth({ options, logger }, execaOpts: any)
             throw new Error("Invalid repository type");
         }
 
-        logger.log(`Allowed to push to the ${options.repoType} repository`);
+        logger.info(`Allowed to push to the ${options.repoType} repository`);
     }
     catch (error)
     {
@@ -458,7 +458,7 @@ export async function tag({options, logger, nextRelease}, execaOpts: any)
             tagLocation = `${nextRelease.vcTagPrefix}-${nextRelease.tag}`;
             tagMessage = `chore(release): tag ${nextRelease.vcTagPrefix} version ${nextRelease.version} [skip ci]`;
         }
-        logger.log(`Tagging Git version at ${tagLocation}`);
+        logger.info(`Tagging Git version at ${tagLocation}`);
         if (options.githubRelease !== "Y") {
             if (!options.dryRun) {
                 await execa("git", ["tag", "-a", tagLocation, "-m", tagMessage], execaOpts);
@@ -470,7 +470,7 @@ export async function tag({options, logger, nextRelease}, execaOpts: any)
         else { //
               // Making a github release even if 'unpublished' tags the repo.  Re-tag
              //
-            logger.log("Re-tagging after release");
+            logger.info("Re-tagging after release");
             if (!options.dryRun) {
                 const proc = await execa("git", [ "push", "origin", ":refs/tags/" + tagLocation ], execaOpts);
                 if (proc.code === 0) {
@@ -497,7 +497,7 @@ export async function tag({options, logger, nextRelease}, execaOpts: any)
             tagLocation = `${tagLocation}/${nextRelease.vcTagPrefix}-${nextRelease.tag}`;
             tagMessage = `chore(release): tag ${nextRelease.vcTagPrefix} version ${nextRelease.version} [skip ci]`;
         }
-        logger.log(`Tagging SVN version at ${tagLocation}`);
+        logger.info(`Tagging SVN version at ${tagLocation}`);
         await execSvn(["copy", options.repo, tagLocation, "-m", tagMessage], execaOpts);
     }
     else {

@@ -126,6 +126,7 @@ async function run(context: any, plugins: any): Promise<boolean>
     if (!options.taskModeStdOut)
     {
         const mode = options.isNodeJsEnv ? "Node.js" : "bin mode";
+        console.log(" ");
         logger.log(`Running ${pkg.name} version ${pkg.version} in ${mode}`);
     }
 

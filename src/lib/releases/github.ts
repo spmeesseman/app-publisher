@@ -90,9 +90,9 @@ async function doGithubRelease({ options, logger, lastRelease, nextRelease, env 
             githubReleaseId = response.body.id;
 
             logger.success(`Successfully created GitHub release v${lastRelease.version}`);
-            logger.info(`   ID         : ${response.body.id}`);
-            logger.info(`   Tarball URL: ${response.body.zipball_url}`);
-            logger.info(`   Zipball URL: ${response.body.tarball_url}`);
+            logger.log(`   ID         : ${response.body.id}`);
+            logger.log(`   Tarball URL: ${response.body.zipball_url}`);
+            logger.log(`   Zipball URL: ${response.body.tarball_url}`);
             //
             // Creating the release was successful, upload assets if any were specified
             //
@@ -142,23 +142,20 @@ async function doGithubRelease({ options, logger, lastRelease, nextRelease, env 
                             //
                             if (response2 && response2.body.id) {
                                 logger.success("Successfully uploaded GitHub asset " + assetName);
-                                logger.info(`   ID          : ${response2.body.id}`);
-                                logger.info(`   Download URL: ${response2.body.browser_download_url}`);
+                                logger.log(`   ID          : ${response2.body.id}`);
+                                logger.log(`   Download URL: ${response2.body.browser_download_url}`);
                             }
                             else {
-                                rc.error = `Failed to upload GitHub asset ${assetName}`;
-                                logger.error(rc.error);
+                                logger.warn(`Failed to upload GitHub asset ${assetName}`);
                             }
                         }
                         else {
-                            rc.error = `Failed to upload GitHub asset ${assetName} - could not read input file`;
-                            logger.error(rc.error);
+                            logger.warn(`Failed to upload GitHub asset ${assetName} - could not read input file`);
                         }
                     }
                     else {
                         const assetName = path.basename(asset);
-                        rc.error = `Failed to upload GitHub asset ${assetName} - input file does not exist`;
-                        logger.error(rc.error);
+                        logger.warn(`Failed to upload GitHub asset ${assetName} - input file does not exist`);
                     }
                 }
             }

@@ -110,7 +110,7 @@ async function doMantisRelease({ options, logger, nextRelease })
                         request.assets.push(assetData);
                     }
                     else {
-                        logger.log(`Partially failed to build MantisBT asset ${assetName} - could not read input file`);
+                        logger.warn(`Partially failed to build MantisBT asset ${assetName} - could not read input file`);
                     }
                 }
                 else {
@@ -168,9 +168,9 @@ async function doMantisRelease({ options, logger, nextRelease })
                 }
                 else {
                     logger.success(`MantisBT release v${nextRelease.version} success`);
-                    logger.info(`   ID         : ${response.body.id}`);
-                    logger.info(`   Message    : ${response.body.msg}`);
-                    logger.info(`   URL        : ${options.mantisbtUrl[i]}`);
+                    logger.log(`   ID         : ${response.body.id}`);
+                    logger.log(`   Message    : ${response.body.msg}`);
+                    logger.log(`   URL        : ${options.mantisbtUrl[i]}`);
                 }
             }
             else {

@@ -172,7 +172,9 @@ export async function createReleaseChangelog({ options, logger }, version: strin
 
 /**
  * Creates a changelog entry for the history/changelog file using the commits list
- * @param param0 context
+ * @since 2.8.0
+ *
+ * @param context context
  */
 export function createSectionFromCommits({ options, commits, logger })
 {
@@ -182,6 +184,8 @@ export function createSectionFromCommits({ options, commits, logger })
     if (!commits || commits.length === 0) {
         return comments;
     }
+
+    logger.log(`Building changelog section from ${commits.length} commits`);
 
     //
     // Parse the commit messages
@@ -293,7 +297,7 @@ export function createSectionFromCommits({ options, commits, logger })
             //
             let newText,
                 match: RegExpExecArray;
-            let regex = new RegExp(/[^ ][(][a-z0-9\- ]*[)]\s*[:][ ]{0,}/m);
+            let regex = new RegExp(/[^ ][(][a-z0-9\- ]*[)]\s*[:][ ]{0,}/gm);
             while ((match = regex.exec(msg)) !== null) // subject - all lower case, or numbers
             {
                 newText = match[0].replace("(", "");
@@ -306,7 +310,7 @@ export function createSectionFromCommits({ options, commits, logger })
                 msg = msg.replace(match[0], `:  ${newText}${EOL}${EOL}`);
             }
 
-            regex = new RegExp(/[^ ][(][a-z\- _.A-Z]*[)]\s*[:][ ]{0,}/m);
+            regex = new RegExp(/[^ ][(][a-z\- _.A-Z]*[)]\s*[:][ ]{0,}/gm);
             while ((match = regex.exec(msg)) !== null) // scope - all thats left (all caps or user formatted)
             {
                 newText = match[0].replace("(", "");
@@ -321,7 +325,7 @@ export function createSectionFromCommits({ options, commits, logger })
             // Take ticket// tags and put them on separate line at bottom of message, skip tags already on
             // their own line
             //
-            regex = new RegExp(/[ ]{0,1}\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/i);
+            regex = new RegExp(/[ ]{0,1}\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/gmi);
             while ((match = regex.exec(msg)) !== null)
             {
                 newText = match[0].toLowerCase();
@@ -367,7 +371,7 @@ export function createSectionFromCommits({ options, commits, logger })
             // Typically when writing the commit messages all lowercase is used.  Capitalize the first
             // letter following the commit message tag
             //
-            while ((match = /[\r\n]{2}\s*[a-z]/m.exec(msg)) !== null) {
+            while ((match = /[\r\n]{2}\s*[a-z]/gm.exec(msg)) !== null) {
                 if (match[0].includes(`${EOL}${EOL}`)) { // ps regex is buggy on [\r\n]{2}
                     msg = msg.replace(match[0], match[0].toUpperCase());
                 }
@@ -573,6 +577,7 @@ export function createSectionFromCommits({ options, commits, logger })
     //
     // comments = CheckSpelling comments false
 
+    logger.log("Successfully created changelog section");
     return comments;
 }
 
@@ -764,9 +769,9 @@ export async function getChangelog({ options, logger }, version: string, numsect
         const typeParts = [];
         const msgParts = [];
 
-        contents = contents.replace(EOL, "<br>");
-        contents = contents.replace("\n", "<br>");
-        contents = contents.replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;");
+        contents = contents.replace(new RegExp(EOL, "gm"), "<br>");
+        contents = contents.replace(/\n/gm, "<br>");
+        contents = contents.replace(/\t/gm, "&nbsp;&nbsp;&nbsp;&nbsp;");
 
         typeParts.push(...getChangelogTypes(contents));
         if (typeParts.length === 0) {
@@ -774,7 +779,7 @@ export async function getChangelog({ options, logger }, version: string, numsect
         }
 
         let match: RegExpExecArray;
-        let regex = new RegExp(/\w*(?<=^|>)(- ){1}.+?(?=(<br>-|<br>##|$))/m);
+        let regex = new RegExp(/\w*(?<=^|>)(- ){1}.+?(?=(<br>-|<br>##|$))/g);
         while ((match = regex.exec(contents)) !== null)
         {
             let value = match[0].substring(2);
@@ -806,7 +811,7 @@ export async function getChangelog({ options, logger }, version: string, numsect
                 scope = msgParts[i].substring(0, msgParts[i].indexOf(":")).replace("**", "").trim();
                 message = msgParts[i].substring(msgParts[i].indexOf(":") + 1).replace("**", "").trim();
             }
-            regex = new RegExp(/\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/mi);
+            regex = new RegExp(/\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/gi);
             while ((match = regex.exec(msgParts[i])) !== null)
             {
                 tickets = match[0];
@@ -1122,12 +1127,12 @@ export async function getHistory({ options, logger }, version: string, numsectio
                 //
                 // Non-subject entries (no <b></b> wrap)
                 //
-                regex = new RegExp(/\w*(?<!<b>)(\b[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>[1-9]|$|<br><b>))/m);
+                regex = new RegExp(/\w*(?<!<b>)(\b[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>[1-9]|$|<br><b>))/g);
                 while ((match = regex.exec(contents)) !== null) {
                     typeParts.push("");
                 }
 
-                regex = new RegExp(/\w*(?<!<b>)(\b[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>[1-9]|$|<br><b>))/m);
+                regex = new RegExp(/\w*(?<!<b>)(\b[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>[1-9]|$|<br><b>))/g);
                 while ((match = regex.exec(contents)) !== null)
                 {
                     let value = match[0].replace("&nbsp;", "").replace(".", "").replace("<b>", "").replace("</b>", "");
@@ -1169,7 +1174,7 @@ export async function getHistory({ options, logger }, version: string, numsectio
                         }
                     }
 
-                    regex = new RegExp(/\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/mi);
+                    regex = new RegExp(/\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/gi);
                     while ((match = regex.exec(msgParts[i])) !== null) {
                         tickets = match[0];
                         tickets = match[0].replace("[", "").replace("]", "").trim();
@@ -1575,7 +1580,7 @@ export async function doHistoryFileEdit({ options, commits, logger, lastRelease,
     //
     if (lastRelease.version !== nextRelease.version || isNewHistoryFile || options.taskMode)
     {
-        const tmpCommits = createSectionFromCommits({ options, commits, logger});
+        const tmpCommits = nextRelease.notes || createSectionFromCommits({ options, commits, logger});
 
         logger.log("Preparing history file");
 
