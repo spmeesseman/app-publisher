@@ -174,19 +174,24 @@ export async function runScripts({options, logger, cwd, env}, scriptType: string
                 script = script.trim();
                 if (script)
                 {
-                    let proc: any;
+                    let proc: any,
+                        procPromise: any;
                     const scriptParts = script.split(" ").filter(a => a !== "");
                     if (scriptParts.length > 1)
                     {
                         const scriptPrg = scriptParts[0];
                         scriptParts.splice(0, 1);
                         logger.log(`   Run script: ${scriptParts.join(" ")}`);
-                        proc = await execa(scriptPrg, scriptParts, {cwd, env});
+                        procPromise = execa(scriptPrg, scriptParts, {cwd, env});
+                        procPromise.stdout.pipe(process.stdout);
+                        proc = await procPromise;
                     }
                     else if (scriptParts.length === 1)
                     {
                         logger.log(`   Run script: ${scriptParts[0]}`);
-                        proc = await execa(scriptParts[0], [], {cwd, env});
+                        procPromise = await execa(scriptParts[0], [], {cwd, env});
+                        procPromise.stdout.pipe(process.stdout);
+                        proc = await procPromise;
                     }
                     else {
                         logger.warn("Invalid script not processed");
