@@ -593,33 +593,43 @@ export async function repoUrl({options, logger}, execaOpts: any)
  */
 export async function revert({options, nextRelease, logger}, execaOpts: any)
 {
-    const changeListAdd = nextRelease.edits.filter((e: any) => e.type === "A").join(" "),
-          changeListModify = nextRelease.edits.filter((e: any) => e.type === "M").join(" ");
+    const changeListAdd = nextRelease.edits.filter((e: any) => e.type === "A"),
+          changeListModify = nextRelease.edits.filter((e: any) => e.type === "M");
+
+    // const changeListAdd: string = edits.filter((e: any) => e.type === "A").map((e: any) => e.path).join(" ").trim(),
+    //       changeListModify: string = edits.filter((e: any) => e.type === "M").map((e: any) => e.path).join(" ").trim();
 
     logger.info("Revert changes");
     logger.info(`   Total Edits   : ${nextRelease.edits.length}`);
-    logger.info(`   Additions     : ${changeListAdd.split(" ").length}`);
-    logger.info(`   Modifications : ${changeListModify.split(" ").length}`);
+    logger.info(`   Additions     : ${changeListAdd.length}`);
+    logger.info(`   Modifications : ${changeListModify.length}`);
 
-    for (const file of changeListAdd) {
+    //
+    // Additions - delete/remove
+    //
+    for (const changeEntry of changeListAdd) {
         try {
-            logger.info(`Removing added file '${file}'`);
-            await deleteFile(file);
+            logger.info(`Removing added file '${changeEntry.path}'`);
+            await deleteFile(changeEntry.path);
         }
         catch (e) {
-            logger.warn(`Could not remove file '${file}'`);
+            logger.warn(`Could not remove file '${changeEntry.path}'`);
         }
     }
 
+    //
+    // Modifications - vc revert
+    //
     try {
+        const chgListStr = changeListModify.map((e: any) => e.path).join(" ");
         logger.info("Reverting all modifications:");
-        logger.info("   " + changeListModify);
+        logger.info("   " + chgListStr);
         if (options.repoType === "git") {
-            await execa("git", [ "stash", "push", "--", changeListModify ], execaOpts);
+            await execa("git", [ "stash", "push", "--", chgListStr ], execaOpts);
             await execa("git", [ "stash", "drop" ], execaOpts);
         }
         else if (options.repoType === "svn") {
-            await execSvn([ "revert", "-R", changeListModify ], execaOpts);
+            await execSvn([ "revert", "-R", chgListStr ], execaOpts);
         }
         else {
             throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
