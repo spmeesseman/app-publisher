@@ -59,9 +59,9 @@ export async function getPomVersion({logger}): Promise<{ version: string, versio
 
 export async function setPomVersion({nextRelease, options})
 {
-    if (nextRelease.versionInfo.length === 2 && await pathExists("pom.xml"))
+    if (nextRelease.versionInfo.versionInfo.length === 2 && await pathExists("pom.xml"))
     {
-        const mavenTag = nextRelease.versionInfo;
+        const mavenTag = nextRelease.versionInfo.versionInfo;
         await replaceInFile("pom.xml", `<${mavenTag}>[0-9a-z.\-]+</${mavenTag}>`, `<${mavenTag}>${nextRelease.version}</${mavenTag}`);
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list

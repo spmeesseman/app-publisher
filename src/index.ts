@@ -377,41 +377,32 @@ async function runNodeScript(context: any, plugins: any)
     // Next version
     //
     const versionInfo = getNextVersion(context);
-    if (options.versionForceNext) {
+    if (options.versionForceNext)
+    {
         logger.log("Forcing next version to " + options.versionForceNext);
         nextRelease.version = options.versionForceNext;
     }
-    else if (!versionInfo.versionInfo) {
-        nextRelease.version = versionInfo.version;
-    }
     else {
         nextRelease.version = versionInfo.version;
-        //
-        // TODO - process versionInfo (maven builds)
-        //
-    }
-
-    //
-    // Version prompt
-    //
-    if (options.promptVersion === "Y" && !options.versionForceNext)
-    {
-        const schema = {
-            properties: {
-                version: {
-                    description: "Enter version number (empty for default)",
-                    pattern: /^[a-z1-9\.\-]+$/,
-                    default: nextRelease.version,
-                    message: "Version must be only contain 0-9 and '.', or for a pre-release version this includes lower case letters and dashes",
-                    required: false
+        if (options.promptVersion === "Y")
+        {
+            const schema = {
+                properties: {
+                    version: {
+                        description: "Enter version number (empty for default)",
+                        pattern: /^(?:[0-9]+\.[0-9]+\.[0-9]+(?:[\-]{0,1}[a-z]+\.[0-9]+){0,1})$|^[0-9]+$/,
+                        default: nextRelease.version,
+                        message: "Version must contain 0-9 and '.', small chars and '-' for pre-release",
+                        required: false
+                    }
                 }
+            };
+            const prompt = require("prompt");
+            prompt.start();
+            const { version } = await prompt.get(schema);
+            if (version) {
+                nextRelease.version = version;
             }
-        };
-        const prompt = require("prompt");
-        prompt.start();
-        const { version } = await prompt.get(schema);
-        if (version) {
-            nextRelease.version = version;
         }
     }
 

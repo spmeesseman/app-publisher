@@ -27,5 +27,12 @@ function getNextVersion({nextRelease: {level}, lastRelease, logger})
         logger.log(`There is no previous release, the next version is ${version}`);
     }
 
-    return { version, versionInfo: undefined };
+    const lrVersionInfo = lastRelease.versionInfo.versionInfo;
+
+    return { version, versionInfo: {
+                    version,
+                    versionInfo: lrVersionInfo ? [ ...lrVersionInfo ] : undefined,
+                    versionSystem: lastRelease.versionInfo.versionSystem
+                }
+            };
 }
