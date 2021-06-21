@@ -154,7 +154,9 @@ export async function runScripts({options, logger, cwd, env}, scriptType: string
     }
 
     logger.log(`Running custom '${scriptType}' script(s)`);
-    logger.log(`   # of scipts: ${scripts.length}`);
+    if (scripts) {
+        logger.log(`   # of scipts: ${scripts.length}`);
+    }
 
     if (scripts && scripts.length > 0) // && !$script:BuildCmdsRun.Contains($ScriptType))
     {
@@ -174,10 +176,16 @@ export async function runScripts({options, logger, cwd, env}, scriptType: string
                 {
                     let proc: any;
                     const scriptParts = script.split(" ").filter(a => a !== "");
-                    if (scriptParts.length > 1) {
-                        proc = await execa(scriptParts[0], scriptParts.splice(0, 1), {cwd, env});
+                    if (scriptParts.length > 1)
+                    {
+                        const scriptPrg = scriptParts[0];
+                        scriptParts.splice(0, 1);
+                        logger.log(`   Run script: ${scriptParts.join(" ")}`);
+                        proc = await execa(scriptPrg, scriptParts, {cwd, env});
                     }
-                    else if (scriptParts.length === 1) {
+                    else if (scriptParts.length === 1)
+                    {
+                        logger.log(`   Run script: ${scriptParts[0]}`);
                         proc = await execa(scriptParts[0], [], {cwd, env});
                     }
                     else {
@@ -186,7 +194,7 @@ export async function runScripts({options, logger, cwd, env}, scriptType: string
                     checkExitCode(proc.code, logger, throwOnError);
                 }
                 else {
-                    logger.warn("Invalid script not processed");
+                    logger.warn("Empty scripts arg not processed");
                 }
             }
         }
