@@ -571,22 +571,25 @@ async function runNodeScript(context: any, plugins: any)
     {   //
         // Pre-github release (.publishrc)
         //
-        await util.runScripts({ options, logger, cwd, env }, "preGithubRelease", options.githubReleasePreCommand);
+        if (!options.taskMode) {
+            await util.runScripts({ options, logger, cwd, env }, "preGithubRelease", options.githubReleasePreCommand);
+        }
         //
         // Perform Github release
         //
-        await doGithubRelease(context);
+        const ghRc = await doGithubRelease(context);
         //
         // Post-github release (.publishrc)
         //
-        await util.runScripts({ options, logger, cwd, env }, "postGithubRelease", options.githubReleasePostCommand);
+        if (!options.taskMode) {
+            await util.runScripts({ options, logger, cwd, env }, "postGithubRelease", options.githubReleasePostCommand);
+        }
         //
         // If this is task mode, we're done
         //
-        if (options.taskGithubRelease)
-        {
+        else {
             await publishGithubRelease({options, nextRelease, logger});
-            logTaskResult(true, logger);
+            logTaskResult(ghRc.error || true, logger);
             if (!hasMoreTasks(options, getTasks5())) {
                 return true;
             }
@@ -601,21 +604,24 @@ async function runNodeScript(context: any, plugins: any)
     {   //
         // Pre-mantis release (.publishrc)
         //
-        await util.runScripts({ options, logger, cwd, env }, "preMantisRelease", options.mantisbtReleasePreCommand);
+        if (!options.taskMode) {
+            await util.runScripts({ options, logger, cwd, env }, "preMantisRelease", options.mantisbtReleasePreCommand);
+        }
         //
         // Perform MantisBT release
         //
-        await doMantisbtRelease(context);
+        const mantisRc = await doMantisbtRelease(context);
         //
         // Post-mantis release scripts (.publishrc)
         //
-        await util.runScripts({ options, logger, cwd, env }, "postMantisRelease", options.mantisbtReleasePostCommand);
+        if (!options.taskMode) {
+            await util.runScripts({ options, logger, cwd, env }, "postMantisRelease", options.mantisbtReleasePostCommand);
+        }
         //
         // If this is task mode, we're done
         //
-        if (options.taskMantisbtRelease)
-        {
-            logTaskResult(true, logger);
+        else {
+            logTaskResult(mantisRc.error || true, logger);
             if (!hasMoreTasks(options, getTasks5())) {
                 return true;
             }

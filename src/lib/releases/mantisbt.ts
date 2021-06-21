@@ -1,6 +1,6 @@
 
 import * as path from "path";
-import { timeout } from "../utils/utils";
+import { btoa } from "../utils/utils";
 import { pathExists, writeFile, readFile } from "../utils/fs";
 import { createReleaseChangelog } from "../changelog-file";
 import { contentTypeMap } from "./content-type-map";
@@ -11,10 +11,15 @@ const got = require("got");
 export = doMantisRelease;
 
 
-async function doMantisRelease({ options, commits, logger, lastRelease, nextRelease, env })
+async function doMantisRelease({ options, logger, nextRelease })
 {
     logger.log("Starting MantisBT release");
     logger.log(`Creating MantisBT v${nextRelease.version} release`);
+
+    let rc = {
+        success: true,
+        error: undefined
+    };
 
     let dryRun = 0;
     if (options.dryRun)
@@ -72,10 +77,10 @@ async function doMantisRelease({ options, commits, logger, lastRelease, nextRele
                 let asset = mbtAsset;
                 let assetDescrip = "";
 
-                if (mbtAsset.Contains("|"))
+                if (mbtAsset.includes("|"))
                 {
-                    asset = mbtAsset.Split("|")[0];
-                    assetDescrip = mbtAsset.Split("|")[1];
+                    asset = mbtAsset.split("|")[0];
+                    assetDescrip = mbtAsset.split("|")[1];
                 }
 
                 const assetName = path.basename(asset);
@@ -89,7 +94,7 @@ async function doMantisRelease({ options, commits, logger, lastRelease, nextRele
                     logger.log("Reading file asset");
                     const fileData = await readFile(asset);
                     if (fileData && fileData.length > 0)
-                    {
+                    {   //
                         // Base 64 encode file data
                         //
                         const fileData64 = btoa(fileData);
@@ -102,7 +107,6 @@ async function doMantisRelease({ options, commits, logger, lastRelease, nextRele
                             type: contentTypeMap[extension],
                             data: fileData64,
                         };
-
                         request.assets.push(assetData);
                     }
                     else {
@@ -129,7 +133,7 @@ async function doMantisRelease({ options, commits, logger, lastRelease, nextRele
             //
             // Encode url part
             //
-            const encPrjName = options.mantisbtProject.replace(/ /g, "%20");
+            const encPrjName = (options.mantisbtProject || options.projectName).replace(/ /g, "%20");
             //
             // Send the REST POST to create the release w/ assets
             //
@@ -138,12 +142,20 @@ async function doMantisRelease({ options, commits, logger, lastRelease, nextRele
             //
             // Send it off
             //
-            const response = await got(url, {
-                json: request,
-                method: "POST",
-                responseType: "json",
-                headers
-            });
+            let response: any;
+            try {
+                response = await got(url, {
+                    json: request,
+                    method: "POST",
+                    responseType: "json",
+                    headers
+                });
+            }
+            catch (e) {
+                rc = { success: false, error: `MantisBT release v${nextRelease.version} failure - ${e.toString()}` };
+                logger.error(rc.error);
+                return rc;
+            }
             //
             // Check response object for success
             //
@@ -155,18 +167,22 @@ async function doMantisRelease({ options, commits, logger, lastRelease, nextRele
                     logger.error(response);
                 }
                 else {
-                    logger.success(`Successfully created MantisBT release v${nextRelease.version}`);
-                    logger.success(`   ID         : ${response.body.id}`);
-                    logger.success(`   Message    : ${response.body.msg}`);
-                    logger.success(`   URL        : ${options.mantisbtUrl[i]}`);
+                    logger.success(`MantisBT release v${nextRelease.version} success`);
+                    logger.info(`   ID         : ${response.body.id}`);
+                    logger.info(`   Message    : ${response.body.msg}`);
+                    logger.info(`   URL        : ${options.mantisbtUrl[i]}`);
                 }
             }
             else {
-                logger.error("Failed to create MantisBT vnextRelease.version release");
+                rc = { success: false, error: `MantisBT release v${nextRelease.version} failure - no response` };
+                logger.error(rc.error);
             }
         }
     }
     else {
-        logger.error("Failed to create MantisBT vnextRelease.version release");
+        rc = { success: false, error: `MantisBT release v${nextRelease.version} failure - no changelog` };
+        logger.error(rc.error);
     }
+
+    return rc;
 }

@@ -26,8 +26,7 @@ function containsValidSubject(options, line: string): boolean
     {
         Object.entries(options.commitMsgMap).forEach((keys) =>
         {
-            const property = keys[0],
-                    value: any = keys[1];
+            const value: any = keys[1];
             if (line.includes(value.formatText))
             {
                 valid = true;
@@ -294,7 +293,8 @@ export function createSectionFromCommits({ options, commits, logger })
             //
             let newText,
                 match: RegExpExecArray;
-            while ((match = /[^ ][(][a-z0-9\- ]*[)]\s*[:][ ]{0,}/m.exec(msg)) !== null) // subject - all lower case, or numbers
+            let regex = new RegExp(/[^ ][(][a-z0-9\- ]*[)]\s*[:][ ]{0,}/m);
+            while ((match = regex.exec(msg)) !== null) // subject - all lower case, or numbers
             {
                 newText = match[0].replace("(", "");
                 newText = newText.replace(")", "");
@@ -306,7 +306,8 @@ export function createSectionFromCommits({ options, commits, logger })
                 msg = msg.replace(match[0], `:  ${newText}${EOL}${EOL}`);
             }
 
-            while ((match = /[^ ][(][a-z\- _.A-Z]*[)]\s*[:][ ]{0,}/m.exec(msg)) !== null) // scope - all thats left (all caps or user formatted)
+            regex = new RegExp(/[^ ][(][a-z\- _.A-Z]*[)]\s*[:][ ]{0,}/m);
+            while ((match = regex.exec(msg)) !== null) // scope - all thats left (all caps or user formatted)
             {
                 newText = match[0].replace("(", "");
                 newText = newText.replace(")", "");
@@ -320,7 +321,8 @@ export function createSectionFromCommits({ options, commits, logger })
             // Take ticket// tags and put them on separate line at bottom of message, skip tags already on
             // their own line
             //
-            while ((match = /[ ]{0,1}\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/i.exec(msg)) !== null)
+            regex = new RegExp(/[ ]{0,1}\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/i);
+            while ((match = regex.exec(msg)) !== null)
             {
                 newText = match[0].toLowerCase();
                 if (newText.includes("fixed ")) {
@@ -666,7 +668,8 @@ function getChangelogTypes(changeLog: string)
         // count the messages for each section and add the subjects to the types array
         //
         let match2: RegExpExecArray;
-        while ((match2 = /\w*(?<=section).+?(?=(<br>###|$))/m.exec(changeLog)) !== null)
+        const regex = new RegExp(/\w*(?<=section).+?(?=(<br>###|$))/m);
+        while ((match2 = regex.exec(changeLog)) !== null)
         {
             let i1 = match2[0].indexOf("<br>- ");
             while (i1 !== -1) {
@@ -771,7 +774,8 @@ export async function getChangelog({ options, logger }, version: string, numsect
         }
 
         let match: RegExpExecArray;
-        while ((match = /\w*(?<=^|>)(- ){1}.+?(?=(<br>-|<br>##|$))/m.exec(contents)) !== null)
+        let regex = new RegExp(/\w*(?<=^|>)(- ){1}.+?(?=(<br>-|<br>##|$))/m);
+        while ((match = regex.exec(contents)) !== null)
         {
             let value = match[0].substring(2);
             value = value.replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;[", "<br>["); // ticket tags
@@ -802,7 +806,8 @@ export async function getChangelog({ options, logger }, version: string, numsect
                 scope = msgParts[i].substring(0, msgParts[i].indexOf(":")).replace("**", "").trim();
                 message = msgParts[i].substring(msgParts[i].indexOf(":") + 1).replace("**", "").trim();
             }
-            while ((match = /\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/mi.exec(msgParts[i])) !== null)
+            regex = new RegExp(/\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/mi);
+            while ((match = regex.exec(msgParts[i])) !== null)
             {
                 tickets = match[0];
                 tickets = match[0].replace("[", "").replace("]", "").trim();
@@ -1043,37 +1048,47 @@ export async function getHistory({ options, logger }, version: string, numsectio
                 contents = contents.substring(0, contents.length - 4);
             }
 
-            let match: RegExpExecArray;
-            while ((match = /[a-zA-z0-9_\/|\"'][,.:]*(&nbsp;){0,1}<br>(&nbsp;){4}[a-zA-z0-9_\/|\"']/m.exec(contents)) !== null)
+            let tContents = contents,
+                match: RegExpExecArray,
+                regex = new RegExp(/[a-zA-z0-9_\/|\"'][,.:]*(&nbsp;){0,1}<br>(&nbsp;){4}[a-zA-z0-9_\/|\"']/g);
+            while ((match = regex.exec(contents)) !== null)
             {
-                contents = contents.replace(match[0], match[0].replace("<br>&nbsp;&nbsp;&nbsp;", "")); // leave a space
+                tContents = tContents.replace(match[0], match[0].replace("<br>&nbsp;&nbsp;&nbsp;", "")); // leave a space
             }
+            contents = tContents;
 
             // break up &nbsp;s
-            while ((match = /(&nbsp;)(\w|'|\")/m.exec(contents)) !== null)
+            tContents = contents;
+            regex = new RegExp(/(&nbsp;)(\w|'|\")/g);
+            while ((match = regex.exec(contents)) !== null)
             {
-                contents = contents.replace(match[0], match[0].replace("&nbsp;", " "));
+                tContents = tContents.replace(match[0], match[0].replace("&nbsp;", " "));
             }
+            contents = tContents;
 
             // Bold all numbered lines with a subject
-            while ((match = /\w*(?<=^|>)[1-9][0-9]{0,1}(&nbsp;| ){0,1}\.(&nbsp;| ).+?(?=<br>)/m.exec(contents)) !== null) {
+            tContents = contents;
+            regex = new RegExp(/\w*(?<=^|>)[1-9][0-9]{0,1}(&nbsp;| ){0,1}\.(&nbsp;| ).+?(?=<br>)/g);
+            while ((match = regex.exec(contents)) !== null) {
                 const value = match[0];
                 if (containsValidSubject(options, value)) {
-                    contents = contents.replace(value, "<b>value</b>");
+                    tContents = tContents.replace(value, `<b>${value}</b>`);
                 }
             }
+            contents = tContents;
 
             if (listOnly === "parts")
             {
-                logger.log("   Extracting parts");
-
                 const typeParts = [];
                 const msgParts = [];
+
+                logger.log("   Extracting parts");
 
                 //
                 // Process entries with a subject (sorrounded by <b></b>)
                 //
-                while ((match = /<b>\w*(?<=^|>)[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>|<\/font>)/m.exec(contents)) !== null)
+                regex = new RegExp(/<b>\w*(?<=^|>)[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>|<\/font>)/g);
+                while ((match = regex.exec(contents)) !== null)
                 {
                     let value = match[0].replace("&nbsp;", "").replace(".", "").replace("<b>", "").replace("</b>", "");
                     for (let i = 0; i < 10; i++) {
@@ -1082,14 +1097,15 @@ export async function getHistory({ options, logger }, version: string, numsectio
                     typeParts.push(value);
                 }
 
-                contents = contents.replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;<br>", "<br><br>");
-                contents = contents.replace("<br>&nbsp;&nbsp;&nbsp;<br>", "<br><br>");
+                contents = contents.replace(/<br>&nbsp;&nbsp;&nbsp;&nbsp;<br>/g, "<br><br>");
+                contents = contents.replace(/<br>&nbsp;&nbsp;&nbsp;<br>/g, "<br><br>");
 
-                while ((match = /(<\/b>){1}(<br>){0,1}(<br>){1}(&nbsp;){2,}[ ]{1}.+?(?=<br>(&nbsp;| ){0,}<br>(<b>|[1-9][0-9]{0,1}\.(&nbsp;| ))|$)/m.exec(contents)) !== null)
+                regex = new RegExp(/(<\/b>){1}(<br>){0,1}(<br>){1}(&nbsp;){2,}[ ]{1}.+?(?=<br>(&nbsp;| ){0,}<br>(<b>|[1-9][0-9]{0,1}\.(&nbsp;| ))|$)/g);
+                while ((match = regex.exec(contents)) !== null)
                 {
-                    let value = match[0].replace("</b>", "");
-                    value = value.replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;[", "<br>["); // ticket tags
-                    value = value.replace("<br>&nbsp;&nbsp;&nbsp; ", "<br>");
+                    let value = match[0].replace(/<\/b>/, "");
+                    value = value.replace(/<br>&nbsp;&nbsp;&nbsp;&nbsp;\[/, "<br>["); // ticket tags
+                    value = value.replace(/<br>&nbsp;&nbsp;&nbsp; /, "<br>");
 
                     if (containsValidSubject(options, value))
                     {
@@ -1100,17 +1116,19 @@ export async function getHistory({ options, logger }, version: string, numsectio
                             value = value.substring(0, value.length - 4);
                         }
                     }
+
                     msgParts.push(value.trim());
                 }
-
                 //
                 // Non-subject entries (no <b></b> wrap)
                 //
-                while ((match = /\w*(?<!<b>)(\b[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>[1-9]|$|<br><b>))/m.exec(contents)) !== null) {
+                regex = new RegExp(/\w*(?<!<b>)(\b[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>[1-9]|$|<br><b>))/m);
+                while ((match = regex.exec(contents)) !== null) {
                     typeParts.push("");
                 }
 
-                while ((match = /\w*(?<!<b>)(\b[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>[1-9]|$|<br><b>))/m.exec(contents)) !== null)
+                regex = new RegExp(/\w*(?<!<b>)(\b[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>[1-9]|$|<br><b>))/m);
+                while ((match = regex.exec(contents)) !== null)
                 {
                     let value = match[0].replace("&nbsp;", "").replace(".", "").replace("<b>", "").replace("</b>", "");
                     for (let i = 0; i < 10; i++) {
@@ -1151,7 +1169,8 @@ export async function getHistory({ options, logger }, version: string, numsectio
                         }
                     }
 
-                    while ((match = /\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/mi.exec(msgParts[i])) !== null) {
+                    regex = new RegExp(/\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/mi);
+                    while ((match = regex.exec(msgParts[i])) !== null) {
                         tickets = match[0];
                         tickets = match[0].replace("[", "").replace("]", "").trim();
                         tickets = properCase(tickets.replace("&nbsp;", " "));

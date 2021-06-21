@@ -6,6 +6,18 @@ const execa = require("execa");
 // const find = require("find-process");
 
 
+export function atob(str: string): string
+{
+    return Buffer.from(str, "base64").toString("binary");
+}
+
+
+export function btoa(str: string): string
+{
+    return Buffer.from(str, "binary").toString("base64");
+}
+
+
 export function extractErrors(err)
 {
     return err && isFunction(err[Symbol.iterator]) ? [...err] : [err];

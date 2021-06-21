@@ -14,7 +14,12 @@ let githubReleaseId;
 
 async function doGithubRelease({ options, logger, lastRelease, nextRelease, env })
 {
-    logger.log("Creating GitHub v$VERSION release");
+    logger.log(`Creating GitHub v${nextRelease.version} release`);
+
+    let rc = {
+        success: true,
+        error: undefined
+    };
 
     const githubChangelog = await createReleaseChangelog({ options, logger }, nextRelease.version);
 
@@ -54,20 +59,29 @@ async function doGithubRelease({ options, logger, lastRelease, nextRelease, env 
         //
         // Send the REST POST to create the release
         //
-        let url = `https://api.github.com/repos/${options.githubUser}/${encPrjName}/releases`;
-        const response = await got(url, {
-            json: {
-                tag_name: nextRelease.tag,
-                target_commitish: options.branch,
-                name: nextRelease.tag,
-                body: githubChangelog,
-                draft: true,
-                prerelease: false,
-                method: "POST"
-            },
-            headers,
-            responseType: "json"
-        });
+        let response: any,
+            url = `https://api.github.com/repos/${options.githubUser}/${encPrjName}/releases`;
+
+        try {
+            response = await got(url, {
+                json: {
+                    tag_name: nextRelease.tag,
+                    target_commitish: options.branch,
+                    name: nextRelease.tag,
+                    body: githubChangelog,
+                    draft: true,
+                    prerelease: false,
+                    method: "POST"
+                },
+                headers,
+                responseType: "json"
+            });
+        }
+        catch (e) {
+            rc = { success: false, error: `GitHub release v${nextRelease.version} failure - ${e.toString()}` };
+            logger.error(rc.error);
+            return rc;
+        }
         //
         // Make sure an upload_url value exists on the response object to check for success
         //
@@ -76,9 +90,9 @@ async function doGithubRelease({ options, logger, lastRelease, nextRelease, env 
             githubReleaseId = response.body.id;
 
             logger.success(`Successfully created GitHub release v${lastRelease.version}`);
-            logger.success(`   ID         : ${response.body.id}`);
-            logger.success(`   Tarball URL: ${response.body.zipball_url}`);
-            logger.success(`   Zipball URL: ${response.body.tarball_url}`);
+            logger.info(`   ID         : ${response.body.id}`);
+            logger.info(`   Tarball URL: ${response.body.zipball_url}`);
+            logger.info(`   Zipball URL: ${response.body.tarball_url}`);
             //
             // Creating the release was successful, upload assets if any were specified
             //
@@ -102,7 +116,6 @@ async function doGithubRelease({ options, logger, lastRelease, nextRelease, env 
                         // The request to upload an asset is the raw binary file data
                         //
                         const request = await readFile(asset);
-                        // $Request = Get-Content -Path $asset -Encoding Byte
                         if (request)
                         {   //
                             // Upload the asset via GitHub API.
@@ -110,39 +123,49 @@ async function doGithubRelease({ options, logger, lastRelease, nextRelease, env 
                             // TODO
                             //
                             // url = $Response.upload_url
-                            url = url.replace("{?name,label}", "") + "?name=assetName";
-                            // Invoke-RestMethod $url -UseBasicParsing -Method POST -Body $Request -Headers $Header
-                            const response2 = await got(url, {
-                                body: request,
-                                responseType: "json",
-                                method: "POST",
-                                headers
-                            });
+                            url = url.replace("{?name,label}", "") + "?name=" + assetName;
+                            let response2: any;
+                            try {
+                                response2 = await got(url, {
+                                    body: request,
+                                    responseType: "json",
+                                    method: "POST",
+                                    headers
+                                });
+                            }
+                            catch (e) {
+                                rc.error = `Failed to upload GitHub asset ${assetName} - ${e.toString()}`;
+                                logger.error(rc.error);
+                            }
                             //
                             // Make sure an id value exists on the response object to check for success
                             //
                             if (response2 && response2.body.id) {
-                                logger.success("Successfully uploaded GitHub asset assetName");
-                                logger.success(`   ID          : ${response2.body.id}`);
-                                logger.success(`   Download URL: ${response2.body.browser_download_url}`);
+                                logger.success("Successfully uploaded GitHub asset " + assetName);
+                                logger.info(`   ID          : ${response2.body.id}`);
+                                logger.info(`   Download URL: ${response2.body.browser_download_url}`);
                             }
                             else {
-                                logger.error("Failed to upload GitHub asset assetName");
+                                rc.error = `Failed to upload GitHub asset ${assetName}`;
+                                logger.error(rc.error);
                             }
                         }
                         else {
-                            logger.error("Failed to upload GitHub asset assetName - could not read input file");
+                            rc.error = `Failed to upload GitHub asset ${assetName} - could not read input file`;
+                            logger.error(rc.error);
                         }
                     }
                     else {
                         const assetName = path.basename(asset);
-                        logger.error(`Failed to upload GitHub asset ${assetName} - input file does not exist`);
+                        rc.error = `Failed to upload GitHub asset ${assetName} - input file does not exist`;
+                        logger.error(rc.error);
                     }
                 }
             }
         }
         else {
-            logger.error("Failed to create GitHub v$VERSION release");
+            rc = { success: false, error: `GitHub release v${nextRelease.version} failure - no response` };
+            logger.error(rc.error);
         }
     }
     else {
@@ -152,9 +175,12 @@ async function doGithubRelease({ options, logger, lastRelease, nextRelease, env 
             logger.log(githubChangelog);
         }
         else {
-            logger.error("Failed to create GitHub v$VERSION release");
+            rc = { success: false, error: `GitHub release v${nextRelease.version} failure - no changelog` };
+            logger.error(rc.error);
         }
     }
+
+    return rc;
 }
 
 
