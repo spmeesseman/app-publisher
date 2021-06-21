@@ -273,19 +273,6 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
     }
 
     //
-    // If pathToMainRoot is set, then PATHPREROOT must be set also, and refer to the same
-    // mirrored location with respect to project/sub-project directories
-    //
-    if (options.pathToMainRoot && !options.pathPreRoot) {
-        logger.error("pathPreRoot must be specified with pathToMainRoot");
-        return false;
-    }
-    if (options.pathPreRoot && !options.pathToMainRoot) {
-        logger.error("pathToMainRoot must be specified with pathPreRoot");
-        return false;
-    }
-
-    //
     // Ensure version control directory exists
     // options.repoType is either git or svn
     //
@@ -294,30 +281,6 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
         logger.error(`The .${options.repoType} directory was not found`);
         logger.error("Set pathToPreRoot, or ensure a branch (i.e. trunk) is the root directory");
         return false;
-    }
-
-    if (options.pathToMainRoot)
-    {   //
-        // Behavior:
-        //
-        //     pathToMainRoot indicates the path to the root project folder with respect to the
-        //     initial working directory.
-        //
-        //     pathPreRoot indicates the path back to the initial working directory with respect
-        //     to the project root.
-        //
-        //     Check to ensire this holds true
-        //
-        const path1 = cwd;
-        process.chdir(path.join(path1, options.pathToMainRoot));
-        const path2 = path.join(cwd, options.pathPreRoot);
-        if (path1 !== path2) {
-            logger.error("Invalid values specified for pathToMainRoot and pathPreRoot");
-            logger.error("    pathToMainRoot indicates the path to the root project folder with respect to the initial working directory");
-            logger.error("    pathPreRoot indicates the path back to the initial working directory with respect to the project root");
-            return false;
-        }
-        process.chdir(path1);
     }
 
     //

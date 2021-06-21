@@ -506,7 +506,9 @@ export const publishRcOpts =
         "be \"..\\..\"",
         "The value should be relative to the script dir, dont use a full path",
         "as this will not share across users well keeping project files in",
-        "different directories"
+        "different directories",
+        "",
+        "Note that this property will be deprecated with the nodejs port in v3.0"
     ],
 
     pathPreRoot: [
@@ -531,7 +533,9 @@ export const publishRcOpts =
         "SVNPREPATH should be set to app\\client, app\\server, or app\\utils, for each",
         "specific sub-project.",
         "This mainly is be used for SVN commands which need to be ran in the directory",
-        "containing the .svn folder."
+        "containing the .svn folder.",
+        "",
+        "Note that this property will be deprecated with the nodejs port in v3.0"
     ],
 
     pathToMainRoot: [
@@ -541,7 +545,9 @@ export const publishRcOpts =
         "This in most cases sould be an empty string if the project is the 'main'",
         "project.  If a sub-project exists within a main project in SVN, then this needs",
         "to be set to the relative directory to the main project root, as seen from the",
-        "sub-project root."
+        "sub-project root.",
+        "",
+        "Note that this property will be deprecated with the nodejs port in v3.0"
     ],
 
     postBuildCommand: [

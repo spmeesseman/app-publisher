@@ -58,9 +58,8 @@ export async function copyDir(src: string, dst: string)
     return new Promise<boolean>(async (resolve, reject) =>
     {
         let files = [];
-
         //
-        // Check if folder needs to be created or integrated
+        // Check if folder needs to be created or merged
         //
         const tgtDir = path.join(path.resolve(dst), path.basename(src));
         if (!fs.existsSync(tgtDir)) {
@@ -71,12 +70,13 @@ export async function copyDir(src: string, dst: string)
                 reject(e);
             }
         }
-
+        //
         // Copy
+        //
         if (fs.lstatSync(src).isDirectory())
         {
             files = fs.readdirSync(src);
-            files.forEach(async (file) =>
+            for (const file of files)
             {
                 const newSrc = path.join(src, file);
                 if (fs.lstatSync(newSrc).isDirectory()) {
@@ -95,7 +95,7 @@ export async function copyDir(src: string, dst: string)
                         reject(e);
                     }
                 }
-            });
+            }
         }
 
         resolve(true);
@@ -198,14 +198,21 @@ export async function readFile(file: string): Promise<string>
 
 export async function deleteFile(file: string): Promise<void>
 {
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<void>(async (resolve, reject) =>
+    {
         try {
-            fs.unlink(path.resolve(file), (e) => {
-                if (e) {
-                    reject(e);
-                }
+            if (await pathExists(file))
+            {
+                fs.unlink(path.resolve(file), (e) => {
+                    if (e) {
+                        reject(e);
+                    }
+                    resolve();
+                });
+            }
+            else {
                 resolve();
-            });
+            }
         }
         catch (e) {
             reject(e);

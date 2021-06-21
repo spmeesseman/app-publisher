@@ -2,6 +2,7 @@
 import * as path from "path";
 import { runScripts } from "../utils/utils";
 import { copyDir, createDir, pathExists, copyFile } from "../utils/fs";
+const copydir = require("copy-dir");
 
 export = doDistRelease;
 
@@ -90,26 +91,37 @@ async function doDistRelease({ options, logger, nextRelease, cwd, env })
                     else if (await pathExists("docs")) {
                         docDirSrc = "docs";
                     }
-                    else if (options.pathToMainRoot)
-                    {
-                        if (await pathExists("$PATHTOMAINROOT\doc")) {
-                            docDirSrc = "$PATHTOMAINROOT\doc";
+                    else {
+                        async function _checkBack(b1, b2, b3)
+                        {
+                            let docDirTmp = path.resolve(path.normalize(b1));
+                            if (!docDirTmp.includes(cwd)) {
+                                return;
+                            }
+                            if (await pathExists(docDirTmp)) {
+                                docDirSrc = docDirTmp;
+                            }
+                            docDirTmp = path.resolve(path.normalize(b2));
+                            if (await pathExists(docDirTmp)) {
+                                docDirSrc = docDirTmp;
+                            }
+                            docDirTmp = path.resolve(path.normalize(b3));
+                            if (await pathExists(docDirTmp)) {
+                                docDirSrc = docDirTmp;
+                            }
                         }
-                        if (await pathExists("$PATHTOMAINROOT\docs")) {
-                            docDirSrc = "$PATHTOMAINROOT\docs";
-                        }
-                        if (await pathExists("$PATHTOMAINROOT\documentation")) {
-                            docDirSrc = "$PATHTOMAINROOT\documentation";
-                        }
+                        await _checkBack(path.join("..", "doc"), path.join("..", "docs"), path.join("..", "documentation"));
+                        await _checkBack(path.join("..", "..", "doc"), path.join("..", "..", "docs"), path.join("..", "..", "documentation"));
                     }
                 }
                 if (docDirSrc)
                 {
                     logger.log("Deploying pdf documentation to targetDocLocation");
-                    await copyFile(path.join(docDirSrc, "*.pdf"), targetDocLocation);
-                    // logger.log("Deploying txt documentation to targetDocLocation"
-                    // Copy-Item "docDirSrc\*.txt" -Destination "targetDocLocation" | Out-Null
-                    // CheckPsCmdSuccess
+                    await copydir(docDirSrc, targetDocLocation, {
+                        filter: (stat: string, filepath: string, filename: string) => {
+                            return stat === "file" && path.extname(filepath).toLowerCase() === ".pdf";
+                        }
+                    });
                 }
                 else {
                     logger.warn("Skipping documentation network push, doc direcory not found");
