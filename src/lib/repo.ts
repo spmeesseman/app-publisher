@@ -656,8 +656,8 @@ export async function tag({options, logger, nextRelease}, execaOpts: any)
         tagLocation = nextRelease.tag;
         if (options.vcTagPrefix && options.vcTagPrefix !== ".")
         {
-            tagLocation = `${nextRelease.vcTagPrefix}-${nextRelease.tag}`;
-            tagMessage = `chore(release): tag ${nextRelease.vcTagPrefix} version ${nextRelease.version} [skip ci]`;
+            tagLocation = `${options.vcTagPrefix}-${nextRelease.tag}`;
+            tagMessage = `chore(release): tag ${options.vcTagPrefix} version ${nextRelease.version} [skip ci]`;
         }
         logger.info(`Tagging Git version at ${tagLocation}`);
         if (options.githubRelease !== "Y") {
@@ -695,24 +695,34 @@ export async function tag({options, logger, nextRelease}, execaOpts: any)
             tagMessage = `chore(release): tag version ${nextRelease.version} [skip ci]`;
         }
         else {
-            tagLocation = `${tagLocation}/${nextRelease.vcTagPrefix}-${nextRelease.tag}`;
-            tagMessage = `chore(release): tag ${nextRelease.vcTagPrefix} version ${nextRelease.version} [skip ci]`;
+            tagLocation = `${tagLocation}/${options.vcTagPrefix}-${nextRelease.tag}`;
+            tagMessage = `chore(release): tag ${options.vcTagPrefix} version ${nextRelease.version} [skip ci]`;
         }
         logger.info(`Tagging SVN version at ${tagLocation}`);
-        await execSvn(["copy", options.repo, tagLocation, "-m", tagMessage], execaOpts);
+        if (!options.dryRun) {
+            await execSvn(["copy", options.repo, tagLocation, "-m", tagMessage], execaOpts);
+        }
+        else {
+            logger.info("   Dry run, tag not performed");
+        }
     }
     else {
-        throw new Error("Invalid repository type");
+        throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
     }
 }
 
 
+/**
+ * @private
+ * @since 3.0.0
+ * @param msg error message
+ * @param logger logger
+ */
 function throwVcsError(msg: string, logger: any)
 {
     logger.error(msg);
     throw new Error(msg);
 }
-
 
 
 /**
@@ -761,7 +771,7 @@ export async function verifyAuth({ options, logger }, execaOpts: any)
             }
         }
         else {
-            throw new Error("Invalid repository type");
+            throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
         }
 
         logger.info(`Allowed to push to the ${options.repoType} repository`);
@@ -795,7 +805,9 @@ export async function verifyTagName(tagName: string, execaOpts: any, repoType = 
             //
             return (await execa("svn", ["check-ref-format", `refs/tags/${tagName}`], execaOpts)).code === 0;
         }
-        throw new Error("Invalid repository type");
+        else {
+            throw new Error("Invalid repository type");
+        }
     }
     catch (error)
     {
