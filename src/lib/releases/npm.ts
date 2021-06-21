@@ -8,7 +8,7 @@ const execa = require("execa");
 export let npmLocation: string;
 
 
-export async function doNpmRelease({ options, logger, nextVersion, cwd, env })
+export async function doNpmRelease({ options, logger, nextRelease, cwd, env })
 {
     logger.log("Starting NPM release");
 
@@ -34,10 +34,10 @@ export async function doNpmRelease({ options, logger, nextVersion, cwd, env })
             const destPackedFile = path.join(options.pathToDist, `${options.projectName}.tgz`);
             timeout(100);
             if (options.npmScope) {
-                tmpPkgFile = `${options.npmScope}-${options.projectName}-${nextVersion.version}.tgz`.substring(1);
+                tmpPkgFile = `${options.npmScope}-${options.projectName}-${nextRelease.version}.tgz`.substring(1);
             }
             else {
-                tmpPkgFile = `${options.projectName}-${nextVersion.version}.tgz`;
+                tmpPkgFile = `${options.projectName}-${nextRelease.version}.tgz`;
             }
             // Move-Item  -Force "*$VERSION.*" $PackedFile
             // CheckPsCmdSuccess
