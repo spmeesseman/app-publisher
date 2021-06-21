@@ -153,12 +153,11 @@ export async function runScripts({options, logger, cwd, env}, scriptType: string
         return;
     }
 
-    if (scripts && scripts.length > 0) // && !$script:BuildCmdsRun.Contains($ScriptType))
-    {   //
-        // Run custom script
-        //
-        logger.log(`Running custom ${scriptType} script(s)`);
+    logger.log(`Running custom '${scriptType}' script(s)`);
+    logger.log(`   # of scipts: ${scripts.length}`);
 
+    if (scripts && scripts.length > 0) // && !$script:BuildCmdsRun.Contains($ScriptType))
+    {
         if (scriptTypesProcessed.includes(scriptType)) {
             logger.warn(`The script type ${scriptType} has already been ran during this run, skipping`);
             return;

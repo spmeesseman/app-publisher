@@ -1,7 +1,9 @@
 
 import * as path from "path";
 import { isString } from "./utils/utils";
-import { deleteFile, pathExists } from "./utils/fs";
+import { deleteFile, pathExists, readFile } from "./utils/fs";
+import { resolve } from "dns";
+import { stderr } from "hook-std";
 const execa = require("execa");
 const debug = require("debug")("app-publisher:git");
 const xml2js = require("xml2js");
@@ -13,17 +15,24 @@ export async function addEdit({options, nextRelease, env, cwd}, pathToAdd: strin
         return;
     }
 
-    function _add(p: string) // , isDir = false)
+    async function _add(p: string) // , isDir = false)
     {
         let editType = "M";
         const pathResolved = path.relative(cwd, path.resolve(p));
-        if (!isVersioned({options}, pathResolved, {cwd, env}))
-        {
-            // if (!isDir) {
-                const dir = path.dirname(pathResolved);
-                if (!isVersioned({options}, dir, {cwd, env})) {
-                    _add(dir); // , true);
-                }
+        try {
+            if (!(await isVersioned({options}, pathResolved, {cwd, env})))
+            {
+                // const dir = path.dirname(pathResolved);
+                // if (!(await isVersioned({options}, dir, {cwd, env}))) {
+                //     _add(dir); // , true);
+                // }
+                editType = "A";
+            }
+        }
+        catch (e) {
+            // const dir = path.dirname(pathResolved);
+            // if (!(await isVersioned({options}, dir, {cwd, env}))) {
+            //     _add(dir); // , true);
             // }
             editType = "A";
         }
@@ -34,14 +43,104 @@ export async function addEdit({options, nextRelease, env, cwd}, pathToAdd: strin
     }
 
     if (isString(pathToAdd)) {
-        _add(pathToAdd);
+        await _add(pathToAdd);
     }
     else {
         for (const p of pathToAdd) {
-            _add(p);
+            await _add(p);
         }
     }
 }
+
+
+/**
+ * Executes svn command with credentials if set in the environment.
+ *
+ * @since 2.8.0
+ *
+ * @param svnArgs Arguments to pass to `svn`
+ * @param execaOpts Options to pass to `execa`
+ *
+ * @returns The process object returned by execa()
+ */
+async function execSvn(svnArgs: string[], execaOpts: any, stdout = false)
+{
+    let proc: any;
+    const svnUser = process.env.SVN_AUTHOR_NAME,
+          svnToken = process.env.SVN_TOKEN;
+    if (svnUser && svnToken) {
+        if (!stdout) {
+             proc = await execa("svn", [...svnArgs, "--non-interactive", "--no-auth-cache", "--username", svnUser, "--password", svnToken ], execaOpts);
+        }
+        else {
+            proc = await execa.stdout("svn", [...svnArgs, "--non-interactive", "--no-auth-cache", "--username", svnUser, "--password", svnToken ], execaOpts);
+        }
+    }
+    else {
+        if (!stdout) {
+            proc = await execa("svn", [...svnArgs, "--non-interactive" ], execaOpts);
+        }
+        else {
+            proc = await execa.stdout("svn", [...svnArgs, "--non-interactive" ], execaOpts);
+        }
+    }
+    return proc;
+}
+
+
+/**
+ * Unshallow the git repository if necessary and fetch all the tags.
+ *
+ * @param context context
+ * @param execaOpts execa options
+ */
+export async function fetch({ repo, repoType }, execaOpts: any)
+{
+    if (repoType === "git")
+    {
+        try {
+            await execa("git", ["fetch", "--unshallow", "--tags", repo], execaOpts);
+        }
+        catch (error) {
+            await execa("git", ["fetch", "--tags", repo], execaOpts);
+        }
+    }
+    else if (repoType === "svn")
+    {
+        await execSvn([ "update", "--force" ], execaOpts);
+    }
+    else {
+        throw new Error("Invalid repository type");
+    }
+}
+
+
+/**
+ * Get the HEAD sha.
+ *
+ * @param execaOpts Options to pass to `execa`.
+ *
+ * @returns The sha of the HEAD commit.
+ */
+export function getHead(execaOpts: any, repoType = "git")
+{
+    if (repoType === "git") {
+        return execa.stdout("git", ["rev-parse", "HEAD"], execaOpts);
+    }
+    else if (repoType === "svn")
+    {
+        const head = execa.stdout("svn", ["info", "-r", "HEAD"], execaOpts);
+        let match: RegExpExecArray;
+        if ((match = /^Revision: ([0-9]+)$/m.exec(head)) !== null)
+        {
+            return match[1];
+        }
+    }
+    else {
+        throw new Error("Invalid repository type");
+    }
+}
+
 
 
 /**
@@ -158,6 +257,86 @@ export async function getTags({env, options, logger}, execaOpts: any)
 
 
 /**
+ * Verify the local branch is up to date with the remote one.
+ *
+ * @param branch The repository branch for which to verify status.
+ * @param execaOpts Options to pass to `execa`.
+ *
+ * @returns `true` is the HEAD of the current local branch is the same as the HEAD of the remote branch, falsy otherwise.
+ */
+export async function isBranchUpToDate(branch: any, execaOpts: any, options: any)
+{
+    const remoteHead = await execa.stdout("git", ["ls-remote", "--heads", "origin", branch], execaOpts);
+    try
+    {
+        if (options.repoType === "git") {
+            return await isRefInHistory(remoteHead.match(/^(\w+)?/)[1], execaOpts, options);
+        }
+        else if (options.repoType === "svn") {
+            //
+            // TODO
+            //
+            return await isRefInHistory(remoteHead.match(/^(\w+)?/)[1], execaOpts, options);
+        }
+        throw new Error("Invalid repository type");
+    }
+    catch (error)
+    {
+        debug(error);
+        throw error;
+    }
+}
+
+
+/**
+ * Test if the current working directory is a Git repository.
+ *
+ * @param execaOpts Options to pass to `execa`.
+ *
+ * @returns `true` if the current working directory is in a git repository, falsy otherwise.
+ */
+export async function isGitRepo(execaOpts: { cwd: any; env: any; })
+{
+    try
+    {
+        return (await execa("git", ["rev-parse", "--git-dir"], execaOpts)).code === 0;
+    }
+    catch (error) {
+        debug(error);
+    }
+}
+
+
+export async function isIgnored({options}, objectPath: string, execaOpts: any, appendPre = false, changePath = false)
+{
+    if (options.repoType === "svn")
+    {
+        const stdout = await execSvn(["propget", "svn:ignore", path.dirname(objectPath) ], execaOpts);
+        if (new RegExp(`^${objectPath}$`).test(stdout)) {
+            return true;
+        }
+    }
+    else if (options.repoType === "git")
+    {
+        if (await pathExists(".gitignore"))
+        {
+            const fileData = await readFile(".gitignore");
+            if (fileData && fileData.length > 0) {
+                if (new RegExp(`^${objectPath}$`).test(fileData)) {
+                    return true;
+                }
+            }
+        }
+    }
+    else {
+        throw new Error("Invalid repository type");
+    }
+
+    return false;
+}
+
+
+/**
  * Verify if the `ref` is in the direct history of the current branch.
  *
  * @param ref The reference to look for.
@@ -190,56 +369,59 @@ export async function isRefInHistory(ref: any, execaOpts: any, { repo, branch, r
 
 
 /**
- * Unshallow the git repository if necessary and fetch all the tags.
+ * Test if the current working directory is a Git repository.
  *
- * @param context context
- * @param execaOpts execa options
+ * @since 2.8.0
+ *
+ * @param execaOpts Options to pass to `execa`
+ *
+ * @returns `true` if the current working directory is in a git repository, falsy otherwise.
  */
-export async function fetch({ repo, repoType }, execaOpts: any)
+export async function isSvnRepo(execaOpts: { cwd: any; env: any; })
 {
-    if (repoType === "git")
+    try
     {
-        try {
-            await execa("git", ["fetch", "--unshallow", "--tags", repo], execaOpts);
-        }
-        catch (error) {
-            await execa("git", ["fetch", "--tags", repo], execaOpts);
-        }
+        return (await execa("svn", ["info"], execaOpts)).code === 0;
     }
-    else if (repoType === "svn")
-    {
-        await execSvn([ "update", "--force" ], execaOpts);
-    }
-    else {
-        throw new Error("Invalid repository type");
+    catch (error) {
+        debug(error);
     }
 }
 
 
 /**
- * Get the HEAD sha.
+ * Determines whether the specifed file or directory is under version control.
  *
- * @param execaOpts Options to pass to `execa`.
+ * @since 2.8.0
  *
- * @returns The sha of the HEAD commit.
+ * @param context run context
+ * @param objectPath Path to the file or directory
+ * @param execaOpts Options to pass to `execa`
+ * @param appendPre manipulate cwd
+ * @param changePath manipulate cwd
+ *
+ * @returns `true` if the specifed file or directory is under version control.
  */
-export function getHead(execaOpts: any, repoType = "git")
+export async function isVersioned({options}, objectPath: string, execaOpts: any, appendPre = false, changePath = false)
 {
-    if (repoType === "git") {
-        return execa.stdout("git", ["rev-parse", "HEAD"], execaOpts);
-    }
-    else if (repoType === "svn")
+    let isVersioned = false,
+        proc: any;
+
+    if (options.repoType === "svn")
     {
-        const head = execa.stdout("svn", ["info", "-r", "HEAD"], execaOpts);
-        let match: RegExpExecArray;
-        if ((match = /^Revision: ([0-9]+)$/m.exec(head)) !== null)
-        {
-            return match[1];
-        }
+        proc = await execSvn(["info", objectPath], execaOpts, true);
+    }
+    else if (options.repoType === "git") {
+        proc = await execa("git", ["ls-files", "--error-unmatch", objectPath ], execaOpts);
     }
     else {
         throw new Error("Invalid repository type");
     }
+    if (proc.code === 0) {
+        isVersioned = true;
+    }
+
+    return isVersioned;
 }
 
 
@@ -270,162 +452,6 @@ export async function repoUrl(execaOpts: any, repoType = "git")
     catch (error)
     {
         debug(error);
-    }
-}
-
-/**
- * Test if the current working directory is a Git repository.
- *
- * @param execaOpts Options to pass to `execa`.
- *
- * @returns `true` if the current working directory is in a git repository, falsy otherwise.
- */
-export async function isGitRepo(execaOpts: { cwd: any; env: any; })
-{
-    try
-    {
-        return (await execa("git", ["rev-parse", "--git-dir"], execaOpts)).code === 0;
-    }
-    catch (error) {
-        debug(error);
-    }
-}
-
-
-/**
- * Test if the current working directory is a Git repository.
- *
- * @since 2.8.0
- *
- * @param execaOpts Options to pass to `execa`
- *
- * @returns `true` if the current working directory is in a git repository, falsy otherwise.
- */
-export async function isSvnRepo(execaOpts: { cwd: any; env: any; })
-{
-    try
-    {
-        return (await execa("svn", ["info"], execaOpts)).code === 0;
-    }
-    catch (error) {
-        debug(error);
-    }
-}
-
-
-/**
- * Executes svn command with credentials if set in the environment.
- *
- * @since 2.8.0
- *
- * @param execaArgs Arguments to pass to `svn`
- * @param execaOpts Options to pass to `execa`
- *
- * @returns The process object returned by execa()
- */
-async function execSvn(execaArgs: string[], execaOpts: any)
-{
-    let proc: any;
-    const svnUser = process.env.SVN_AUTHOR_NAME,
-          svnToken = process.env.SVN_TOKEN;
-    if (svnUser && svnToken) {
-        proc = await execa("svn", [...execaArgs, "--non-interactive", "--no-auth-cache", "--username", svnUser, "--password", svnToken ], execaOpts);
-    }
-    else {
-        proc = await execa("svn", [...execaArgs, "--non-interactive" ], execaOpts);
-    }
-    return proc;
-}
-
-
-/**
- * Determines whether the specifed file or directory is under version control.
- *
- * @since 2.8.0
- *
- * @param context run context
- * @param objectPath Path to the file or directory
- * @param execaOpts Options to pass to `execa`
- * @param appendPre manipulate cwd
- * @param changePath manipulate cwd
- *
- * @returns `true` if the specifed file or directory is under version control.
- */
-export async function isVersioned({options}, objectPath: string, execaOpts: any, appendPre = false, changePath = false)
-{
-    let isVersioned = false,
-        proc: any;
-
-    if (options.repoType === "svn")
-    {
-        proc = await execSvn(["info", objectPath], execaOpts);
-    }
-    else {
-        proc = await execa("git", ["ls-files", "--error-unmatch", objectPath ], execaOpts);
-    }
-    if (proc.code === 0) {
-        isVersioned = true;
-    }
-
-    return isVersioned;
-}
-
-
-/**
- * Verify the write access authorization to remote repository with push dry-run.
- *
- * @param context context
- * @param execaOpts Options to pass to `execa`.
- *
- * @throws {Error} if not authorized to push.
- */
-export async function verifyAuth({ options, logger }, execaOpts: any)
-{
-    try
-    {
-        if (options.repoType === "git") {
-            try {
-                await execa("git", ["push", "--dry-run", options.repo, `HEAD:${options.branch}`], execaOpts);
-            }
-            catch (error) {
-                if (!(await isBranchUpToDate(options.branch, context, options)))
-                {
-                    logger.info(
-                        `The local branch ${
-                        options.branch
-                        } is behind the remote one, can't publish a new version.`
-                    );
-                    return;
-                }
-                throw error;
-            }
-        }
-        else if (options.repoType === "svn")
-        {
-            try {
-                await execa("svn", ["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
-            }
-            catch (error) {
-                if (!error.toString().includes("E195020")) { // Cannot merge into mixed-revision working copy
-                    logger.info(
-                        `The remote branch ${
-                        options.branch
-                        } is behind the local one, won't publish a new version.`
-                    );
-                    return;
-                }
-            }
-        }
-        else {
-            throw new Error("Invalid repository type");
-        }
-
-        logger.info(`Allowed to push to the ${options.repoType} repository`);
-    }
-    catch (error)
-    {
-        debug(error);
-        throw error;
     }
 }
 
@@ -638,6 +664,65 @@ export async function revert(edits: string[] | undefined, execaOpts: any, repoTy
 
 
 /**
+ * Verify the write access authorization to remote repository with push dry-run.
+ *
+ * @param context context
+ * @param execaOpts Options to pass to `execa`.
+ *
+ * @throws {Error} if not authorized to push.
+ */
+export async function verifyAuth({ options, logger }, execaOpts: any)
+{
+    try
+    {
+        if (options.repoType === "git") {
+            try {
+                await execa("git", ["push", "--dry-run", options.repo, `HEAD:${options.branch}`], execaOpts);
+            }
+            catch (error) {
+                if (!(await isBranchUpToDate(options.branch, context, options)))
+                {
+                    logger.info(
+                        `The local branch ${
+                        options.branch
+                        } is behind the remote one, can't publish a new version.`
+                    );
+                    return;
+                }
+                throw error;
+            }
+        }
+        else if (options.repoType === "svn")
+        {
+            try {
+                await execa("svn", ["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
+            }
+            catch (error) {
+                if (!error.toString().includes("E195020")) { // Cannot merge into mixed-revision working copy
+                    logger.info(
+                        `The remote branch ${
+                        options.branch
+                        } is behind the local one, won't publish a new version.`
+                    );
+                    return;
+                }
+            }
+        }
+        else {
+            throw new Error("Invalid repository type");
+        }
+
+        logger.info(`Allowed to push to the ${options.repoType} repository`);
+    }
+    catch (error)
+    {
+        debug(error);
+        throw error;
+    }
+}
+
+
+/**
  * Verify a tag name is a valid Git reference.
  *
  * @param tagName the tag name to verify.
@@ -657,37 +742,6 @@ export async function verifyTagName(tagName: string, execaOpts: any, repoType = 
             // TODO
             //
             return (await execa("svn", ["check-ref-format", `refs/tags/${tagName}`], execaOpts)).code === 0;
-        }
-        throw new Error("Invalid repository type");
-    }
-    catch (error)
-    {
-        debug(error);
-        throw error;
-    }
-}
-
-/**
- * Verify the local branch is up to date with the remote one.
- *
- * @param branch The repository branch for which to verify status.
- * @param execaOpts Options to pass to `execa`.
- *
- * @returns `true` is the HEAD of the current local branch is the same as the HEAD of the remote branch, falsy otherwise.
- */
-export async function isBranchUpToDate(branch: any, execaOpts: any, options: any)
-{
-    const remoteHead = await execa.stdout("git", ["ls-remote", "--heads", "origin", branch], execaOpts);
-    try
-    {
-        if (options.repoType === "git") {
-            return await isRefInHistory(remoteHead.match(/^(\w+)?/)[1], execaOpts, options);
-        }
-        else if (options.repoType === "svn") {
-            //
-            // TODO
-            //
-            return await isRefInHistory(remoteHead.match(/^(\w+)?/)[1], execaOpts, options);
         }
         throw new Error("Invalid repository type");
     }
