@@ -1,8 +1,9 @@
 
 import * as path from "path";
-import { editFile, readFile, pathExists, writeFile, createDir, appendFile, deleteFile } from "./utils/fs";
-import { properCase, isString } from "./utils/utils";
+import { readFile, pathExists, writeFile, createDir, appendFile, deleteFile } from "./utils/fs";
+import { editFile, properCase, isString } from "./utils/utils";
 import { npmLocation } from "./releases/npm";
+import { addEdit } from "./repo";
 const execa = require("execa");
 const os = require("os"), EOL = os.EOL;
 
@@ -1309,7 +1310,7 @@ function getFormattedSubject({options}, subject: string)
 }
 
 
-export async function doChangelogFileEdit({ options, commits, logger, lastRelease, nextRelease, env })
+export async function doChangelogFileEdit({ options, commits, logger, lastRelease, nextRelease, env, cwd })
 {
     const fmtDate = getFormattedDate();
     logger.log("Start changelog file edit");
@@ -1505,11 +1506,11 @@ export async function doChangelogFileEdit({ options, commits, logger, lastReleas
     //
     // Allow manual modifications to history file
     //
-    await editFile({options}, options.changelogFile);
+    await editFile({nextRelease, options, logger, cwd, env}, options.changelogFile);
 }
 
 
-export async function doHistoryFileEdit({ options, commits, logger, lastRelease, nextRelease, env })
+export async function doHistoryFileEdit({ options, commits, logger, lastRelease, nextRelease, env, cwd})
 {
     const fmtDate = getFormattedDate();
     logger.log("Start history file edit");
@@ -1628,5 +1629,5 @@ export async function doHistoryFileEdit({ options, commits, logger, lastRelease,
     //
     // Allow manual modifications to history file
     //
-    await editFile({options}, options.historyFile);
+    await editFile({nextRelease, options, logger, cwd, env}, options.historyFile);
 }

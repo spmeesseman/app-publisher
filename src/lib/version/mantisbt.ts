@@ -1,5 +1,6 @@
 
-import { replaceInFile, readFile, editFile, pathExists } from "../utils/fs";
+import { replaceInFile, readFile, pathExists } from "../utils/fs";
+import { editFile } from "../utils/utils";
 
 
 export async function getMantisBtVersion({logger, options}): Promise<{ version: string, versionSystem: string, versionInfo: any }>
@@ -23,7 +24,7 @@ export async function getMantisBtVersion({logger, options}): Promise<{ version: 
 }
 
 
-export async function setMantisBtVersion({nextRelease, options})
+export async function setMantisBtVersion({options, logger, nextRelease, cwd, env})
 {
     if (options.mantisBtPlugin && await pathExists(options.mantisBtPlugin))
     {   //
@@ -33,6 +34,6 @@ export async function setMantisBtVersion({nextRelease, options})
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
-        await editFile({options}, options.mantisBtPlugin);
+        await editFile({options, logger, nextRelease, cwd, env}, options.mantisBtPlugin);
     }
 }

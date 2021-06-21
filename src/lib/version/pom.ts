@@ -1,5 +1,6 @@
 
-import { pathExists, replaceInFile, readFile, editFile } from "../utils/fs";
+import { pathExists, replaceInFile, readFile } from "../utils/fs";
+import { editFile } from "../utils/utils";
 
 
 export async function getPomVersion({logger}): Promise<{ version: string, versionSystem: string, versionInfo: any }>
@@ -57,7 +58,7 @@ export async function getPomVersion({logger}): Promise<{ version: string, versio
 }
 
 
-export async function setPomVersion({nextRelease, options})
+export async function setPomVersion({options, logger, nextRelease, cwd, env})
 {
     if (nextRelease.versionInfo.versionInfo.length === 2 && await pathExists("pom.xml"))
     {
@@ -66,6 +67,6 @@ export async function setPomVersion({nextRelease, options})
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
-        await editFile({options}, "pom.xml");
+        await editFile({options, logger, nextRelease, cwd, env}, "pom.xml");
     }
 }

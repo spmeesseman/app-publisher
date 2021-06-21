@@ -2,7 +2,8 @@
 import glob = require("glob");
 import { relative } from "path";
 import { isIgnored } from "../repo";
-import { replaceInFile, editFile, pathExists } from "../utils/fs";
+import { replaceInFile, pathExists } from "../utils/fs";
+import { editFile } from "../utils/utils";
 
 
 async function getFiles(logger: any)
@@ -46,7 +47,7 @@ export async function setAppPublisherVersion({nextRelease, options, logger, cwd,
                     //
                     // Allow manual modifications to mantisbt main plugin file and commit to modified list
                     //
-                    await editFile({options}, file);
+                    await editFile({nextRelease, options, logger, cwd, env}, file);
                 // }
             }
         }

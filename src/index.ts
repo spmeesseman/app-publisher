@@ -27,7 +27,7 @@ import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
 import { sendNotificationEmail } from "./lib/email";
 import { writeFile } from "./lib/utils/fs";
 import { createSectionFromCommits, doChangelogFileEdit, doHistoryFileEdit } from "./lib/changelog-file";
-import { addEdit, commit, fetch, verifyAuth, getHead, tag, push, revert } from "./lib/repo";
+import { commit, fetch, verifyAuth, getHead, tag, push, revert } from "./lib/repo";
 import { EOL } from "os";
 const envCi = require("@spmeesseman/env-ci");
 const pkg = require("../package.json");
@@ -459,10 +459,6 @@ async function runNodeScript(context: any, plugins: any)
                 return true;
             }
         }
-        //
-        // Track modified files
-        //
-        addEdit({options, nextRelease, logger, cwd, env}, options.historyFile);
     }
     else if (options.changelogFile && doChangelog)
     {
@@ -476,10 +472,6 @@ async function runNodeScript(context: any, plugins: any)
                 return true;
             }
         }
-        //
-        // Track modified files
-        //
-        addEdit({options, nextRelease, logger, cwd, env}, options.changelogFile);
     }
 
     //
@@ -494,11 +486,7 @@ async function runNodeScript(context: any, plugins: any)
     //
     if (!options.taskMode)
     {
-        const edits = await setVersions(context);
-        //
-        // Track modified files
-        //
-        addEdit({options, nextRelease, logger, cwd, env}, edits);
+        await setVersions(context);
     }
 
     //

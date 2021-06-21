@@ -1,4 +1,6 @@
-import { editFile, pathExists, replaceInFile } from "../utils/fs";
+
+import { pathExists, replaceInFile } from "../utils/fs";
+import { editFile } from "../utils/utils";
 import { setAppPublisherVersion } from "./app-publisher";
 import { setDotNetVersion, getDotNetFiles } from "./dotnet";
 import { setExtJsVersion } from "./extjs";
@@ -6,7 +8,6 @@ import { setMakefileVersion } from "./makefile";
 import { setMantisBtVersion } from "./mantisbt";
 import { setPomVersion } from "./pom";
 import { setNpmVersion } from "./npm";
-// import { relative } from "path";
 
 export = setVersions;
 
@@ -18,56 +19,43 @@ export = setVersions;
  *
  * @param context context
  */
-async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}): Promise<string[]>
+async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}): Promise<void>
 {
-    const edits: string[] = [];
     //
     // NPM managed project, update package.json if required
     //
     if (await pathExists("package.json")) {
         await setNpmVersion({options, logger, lastRelease, nextRelease, cwd, env});
-        //
-        // Track modified files
-        //
-        edits.push("package.json");
     }
     //
     // AppPublisher publishrc version
     //
     if (options.version) {
-        const rcFiles = await setAppPublisherVersion({options, logger, nextRelease, cwd, env});
-        if (rcFiles) {
-            edits.push(...rcFiles);
-            // edits.push(relative(process.cwd(), ...rcFiles));
-        }
+        await setAppPublisherVersion({options, logger, nextRelease, cwd, env});
     }
     //
     // ExtJs build
     //
     if (await pathExists("app.json") && (await pathExists("workspace.json") || await pathExists("build.xml"))) {
-        await setExtJsVersion({options, nextRelease});
-        edits.push("app.json");
+        await setExtJsVersion({options, logger, nextRelease, cwd, env});
     }
     //
     // Maven managed project, update pom.xml if required
     //
     if (await pathExists("pom.xml")) {
-        setPomVersion({options, nextRelease});
-        edits.push("pom.xml");
+        setPomVersion({options, logger, nextRelease, cwd, env});
     }
     //
     // Mantisbt plugin project, update main plugin file if required
     //
     if (options.mantisbtPlugin) {
-        await setMantisBtVersion({options, nextRelease});
-        edits.push(options.mantisbtPlugin);
+        await setMantisBtVersion({options, logger, nextRelease, cwd, env});
     }
     //
     // C project, update main rc file if required
     //
     if (options.cProjectRcFile) {
-        await setMakefileVersion({options, nextRelease});
-        edits.push(options.cProjectRcFile);
+        await setMakefileVersion({options, logger, nextRelease, cwd, env});
     }
     //
     // If this is a .NET build, update assemblyinfo file
@@ -78,10 +66,7 @@ async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}
     // if ($AssemblyInfoLoc -is [system.string] && ![string]::IsNullOrEmpty($AssemblyInfoLoc))
     // {
     if ((await getDotNetFiles(logger)).length > 0) {
-        const dotNetFile = await setDotNetVersion({options, logger, nextRelease});
-        if (dotNetFile) {
-            edits.push(dotNetFile);
-        }
+        await setDotNetVersion({options, logger, nextRelease, cwd, env});
     }
     // }
     // else if ($AssemblyInfoLoc -is [System.Array] && $AssemblyInfoLoc.Length -gt 0) {
@@ -92,25 +77,19 @@ async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}
     //
     // Version bump specified files in publishrc config 'versionFiles'
     //
-    const vFiles = await setVersionFiles({options, logger, lastRelease, nextRelease});
-    if (vFiles.length > 0) {
-        edits.push(...vFiles);
-    }
-
-    return edits;
+    await setVersionFiles({options, logger, lastRelease, nextRelease, cwd, env});
 }
 
 
-async function setVersionFiles({options, logger, lastRelease, nextRelease}): Promise<string[]>
+async function setVersionFiles({options, logger, lastRelease, nextRelease, cwd, env}): Promise<void>
 {
-    const vFiles: string[] = [];
     let incremental = false;
 
     logger.log("Preparing version files");
     if (!options.versionFiles || options.versionFiles.length === 0)
     {
-        logger.log("   # of files : " + options.versionFiles);
-        return vFiles;
+        logger.log("   # of files : 0");
+        return;
     }
     logger.log("   # of files : " + options.versionFiles);
 
@@ -207,10 +186,7 @@ async function setVersionFiles({options, logger, lastRelease, nextRelease}): Pro
             // Allow manual modifications to vFile and commit to modified list
             // Edit-File will add this file to options.versionFilesEdited
             //
-            vFiles.push(vFile);
-            await editFile({options}, vFile);
+            await editFile({nextRelease, options, logger, cwd, env}, vFile);
         }
     }
-
-    return vFiles;
 }

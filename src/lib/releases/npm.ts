@@ -1,5 +1,6 @@
 
 import * as path from "path";
+import { addEdit } from "../repo";
 import { createDir, pathExists } from "../utils/fs";
 import { timeout, checkExitCode } from "../utils/utils";
 const execa = require("execa");
@@ -14,7 +15,6 @@ export async function doNpmRelease({ options, logger, nextRelease, cwd, env })
 
     if (await pathExists("package.json"))
     {
-        let publishFailed = false;
         let proc: any;
         //
         // Pack tarball and mvoe to dist dir if specified
@@ -39,8 +39,9 @@ export async function doNpmRelease({ options, logger, nextRelease, cwd, env })
             else {
                 tmpPkgFile = `${options.projectName}-${nextRelease.version}.tgz`;
             }
-            // Move-Item  -Force "*$VERSION.*" $PackedFile
-            // CheckPsCmdSuccess
+            //
+            // Move file
+            //
             timeout(500);
             logger.log("Moving package:");
             logger.log("   " + tmpPkgFile);
@@ -54,7 +55,10 @@ export async function doNpmRelease({ options, logger, nextRelease, cwd, env })
                 proc = await execa.shell(`mv -f "${tmpPkgFile}" "${destPackedFile}`);
             }
             checkExitCode(proc.code, logger);
-            publishFailed = proc.code !== 0;
+            //
+            // Track modified file
+            //
+            addEdit({ options, logger, nextRelease, cwd, env }, destPackedFile);
         }
         //
         // Publish to npm server
@@ -85,7 +89,7 @@ export async function doNpmRelease({ options, logger, nextRelease, cwd, env })
         //
         //
         //
-        if (!publishFailed)
+        if (proc.code === 0)
         {
             if (options.npmScope) {
                 npmLocation = `${options.npmRegistry}/-/web/detail/${options.npmScope}/${options.projectName}`;

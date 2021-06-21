@@ -1,6 +1,8 @@
 
 import * as path from "path";
-import { pathExists, editFile, writeFile } from "../utils/fs";
+import { addEdit } from "../repo";
+import { pathExists, writeFile } from "../utils/fs";
+import { editFile } from "../utils/utils";
 
 export let defaultBugs: string;
 export let defaultHomePage: string;
@@ -128,10 +130,18 @@ export async function setNpmVersion({options, lastRelease, nextRelease, logger, 
     //
     // Allow manual modifications to package.json and package-lock.json
     //
-    editFile({options}, "package.json");
+    editFile({nextRelease, options, logger, cwd, env}, "package.json");
+    //
+    // Track modified files
+    //
+    addEdit({options, logger, nextRelease, cwd, env}, "package.json");
     if (packageLockFileExists)
     {
-        await editFile({options}, "package-lock.json");
+        await editFile({nextRelease, options, logger, cwd, env}, "package-lock.json");
+        //
+        // Track modified files
+        //
+        addEdit({options, logger, nextRelease, cwd, env}, "package-lock.json");
     }
 }
 

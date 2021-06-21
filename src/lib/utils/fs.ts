@@ -1,6 +1,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import { addEdit } from "../repo";
 import { getPsScriptLocation, timeout } from "./utils";
 const execa = require("execa");
 
@@ -118,42 +119,6 @@ export async function createDir(dir: string)
             reject(e);
         }
     });
-}
-
-
-export async function editFile({ options }, editFile: string)
-{
-    if (editFile && await pathExists(editFile))
-    {
-        const skipEdit = (options.skipVersionEdits === " Y" || options.taskTouchVersions || options.taskChangelogFile) &&
-                         !options.taskChangelogView && (!options.versionFilesEditAlways.includes(editFile) || options.taskMode),
-              async = options.taskMode,
-              seekToEnd = (!options.taskChangelog && !options.taskCommit) || options.versionFilesScrollDown.includes(editFile);
-
-        if (!skipEdit)
-        {   //
-            // Start Notepad process to edit specified file
-            // If this is win32, and it's a manual edit, then use the super cool ps script
-            // that will scroll the content in the editor to the end
-            //
-            if (process.platform === "win32" && seekToEnd && !async)
-            {
-                const ps1Script = await getPsScriptLocation("edit-file");
-                await execa.sync("powershell.exe",
-                                    [ ps1Script, "-f", editFile, "-e", options.textEditor, "-s", seekToEnd, "-a", async ],
-                                    { stdio: ["pipe", "pipe", "pipe"], env: process.env}
-                                );
-            }
-            else {
-                if (async) { // unref() so parent doesn't wait
-                    await execa(options.textEditor, [ editFile ], { detached: true, stdio: "ignore" }).unref();
-                }
-                else {
-                    await execa.sync(options.textEditor, [ editFile ]);
-                }
-            }
-        }
-    }
 }
 
 

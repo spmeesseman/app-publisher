@@ -2,6 +2,7 @@
 import hideSensitive = require("../hide-sensitive");
 import { isFunction } from "lodash";
 import { pathExists } from "./fs";
+import { addEdit } from "../repo";
 const execa = require("execa");
 // const find = require("find-process");
 
@@ -62,6 +63,46 @@ export function checkExitCode(code: number, logger: any, throwOnError = false)
         if (throwOnError) {
             throw new Error("Sub-process failed with exit code" + code);
         }
+    }
+}
+
+
+export async function editFile({ options, nextRelease, logger, cwd, env }, editFile: string)
+{
+    if (editFile && await pathExists(editFile))
+    {
+        const skipEdit = (options.skipVersionEdits === " Y" || options.taskTouchVersions || options.taskChangelogFile) &&
+                         !options.taskChangelogView && (!options.versionFilesEditAlways.includes(editFile) || options.taskMode),
+              async = options.taskMode,
+              seekToEnd = (!options.taskChangelog && !options.taskCommit) || options.versionFilesScrollDown.includes(editFile);
+
+        if (!skipEdit)
+        {   //
+            // Start Notepad process to edit specified file
+            // If this is win32, and it's a manual edit, then use the super cool ps script
+            // that will scroll the content in the editor to the end
+            //
+            if (process.platform === "win32" && seekToEnd && !async)
+            {
+                const ps1Script = await getPsScriptLocation("edit-file");
+                await execa.sync("powershell.exe",
+                                    [ ps1Script, "-f", editFile, "-e", options.textEditor, "-s", seekToEnd, "-a", async ],
+                                    { stdio: ["pipe", "pipe", "pipe"], env: process.env}
+                                );
+            }
+            else {
+                if (async) { // unref() so parent doesn't wait
+                    await execa(options.textEditor, [ editFile ], { detached: true, stdio: "ignore" }).unref();
+                }
+                else {
+                    await execa.sync(options.textEditor, [ editFile ]);
+                }
+            }
+        }
+        //
+        // Track modified files
+        //
+        await addEdit({options, logger, nextRelease, cwd, env}, editFile);
     }
 }
 

@@ -621,15 +621,15 @@ export async function revert({options, nextRelease, logger}, execaOpts: any)
     // Modifications - vc revert
     //
     try {
-        const chgListStr = changeListModify.map((e: any) => e.path).join(" ");
+        const chgListPaths = changeListModify.map((e: any) => e.path);
         logger.info("Reverting all modifications:");
-        logger.info("   " + chgListStr);
+        logger.info("   " + chgListPaths.join(" "));
         if (options.repoType === "git") {
-            await execa("git", [ "stash", "push", "--", chgListStr ], execaOpts);
+            await execa("git", [ "stash", "push", "--", ...chgListPaths ], execaOpts);
             await execa("git", [ "stash", "drop" ], execaOpts);
         }
         else if (options.repoType === "svn") {
-            await execSvn([ "revert", "-R", chgListStr ], execaOpts);
+            await execSvn([ "revert", "-R", ...chgListPaths ], execaOpts);
         }
         else {
             throwVcsError(`Invalid repository type: ${options.repoType}`, logger);

@@ -1,5 +1,6 @@
 
-import { replaceInFile, editFile, pathExists } from "../utils/fs";
+import { replaceInFile, pathExists } from "../utils/fs";
+import { editFile } from "../utils/utils";
 
 
 export async function getMakefileVersion({logger, options}): Promise<{ version: string, versionSystem: string, versionInfo: any }>
@@ -8,7 +9,7 @@ export async function getMakefileVersion({logger, options}): Promise<{ version: 
 }
 
 
-export async function setMakefileVersion({nextRelease, options})
+export async function setMakefileVersion({nextRelease, options, logger, cwd, env})
 {
     if (options.mantisBtPlugin && await pathExists("app.json"))
     {
@@ -46,7 +47,7 @@ export async function setMakefileVersion({nextRelease, options})
             //
             // Allow manual modifications to mantisbt main plugin file and commit to modified list
             //
-            await editFile({options}, options.cProjectRcFile);
+            await editFile({options, logger, nextRelease, cwd, env}, options.cProjectRcFile);
         }
     }
 }
