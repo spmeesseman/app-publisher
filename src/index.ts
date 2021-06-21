@@ -392,6 +392,30 @@ async function runNodeScript(context: any, plugins: any)
     }
 
     //
+    // Version prompt
+    //
+    if (options.promptVersion === "Y" && !options.versionForceNext)
+    {
+        const schema = {
+            properties: {
+                version: {
+                    description: "Enter version number (empty for default)",
+                    pattern: /^[a-z1-9\.\-]+$/,
+                    default: nextRelease.version,
+                    message: "Version must be only contain 0-9 and '.', or for a pre-release version this includes lower case letters and dashes",
+                    required: false
+                }
+            }
+        };
+        const prompt = require("prompt");
+        prompt.start();
+        const { version } = await prompt.get(schema);
+        if (version) {
+            nextRelease.version = version;
+        }
+    }
+
+    //
     // If a l3 task is processed, we'll be done
     //
     taskDone = await processTasks3(context);
