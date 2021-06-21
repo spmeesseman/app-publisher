@@ -116,11 +116,6 @@ async function run(context: any, plugins: any): Promise<boolean>
     }
 
     //
-    // Set task mode stdout flag on the options object
-    //
-    options.taskModeStdOut = !!(options.taskVersionCurrent || options.taskVersionNext || options.taskVersionInfo ||
-                                options.taskCiEvInfo || options.taskVersionPreReleaseId);
-    //
     // Display mode - bin mode, or node env
     //
     if (!options.taskModeStdOut)

@@ -50,10 +50,10 @@ async function getLastRelease({ cwd, env, options, logger })
 
     if (tag)
     {
-        logger.log(`Found ${options.repoType} tag ${tag.tag} associated with version ${tag.version}`);
+        logger.info(`Found ${options.repoType} tag ${tag.tag} associated with version ${tag.version}`);
         return { head: await getTagHead(tag.tag, { cwd, env }, options), ...tag };
     }
 
-    logger.log(`No ${options.repoType} tag version found`);
+    logger.info(`No ${options.repoType} tag version found`);
     return {};
 }

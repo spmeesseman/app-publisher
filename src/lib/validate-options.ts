@@ -17,8 +17,6 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
     const environ = { ...process.env, ...env };
     logger.log("Validating all options...");
 
-    
-
     //
     // Convert array params to arrays, if specified as string on cmdline or publishrc
     //
@@ -516,8 +514,8 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
             for (const val of value) {
                 if (val instanceof String || typeof(val) === "string") {
                     if (val.trim().startsWith("$`{") && val.trim().endsWith("`}")) {
-                        logger.warning(`Option ${property} environment value was not found/set`);
-                        logger.warning("   " + val);
+                        logger.warn(`Option ${property} environment value was not found/set`);
+                        logger.warn("   " + val);
                     }
                 }
             }
@@ -525,13 +523,16 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
         else {
             if (value instanceof String || typeof(value) === "string") {
                 if (value.trim().startsWith("$`{") && value.trim().endsWith("`}")) {
-                    logger.warning(`Option ${property} environment value was not found/set`);
-                    logger.warning("   " + value);
+                    logger.warn(`Option ${property} environment value was not found/set`);
+                    logger.warn("   " + value);
                 }
             }
         }
     });
 
+    //
+    // CI
+    //
     if (!options.noCi)
     {
         options.skipChangelogEdits = "Y";
@@ -545,6 +546,62 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
         logger.warn("   versionFilesEditAlways");
     }
 
+    //
+    // *** TASKS ***
+    //
+
+    //
+    // Set transitive task flags
+    //
+    if (options.taskChangelogFile) {
+        options.taskChangelog = true;
+    }
+    if (options.taskTouchVersionsCommit) {
+        options.taskTouchVersions = true;
+    }
+    if (options.taskEmail || options.taskTouchVersions || options.taskMantisbtRelease) {
+        options.skipChangelogEdits = "Y";
+    }
+
+    //
+    // Certain 'single-task mode' options can't be used together...
+    //
+    if ((options.taskChangelog && options.taskEmail) || (options.taskChangelog && options.taskTouchVersions) ||
+        (options.taskTouchVersions && options.taskEmail) || (options.taskMantisbtRelease && options.taskEmail) ||
+        (options.taskMantisbtRelease && options.taskTouchVersions) || (options.taskMantisbtRelease && options.taskChangelog) ||
+        (options.taskGithubRelease && options.taskEmail) || (options.taskGithubRelease && options.taskTouchVersions) ||
+        (options.taskGithubRelease && options.taskChangelog))
+    {
+        logger.error("Invalid options specified:");
+        logger.error("  Two or more of the specified tasks cannot be used together");
+        logger.error("    changeLog     : " + options.changeLogOnly);
+        logger.error("    email         : " + options.emailOnly);
+        logger.error("    githubRelease : " + options.githubRelease);
+        logger.error("    mantisRelease : " + options.mantisbtRelease);
+        logger.error("    republish     : " + options.republish);
+        logger.error("    touchVersions : " + options.touchVersions);
+        return false;
+    }
+
+    if (options.taskModeStdOut) {
+        for (const o in options) {
+            if (o.startsWith("task")) {
+                if (options[o] === true) {
+                    if (o !== "taskVersionCurrent" && o !== "taskVersionNext" && o !== "taskVersionInfo" &&
+                        o !== "taskCiEvInfo" && o !== "taskVersionPreReleaseId" && o !== "taskMode" && o !== "taskModeStdOut")
+                    {
+                        logger.error("The specified task cannot be used with a 'stdout' type task:");
+                        logger.error("   " + o);
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+
+    //
+    // Good to go...
+    //
     logger.success("Success - options validated");
     return true;
 }

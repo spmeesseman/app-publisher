@@ -94,8 +94,8 @@ export async function getTags({env, options, logger}, execaOpts: any)
     {
         return (await execa.stdout("git", ["tag"], execaOpts))
             .split("\n")
-            .map((tag: { trim: () => void; }) => tag.trim())
-            .filter(Boolean);
+            .map((tag: { trim: () => void; }) => tag.trim()) // um ok
+            .filter(Boolean); // why??
     }
     else if (options.repoType === "svn")
     {
@@ -429,6 +429,7 @@ export async function verifyAuth({ options, logger }, execaOpts: any)
     }
 }
 
+
 /**
  * Tag the commit head on the local repository.
  *
@@ -504,6 +505,7 @@ export async function tag({options, logger, nextRelease}, execaOpts: any)
         throw new Error("Invalid repository type");
     }
 }
+
 
 /**
  * Push to the remote repository.

@@ -23,7 +23,7 @@ async function getCommits({ cwd, env, options, lastRelease: { head }, logger })
     }
     else
     {
-        logger.log("No previous release found, retrieving all commits");
+        logger.info("No previous release found, retrieving all commits");
     }
 
     if (options.repoType === "git")
@@ -75,7 +75,7 @@ async function getCommits({ cwd, env, options, lastRelease: { head }, logger })
         //
         // Retrieve commits since last version tag
         //
-        logger.log(`Retrieving commits since last version (revision ${head})`);
+        logger.info(`Retrieving commits since last version (revision ${head})`);
 
         if (svnUser && svnToken) {
             xml = await execa.stdout("svn", ["log", "--xml", `${options.repo}`, "--verbose", "--limit", "250", "-r", `${head}:HEAD`,
@@ -89,10 +89,10 @@ async function getCommits({ cwd, env, options, lastRelease: { head }, logger })
         // TODO - check execa rtn code?
         //
         // if ($LASTEXITCODE -ne 0) {
-        //     logger.log("Failed to retrieve commits" "red"
+        //     logger.info("Failed to retrieve commits" "red"
         //     return $comments
         // }
-        logger.log("Parsing commits response from SVN");
+        logger.info("Parsing commits response from SVN");
 
         try {
             parser.parseString(xml, (err, result) =>
@@ -122,7 +122,7 @@ async function getCommits({ cwd, env, options, lastRelease: { head }, logger })
         }
     }
 
-    logger.log(`Found ${commits.length} commits since last release`);
+    logger.info(`Found ${commits.length} commits since last release`);
     debug("Parsed commits: %o", commits);
 
     return commits;
