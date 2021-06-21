@@ -27,7 +27,7 @@ import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
 import { sendNotificationEmail } from "./lib/email";
 import { writeFile } from "./lib/utils/fs";
 import { createSectionFromCommits, doChangelogFileEdit, doHistoryFileEdit } from "./lib/changelog-file";
-import { commit, fetch, verifyAuth, getHead, tag, push, revert } from "./lib/repo";
+import { addEdit, commit, fetch, verifyAuth, getHead, tag, push, revert } from "./lib/repo";
 import { EOL } from "os";
 const envCi = require("@spmeesseman/env-ci");
 const pkg = require("../package.json");
@@ -203,6 +203,7 @@ async function run(context: any, plugins: any): Promise<boolean>
     if (options.taskModeStdOut) {
         context.logger = {
             log: () => { /* */ },
+            info: () => { /* */ },
             warn: () => { /* */ },
             success: () => { /* */ },
             error: context.logger.error
@@ -450,7 +451,7 @@ async function runNodeScript(context: any, plugins: any)
         //
         // Track modified files
         //
-        nextRelease.edits.push(options.historyFile);
+        addEdit({options, nextRelease, cwd, env}, options.historyFile);
     }
     else if (options.changelogFile && doChangelog)
     {
@@ -467,7 +468,7 @@ async function runNodeScript(context: any, plugins: any)
         //
         // Track modified files
         //
-        nextRelease.edits.push(options.changelogFile);
+        addEdit({options, nextRelease, cwd, env}, options.changelogFile);
     }
 
     //
@@ -486,9 +487,7 @@ async function runNodeScript(context: any, plugins: any)
         //
         // Track modified files
         //
-        if (edits.length > 0) {
-            nextRelease.edits.push(...edits);
-        }
+        addEdit({options, nextRelease, cwd, env}, edits);
     }
 
     //
@@ -659,25 +658,13 @@ async function runNodeScript(context: any, plugins: any)
     //
     // Commit / Tag
     //
-    // if (options.dryRun)
-    // {
-    //     logger.warn(`Skip ${nextRelease.tag} tag creation and commits in dry-run mode`);
-    //     //
-    //     // Revert
-    //     //
-    //     if (options.dryRunVcRevert) // && options.noCi)
-    //     {
-    //         await revert(nextRelease.edits, { cwd, env}, options.repoType);
-    //     }
-    // }
-    // else
     if (!options.taskMode || options.taskCommit || options.taskTag)
     {   //
         // Commit
         //
         if (!options.taskTag || options.taskCommit || !options.taskMode)
         {
-            await commit({options, nextRelease}, { cwd, env });
+            await commit({options, nextRelease, logger}, { cwd, env });
             logger.success((options.dryRun ? "Dry run - " : "") + `Successfully committed changes for v${nextRelease.version}`);
         }
         //
@@ -701,6 +688,13 @@ async function runNodeScript(context: any, plugins: any)
                     logger.success(`Dry run - Published Github release tagged @ ${nextRelease.tag}`);
                 }
             }
+        }
+        //
+        // Revert all changes if dry run, and configured to do so
+        //
+        if (options.dryRun && options.dryRunVcRevert)
+        {
+            await revert(nextRelease.edits, { cwd, env}, options.repoType);
         }
     }
 
@@ -747,9 +741,8 @@ async function processTasks1(context: any): Promise<boolean>
     const options = context.options;
 
     if (options.taskDevTest)
-    {   //
-        // For testing code.  ( Run with --node --no-ci --task-dev-test )
-        //
+    {
+        runDevCodeTests();
         return true;
     }
     else if (options.taskVersionCurrent)
@@ -1109,3 +1102,24 @@ export = async (opts = {}, { cwd = process.cwd(), env = process.env, stdout = un
         throw error;
     }
 };
+
+
+function runDevCodeTests()
+{
+    // const edits = [{
+    //     path: "src/test.txt",
+    //     type: "M"
+    // },
+    // {
+    //     path: "dist/install.com",
+    //     type: "A"
+    // },
+    // {
+    //     path: "install/dist/installer.msi",
+    //     type: "M"
+    // }];
+    // const changeListAdd: string = edits.filter((e: any) => e.type === "A").map((e: any) => e.path).join(" ").trim(),
+    //       changeListModify: string = edits.filter((e: any) => e.type === "M").map((e: any) => e.path).join(" ").trim();
+    // console.log(1, changeListAdd);
+    // console.log(2, changeListModify);
+}

@@ -1,8 +1,47 @@
 
 import * as path from "path";
+import { isString } from "./utils/utils";
+import { deleteFile, pathExists } from "./utils/fs";
 const execa = require("execa");
 const debug = require("debug")("app-publisher:git");
 const xml2js = require("xml2js");
+
+
+export async function addEdit({options, nextRelease, env, cwd}, pathToAdd: string | string[])
+{
+    if (!pathToAdd || pathToAdd.length === 0) {
+        return;
+    }
+
+    function _add(p: string) // , isDir = false)
+    {
+        let editType = "M";
+        const pathResolved = path.relative(cwd, path.resolve(p));
+        if (!isVersioned({options}, pathResolved, {cwd, env}))
+        {
+            // if (!isDir) {
+                const dir = path.dirname(pathResolved);
+                if (!isVersioned({options}, dir, {cwd, env})) {
+                    _add(dir); // , true);
+                }
+            // }
+            editType = "A";
+        }
+        nextRelease.edits.push({
+            path: pathResolved,
+            type: editType
+        });
+    }
+
+    if (isString(pathToAdd)) {
+        _add(pathToAdd);
+    }
+    else {
+        for (const p of pathToAdd) {
+            _add(p);
+        }
+    }
+}
 
 
 /**
@@ -312,35 +351,20 @@ async function execSvn(execaArgs: string[], execaOpts: any)
  *
  * @returns `true` if the specifed file or directory is under version control.
  */
-export async function isVersioned({options, env}, objectPath: string, execaOpts: any, appendPre = false, changePath = false)
+export async function isVersioned({options}, objectPath: string, execaOpts: any, appendPre = false, changePath = false)
 {
-    let vcFile = objectPath,
-        isVersioned = false,
+    let isVersioned = false,
         proc: any;
 
-    if (appendPre && options.pathPreRoot) {
-        vcFile = path.normalize(path.join(options.pathPreRoot, objectPath));
-    }
-
-    if (changePath && options.pathToMainRoot && options.pathToMainRoot !== ".") {
-        process.chdir(path.normalize(options.pathToMainRoot));
-    }
     if (options.repoType === "svn")
     {
-        proc = await execSvn(["info", vcFile], execaOpts);
+        proc = await execSvn(["info", objectPath], execaOpts);
     }
     else {
-        proc = await execa("git", ["ls-files", "--error-unmatch", vcFile ], execaOpts);
+        proc = await execa("git", ["ls-files", "--error-unmatch", objectPath ], execaOpts);
     }
     if (proc.code === 0) {
         isVersioned = true;
-    }
-    //
-    // Change directory back to project root
-    // PATHTOPREROOT will be defined if PATHTOMAINROOT is
-    //
-    if (changePath && options.pathToMainRoot && options.pathToMainRoot !== ".") {
-        process.chdir(path.normalize(options.pathPreRoot));
     }
 
     return isVersioned;
@@ -516,61 +540,65 @@ export async function push({options}, execaOpts: any)
  *
  * @throws {Error} if the commit failed.
  */
-export async function commit({options, nextRelease}, execaOpts: any)
+export async function commit({options, nextRelease, logger}, execaOpts: any)
 {
-    let proc;
-    const changeList = nextRelease.edits.join(" ");
+    let proc,
+        addFailed = false;
+
+    if (!nextRelease.edits || nextRelease.edits === 0) {
+        logger.info("Commit - Nothing to commit");
+        return;
+    }
+
+    const changeListAdd: string = nextRelease.edits.filter((e: any) => e.type === "A").map((e: any) => e.path).join(" ").trim(),
+          changeList: string = nextRelease.edits.map((e: any) => e.path).join(" ").trim();
+
     if (options.repoType === "git")
     {
-        //
-        // TODO - Additions
-        //
-        // if ($VCCHANGELISTADD -ne "")
-        // {
-        //     $cl = $VCCHANGELISTADD.Replace("|", " ");
-        //     LogMessage "Adding unversioned touched files to GIT version control"
-        //     LogMessage "   $cl"
-        //     Invoke-Expression -Command "git add -- $cl"
-        //     CheckExitCode $false
-        // }
-        if (!options.dryRun) {
-            proc = await execa("git", [ "commit", "-m", `"chore(release): v${nextRelease.version} [skip ci]`, "--", changeList ], execaOpts);
+        if (changeListAdd)
+        {
+            logger.info("Adding unversioned touched files to git version control");
+            logger.info("   " + changeListAdd);
+            proc = await execa("git", [ "add", "--", changeListAdd ], execaOpts);
+            addFailed = proc.code !== 0;
         }
-        else {
-            proc = await execa("git", [ "commit", "--dry-run", "-m", `"chore(release): v${nextRelease.version} [skip ci]`, "--", changeList  ], execaOpts);
-        }
-        if (proc.code === 0) {
+        if (changeList)
+        {
+            logger.info("Committing touched files to git version control");
             if (!options.dryRun) {
-                proc = await execa("git", [ "push", "origin", `${options.branch}:${options.branch}` ], execaOpts);
+                proc = await execa("git", [ "commit", "-m", `"chore(release): v${nextRelease.version} [skip ci]`, "--", changeList ], execaOpts);
             }
             else {
-                proc = await execa("git", [ "push", "--dry-run", "origin", `${options.branch}:${options.branch}` ], execaOpts);
+                proc = await execa("git", [ "commit", "--dry-run", "-m", `"chore(release): v${nextRelease.version} [skip ci]`, "--", changeList  ], execaOpts);
+            }
+            if (proc.code === 0) {
+                logger.info("Pushing touched files to svn version control");
+                if (!options.dryRun) {
+                    proc = await execa("git", [ "push", "origin", `${options.branch}:${options.branch}` ], execaOpts);
+                }
+                else {
+                    proc = await execa("git", [ "push", "--dry-run", "origin", `${options.branch}:${options.branch}` ], execaOpts);
+                }
             }
         }
     }
     else if (options.repoType === "svn")
     {
-        //
-        // TODO - Additions
-        //
-        // if ($VCCHANGELISTADD -ne "")
-        // {
-        //     $cl = $VCCHANGELISTADD.Replace("|", " ");
-        //     LogMessage "Adding unversioned touched files to GIT version control"
-        //     LogMessage "   $cl"
-        //     if (![string]::IsNullOrEmpty($svnUser) -and ![string]::IsNullOrEmpty($svnToken)) {
-        //         Invoke-Expression -Command "svn add $cl --non-interactive --no-auth-cache --username `"$svnUser`" --password `"$svnToken`""
-        //     }
-        //     else {
-        //         Invoke-Expression -Command "svn add $cl --non-interactive"
-        //     }
-        //     CheckExitCode $false
-        // }
-        if (!options.dryRun) {
-            await execa("svn", ["commit", changeList, "-m", `chore: v${nextRelease.version} [skip ci]` ], execaOpts);
+        if (changeListAdd)
+        {
+            logger.info("Adding unversioned touched files to svn version control");
+            logger.info("   " + changeListAdd);
+            await execSvn([ "add", changeListAdd ], execaOpts);
         }
-        else {
-            await execa("svn", ["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
+        if (changeList)
+        {
+            logger.info("Committing touched files to svn version control");
+            if (!options.dryRun) {
+                await execa("svn", ["commit", changeList, "-m", `chore: v${nextRelease.version} [skip ci]` ], execaOpts);
+            }
+            else {
+                await execa("svn", ["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
+            }
         }
     }
     else {
@@ -585,23 +613,21 @@ export async function commit({options, nextRelease}, execaOpts: any)
  * @param execaOpts Options to pass to `execa`.
  * @param repoType Repositorytype, one of 'git' or 'svn'
  */
-export async function revert(changeList: string[] | undefined, execaOpts: any, repoType = "git")
+export async function revert(edits: string[] | undefined, execaOpts: any, repoType = "git")
 {
+    const changeListAdd = edits.filter((e: any) => e.type === "A").join(" "),
+          changeListModify = edits.filter((e: any) => e.type === "M").join(" ");
+
+    for (const file of changeListAdd) {
+        await deleteFile(file);
+    }
+
     if (repoType === "git") {
-        throw new Error("Method not implemented");
+        await execa("git", [ "stash", "push", "--", changeListModify ], execaOpts);
+        await execa("git", [ "stash", "drop" ], execaOpts);
     }
     else if (repoType === "svn") {
-        if (!changeList) {
-            await execa("svn", [ "revert", "-R", "." ], execaOpts);
-            await execa("svn", [ "cleanup", ".", "--remove-unversioned" ], execaOpts);
-        }
-        else {
-            await execa("svn", [ "revert", "-R", ...changeList ], execaOpts);
-            // for (const change of changeList)
-            // {
-            //     await execa("svn", ["revert", change ], execaOpts);
-            // }
-        }
+        await execSvn([ "revert", "-R", changeListModify ], execaOpts);
     }
     else {
         throw new Error("Invalid repository type");
