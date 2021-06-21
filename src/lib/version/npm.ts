@@ -36,6 +36,14 @@ export async function setNpmVersion({options, lastRelease, nextRelease, logger, 
     }
 
     //
+    // Scope/name - package.json
+    //
+    defaultName = packageJson.name;
+    if (defaultName.includes("@") && defaultName.includes("/")) {
+        options.npmScope = defaultScope = defaultName.substring(0, defaultName.indexOf("/"));
+    }
+
+    //
     // A full publish run can modify the npm configs at runtime and have them restored to
     // the defaults when finished.  In task mode, this isn't possible.
     //
@@ -84,29 +92,29 @@ export async function setNpmVersion({options, lastRelease, nextRelease, logger, 
         //
         // Scope/name - package.json
         //
-    // defaultName = packageJson.name;
-    // if (defaultName.includes("@") && defaultName.includes("/")) {
-    //     defaultScope = defaultName.substring(0, defaultName.indexOf("/"));
-    // }
-    //
-    //     if (options.npmScope)
-    //     {
-    //         if (!defaultName.includes(options.npmScope))
-    //         {
-    //             const name = options.npmScope + "/" + options.projectName;
-    //             logger.log(`Setting package name in package.json: ${name}`);
-    //             packageJson.name = name;
-    //             //
-    //             // package-lock.json
-    //             //
-    //             if (packageLockFileExists)
-    //             {
-    //                 logger.log(`Setting package name in package-lock.json: ${name}`);
-    //                 packageLockJson.name = name;
-    //             }
-    //             modified = true;
-    //         }
-    //     }
+        // defaultName = packageJson.name;
+        // if (defaultName.includes("@") && defaultName.includes("/")) {
+        //     defaultScope = defaultName.substring(0, defaultName.indexOf("/"));
+        // }
+
+        // if (options.npmScope)
+        // {
+        //     if (!defaultName.includes(options.npmScope))
+        //     {
+        //         const name = options.npmScope + "/" + options.projectName;
+        //         logger.log(`Setting package name in package.json: ${name}`);
+        //         packageJson.name = name;
+        //         //
+        //         // package-lock.json
+        //         //
+        //         if (packageLockFileExists)
+        //         {
+        //             logger.log(`Setting package name in package-lock.json: ${name}`);
+        //             packageLockJson.name = name;
+        //         }
+        //         modified = true;
+        //     }
+        // }
     // }
 
     if (modified) {
