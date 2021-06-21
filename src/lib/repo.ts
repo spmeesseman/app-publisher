@@ -9,7 +9,7 @@ const debug = require("debug")("app-publisher:git");
 const xml2js = require("xml2js");
 
 
-export async function addEdit({options, nextRelease, env, cwd}, pathToAdd: string | string[])
+export async function addEdit({options, nextRelease, logger,  env, cwd}, pathToAdd: string | string[])
 {
     if (!pathToAdd || pathToAdd.length === 0) {
         return;
@@ -18,24 +18,23 @@ export async function addEdit({options, nextRelease, env, cwd}, pathToAdd: strin
     async function _add(p: string) // , isDir = false)
     {
         let editType = "M";
-        const pathResolved = path.relative(cwd, path.resolve(p));
-        try {
-            if (!(await isVersioned({options}, pathResolved, {cwd, env})))
-            {
-                // const dir = path.dirname(pathResolved);
-                // if (!(await isVersioned({options}, dir, {cwd, env}))) {
-                //     _add(dir); // , true);
-                // }
-                editType = "A";
-            }
-        }
-        catch (e) {
+        const pathResolved = path.relative(cwd, path.resolve(p)),
+              versioned = await isVersioned({options, logger}, pathResolved, {cwd, env});
+        if (!versioned)
+        {
+            const ignored = await isIgnored({options, logger}, pathResolved, {cwd, env});
             // const dir = path.dirname(pathResolved);
             // if (!(await isVersioned({options}, dir, {cwd, env}))) {
             //     _add(dir); // , true);
             // }
-            editType = "A";
+            if (!ignored) {
+                editType = "A";
+            }
+            else {
+                editType = "I";
+            }
         }
+
         nextRelease.edits.push({
             path: pathResolved,
             type: editType
@@ -49,6 +48,85 @@ export async function addEdit({options, nextRelease, env, cwd}, pathToAdd: strin
         for (const p of pathToAdd) {
             await _add(p);
         }
+    }
+}
+
+
+/**
+ * Push to the remote repository.
+ *
+ * @param repo The remote repository URL.
+ * @param execaOpts Options to pass to `execa`.
+ *
+ * @throws {Error} if the commit failed or the repository type is invalid.
+ */
+export async function commit({options, nextRelease, logger}, execaOpts: any)
+{
+    let proc: any;
+
+    if (!nextRelease.edits || nextRelease.edits === 0) {
+        logger.info("Commit - Nothing to commit");
+        return;
+    }
+
+    const changeListAdd: string = nextRelease.edits.filter((e: any) => e.type === "A").map((e: any) => e.path).join(" ").trim(),
+          changeList: string = nextRelease.edits.filter((e: any) => e.type !== "I").map((e: any) => e.path).join(" ").trim();
+
+    if (options.repoType === "git")
+    {
+        if (changeListAdd)
+        {
+            logger.info("Adding unversioned touched files to git version control");
+            logger.info("   " + changeListAdd);
+            proc = await execa("git", [ "add", "--", changeListAdd ], execaOpts);
+            if (proc.code !== 0) {
+                logger.warning("Add file(s) to VCS failed");
+            }
+        }
+        if (changeList)
+        {
+            logger.info("Committing touched files to git version control");
+            if (!options.dryRun) {
+                proc = await execa("git", [ "commit", "-m", `"chore(release): v${nextRelease.version} [skip ci]`, "--", changeList ], execaOpts);
+            }
+            else {
+                proc = await execa("git", [ "commit", "--dry-run", "-m", `"chore(release): v${nextRelease.version} [skip ci]`, "--", changeList  ], execaOpts);
+            }
+            if (proc.code === 0) {
+                logger.info("Pushing touched files to svn version control");
+                if (!options.dryRun) {
+                    proc = await execa("git", [ "push", "origin", `${options.branch}:${options.branch}` ], execaOpts);
+                }
+                else {
+                    proc = await execa("git", [ "push", "--dry-run", "origin", `${options.branch}:${options.branch}` ], execaOpts);
+                }
+            }
+            else {
+                logger.warning("Add file(s) to VCS failed");
+            }
+        }
+    }
+    else if (options.repoType === "svn")
+    {
+        if (changeListAdd)
+        {
+            logger.info("Adding unversioned touched files to svn version control");
+            logger.info("   " + changeListAdd);
+            await execSvn([ "add", changeListAdd ], execaOpts);
+        }
+        if (changeList)
+        {
+            logger.info("Committing touched files to svn version control");
+            if (!options.dryRun) {
+                await execa("svn", ["commit", changeList, "-m", `chore: v${nextRelease.version} [skip ci]` ], execaOpts);
+            }
+            else {
+                await execa("svn", ["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
+            }
+        }
+    }
+    else {
+        throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
     }
 }
 
@@ -94,23 +172,23 @@ async function execSvn(svnArgs: string[], execaOpts: any, stdout = false)
  * @param context context
  * @param execaOpts execa options
  */
-export async function fetch({ repo, repoType }, execaOpts: any)
+export async function fetch({ options, logger }, execaOpts: any)
 {
-    if (repoType === "git")
+    if (options.repoType === "git")
     {
         try {
-            await execa("git", ["fetch", "--unshallow", "--tags", repo], execaOpts);
+            await execa("git", ["fetch", "--unshallow", "--tags", options.repo], execaOpts);
         }
         catch (error) {
-            await execa("git", ["fetch", "--tags", repo], execaOpts);
+            await execa("git", ["fetch", "--tags", options.repo], execaOpts);
         }
     }
-    else if (repoType === "svn")
+    else if (options.repoType === "svn")
     {
         await execSvn([ "update", "--force" ], execaOpts);
     }
     else {
-        throw new Error("Invalid repository type");
+        throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
     }
 }
 
@@ -122,12 +200,12 @@ export async function fetch({ repo, repoType }, execaOpts: any)
  *
  * @returns The sha of the HEAD commit.
  */
-export function getHead(execaOpts: any, repoType = "git")
+export function getHead({options, logger}, execaOpts: any)
 {
-    if (repoType === "git") {
+    if (options.repoType === "git") {
         return execa.stdout("git", ["rev-parse", "HEAD"], execaOpts);
     }
-    else if (repoType === "svn")
+    else if (options.repoType === "svn")
     {
         const head = execa.stdout("svn", ["info", "-r", "HEAD"], execaOpts);
         let match: RegExpExecArray;
@@ -137,7 +215,7 @@ export function getHead(execaOpts: any, repoType = "git")
         }
     }
     else {
-        throw new Error("Invalid repository type");
+        throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
     }
 }
 
@@ -149,19 +227,19 @@ export function getHead(execaOpts: any, repoType = "git")
  * @param tagName Tag name for which to retrieve the commit sha.
  * @param execaOpts Options to pass to `execa`.
  *
- * @returns {string} The commit sha of the tag in parameter or `null`.
+ * @returns The commit sha of the tag in parameter or `null`.
  */
-export async function getTagHead(tagName: any, execaOpts: { cwd: any; env: any; }, { branch, repo, repoType })
+export async function getTagHead({options, logger}, tagName: any, execaOpts: { cwd: any; env: any; })
 {
     try
     {
-        if (repoType === "git")
+        if (options.repoType === "git")
         {
             return await execa.stdout("git", ["rev-list", "-1", tagName], execaOpts);
         }
-        else if (repoType === "svn")
+        else if (options.repoType === "svn")
         {
-            const tagLocation = repo.replace("trunk", "tags").replace("branches/" + branch, "tags"),
+            const tagLocation = options.repo.replace("trunk", "tags").replace("branches/" + options.branch, "tags"),
                   head = await execa.stdout("svn", ["log", tagLocation + "/" + tagName, "-v", "--stop-on-copy"], execaOpts);
             let match: RegExpExecArray;
             if ((match = /^r([0-9]+) \|/m.exec(head)) !== null)
@@ -170,9 +248,10 @@ export async function getTagHead(tagName: any, execaOpts: { cwd: any; env: any; 
             }
         }
         else {
-            throw new Error("Invalid repository type");
+            throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
         }
-    } catch (error)
+    }
+    catch (error)
     {
         debug(error);
     }
@@ -185,7 +264,7 @@ export async function getTagHead(tagName: any, execaOpts: { cwd: any; env: any; 
  * @param execaOpts Options to pass to `execa`.
  *
  * @returns List of git tags.
- * @throws {Error} If the `git` or `svn` command fails.
+ * @throws {Error} If the `git` or `svn` command fails or the repository type is invalid.
  */
 export async function getTags({env, options, logger}, execaOpts: any)
 {
@@ -251,7 +330,7 @@ export async function getTags({env, options, logger}, execaOpts: any)
         }
     }
     else {
-        throw new Error("Invalid repository type");
+        throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
     }
 }
 
@@ -264,7 +343,7 @@ export async function getTags({env, options, logger}, execaOpts: any)
  *
  * @returns `true` is the HEAD of the current local branch is the same as the HEAD of the remote branch, falsy otherwise.
  */
-export async function isBranchUpToDate(branch: any, execaOpts: any, options: any)
+export async function isBranchUpToDate({options, logger}, branch: any, execaOpts: any)
 {
     const remoteHead = await execa.stdout("git", ["ls-remote", "--heads", "origin", branch], execaOpts);
     try
@@ -278,7 +357,9 @@ export async function isBranchUpToDate(branch: any, execaOpts: any, options: any
             //
             return await isRefInHistory(remoteHead.match(/^(\w+)?/)[1], execaOpts, options);
         }
-        throw new Error("Invalid repository type");
+        else {
+            throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
+        }
     }
     catch (error)
     {
@@ -307,11 +388,11 @@ export async function isGitRepo(execaOpts: { cwd: any; env: any; })
 }
 
 
-export async function isIgnored({options}, objectPath: string, execaOpts: any, appendPre = false, changePath = false)
+export async function isIgnored({options, logger}, objectPath: string, execaOpts: any)
 {
     if (options.repoType === "svn")
     {
-        const stdout = await execSvn(["propget", "svn:ignore", path.dirname(objectPath) ], execaOpts);
+        const stdout = await execSvn(["propget", "svn:ignore", path.dirname(objectPath) ], execaOpts, true);
         if (new RegExp(`^${objectPath}$`).test(stdout)) {
             return true;
         }
@@ -329,7 +410,7 @@ export async function isIgnored({options}, objectPath: string, execaOpts: any, a
         }
     }
     else {
-        throw new Error("Invalid repository type");
+        throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
     }
 
     return false;
@@ -400,28 +481,65 @@ export async function isSvnRepo(execaOpts: { cwd: any; env: any; })
  * @param appendPre manipulate cwd
  * @param changePath manipulate cwd
  *
- * @returns `true` if the specifed file or directory is under version control.
+ * @throws {Error} if the repository type is invalid
+ * @returns `true` if the specifed file or directory is under version control, `false` otherwise.
  */
-export async function isVersioned({options}, objectPath: string, execaOpts: any, appendPre = false, changePath = false)
+export async function isVersioned({options, logger}, objectPath: string, execaOpts: any)
 {
     let isVersioned = false,
-        proc: any;
+        stdout: string;
 
-    if (options.repoType === "svn")
-    {
-        proc = await execSvn(["info", objectPath], execaOpts, true);
+    try {
+        if (options.repoType === "svn")
+        {   //
+            // If not versioned, the error message shouldbe:
+            //     svn: warning: W155010: The node '...' was not found.
+            //     svn: E200009: Could not display info for all targets because some targets don't exist
+            //
+            stdout = await execSvn(["info", objectPath], execaOpts, true);
+            isVersioned = !stdout.includes("W155010") && !stdout.includes("E200009");
+        }
+        else if (options.repoType === "git")
+        {   //
+            // If not versioned, the error message shouldbe:
+            //     error: pathspec 'test.txt' did not match any file(s) known to git
+            //
+            stdout = await execa.stdout("git", ["ls-files", "--error-unmatch", objectPath ], execaOpts);
+            isVersioned = !stdout.includes("E200009");
+        }
+        else {
+            throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
+        }
     }
-    else if (options.repoType === "git") {
-        proc = await execa("git", ["ls-files", "--error-unmatch", objectPath ], execaOpts);
-    }
-    else {
-        throw new Error("Invalid repository type");
-    }
-    if (proc.code === 0) {
-        isVersioned = true;
-    }
+    catch (e) { /* */ }
 
     return isVersioned;
+}
+
+/**
+ * Push to the remote repository.
+ *
+ * @param repo The remote repository URL.
+ * @param execaOpts Options to pass to `execa`.
+ *
+ * @throws {Error} if the push failed or the repository type is invalid.
+ */
+export async function push({options, logger}, execaOpts: any)
+{
+    if (options.repoType === "git") {
+        if (!options.dryRun) {
+            await execa("git", ["push", "--tags", options.repo], execaOpts);
+        }
+        else {
+            await execa("git", ["push", "--dry-run", "--tags", options.repo], execaOpts);
+        }
+    }
+    else if (options.repoType === "svn") {
+        // Nothing to do
+    }
+    else {
+        throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
+    }
 }
 
 
@@ -432,21 +550,21 @@ export async function isVersioned({options}, objectPath: string, execaOpts: any,
  *
  * @returns The value of the remote git URL.
  */
-export async function repoUrl(execaOpts: any, repoType = "git")
+export async function repoUrl({options, logger}, execaOpts: any)
 {
     try
     {
-        if (repoType === "git") {
+        if (options.repoType === "git") {
             return await execa.stdout("git", ["config", "--get", "remote.origin.url"], execaOpts);
         }
-        else if (repoType === "svn") {
+        else if (options.repoType === "svn") {
             //
             // TODO
             //
             return await execa.stdout("svn", ["config", "--get", "remote.origin.url"], execaOpts);
         }
         else {
-            throw new Error("Invalid repository type");
+            throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
         }
     }
     catch (error)
@@ -457,12 +575,42 @@ export async function repoUrl(execaOpts: any, repoType = "git")
 
 
 /**
+ * @since 2.8.0
+ * @param changeList Changelist.  If not specified, a recursive revert is done
+ * @param execaOpts Options to pass to `execa`.
+ * @param repoType Repositorytype, one of 'git' or 'svn'
+ */
+export async function revert({options, nextRelease, logger}, execaOpts: any)
+{
+    const changeListAdd = nextRelease.edits.filter((e: any) => e.type === "A").join(" "),
+          changeListModify = nextRelease.edits.filter((e: any) => e.type === "M").join(" ");
+
+    logger.info("Revert changes");
+
+    for (const file of changeListAdd) {
+        await deleteFile(file);
+    }
+
+    if (options.repoType === "git") {
+        await execa("git", [ "stash", "push", "--", changeListModify ], execaOpts);
+        await execa("git", [ "stash", "drop" ], execaOpts);
+    }
+    else if (options.repoType === "svn") {
+        await execSvn([ "revert", "-R", changeListModify ], execaOpts);
+    }
+    else {
+        throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
+    }
+}
+
+
+/**
  * Tag the commit head on the local repository.
  *
  * @param tagName The name of the tag.
  * @param execaOpts Options to pass to `execa`.
  *
- * @throws {Error} if the tag creation failed.
+ * @throws {Error} if the tag creation failed or the repository type is invalid.
  */
 export async function tag({options, logger, nextRelease}, execaOpts: any)
 {
@@ -533,134 +681,12 @@ export async function tag({options, logger, nextRelease}, execaOpts: any)
 }
 
 
-/**
- * Push to the remote repository.
- *
- * @param repo The remote repository URL.
- * @param execaOpts Options to pass to `execa`.
- *
- * @throws {Error} if the push failed.
- */
-export async function push({options}, execaOpts: any)
+function throwVcsError(msg: string, logger: any)
 {
-    if (options.repoType === "git") {
-        if (!options.dryRun) {
-            await execa("git", ["push", "--tags", options.repo], execaOpts);
-        }
-        else {
-            await execa("git", ["push", "--dry-run", "--tags", options.repo], execaOpts);
-        }
-    }
-    else if (options.repoType === "svn") {
-        // Nothing to do
-    }
-    else {
-        throw new Error("Invalid repository type");
-    }
+    logger.error(msg);
+    throw new Error(msg);
 }
 
-
-/**
- * Push to the remote repository.
- *
- * @param repo The remote repository URL.
- * @param execaOpts Options to pass to `execa`.
- *
- * @throws {Error} if the commit failed.
- */
-export async function commit({options, nextRelease, logger}, execaOpts: any)
-{
-    let proc,
-        addFailed = false;
-
-    if (!nextRelease.edits || nextRelease.edits === 0) {
-        logger.info("Commit - Nothing to commit");
-        return;
-    }
-
-    const changeListAdd: string = nextRelease.edits.filter((e: any) => e.type === "A").map((e: any) => e.path).join(" ").trim(),
-          changeList: string = nextRelease.edits.map((e: any) => e.path).join(" ").trim();
-
-    if (options.repoType === "git")
-    {
-        if (changeListAdd)
-        {
-            logger.info("Adding unversioned touched files to git version control");
-            logger.info("   " + changeListAdd);
-            proc = await execa("git", [ "add", "--", changeListAdd ], execaOpts);
-            addFailed = proc.code !== 0;
-        }
-        if (changeList)
-        {
-            logger.info("Committing touched files to git version control");
-            if (!options.dryRun) {
-                proc = await execa("git", [ "commit", "-m", `"chore(release): v${nextRelease.version} [skip ci]`, "--", changeList ], execaOpts);
-            }
-            else {
-                proc = await execa("git", [ "commit", "--dry-run", "-m", `"chore(release): v${nextRelease.version} [skip ci]`, "--", changeList  ], execaOpts);
-            }
-            if (proc.code === 0) {
-                logger.info("Pushing touched files to svn version control");
-                if (!options.dryRun) {
-                    proc = await execa("git", [ "push", "origin", `${options.branch}:${options.branch}` ], execaOpts);
-                }
-                else {
-                    proc = await execa("git", [ "push", "--dry-run", "origin", `${options.branch}:${options.branch}` ], execaOpts);
-                }
-            }
-        }
-    }
-    else if (options.repoType === "svn")
-    {
-        if (changeListAdd)
-        {
-            logger.info("Adding unversioned touched files to svn version control");
-            logger.info("   " + changeListAdd);
-            await execSvn([ "add", changeListAdd ], execaOpts);
-        }
-        if (changeList)
-        {
-            logger.info("Committing touched files to svn version control");
-            if (!options.dryRun) {
-                await execa("svn", ["commit", changeList, "-m", `chore: v${nextRelease.version} [skip ci]` ], execaOpts);
-            }
-            else {
-                await execa("svn", ["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
-            }
-        }
-    }
-    else {
-        throw new Error("Invalid repository type");
-    }
-}
-
-
-/**
- * @since 2.8.0
- * @param changeList Changelist.  If not specified, a recursive revert is done
- * @param execaOpts Options to pass to `execa`.
- * @param repoType Repositorytype, one of 'git' or 'svn'
- */
-export async function revert(edits: string[] | undefined, execaOpts: any, repoType = "git")
-{
-    const changeListAdd = edits.filter((e: any) => e.type === "A").join(" "),
-          changeListModify = edits.filter((e: any) => e.type === "M").join(" ");
-
-    for (const file of changeListAdd) {
-        await deleteFile(file);
-    }
-
-    if (repoType === "git") {
-        await execa("git", [ "stash", "push", "--", changeListModify ], execaOpts);
-        await execa("git", [ "stash", "drop" ], execaOpts);
-    }
-    else if (repoType === "svn") {
-        await execSvn([ "revert", "-R", changeListModify ], execaOpts);
-    }
-    else {
-        throw new Error("Invalid repository type");
-    }
-}
 
 
 /**
@@ -669,7 +695,7 @@ export async function revert(edits: string[] | undefined, execaOpts: any, repoTy
  * @param context context
  * @param execaOpts Options to pass to `execa`.
  *
- * @throws {Error} if not authorized to push.
+ * @throws {Error} if not authorized to push or the repository type is invalid.
  */
 export async function verifyAuth({ options, logger }, execaOpts: any)
 {

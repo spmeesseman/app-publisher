@@ -299,7 +299,7 @@ async function runNodeScript(context: any, plugins: any)
     //
     // Fetch tags (git only)
     //
-    await fetch(options, { cwd, env });
+    await fetch({options, logger}, { cwd, env });
 
     //
     // Populate context with last release info
@@ -351,7 +351,7 @@ async function runNodeScript(context: any, plugins: any)
     //
     const nextRelease = {
         level: await getReleaseLevel(context),
-        head: await getHead({ cwd, env }),
+        head: await getHead({options, logger}, { cwd, env }),
         version: undefined,
         tag: undefined,
         notes: undefined,
@@ -462,7 +462,7 @@ async function runNodeScript(context: any, plugins: any)
         //
         // Track modified files
         //
-        addEdit({options, nextRelease, cwd, env}, options.historyFile);
+        addEdit({options, nextRelease, logger, cwd, env}, options.historyFile);
     }
     else if (options.changelogFile && doChangelog)
     {
@@ -479,7 +479,7 @@ async function runNodeScript(context: any, plugins: any)
         //
         // Track modified files
         //
-        addEdit({options, nextRelease, cwd, env}, options.changelogFile);
+        addEdit({options, nextRelease, logger, cwd, env}, options.changelogFile);
     }
 
     //
@@ -498,7 +498,7 @@ async function runNodeScript(context: any, plugins: any)
         //
         // Track modified files
         //
-        addEdit({options, nextRelease, cwd, env}, edits);
+        addEdit({options, nextRelease, logger, cwd, env}, edits);
     }
 
     //
@@ -684,7 +684,7 @@ async function runNodeScript(context: any, plugins: any)
         if (!options.taskCommit || options.taskTag || !options.taskMode)
         {
             await tag(context, { cwd, env });
-            await push({options}, { cwd, env });
+            await push({options, logger}, { cwd, env });
             logger.success((options.dryRun ? "Dry run - " : "") + `Created tag ${nextRelease.tag}`);
             //
             // If there was a Github release made, then publish it and re-tag
@@ -705,7 +705,7 @@ async function runNodeScript(context: any, plugins: any)
         //
         if (options.dryRun && options.dryRunVcRevert)
         {
-            await revert(nextRelease.edits, { cwd, env}, options.repoType);
+            await revert({options, nextRelease, logger}, { cwd, env});
         }
     }
 
