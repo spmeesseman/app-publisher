@@ -1,5 +1,5 @@
 {
-    "name": "@perryjohnson/app-publisher",
+    "name": "@spmeesseman/app-publisher",
     "version": "2.7.2",
     "displayName": "App Publisher",
     "description": "App Publisher",
@@ -9,12 +9,12 @@
         "email": "smeesseman@pjats.com"
     },
     "bugs": {
-        "url": "https://app1.development.pjats.com/projects/set_project.php?project=app-publisher&make_default=no&ref=bug_report_page.php"
+        "url": "https://github.com/spmeesseman/app-publisher/issues"
     },
-    "homepage": "https://app1.development.pjats.com/svn/web/listing.php?repname=pja&path=%2Fapp-publisher%2Ftrunk%2F",
+    "homepage": "https://github.com/spmeesseman/app-publisher",
     "repository": {
-        "type": "svn",
-        "url": "https://svn.development.pjats.com/pja/app-publisher/trunk"
+        "type": "git",
+        "url": "https://github.com/spmeesseman/app-publisher.git"
     },
     "dependencies": {
         "@spmeesseman/arg-parser": "^1.1.5",

@@ -1,15 +1,16 @@
 # App Publisher - Release Automation
 
-[![perry-johnson](https://img.shields.io/badge/perry%20johnson-pja%20pjr-blue.svg)](https://www.spmeesseman.com)
+[![authors](https://img.shields.io/badge/authors-scott%20meesseman-6F02B5.svg?logo=visual%20studio%20code)](https://www.littlesm.com)
 [![app-category](https://img.shields.io/badge/category-releases%20automation%20npm-blue.svg)](https://www.spmeesseman.com)
 [![app-lang](https://img.shields.io/badge/language-typescript%20powershell5-blue.svg)](https://www.spmeesseman.com)
 [![app-publisher](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-app--publisher-e10000.svg)](https://www.spmeesseman.com)
+[![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
-[![authors](https://img.shields.io/badge/authors-scott%20meesseman-6F02B5.svg?logo=visual%20studio%20code)](https://www.spmeesseman.com)
-[![MantisBT issues open](https://app1.development.pjats.com/projects/plugins/ApiExtend/api/issues/countbadge/app-publisher/open)](https://app1.development.pjats.com/projects/set_project.php?project=app-publisher&make_default=no&ref=bug_report_page.php)
-[![MantisBT issues closed](https://app1.development.pjats.com/projects/plugins/ApiExtend/api/issues/countbadge/app-publisher/closed)](https://app1.development.pjats.com/projects/set_project.php?project=app-publisher&make_default=no&ref=bug_report_page.php)
-[![MantisBT version current](https://app1.development.pjats.com/projects/plugins/ApiExtend/api/versionbadge/app-publisher/current)](https://app1.development.pjats.com/projects/set_project.php?project=app-publisher&make_default=no&ref=plugin.php?page=Releases/releases)
-[![MantisBT version next](https://app1.development.pjats.com/projects/plugins/ApiExtend/api/versionbadge/app-publisher/next)](https://app1.development.pjats.com/projects/set_project.php?project=app-publisher&make_default=no&ref=plugin.php?page=Releases/releases)
+[![GitHub issues open](https://img.shields.io/github/issues-raw/spmeesseman/app%2dpublisher.svg?logo=github)](https://github.com/spmeesseman/app-publisher/issues)
+[![GitHub issues closed](https://img.shields.io/github/issues-closed-raw/spmeesseman/app%2dpublisher.svg?logo=github)](https://github.com/spmeesseman/app-publisher/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/spmeesseman/app%2dpublisher.svg?logo=github)](https://github.com/spmeesseman/app-publisher/pulls)
+[![GitHub last commit](https://img.shields.io/github/last-commit/spmeesseman/app%2dpublisher.svg?logo=github)](https://github.com/spmeesseman/app-publisher)
+[![PayPalDonate](https://img.shields.io/badge/paypal-donate-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=YWZXT3KE2L4BA&item_name=taskexplorer&currency_code=USD)
 
 [![app-publisher-cmdline-banner](https://app1.development.pjats.com/svn/web/filedetails.php?repname=pja&path=/app-publisher/trunk/res/readme/cmdline-banner.png&usemime=1)](https://app1.development.pjats.com/svn/web/filedetails.php?repname=pja&path=/app-publisher/trunk/res/readme/cmdline-banner.png&usemime=1)
 
@@ -170,7 +171,7 @@ References:
 
 For the latest help content, run app-publisher detailed help with the -h2 option.
 
-App-Publisher can be run from the command line or in Visual Studio Code using the [Task Explorer](https://marketplace.visualstudio.com/items?itemName=spmeesseman.vscode-taskexplorer) Extension.  The Task Explorer extension will automatically detect .publishrc.json files in a project, and display the tasks within an app-publisher node.
+App-Publisher can be run from the command line or in Visual Studio Code using the [Task Explorer](https://marketplace.visualstudio.com/items?itemName=spmeesseman.app-publisher) Extension.  The Task Explorer extension will automatically detect .publishrc.json files in a project, and display the tasks within an app-publisher node.
 
 From the command line, the following command can be executed:
 
