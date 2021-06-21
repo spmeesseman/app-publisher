@@ -20,7 +20,7 @@ import validateOptions = require("./lib/validate-options");
 import doDistRelease = require("./lib/releases/dist");
 import { doGithubRelease, publishGithubRelease } from "./lib/releases/github";
 import doMantisbtRelease = require("./lib/releases/mantisbt");
-import { doNpmRelease } from "./lib/releases/npm";
+import { doNpmRelease, restorePackageJson, setPackageJson } from "./lib/releases/npm";
 import setVersions = require("./lib/version/set-versions");
 import { template } from "lodash";
 import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
@@ -482,7 +482,7 @@ async function runNodeScript(context: any, plugins: any)
     }
 
     //
-    // Update relevant files with new version #
+    // Update relevant local files with the new version #
     //
     if (!options.taskMode)
     {
@@ -510,6 +510,11 @@ async function runNodeScript(context: any, plugins: any)
     //
     if (options.npmRelease === "Y" && (!options.taskMode || options.taskNpmRelease))
     {   //
+        // User can specify values in publishrc that override what;s in the package.json
+        // file.  Manipulate the package.json file if needed
+        //
+        const packageJsonModified = await setPackageJson({options, logger});
+        //
         // Run pre npm-release scripts if specified
         //
         await util.runScripts({ options, logger, cwd, env }, "preNpmRelease", options.npmReleasePreCommand);
@@ -521,6 +526,12 @@ async function runNodeScript(context: any, plugins: any)
         // Run pre npm-release scripts if specified
         //
         await util.runScripts({options, logger, cwd, env}, "postNpmRelease", options.npmReleasePostCommand);
+        //
+        // Restore any configured package.json values to the original values
+        //
+        if (packageJsonModified) {
+            restorePackageJson(context);
+        }
     }
 
     //

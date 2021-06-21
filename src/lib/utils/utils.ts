@@ -72,27 +72,26 @@ export async function editFile({ options, nextRelease, logger, cwd, env }, editF
     if (editFile && await pathExists(editFile))
     {
         const skipEdit = (options.skipVersionEdits === " Y" || options.taskTouchVersions || options.taskChangelogFile) &&
-                         !options.taskChangelogView && (!options.versionFilesEditAlways.includes(editFile) || options.taskMode),
-              async = options.taskMode;
+                         !options.taskChangelogView && (!options.versionFilesEditAlways.includes(editFile) || options.taskMode);
 
         seekToEnd = seekToEnd || options.versionFilesScrollDown.includes(editFile);
 
         if (!skipEdit)
         {   //
             // Start Notepad process to edit specified file
-            // If this is win32, and it's a manual edit, then use the super cool ps script
-            // that will scroll the content in the editor to the end
+            // If this is win32, and we're told to do do, then use the super cool but painfully slow
+            // powershell script that will scroll the content in the editor to the end
             //
-            if (process.platform === "win32" && seekToEnd && !async)
+            if (process.platform === "win32" && seekToEnd && !options.taskMode)
             {
                 const ps1Script = await getPsScriptLocation("edit-file");
                 await execa.sync("powershell.exe",
-                                    [ ps1Script, "-f", editFile, "-e", options.textEditor, "-s", seekToEnd, "-a", async ],
-                                    { stdio: ["pipe", "pipe", "pipe"], env: process.env}
-                                );
+                    [ ps1Script, "-f", editFile, "-e", options.textEditor, "-s", seekToEnd, "-a", options.taskMode ],
+                    { stdio: ["pipe", "pipe", "pipe"], env: process.env}
+                );
             }
             else {
-                if (async) { // unref() so parent doesn't wait
+                if (options.taskMode) { // unref() so parent doesn't wait
                     await execa(options.textEditor, [ editFile ], { detached: true, stdio: "ignore" }).unref();
                 }
                 else {
@@ -101,9 +100,11 @@ export async function editFile({ options, nextRelease, logger, cwd, env }, editF
             }
         }
         //
-        // Track modified files
+        // Track modified files during a publish run (non-task mode)
         //
-        await addEdit({options, logger, nextRelease, cwd, env}, editFile);
+        if (!options.taskMode) {
+            await addEdit({options, logger, nextRelease, cwd, env}, editFile);
+        }
     }
 }
 
