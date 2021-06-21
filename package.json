@@ -17,7 +17,7 @@
         "url": "https://svn.development.pjats.com/pja/app-publisher/trunk"
     },
     "dependencies": {
-        "@spmeesseman/arg-parser": "^1.1.4",
+        "@spmeesseman/arg-parser": "^1.1.5",
         "@spmeesseman/env-ci": "^1.0.3",
         "@types/env-ci": "*",
         "@types/glob": "^7.1.1",
@@ -42,7 +42,7 @@
         "hook-std": "^2.0.0",
         "json": "^9.0.6",
         "jsonc-parser": "^2.1.0",
-        "lodash": "^4.17.15",
+        "lodash": "^4.17.21",
         "marked": "^0.7.0",
         "marked-terminal": "^3.2.0",
         "minimatch": "^3.0.4",
