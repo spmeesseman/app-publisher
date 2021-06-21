@@ -598,11 +598,12 @@ export async function revert({options, nextRelease, logger}, execaOpts: any)
 
     logger.info("Revert changes");
     logger.info(`   Total Edits   : ${nextRelease.edits.length}`);
-    logger.info(`   Additions     : ${changeListAdd.length}`);
-    logger.info(`   Modifications : ${changeListModify.length}`);
+    logger.info(`   Additions     : ${changeListAdd.split(" ").length}`);
+    logger.info(`   Modifications : ${changeListModify.split(" ").length}`);
 
     for (const file of changeListAdd) {
         try {
+            logger.info(`Removing added file '${file}'`);
             await deleteFile(file);
         }
         catch (e) {
@@ -611,6 +612,8 @@ export async function revert({options, nextRelease, logger}, execaOpts: any)
     }
 
     try {
+        logger.info("Reverting all modifications:");
+        logger.info("   " + changeListModify);
         if (options.repoType === "git") {
             await execa("git", [ "stash", "push", "--", changeListModify ], execaOpts);
             await execa("git", [ "stash", "drop" ], execaOpts);
@@ -623,8 +626,7 @@ export async function revert({options, nextRelease, logger}, execaOpts: any)
         }
     }
     catch (e) {
-        logger.warn("Could not revert files:");
-        logger.warn("   " + changeListModify);
+        logger.warn("Could not revert modified files");
     }
 }
 
