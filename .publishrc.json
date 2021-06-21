@@ -71,7 +71,6 @@
     "postCommitCommand": [],
     "postReleaseCommand":"",
     "promptVersion":     "N",
-    "readme":            "README.spm.md",
     "repo":              "https://github.com/spmeesseman/app-publisher.git",
     "repoType":          "git",
     "skipCommit":        "N",
