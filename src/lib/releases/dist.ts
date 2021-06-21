@@ -38,8 +38,8 @@ async function doDistRelease({ options, logger, nextRelease, cwd, env })
     //
     // Create remote paths
     //
-    targetNetLocation = path.join(options.distReleasePath, options.projectName, nextRelease.version);
-    targetDocLocation = path.join(options.distDocPath, options.projectName, nextRelease.version);
+    targetNetLocation = path.normalize(path.join(options.distReleasePath, options.projectName, nextRelease.version));
+    targetDocLocation = path.normalize(path.join(options.distDocPath, options.projectName, nextRelease.version));
     //
     // Check for legacy Deploy.xml script.  The scipt should at least be modified to NOT
     // send the notification email.
