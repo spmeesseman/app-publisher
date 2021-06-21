@@ -623,14 +623,14 @@ export const publishRcOpts =
         true,
         "boolean",
         false,
-        [ "-cfg", "--config" ],
+        [ "-rcfg", "--read-config" ],
         {
             help: "Display the contents of the configuration file."
         }
     ],
 
     repo: [
-        true,
+        false,
         "string",
         "",
         "The repository URL.  In the form:",
@@ -640,9 +640,9 @@ export const publishRcOpts =
     ],
 
     repoType: [
-        true,
-        "string",
-        "svn",
+        false,
+        "enum(git|svn)",
+        "git",
         "The repository type. It should be one of the following:",
         "",
         "    1. git",

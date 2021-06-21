@@ -206,7 +206,7 @@ export async function getHead({options, logger}, execaOpts: any)
         }
         else if (options.repoType === "svn")
         {
-            const head = execa.stdout("svn", ["info", "-r", "HEAD"], execaOpts);
+            const head = await execa.stdout("svn", ["info", "-r", "HEAD"], execaOpts);
             let match: RegExpExecArray;
             if ((match = /^Revision: ([0-9]+)$/m.exec(head)) !== null)
             {
