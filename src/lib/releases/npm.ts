@@ -48,10 +48,10 @@ export async function doNpmRelease({ options, logger, nextRelease, cwd, env })
             logger.log("   " + destPackedFile);
 
             if (process.platform === "win32") {
-                proc = await execa.shell("move", [ "/Y", tmpPkgFile, destPackedFile]);
+                proc = await execa.shell(`move /Y "${tmpPkgFile}" "${destPackedFile}`);
             }
             else {
-                proc = await execa.shell("mv", [ "-f", tmpPkgFile, destPackedFile]);
+                proc = await execa.shell(`mv -f "${tmpPkgFile}" "${destPackedFile}`);
             }
             checkExitCode(proc.code, logger);
             publishFailed = proc.code !== 0;
