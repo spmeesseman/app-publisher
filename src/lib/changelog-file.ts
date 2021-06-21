@@ -298,7 +298,7 @@ export function createSectionFromCommits({ options, commits, logger })
             //
             let newText,
                 match: RegExpExecArray;
-            let regex = new RegExp(/[^ ][(][a-z0-9\- ]*[)]\s*[:][ ]{0,}/gm);
+            let regex = new RegExp(/(?<=[^ ])[\(][a-z0-9\- ]*[\)]\s*[:][ ]{0,}/gm);
             while ((match = regex.exec(msg)) !== null) // subject - all lower case, or numbers
             {
                 newText = match[0].replace("(", "");
