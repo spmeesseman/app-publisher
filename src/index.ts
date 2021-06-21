@@ -51,8 +51,8 @@ async function run(context: any, plugins: any): Promise<boolean>
  Run Configuration - .publishrc / cmd line
 ----------------------------------------------------------------------------
         `;
-        console.log(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
-        console.log(JSON.stringify(options, undefined, 3));
+        context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
+        context.stdout.write(JSON.stringify(options, undefined, 3));
         return true;
     }
 
@@ -74,20 +74,20 @@ async function run(context: any, plugins: any): Promise<boolean>
  CI Environment Details
 ----------------------------------------------------------------------------
         `;
-        console.log(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
+        context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
         if (isCi)
         {
-            console.log("  CI Name           : " + ciName);
-            console.log("  CI Branch         : " + ciBranch);
-            console.log("  Is PR             : " + isPr);
-            console.log("  Commit            : " + isPr);
-            console.log("  Root              : " + ciRoot);
-            console.log("  Commit            : " + ciCommit);
-            console.log("  Build             : " + ciBuild);
-            console.log("  Build URL         : " + ciBuildUrl);
+            context.stdout.write("  CI Name           : " + ciName);
+            context.stdout.write("  CI Branch         : " + ciBranch);
+            context.stdout.write("  Is PR             : " + isPr);
+            context.stdout.write("  Commit            : " + isPr);
+            context.stdout.write("  Root              : " + ciRoot);
+            context.stdout.write("  Commit            : " + ciCommit);
+            context.stdout.write("  Build             : " + ciBuild);
+            context.stdout.write("  Build URL         : " + ciBuildUrl);
         }
         else {
-            console.log("  No known CI environment was found");
+            context.stdout.write("  No known CI environment was found");
         }
         return true;
     }
@@ -121,7 +121,7 @@ async function run(context: any, plugins: any): Promise<boolean>
     if (!options.taskModeStdOut)
     {
         const mode = options.isNodeJsEnv ? "Node.js" : "bin mode";
-        console.log(" ");
+        context.stdout.write("\n");
         logger.log(`Running ${pkg.name} version ${pkg.version} in ${mode}`);
     }
 
@@ -716,26 +716,30 @@ async function runNodeScript(context: any, plugins: any)
     // await plugins.success(context);
 
     //
-    // Success
-    //
-    if (!options.taskMode) {
-        logger.success((options.dryRun ? "Dry Run: " : "") + `Published release ${nextRelease.version}`);
-    }
-    else {
-        logger.success("Successfully completed task");
-    }
-
-    //
-    // Display cjangelog notes if thisis a dry run
+    // Display changelog notes if this is a dry run
     //
     if (options.dryRun)
     {
         logger.log(`Release notes for version ${nextRelease.version}:`);
         if (nextRelease.notes)
         {
-            // context.stdout.write(marked(nextRelease.notes));
-            context.stdout.write(nextRelease.notes.replace(/\r\n/g, "\n"));
+            if (options.changelogFile) {
+                context.stdout.write(marked(nextRelease.notes));
+            }
+            else {
+                context.stdout.write(nextRelease.notes.replace(/\r\n/g, "\n"));
+            }
         }
+    }
+
+    //
+    // Success
+    //
+    if (!options.taskMode) {
+        logger.success((options.dryRun ? "Dry Run: " : "") + `Published release ${nextRelease.version}`);
+    }
+    else {
+        logger.success((options.dryRun ? "Dry Run: " : "") + "Successfully completed task(s)");
     }
 
     return true; // pick(context, [ "lastRelease", "commits", "nextRelease", "releases" ]);
@@ -759,7 +763,7 @@ async function processTasks1(context: any): Promise<boolean>
     else if (options.taskVersionCurrent)
     {
         const versionInfo = await getCurrentVersion(context);
-        console.log(versionInfo.version);
+        context.stdout.write(versionInfo.version);
         return true;
     }
     else if (options.taskVersionPreReleaseId && util.isString(options.taskVersionPreReleaseId))
@@ -770,7 +774,7 @@ async function processTasks1(context: any): Promise<boolean>
         {
             preRelId = match[1];
         }
-        console.log(preRelId);
+        context.stdout.write(preRelId);
         return true;
     }
 
@@ -844,12 +848,12 @@ async function processTasks4(context: any): Promise<boolean>
 
     if (options.taskVersionNext)
     {
-        console.log(context.nextRelease.version);
+        context.stdout.write(context.nextRelease.version);
         return true;
     }
 
     if (options.taskVersionInfo) {
-        console.log(lastRelease.version + "|" + nextRelease.version);
+        context.stdout.write(lastRelease.version + "|" + nextRelease.version);
         return true;
     }
 
@@ -870,13 +874,13 @@ async function processTasks4(context: any): Promise<boolean>
     if (options.taskCiEnvInfo)
     {
         if (options.historyFile) {
-            console.log(`${lastRelease.version}|${nextRelease.version}|${options.historyFile}`);
+            context.stdout.write(`${lastRelease.version}|${nextRelease.version}|${options.historyFile}`);
         }
         else if (options.changelogFile) {
-            console.log(`${lastRelease.version}|${nextRelease.version}|${options.changelogFile}`);
+            context.stdout.write(`${lastRelease.version}|${nextRelease.version}|${options.changelogFile}`);
         }
         else {
-            console.log(`${lastRelease.version}|${nextRelease.version}`);
+            context.stdout.write(`${lastRelease.version}|${nextRelease.version}`);
         }
         return true;
     }
