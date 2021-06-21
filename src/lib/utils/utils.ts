@@ -66,6 +66,12 @@ export function checkExitCode(code: number, logger: any, throwOnError = false)
 }
 
 
+export function escapeRegExp(text: string)
+{
+    return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
+}
+
+
 export async function getPsScriptLocation(scriptFile: string)
 {
     let ps1Script;

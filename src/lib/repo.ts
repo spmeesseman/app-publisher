@@ -1,9 +1,7 @@
 
 import * as path from "path";
-import { isString } from "./utils/utils";
+import { escapeRegExp, isString } from "./utils/utils";
 import { deleteFile, pathExists, readFile } from "./utils/fs";
-import { resolve } from "dns";
-import { stderr } from "hook-std";
 const execa = require("execa");
 const debug = require("debug")("app-publisher:git");
 const xml2js = require("xml2js");
@@ -390,11 +388,24 @@ export async function isGitRepo(execaOpts: { cwd: any; env: any; })
 
 export async function isIgnored({options, logger}, objectPath: string, execaOpts: any)
 {
+    const excapedRegex = escapeRegExp(objectPath);
+
+    logger.info(`Check ignored property for '${objectPath}'`);
+
     if (options.repoType === "svn")
     {
-        const stdout = await execSvn(["propget", "svn:ignore", path.dirname(objectPath) ], execaOpts, true);
-        if (new RegExp(`^${objectPath}$`).test(stdout)) {
-            return true;
+        try {
+            const stdout = await execSvn(["propget", "svn:ignore", path.dirname(objectPath) ], execaOpts, true);
+            if (new RegExp(`^${excapedRegex}$`).test(stdout)) {
+                logger.info("   This file is being ignored from version control");
+                return true;
+            }
+        }
+        catch (e) // no propget in base dir W200017 E200000
+        {    //
+            // svn: warning: W200017: Property 'svn:ignore' not found on '...'
+           // svn: E200000: A problem occurred; see other errors for details
+          // Nothing to do here, returning 'false'
         }
     }
     else if (options.repoType === "git")
@@ -403,7 +414,8 @@ export async function isIgnored({options, logger}, objectPath: string, execaOpts
         {
             const fileData = await readFile(".gitignore");
             if (fileData && fileData.length > 0) {
-                if (new RegExp(`^${objectPath}$`).test(fileData)) {
+                if (new RegExp(`^${excapedRegex}$`).test(fileData)) {
+                    logger.info("   This file is being ignored from version control");
                     return true;
                 }
             }
