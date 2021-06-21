@@ -1331,7 +1331,7 @@ export async function doChangelogFileEdit({ options, commits, logger, lastReleas
     }
     else if (options.taskMode && !options.taskChangelog)
     {
-        options.changelogFile = path.join(os.tmpdir(), `history.${nextRelease.version}.txt`);
+        options.changelogFile = path.join(os.tmpdir(), `changelog.${nextRelease.version}.md`);
         if (await pathExists(options.changelogFile))
         {
             await deleteFile(options.changelogFile);
@@ -1380,15 +1380,19 @@ export async function doChangelogFileEdit({ options, commits, logger, lastReleas
         if (!newChangelog) {
             tmpCommits = "\r\n";
         }
-        tmpCommits += `## $VERSIONTEXT $VERSION (${fmtDate})\r\n`;
+        tmpCommits += `## ${options.versionText} ${nextRelease.version} (${fmtDate})\r\n`;
         //
         // Loop through the commits and build the markdown for appending to the changelog
         //
         for (const commit of commits)
         {
+            if (!commit || !commit.message) {
+                continue;
+            }
+
             let scope = "",
                 section: string;
-            let tmpCommit = commit.trim();
+            let tmpCommit = commit.message.trim();
             tmpCommit = tmpCommit.replace("\n", "\r\n");
             const idx1 = tmpCommit.indexOf("("),
                     idx2 = tmpCommit.indexOf(":");
@@ -1407,11 +1411,11 @@ export async function doChangelogFileEdit({ options, commits, logger, lastReleas
                 continue;
             }
             else if (idx1 !== -1 && idx1 < idx2) {
-                section = tmpCommit.SubString(0, idx1).TrimEnd();
-                scope = properCase(tmpCommit.SubString(idx1 + 1, tmpCommit.indexOf(")") - idx1 - 1).toLowerCase().trim());
+                section = tmpCommit.substring(0, idx1).trimRight();
+                scope = properCase(tmpCommit.substring(idx1 + 1, tmpCommit.indexOf(")") - idx1 - 1).toLowerCase().trim());
             }
             else {
-                section = properCase(tmpCommit.SubString(0, idx2).toLowerCase().TrimEnd());
+                section = properCase(tmpCommit.substring(0, idx2).toLowerCase().trimRight());
             }
             //
             // Ignore chores, progress, and custom specified psubjects to ignore
@@ -1433,7 +1437,7 @@ export async function doChangelogFileEdit({ options, commits, logger, lastReleas
             if (doContinue) {
                 continue;
             }
-            tmpCommit = tmpCommit.SubString(idx2 + 1).trim();
+            tmpCommit = tmpCommit.substring(idx2 + 1).trim();
             //
             // Print out the subject as a title if it is different than the previous sections
             // title.  Comments are alphabetized.
@@ -1454,7 +1458,7 @@ export async function doChangelogFileEdit({ options, commits, logger, lastReleas
             //
             if (tmpCommit.includes(EOL))
             {
-                const tmpCommitParts = tmpCommit.Split(EOL);
+                const tmpCommitParts = tmpCommit.split(EOL);
                 tmpCommits += tmpCommitParts[0];
                 for (let i = 1; i < tmpCommitParts.Length; i++)
                 {
@@ -1493,9 +1497,11 @@ export async function doChangelogFileEdit({ options, commits, logger, lastReleas
         // Write the formatted commits text to the top of options.changelogFile, but underneath the
         // changelog title
         //
+
         tmpCommits = tmpCommits.trim();
         let changeLogContents = await readFile(options.changelogFile);
         changeLogContents = changeLogContents.replace(changelogTitle, "").trim();
+
         let changeLogFinal = `${changelogTitle}${EOL}${EOL}`;
         if (tmpCommits) {
             changeLogFinal = `${changeLogFinal}${tmpCommits}${EOL}${EOL}`;
@@ -1503,6 +1509,9 @@ export async function doChangelogFileEdit({ options, commits, logger, lastReleas
         if (changeLogContents) {
             changeLogFinal = `${changeLogFinal}${changeLogContents}${EOL}`;
         }
+        //
+        // Write content to file
+        //
         await writeFile(options.changelogFile, changeLogFinal);
     }
     else {

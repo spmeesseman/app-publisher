@@ -142,16 +142,13 @@ export async function pathExists(file: string, resolve = true): Promise<boolean>
 
 export async function readFile(file: string): Promise<string>
 {
-    if (!file.includes(path.delimiter)) {
-        file = path.join(process.cwd(), file);
-    }
     return new Promise<string>((resolve, reject) => {
         try {
-            fs.readFile(file, (e, data) => {
+            fs.readFile(path.resolve(file), (e, data) => {
                 if (e) {
                     reject(e);
                 }
-                resolve(data.toString());
+                resolve(data ? data.toString() : "");
             });
         }
         catch (e) {
