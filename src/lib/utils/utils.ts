@@ -54,7 +54,7 @@ export function camelCase(name: string, indexUpper: number)
 
 export function checkExitCode(code: number, logger: any, throwOnError = false)
 {
-    if (code !== 0) {
+    if (code === 0) {
         logger.success("Exit Code 0");
     }
     else {
