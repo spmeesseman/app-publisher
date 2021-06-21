@@ -1629,5 +1629,5 @@ export async function doHistoryFileEdit({ options, commits, logger, lastRelease,
     //
     // Allow manual modifications to history file
     //
-    await editFile({nextRelease, options, logger, cwd, env}, options.historyFile);
+    await editFile({nextRelease, options, logger, cwd, env}, options.historyFile, true);
 }

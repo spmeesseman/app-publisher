@@ -67,14 +67,15 @@ export function checkExitCode(code: number, logger: any, throwOnError = false)
 }
 
 
-export async function editFile({ options, nextRelease, logger, cwd, env }, editFile: string)
+export async function editFile({ options, nextRelease, logger, cwd, env }, editFile: string, seekToEnd = false)
 {
     if (editFile && await pathExists(editFile))
     {
         const skipEdit = (options.skipVersionEdits === " Y" || options.taskTouchVersions || options.taskChangelogFile) &&
                          !options.taskChangelogView && (!options.versionFilesEditAlways.includes(editFile) || options.taskMode),
-              async = options.taskMode,
-              seekToEnd = (!options.taskChangelog && !options.taskCommit) || options.versionFilesScrollDown.includes(editFile);
+              async = options.taskMode;
+
+        seekToEnd = seekToEnd || options.versionFilesScrollDown.includes(editFile);
 
         if (!skipEdit)
         {   //
