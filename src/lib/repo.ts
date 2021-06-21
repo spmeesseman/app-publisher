@@ -198,22 +198,28 @@ export async function fetch({ options, logger }, execaOpts: any)
  *
  * @returns The sha of the HEAD commit.
  */
-export function getHead({options, logger}, execaOpts: any)
+export async function getHead({options, logger}, execaOpts: any)
 {
-    if (options.repoType === "git") {
-        return execa.stdout("git", ["rev-parse", "HEAD"], execaOpts);
-    }
-    else if (options.repoType === "svn")
-    {
-        const head = execa.stdout("svn", ["info", "-r", "HEAD"], execaOpts);
-        let match: RegExpExecArray;
-        if ((match = /^Revision: ([0-9]+)$/m.exec(head)) !== null)
+    try {
+        if (options.repoType === "git") {
+            return await execa.stdout("git", ["rev-parse", "HEAD"], execaOpts);
+        }
+        else if (options.repoType === "svn")
         {
-            return match[1];
+            const head = execa.stdout("svn", ["info", "-r", "HEAD"], execaOpts);
+            let match: RegExpExecArray;
+            if ((match = /^Revision: ([0-9]+)$/m.exec(head)) !== null)
+            {
+                return match[1];
+            }
+        }
+        else {
+            throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
         }
     }
-    else {
-        throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
+    catch (error)
+    {
+        throwVcsError(error.toString(), logger);
     }
 }
 
@@ -229,8 +235,7 @@ export function getHead({options, logger}, execaOpts: any)
  */
 export async function getTagHead({options, logger}, tagName: any, execaOpts: { cwd: any; env: any; })
 {
-    try
-    {
+    try {
         if (options.repoType === "git")
         {
             return await execa.stdout("git", ["rev-list", "-1", tagName], execaOpts);
@@ -251,7 +256,7 @@ export async function getTagHead({options, logger}, tagName: any, execaOpts: { c
     }
     catch (error)
     {
-        debug(error);
+        throwVcsError(error.toString(), logger);
     }
 }
 

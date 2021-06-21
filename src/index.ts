@@ -1,6 +1,7 @@
 
 import * as util from "./lib/utils/utils";
 import * as child_process from "child_process";
+import * as npm from "./lib/releases/npm";
 import gradient from "gradient-string";
 import chalk from "chalk";
 import marked from "marked";
@@ -20,7 +21,6 @@ import validateOptions = require("./lib/validate-options");
 import doDistRelease = require("./lib/releases/dist");
 import { doGithubRelease, publishGithubRelease } from "./lib/releases/github";
 import doMantisbtRelease = require("./lib/releases/mantisbt");
-import { doNpmRelease, restorePackageJson, setPackageJson } from "./lib/releases/npm";
 import setVersions = require("./lib/version/set-versions");
 import { template } from "lodash";
 import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
@@ -513,7 +513,7 @@ async function runNodeScript(context: any, plugins: any)
         // User can specify values in publishrc that override what;s in the package.json
         // file.  Manipulate the package.json file if needed
         //
-        const packageJsonModified = await setPackageJson({options, logger});
+        const packageJsonModified = await npm.setPackageJson({options, logger});
         //
         // Run pre npm-release scripts if specified
         //
@@ -521,7 +521,7 @@ async function runNodeScript(context: any, plugins: any)
         //
         // Perform dist / network folder release
         //
-        await doNpmRelease(context);
+        await npm.doNpmRelease(context);
         //
         // Run pre npm-release scripts if specified
         //
@@ -530,7 +530,7 @@ async function runNodeScript(context: any, plugins: any)
         // Restore any configured package.json values to the original values
         //
         if (packageJsonModified) {
-            restorePackageJson(context);
+            await npm.restorePackageJson(context);
         }
     }
 

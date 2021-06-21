@@ -33,9 +33,9 @@ export async function setNpmVersion({options, lastRelease, nextRelease, logger, 
     //
     // Scope/name - package.json
     //
-    defaultName = packageJson.name;
+    const defaultName = packageJson.name;
     if (defaultName.includes("@") && defaultName.includes("/")) {
-        options.npmScope = defaultScope = defaultName.substring(0, defaultName.indexOf("/"));
+        options.npmScope = defaultName.substring(0, defaultName.indexOf("/"));
     }
 
     if (modified) {
