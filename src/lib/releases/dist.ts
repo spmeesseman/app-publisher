@@ -59,23 +59,24 @@ async function doDistRelease({ options, logger, nextRelease, cwd, env })
             // TargetNetLocation is defined above as it is needed for email notification fn as well
             //
             if (!(await pathExists(targetNetLocation))) {
-                logger.log("Create directory targetNetLocation");
+                logger.log(`Create directory ${targetNetLocation}`);
                 await createDir(targetNetLocation);
             }
             //
             // Copy all files in 'dist' directory that start with options.projectName, and the history file
             //
-            logger.log("Deploying files to " + targetNetLocation);
+            logger.log(`Deploying files to ${targetNetLocation}`);
             await copyDir(options.pathToDist, targetNetLocation);
             //
             // DOC
             //
             if (options.distDocPath !== "")
-            {
-                //
+            {   //
                 // Create directory on doc share
                 //
-                await createDir(targetDocLocation);
+                if (!(await pathExists(targetDocLocation))) {
+                    await createDir(targetDocLocation);
+                }
                 //
                 // Copy all pdf files in 'dist' and 'doc' and 'documentation' directories
                 //
@@ -116,7 +117,7 @@ async function doDistRelease({ options, logger, nextRelease, cwd, env })
                 }
                 if (docDirSrc)
                 {
-                    logger.log("Deploying pdf documentation to targetDocLocation");
+                    logger.log(`Deploying pdf documentation to ${targetDocLocation}`);
                     await copydir(docDirSrc, targetDocLocation, {
                         filter: (stat: string, filepath: string, filename: string) => {
                             return stat === "file" && path.extname(filepath).toLowerCase() === ".pdf";
@@ -124,16 +125,16 @@ async function doDistRelease({ options, logger, nextRelease, cwd, env })
                     });
                 }
                 else {
-                    logger.warn("Skipping documentation network push, doc direcory not found");
+                    logger.warn("Skipping Dist doc push to shared drive / directory, doc direcory not found");
                 }
             }
         }
         else {
-            logger.log("Dry run, skipping basic push to network drive");
+            logger.log("Dry run, skipping Dist push to shared drive / directory");
         }
     }
     else {
-        logger.log("Skipped network release push (user specified)");
+        logger.log("Skipped Dist push to shared drive / directory (user specified)");
     }
 
     //
