@@ -205,6 +205,8 @@ async function doGithubRelease({ options, logger, lastRelease, nextRelease, env 
 
 async function publishGithubRelease({options, nextRelease, logger})
 {
+    logger.log(`Publishing GitHub v${nextRelease.version} release`);
+
     if (githubReleaseId)
     {
         logger.log("Marking release as published");
@@ -245,5 +247,8 @@ async function publishGithubRelease({options, nextRelease, logger})
         else {
             logger.error(`Failed to publish/patch GitHub v${nextRelease.version} release`);
         }
+    }
+    else {
+        logger.warn("No un-published release id to publish");
     }
 }
