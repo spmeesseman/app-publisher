@@ -67,8 +67,8 @@ export async function commit({options, nextRelease, logger}, execaOpts: any)
         return;
     }
 
-    const changeListAdd: string = nextRelease.edits.filter((e: any) => e.type === "A").map((e: any) => e.path).join(" ").trim(),
-          changeList: string = nextRelease.edits.filter((e: any) => e.type !== "I").map((e: any) => e.path).join(" ").trim();
+    const changeListAdd = nextRelease.edits.filter((e: any) => e.type === "A"),
+          changeList = nextRelease.edits.filter((e: any) => e.type !== "I");
 
     logger.info("Commit changes");
     logger.info(`   Total Edits     : ${nextRelease.edits.length}`);
@@ -79,13 +79,14 @@ export async function commit({options, nextRelease, logger}, execaOpts: any)
     {
         if (changeListAdd)
         {
+            const chgListPathsAdded = changeListAdd.map((e: any) => e.path);
             logger.info("Adding unversioned touched files to git version control");
-            logger.info("   " + changeListAdd);
+            logger.info("   " + chgListPathsAdded.join(" "));
             if (!options.dryRun) {
-                proc = await execa("git", [ "add", "--", changeListAdd ], execaOpts);
+                proc = await execa("git", [ "add", "--", ...chgListPathsAdded ], execaOpts);
             }
             else {
-                proc = await execa("git", [ "add", "--dry-run", "--", changeListAdd ], execaOpts);
+                proc = await execa("git", [ "add", "--dry-run", "--", ...chgListPathsAdded ], execaOpts);
             }
             if (proc.code !== 0) {
                 logger.warning("Add file(s) to VCS failed");
@@ -93,7 +94,9 @@ export async function commit({options, nextRelease, logger}, execaOpts: any)
         }
         if (changeList)
         {
+            const chgListPaths = changeList.map((e: any) => e.path);
             logger.info("Committing touched files to git version control");
+            logger.info("   " + changeList.join(" "));
             if (!options.dryRun) {
                 proc = await execa("git", [ "commit", "-m", `"chore(release): v${nextRelease.version} [skip ci]"`, "--", changeList ], execaOpts);
             }
@@ -118,10 +121,11 @@ export async function commit({options, nextRelease, logger}, execaOpts: any)
     {
         if (changeListAdd)
         {
+            const chgListPathsAdded = changeListAdd.map((e: any) => e.path);
             logger.info("Adding unversioned touched files to svn version control");
-            logger.info("   " + changeListAdd);
+            logger.info("   " + chgListPathsAdded);
             if (!options.dryRun) {
-                await execSvn([ "add", changeListAdd ], execaOpts);
+                await execSvn([ "add", ...chgListPathsAdded ], execaOpts);
             }
             else {
                 await execSvn(["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
@@ -129,9 +133,11 @@ export async function commit({options, nextRelease, logger}, execaOpts: any)
         }
         if (changeList)
         {
+            const chgListPaths = changeList.map((e: any) => e.path);
             logger.info("Committing touched files to svn version control");
+            logger.info("   " + chgListPaths);
             if (!options.dryRun) {
-                await execSvn(["commit", changeList, "-m", `"chore: v${nextRelease.version} [skip ci]"` ], execaOpts);
+                await execSvn(["commit", ...chgListPaths, "-m", `"chore: v${nextRelease.version} [skip ci]"` ], execaOpts);
             }
             else {
                 await execSvn(["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
