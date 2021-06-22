@@ -36,7 +36,7 @@ const pkg = require("../package.json");
 marked.setOptions({ renderer: new TerminalRenderer() });
 
 
-async function run(context: any, plugins: any): Promise<boolean>
+async function run(context: any, plugins: any)
 {
     const { cwd, env, options, logger } = context;
     const runTxt = !options.dryRun ? "run" : "test run";
@@ -946,7 +946,7 @@ async function runPowershellScript(options: any, logger: any)
         logPowershell(data, logger, isStdOutCmd);
     });
 
-    let iCode: number;
+    let iCode: number | null;
     child.on("exit", code =>
     {
         // if (fs.existsSync("ap.env"))

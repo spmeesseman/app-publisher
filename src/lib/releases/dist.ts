@@ -9,12 +9,6 @@ export = doDistRelease;
 
 async function doDistRelease({ options, logger, nextRelease, cwd, env })
 {
-    //
-    // Create remote paths
-    //
-    let targetNetLocation: string,
-        targetDocLocation: string;
-
     logger.log("Starting Distribution release");
 
     //
@@ -28,8 +22,8 @@ async function doDistRelease({ options, logger, nextRelease, cwd, env })
     //
     // Create remote paths
     //
-    targetNetLocation = path.normalize(path.join(options.distReleasePath, options.projectName, nextRelease.version));
-    targetDocLocation = path.normalize(path.join(options.distDocPath, options.projectName, nextRelease.version));
+    const targetNetLocation = path.normalize(path.join(options.distReleasePath, options.projectName, nextRelease.version)),
+          targetDocLocation = path.normalize(path.join(options.distDocPath, options.projectName, nextRelease.version));
 
     //
     // Check for legacy Deploy.xml script.  The scipt should at least be modified to NOT
@@ -84,7 +78,7 @@ async function doDistRelease({ options, logger, nextRelease, cwd, env })
                         docDirSrc = "docs";
                     }
                     else {
-                        async function _checkBack(b1, b2, b3)
+                        async function checkBack(b1, b2, b3)
                         {
                             let docDirTmp = path.resolve(path.normalize(b1));
                             if (!docDirTmp.includes(cwd)) {
@@ -102,8 +96,8 @@ async function doDistRelease({ options, logger, nextRelease, cwd, env })
                                 docDirSrc = docDirTmp;
                             }
                         }
-                        await _checkBack(path.join("..", "doc"), path.join("..", "docs"), path.join("..", "documentation"));
-                        await _checkBack(path.join("..", "..", "doc"), path.join("..", "..", "docs"), path.join("..", "..", "documentation"));
+                        await checkBack(path.join("..", "doc"), path.join("..", "docs"), path.join("..", "documentation"));
+                        await checkBack(path.join("..", "..", "doc"), path.join("..", "..", "docs"), path.join("..", "..", "documentation"));
                     }
                 }
                 if (docDirSrc)

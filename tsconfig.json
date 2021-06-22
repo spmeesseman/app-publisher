@@ -1,23 +1,54 @@
 {
+    // "compilerOptions": {
+	// 	"module": "commonjs",
+	// 	"target": "es2019",
+	// 	"lib": ["ES2019"],
+	// 	"outDir": "dist",
+	// 	"rootDir": "src",
+	// 	"sourceMap": true
+	// },
+    "include": ["src/**/*"],
     "exclude": [
         "node_modules",
         "doc",
         "install",
         "res",
         "script",
-        "**/*.spec.ts"
+        "**/*.spec.ts",
+        "testFixture"
     ],
     "compilerOptions": {
-        "module": "commonjs",
-        "target": "es6",
-        "outDir": "build",
-        "sourceMap": true,
-        "rootDir": "src",
-        "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true,
-        "lib": [
-            "dom",
-            "es6"
-        ],
-    }
+		"target": "es2019",
+		"lib": ["ES2019"],
+		"module": "commonjs",
+		"outDir": "build",
+		"moduleResolution": "node",
+		"rootDir": "src",
+		// "strict": true,
+		"sourceMap": true,
+		"allowSyntheticDefaultImports":true
+	},
+    // "compilerOptions": {
+    //     "module": "commonjs",
+    //     "target": "es6",
+    //     "outDir": "build",
+    //     "rootDir": "src",
+    //     "esModuleInterop": true,
+    //     "allowSyntheticDefaultImports": true,
+    //     "lib": [
+    //         "dom",
+    //         "es6"
+    //     ],
+	// 	// "allowSyntheticDefaultImports":true,
+    //     "sourceMap": true,
+    //     //"allowSyntheticDefaultImports": true,
+    //     //"esModuleInterop": true,
+    //     /* Strict Type-Checking Option */
+    //     // "strict": true,   /* enable all strict type-checking options */
+    //     /* Additional Checks */
+    //     "noUnusedLocals": false /* Report errors on unused locals. */
+    //     // "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
+    //     // "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
+    //     // "noUnusedParameters": true,  /* Report errors on unused parameters. */
+    // }
 }

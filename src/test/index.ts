@@ -1,7 +1,6 @@
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable prefer-arrow/prefer-arrow-functions */
 "use strict";
-
 //
 import * as path from "path";
 import * as Mocha from "mocha";
@@ -9,11 +8,17 @@ const NYC = require("nyc");
 import * as glob from "glob";
 
 //
+// Simulates the recommended config option
+// extends: "@istanbuljs/nyc-config-typescript",
+// import * as baseConfig from "@istanbuljs/nyc-config-typescript";
+
+//
 // Recommended modules, loading them here to speed up NYC init
 // and minimize risk of race condition
 //
 import "ts-node/register";
 import "source-map-support/register";
+
 
 //
 // Linux: prevent a weird NPE when mocha on Linux requires the window size from the TTY
@@ -33,12 +38,13 @@ if (process.platform === "linux")
 
 export async function run(): Promise<void>
 {
-    const testsRoot = path.resolve(__dirname, "..", "..", "..");
+    const testsRoot = path.resolve(__dirname, "..");
+
     // Setup coverage pre-test, including post-test hook to report
-    const nyc = new NYC(
-    {
+    const nyc = new NYC({
+        // ...baseConfig,
         extends: "@istanbuljs/nyc-config-typescript",
-        cwd: path.join(__dirname, "..", "..", "..", ".."),
+        cwd: path.join(__dirname, "..", ".."),
         reporter: ["text-summary", "html", "lcov", "cobertura" ],
         all: true,
         silent: false,
@@ -46,11 +52,11 @@ export async function run(): Promise<void>
         hookRequire: true,
         hookRunInContext: true,
         hookRunInThisContext: true,
-        useSpawnWrap: true,           // wrap language server spawn
         include: ["dist/**/*.js"],
-        exclude: ["dist/client/test/**"]
+        exclude: ["dist/test/**"],
     });
     await nyc.wrap();
+
     //
     // Check the modules already loaded and warn in case of race condition
     // (ideally, at this point the require cache should only contain one file - this module)
@@ -66,6 +72,7 @@ export async function run(): Promise<void>
     // Debug which files will be included/excluded
     // console.log('Glob verification', await nyc.exclude.glob(nyc.cwd));
     //
+
     await nyc.createTempDirectory();
 
     //
@@ -73,7 +80,7 @@ export async function run(): Promise<void>
     //
     const mocha = new Mocha({
         ui: "tdd", // the TDD UI is being used in extension.test.ts (suite, test, etc.)
-        color: true, // colored output from test results,
+        useColors: true, // colored output from test results,
         timeout: 30000, // default timeout: 10 seconds
         retries: 1,
         reporter: "mocha-multi-reporters",
@@ -85,6 +92,8 @@ export async function run(): Promise<void>
             }
         }
     });
+
+    mocha.useColors(true);
 
     //
     // Add all files to the test suite
