@@ -6,12 +6,13 @@ import { createReleaseChangelog } from "../changelog-file";
 import { contentTypeMap } from "./content-type-map";
 import { isString } from "lodash";
 import { APP_NAME } from "../definitions/constants";
+import { IContext } from "../../interface";
 const got = require("got");
 
 export = doMantisRelease;
 
 
-async function doMantisRelease({ options, logger, nextRelease })
+async function doMantisRelease({ options, logger, nextRelease }: IContext)
 {
     logger.log("Starting MantisBT release");
     logger.log(`Creating MantisBT v${nextRelease.version} release`);

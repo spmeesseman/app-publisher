@@ -4,6 +4,7 @@ import { pathExists, writeFile, readFile } from "../utils/fs";
 import { createReleaseChangelog } from "../changelog-file";
 import { contentTypeMap } from "./content-type-map";
 import { APP_NAME } from "../definitions/constants";
+import { IContext } from "../../interface";
 const got = require("got");
 
 export { doGithubRelease, publishGithubRelease };
@@ -12,7 +13,7 @@ export { doGithubRelease, publishGithubRelease };
 let githubReleaseId;
 
 
-async function doGithubRelease({ options, logger, lastRelease, nextRelease, env })
+async function doGithubRelease({ options, logger, lastRelease, nextRelease, env }: IContext)
 {
     logger.log(`Creating GitHub v${nextRelease.version} release`);
 
