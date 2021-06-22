@@ -576,7 +576,7 @@ async function runNodeScript(context: any, plugins: any)
     // Github release
     //
     let didGithubRelease = false;
-    if (options.repo === "git" && options.githubRelease === "Y" && (!options.taskMode || options.taskGithubRelease))
+    if (options.repoType === "git" && options.githubRelease === "Y" && (!options.taskMode || options.taskGithubRelease))
     {   //
         // Pre-github release (.publishrc)
         //

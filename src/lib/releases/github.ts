@@ -23,7 +23,7 @@ async function doGithubRelease({ options, logger, lastRelease, nextRelease, env 
 
     const githubChangelog = await createReleaseChangelog({ options, logger }, nextRelease.version);
 
-    if (githubChangelog && !options.dryRun)
+    if (githubChangelog)
     {   //
         // TODO - Allow user to edit html changelog
         //
@@ -62,26 +62,41 @@ async function doGithubRelease({ options, logger, lastRelease, nextRelease, env 
         let response: any,
             url = `https://api.github.com/repos/${options.githubUser}/${encPrjName}/releases`;
 
-        try {
-            response = await got(url, {
-                json: {
-                    tag_name: nextRelease.tag,
-                    target_commitish: options.branch,
-                    name: nextRelease.tag,
-                    body: githubChangelog,
-                    draft: true,
-                    prerelease: false,
-                    method: "POST"
-                },
-                headers,
-                responseType: "json"
-            });
+        if (!options.dryRun)
+        {
+            try {
+                response = await got(url, {
+                    json: {
+                        tag_name: nextRelease.tag,
+                        target_commitish: options.branch,
+                        name: nextRelease.tag,
+                        body: githubChangelog,
+                        draft: true,
+                        prerelease: false,
+                        method: "POST"
+                    },
+                    headers,
+                    responseType: "json"
+                });
+            }
+            catch (e) {
+                rc = { success: false, error: `GitHub release v${nextRelease.version} failure - ${e.toString()}` };
+                logger.error(rc.error);
+                return rc;
+            }
         }
-        catch (e) {
-            rc = { success: false, error: `GitHub release v${nextRelease.version} failure - ${e.toString()}` };
-            logger.error(rc.error);
-            return rc;
+        else {
+            logger.log("Dry run - skip rest request, emulate response");
+            response = {
+                body: {
+                    id: "dry-run-id",
+                    upload_url: "https://this-is-a-dry-run.com",
+                    tarball_url: "https://this-is-a-dry-run.com/tarball.tar",
+                    zipball_url: "https://this-is-a-dry-run.com/zipball.zip"
+                }
+            };
         }
+
         //
         // Make sure an upload_url value exists on the response object to check for success
         //
@@ -125,17 +140,31 @@ async function doGithubRelease({ options, logger, lastRelease, nextRelease, env 
                             // url = $Response.upload_url
                             url = url.replace("{?name,label}", "") + "?name=" + assetName;
                             let response2: any;
-                            try {
-                                response2 = await got(url, {
-                                    body: request,
-                                    responseType: "json",
-                                    method: "POST",
-                                    headers
-                                });
+                            if (!options.dryRun)
+                            {
+                                try {
+                                    response2 = await got(url, {
+                                        body: request,
+                                        responseType: "json",
+                                        method: "POST",
+                                        headers
+                                    });
+                                }
+                                catch (e) {
+                                    rc.error = `Failed to upload GitHub asset ${assetName} - ${e.toString()}`;
+                                    logger.error(rc.error);
+                                }
                             }
-                            catch (e) {
-                                rc.error = `Failed to upload GitHub asset ${assetName} - ${e.toString()}`;
-                                logger.error(rc.error);
+                            else {
+                                logger.log("Dry run - skip rest request, emulate response");
+                                response2 = {
+                                    body: {
+                                        id: "dry-run-asset-id",
+                                        browser_download_url: "https://this-is-a-dry-run.com/" + assetName,
+                                        tarball_url: "https://this-is-a-dry-run.com/tarball.tar",
+                                        zipball_url: "https://this-is-a-dry-run.com/zipball.zip"
+                                    }
+                                };
                             }
                             //
                             // Make sure an id value exists on the response object to check for success
@@ -166,15 +195,8 @@ async function doGithubRelease({ options, logger, lastRelease, nextRelease, env 
         }
     }
     else {
-        if (githubChangelog) {
-            logger.log("Dry run, skipping GitHub release");
-            logger.log("Dry run has generated an html changelog from previous version to test functionality:");
-            logger.log(githubChangelog);
-        }
-        else {
-            rc = { success: false, error: `GitHub release v${nextRelease.version} failure - no changelog` };
-            logger.error(rc.error);
-        }
+        rc = { success: false, error: `GitHub release v${nextRelease.version} failure - no changelog` };
+        logger.error(rc.error);
     }
 
     return rc;

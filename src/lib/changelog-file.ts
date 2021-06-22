@@ -61,14 +61,14 @@ export async function createReleaseChangelog({ options, logger }, version: strin
     let changeLog = "",
         changeLogParts: string | any[];
 
+    logger.log("Converting changelog markdown to release changelog html");
+
     if (options.historyFile)
     {
-        logger.log("Converting history text to mantisbt release changelog html");
         changeLogParts = await getHistory({ options, logger }, version, 1, "parts");
     }
     else if (options.changelogFile)
     {
-        logger.log("Converting changelog markdown to mantisbt release changelog html");
         changeLogParts = await getChangelog({ options, logger }, version, 1, "parts");
     }
 
@@ -698,9 +698,14 @@ export async function getChangelog({ options, logger }, version: string, numsect
     //
     // Make sure user entered correct cmd line params
     //
-    if (!options.changelogFile || !(await pathExists(options.changelogFile))) {
+    if (!options.changelogFile) {
         logger.error("Error: No changelog file specified");
         throw new Error("160");
+    }
+
+    if (!(await pathExists(options.changelogFile))) {
+        logger.warn("No changelog file exists");
+        return "";
     }
 
     if (!options.versionText) {
@@ -766,6 +771,18 @@ export async function getChangelog({ options, logger }, version: string, numsect
     }
     logger.log("Found version section(s)");
     contents = contents.substring(index1, index2 - index1);
+
+    //
+    // TODO
+    // Add changelinks to changelog entries
+    // Ex: https://github.com/spmeesseman/vscode-taskexplorer/compare/v2.2.0...v2.3.0
+    //
+
+    //
+    // TODO
+    // Add issue links
+    // Ex: ([ce9c8f0](https://github.com/spmeesseman/vscode-taskexplorer/commit/ce9c8f0))
+    //
 
     if (isString(listOnly) && listOnly === "parts")
     {
@@ -861,13 +878,18 @@ export async function getChangelog({ options, logger }, version: string, numsect
 export async function getHistory({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false)
 {
     const iNumberOfDashesInVersionLine = 20;
-    let szFinalContents = "";
+    let finalContents = "";
     //
     // Make sure user entered correct cmd line params
     //
-    if (!options.historyFile || !(await pathExists(options.historyFile))) {
-        logger.error("History file does not exist");
-        return szFinalContents;
+    if (!options.historyFile) {
+        logger.error("Error: No history file specified");
+        throw new Error("160");
+    }
+
+    if (!(await pathExists(options.historyFile))) {
+        logger.warn("History file does not exist");
+        return finalContents;
     }
 
     logger.log("Extract from history.txt file");
@@ -1027,11 +1049,11 @@ export async function getHistory({ options, logger }, version: string, numsectio
     {
         logger.log("   Write header text to message");
         const szHrefs = getEmailHeader(options, version);
-        szFinalContents += `${szHrefs}<br>Most Recent History File Entry:<br><br>`;
+        finalContents += `${szHrefs}<br>Most Recent History File Entry:<br><br>`;
         logger.log(`   Write ${numsections} history section(s) to message`);
 
         if (listOnly === false) {
-            szFinalContents += contents;
+            finalContents += contents;
         }
         else
         {
@@ -1227,13 +1249,13 @@ export async function getHistory({ options, logger }, version: string, numsectio
                     contents += "<br>";
                 }
             }
-            szFinalContents = "<font face=\"Courier New\" style=\"font-size:12px\">" + contents + "</font>";
+            finalContents = "<font face=\"Courier New\" style=\"font-size:12px\">" + contents + "</font>";
         }
     }
 
     logger.success("   Successful");
 
-    return [ szFinalContents ];
+    return [ finalContents ];
 }
 
 
