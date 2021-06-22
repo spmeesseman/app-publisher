@@ -659,10 +659,10 @@ function getEmailHeader(options: any, version: string)
 
 function getChangelogTypes(changeLog: string)
 {
-    const changelogTypes = [];
-
+    const changelogTypes = [],
+          regex = new RegExp(/\w*(?<=### ).+?(?=(<br>-))/gm);
     let match: RegExpExecArray;
-    while ((match = /\w*(?<=### ).+?(?=(<br>-))/m.exec(changeLog)) !== null)
+    while ((match = regex.exec(changeLog)) !== null)
     {
         let section = match[0];
         //
@@ -678,7 +678,7 @@ function getChangelogTypes(changeLog: string)
         // count the messages for each section and add the subjects to the types array
         //
         let match2: RegExpExecArray;
-        const regex = new RegExp(/\w*(?<=section).+?(?=(<br>###|$))/m);
+        const regex = new RegExp(`\\w*(?<=${section}).+?(?=(<br>###|$))`, "gm");
         while ((match2 = regex.exec(changeLog)) !== null)
         {
             let i1 = match2[0].indexOf("<br>- ");
@@ -791,7 +791,7 @@ export async function getChangelog({ options, logger }, version: string, numsect
         const typeParts = [];
         const msgParts = [];
 
-        contents = contents.replace(new RegExp(EOL, "gm"), "<br>");
+        contents = contents.replace(/\r\n/gm, "<br>");
         contents = contents.replace(/\n/gm, "<br>");
         contents = contents.replace(/\t/gm, "&nbsp;&nbsp;&nbsp;&nbsp;");
 
@@ -837,16 +837,16 @@ export async function getChangelog({ options, logger }, version: string, numsect
             while ((match = regex.exec(msgParts[i])) !== null)
             {
                 tickets = match[0];
-                tickets = match[0].replace("[", "").replace("]", "").trim();
+                tickets = match[0].replace(/\[/, "").replace("]", "").trim();
                 tickets = properCase(tickets.replace("&nbsp;", " "));
-                message = message.replace("<br><br>" + match[0], "");
-                message = message.replace("<br>" + match[0], "").trim();
-                message = message.replace("&nbsp;&nbsp;&nbsp;&nbsp;" + match[0], "").trim();
-                message = message.replace("&nbsp;&nbsp;&nbsp;" + match[0], "").trim();
-                message = message.replace("&nbsp;&nbsp;" + match[0], "").trim();
-                message = message.replace("&nbsp;" + match[0], "").trim();
-                message = message.replace(" " + match[0], "").trim();
-                message = message.replace(match[0], "").trim();
+                message = message.replace(new RegExp("/<br><br>" + match[0], "g"), "");
+                message = message.replace(new RegExp("<br>" + match[0], "g"), "").trim();
+                message = message.replace(new RegExp("&nbsp;&nbsp;&nbsp;&nbsp;" + match[0], "g"), "").trim();
+                message = message.replace(new RegExp("&nbsp;&nbsp;&nbsp;" + match[0], "g"), "").trim();
+                message = message.replace(new RegExp("&nbsp;&nbsp;" + match[0], "g"), "").trim();
+                message = message.replace(new RegExp("&nbsp;" + match[0], "g"), "").trim();
+                message = message.replace(new RegExp(" " + match[0], "g"), "").trim();
+                message = message.replace(new RegExp(match[0], "g"), "").trim();
             }
             contents.push({ subject, scope, message, tickets });
         }

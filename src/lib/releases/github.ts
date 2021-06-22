@@ -227,15 +227,34 @@ async function publishGithubRelease({options, nextRelease, logger})
         //
         // Send the REST POST to publish the release
         //
+        let response: any;
         const url = `https://api.github.com/repos/${options.githubUser}/${options.projectName}/releases/${githubReleaseId}`;
-        const response = await got(url, {
-            json: {
-                draft: false
-            },
-            method: "PATCH",
-            responseType: "json",
-            headers
-        });
+        if (!options.dryRun)
+        {
+            try {
+                response = await got(url, {
+                    json: {
+                        draft: false
+                    },
+                    method: "PATCH",
+                    responseType: "json",
+                    headers
+                });
+            }
+            catch (e) {
+                const rc = { success: false, error: `GitHub release v${nextRelease.version} publish failure - ${e.toString()}` };
+                logger.error(rc.error);
+                return rc;
+            }
+        }
+        else {
+            logger.log("Dry run - skip rest request, emulate response");
+            response = {
+                body: {
+                    upload_url: "https://this-is-a-dry-run.com"
+                }
+            };
+        }
         // const jso = JSON.parse(response.body);
         //
         // Make sure an upload_url value exists on the response object to check for success

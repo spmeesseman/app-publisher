@@ -2,7 +2,7 @@
 
 ## Version 2.7.2
 
-## Bug Fixes
+### Bug Fixes
 
 - Releases halted after v1.13.
 

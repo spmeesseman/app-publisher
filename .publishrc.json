@@ -33,7 +33,7 @@
     "emailHrefs":        [],
     "githubRelease":     "Y",
     "githubAssets":      [
-        "install\\dist\\history.txt|History File",
+        "CHANGELOG.md|Changelog File",
         "install\\dist\\app-publisher.tgz|NPM Tarball"
     ],
     "githubChglogEdit":  "N",
