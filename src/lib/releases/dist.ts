@@ -50,78 +50,93 @@ async function doDistRelease(context: IContext)
         await addEdit(context, path.normalize(path.join(options.pathToDist, options.historyFile)));
     }
 
-    //
-    // Create remote paths
-    //
-    const targetNetLocation = path.normalize(path.join(options.distReleasePath, options.projectName, nextRelease.version)),
-            targetDocLocation = path.normalize(path.join(options.distDocPath, options.projectName, nextRelease.version));
-
-    logger.log("Deploying distribution files to specified location:");
-    logger.log("   Source : " + targetNetLocation);
-    logger.log("   Target : " + targetNetLocation);
+    const targetNetLocation = options.distReleasePath ? path.normalize(path.join(options.distReleasePath, options.projectName, nextRelease.version)) : undefined,
+          targetDocLocation = options.distDocPath ? path.normalize(path.join(options.distDocPath, options.projectName, nextRelease.version)) : undefined;
 
     //
     // Copy contents of dist dir to target location, and pdf docs to docs location
     //
-    if (!options.dryRun)
-    {   //
-        // Copy all files in 'dist' directory that start with options.projectName, and the history file
-        //
-        logger.log(`Deploying files to ${targetNetLocation}`);
-        await copyDir(options.pathToDist, targetNetLocation);
-        //
-        // DOC
-        //
-        if (options.distDocPath)
+    logger.log("Deploying dist release files");
+    if (options.pathToDist && targetNetLocation)
+    {
+        logger.log("   Source : " + options.pathToDist);
+        logger.log("   Target : " + targetNetLocation);
+        if (!options.dryRun)
         {   //
-            // Copy all pdf files in 'dist' and 'doc' and 'documentation' directories
+            // Copy all files in 'dist' directory that start with options.projectName, and the history file
             //
-            let docDirSrc = options.distDocPathSrc;
-            if (!docDirSrc)
-            {
-                if (await pathExists("documentation")) {
-                    docDirSrc = "documentation";
-                }
-                else if (await pathExists("doc")) {
-                    docDirSrc = "doc";
-                }
-                else if (await pathExists("docs")) {
-                    docDirSrc = "docs";
-                }
-                else {
-                    async function checkBack(b1: string, b2: string, b3: string)
-                    {
-                        let docDirTmp = path.resolve(path.normalize(b1));
-                        if (!docDirTmp.includes(context.cwd)) {
-                            return;
-                        }
-                        if (await pathExists(docDirTmp)) {
-                            docDirSrc = docDirTmp;
-                        }
-                        docDirTmp = path.resolve(path.normalize(b2));
-                        if (await pathExists(docDirTmp)) {
-                            docDirSrc = docDirTmp;
-                        }
-                        docDirTmp = path.resolve(path.normalize(b3));
-                        if (await pathExists(docDirTmp)) {
-                            docDirSrc = docDirTmp;
-                        }
-                    }
-                    await checkBack(path.join("..", "doc"), path.join("..", "docs"), path.join("..", "documentation"));
-                    await checkBack(path.join("..", "..", "doc"), path.join("..", "..", "docs"), path.join("..", "..", "documentation"));
-                }
-            }
-            if (docDirSrc)
-            {
-                logger.log(`Deploying pdf documentation to ${targetDocLocation}`);
-                await copyDir(docDirSrc, targetDocLocation, /.*\.pdf/i);
-            }
-            else {
-                logger.warn("Skipping Dist doc push to shared drive / directory, doc direcory not found");
-            }
+            await copyDir(options.pathToDist, targetNetLocation);
+        }
+        else {
+            logger.log("   Dry run - skipped dist release file push");
         }
     }
     else {
-        logger.log("Dry run, skipping Dist push to shared drive / directory");
+        logger.warn("   Invalid path(s) - dist release files not copied");
+    }
+
+    //
+    // DOC
+    //
+    logger.log("Deploying dist release pdf documentation");
+    if (options.distDocPath && targetDocLocation)
+    {   //
+        // Copy all pdf files in 'dist' and 'doc' and 'documentation' directories
+        //
+        let docDirSrc = options.distDocPathSrc;
+        if (!docDirSrc)
+        {
+            if (await pathExists("documentation")) {
+                docDirSrc = "documentation";
+            }
+            else if (await pathExists("doc")) {
+                docDirSrc = "doc";
+            }
+            else if (await pathExists("docs")) {
+                docDirSrc = "docs";
+            }
+            else {
+                async function checkBack(b1: string, b2: string, b3: string)
+                {
+                    let docDirTmp = path.resolve(path.normalize(b1));
+                    if (!docDirTmp.includes(context.cwd)) {
+                        return;
+                    }
+                    if (await pathExists(docDirTmp)) {
+                        docDirSrc = docDirTmp;
+                    }
+                    docDirTmp = path.resolve(path.normalize(b2));
+                    if (await pathExists(docDirTmp)) {
+                        docDirSrc = docDirTmp;
+                    }
+                    docDirTmp = path.resolve(path.normalize(b3));
+                    if (await pathExists(docDirTmp)) {
+                        docDirSrc = docDirTmp;
+                    }
+                }
+                await checkBack(path.join("..", "doc"), path.join("..", "docs"), path.join("..", "documentation"));
+                if (!docDirSrc) {
+                    await checkBack(path.join("..", "..", "doc"), path.join("..", "..", "docs"), path.join("..", "..", "documentation"));
+                }
+            }
+        }
+
+        logger.log("   Source : " + docDirSrc);
+        logger.log("   Target : " + targetDocLocation);
+        if (docDirSrc)
+        {
+            if (!options.dryRun) {
+                await copyDir(docDirSrc, targetDocLocation, /.*\.pdf/i);
+            }
+            else {
+                logger.info("   Dry Run - Skipped Dist doc push");
+            }
+        }
+        else {
+            logger.warn("   Skipped dist release doc push, source doc direcory not found");
+        }
+    }
+    else {
+        logger.warn("   Invalid path(s) - dist release docs not copied");
     }
 }
