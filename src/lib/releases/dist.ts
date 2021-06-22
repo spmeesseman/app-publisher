@@ -78,7 +78,7 @@ async function doDistRelease({ options, logger, nextRelease, cwd, env })
                         docDirSrc = "docs";
                     }
                     else {
-                        async function checkBack(b1, b2, b3)
+                        async function checkBack(b1: string, b2: string, b3: string)
                         {
                             let docDirTmp = path.resolve(path.normalize(b1));
                             if (!docDirTmp.includes(cwd)) {
