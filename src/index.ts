@@ -29,6 +29,7 @@ import { writeFile } from "./lib/utils/fs";
 import { createSectionFromCommits, doChangelogFileEdit, doHistoryFileEdit } from "./lib/changelog-file";
 import { commit, fetch, verifyAuth, getHead, tag, push, revert } from "./lib/repo";
 import { EOL } from "os";
+import { IContext, INextRelease } from "./interface";
 const envCi = require("@spmeesseman/env-ci");
 const pkg = require("../package.json");
 
@@ -36,7 +37,7 @@ const pkg = require("../package.json");
 marked.setOptions({ renderer: new TerminalRenderer() });
 
 
-async function run(context: any, plugins: any)
+async function run(context: IContext, plugins: any)
 {
     const { cwd, env, options, logger } = context;
     const runTxt = !options.dryRun ? "run" : "test run";
@@ -244,7 +245,7 @@ function hasMoreTasks(options: any, tasks: string[])
 }
 
 
-async function runNodeScript(context: any, plugins: any)
+async function runNodeScript(context: IContext, plugins: any)
 {
     const { cwd, env, options, logger } = context;
 
@@ -298,7 +299,7 @@ async function runNodeScript(context: any, plugins: any)
     //
     // Fetch tags (git only)
     //
-    await fetch({options, logger}, { cwd, env });
+    await fetch(context, { cwd, env });
 
     //
     // Populate context with last release info
@@ -350,11 +351,12 @@ async function runNodeScript(context: any, plugins: any)
     //
     const nextRelease = {
         level: await getReleaseLevel(context),
-        head: await getHead({options, logger}, { cwd, env }),
+        head: await getHead(context, { cwd, env }),
         version: undefined,
         tag: undefined,
         notes: undefined,
-        edits: []
+        edits: [],
+        versionInfo: undefined
     };
 
     //
@@ -668,7 +670,7 @@ async function runNodeScript(context: any, plugins: any)
         //
         if (!options.taskTag || options.taskCommit || !options.taskMode)
         {
-            await commit({options, nextRelease, logger}, { cwd, env });
+            await commit(context, { cwd, env });
             logger.success((options.dryRun ? "Dry run - " : "") + `Successfully committed changes for v${nextRelease.version}`);
         }
         //
@@ -677,7 +679,7 @@ async function runNodeScript(context: any, plugins: any)
         if (!options.taskCommit || options.taskTag || !options.taskMode)
         {
             await tag(context, { cwd, env });
-            await push({options, logger}, { cwd, env });
+            await push(context, { cwd, env });
             logger.success((options.dryRun ? "Dry run - " : "") + `Created tag ${nextRelease.tag}`);
             //
             // If there was a Github release made, then publish it and re-tag
@@ -685,7 +687,7 @@ async function runNodeScript(context: any, plugins: any)
             if (didGithubRelease)
             {
                 if (!options.dryRun) {
-                    await publishGithubRelease({options, nextRelease, logger});
+                    await publishGithubRelease(context);
                     logger.success(`Published Github release tagged @ ${nextRelease.tag}`);
                 }
                 else {
@@ -698,7 +700,7 @@ async function runNodeScript(context: any, plugins: any)
         //
         if (options.dryRun && options.dryRunVcRevert)
         {
-            await revert({options, nextRelease, logger}, { cwd, env});
+            await revert(context, { cwd, env});
         }
     }
 
@@ -744,7 +746,7 @@ async function runNodeScript(context: any, plugins: any)
  *
  * @param context context
  */
-async function processTasks1(context: any): Promise<boolean>
+async function processTasks1(context: IContext): Promise<boolean>
 {
     const options = context.options;
 
@@ -799,7 +801,7 @@ function getTasks5()
  *
  * @param context context
  */
-async function processTasks2(context: any): Promise<boolean>
+async function processTasks2(context: IContext): Promise<boolean>
 {
     if (context.options.taskEmail)
     {
@@ -816,7 +818,7 @@ async function processTasks2(context: any): Promise<boolean>
  *
  * @param context context
  */
-async function processTasks3(context: any): Promise<boolean>
+async function processTasks3(context: IContext): Promise<boolean>
 {
     if (context.options.taskTouchVersions)
     {
@@ -832,7 +834,7 @@ async function processTasks3(context: any): Promise<boolean>
  *
  * @param context context
  */
-async function processTasks4(context: any): Promise<boolean>
+async function processTasks4(context: IContext): Promise<boolean>
 {
     const options = context.options,
           logger = context.logger,
@@ -1092,7 +1094,16 @@ export = async (opts = {}, { cwd = process.cwd(), env = process.env, stdout = un
         hideSensitive(env)
     );
 
-    const context = { cwd, env, stdout: stdout || process.stdout, stderr: stderr || process.stderr, logger: undefined, options: undefined };
+    const context: IContext = {
+        cwd, env,
+        stdout: stdout || process.stdout,
+        stderr: stderr || process.stderr,
+        logger: undefined,
+        options: undefined,
+        lastRelease: undefined,
+        nextRelease: undefined,
+        commits: undefined
+    };
     context.logger = getLogger(context);
 
     try

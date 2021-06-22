@@ -1,5 +1,7 @@
 
+import { pick } from "lodash";
 import * as path from "path";
+import { IContext } from "../../interface";
 import { addEdit } from "../repo";
 import { createDir, pathExists, writeFile } from "../utils/fs";
 import { timeout, checkExitCode } from "../utils/utils";
@@ -15,8 +17,12 @@ export let defaultRepoType: string;
 export let defaultScope: string;
 
 
-export async function doNpmRelease({ options, logger, nextRelease, cwd, env })
+export async function doNpmRelease(context: IContext)
 {
+    const options = context.options,
+          logger = context.logger,
+          nextRelease = context.nextRelease;
+
     logger.log("Starting NPM release");
 
     if (await pathExists("package.json"))
@@ -28,7 +34,7 @@ export async function doNpmRelease({ options, logger, nextRelease, cwd, env })
         if (options.npmPackDist === "Y")
         {
             let tmpPkgFile;
-            let proc = await execa("npm", ["pack"], {cwd, env});
+            let proc = await execa("npm", ["pack"], pick(context, [ "cwd", "env"]));
             checkExitCode(proc.code, logger);
 
             if (!options.pathToDist)
@@ -64,7 +70,7 @@ export async function doNpmRelease({ options, logger, nextRelease, cwd, env })
             //
             // Track modified file
             //
-            addEdit({ options, logger, nextRelease, cwd, env }, destPackedFile);
+            addEdit(context, destPackedFile);
         }
         //
         // Publish to npm server

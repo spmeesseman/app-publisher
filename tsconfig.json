@@ -15,30 +15,33 @@
         "res",
         "script",
         "**/*.spec.ts",
-        "testFixture"
+        "testFixture",
+        ".eslint.js"
     ],
-    "compilerOptions": {
-		"target": "es2019",
-		"lib": ["ES2019"],
-		"module": "commonjs",
-		"outDir": "build",
-		"moduleResolution": "node",
-		"rootDir": "src",
-		// "strict": true,
-		"sourceMap": true,
-		"allowSyntheticDefaultImports":true
-	},
     // "compilerOptions": {
-    //     "module": "commonjs",
-    //     "target": "es6",
-    //     "outDir": "build",
-    //     "rootDir": "src",
-    //     "esModuleInterop": true,
-    //     "allowSyntheticDefaultImports": true,
-    //     "lib": [
-    //         "dom",
-    //         "es6"
-    //     ],
+	// 	"target": "es2019",
+	// 	"lib": ["ES2019"],
+	// 	"module": "commonjs",
+	// 	"outDir": "build",
+	// 	"moduleResolution": "node",
+	// 	"rootDir": "src",
+	// 	// "strict": true,
+	// 	"sourceMap": true,
+	// 	"allowSyntheticDefaultImports":true
+	// },
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es6",
+        "outDir": "build",
+        "rootDir": "src",
+        "sourceMap": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "lib": [
+            "dom",
+            "es6"
+        ],
+    }
 	// 	// "allowSyntheticDefaultImports":true,
     //     "sourceMap": true,
     //     //"allowSyntheticDefaultImports": true,

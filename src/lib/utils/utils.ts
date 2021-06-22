@@ -3,6 +3,7 @@ import hideSensitive = require("../hide-sensitive");
 import { isFunction } from "lodash";
 import { pathExists } from "./fs";
 import { addEdit } from "../repo";
+import { IContext } from "../../interface";
 const execa = require("execa");
 // const find = require("find-process");
 
@@ -103,7 +104,7 @@ export async function editFile({ options, nextRelease, logger, cwd, env }, editF
         // Track modified files during a publish run (non-task mode)
         //
         if (!options.taskMode) {
-            await addEdit({options, logger, nextRelease, cwd, env}, editFile);
+            await addEdit({options, logger, nextRelease, cwd, env} as IContext, editFile);
         }
     }
 }
@@ -188,6 +189,7 @@ export function properCase(name: string)
 
 export function timeout(ms: number)
 {
+    // eslint-disable-next-line @typescript-eslint/tslint/config
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 

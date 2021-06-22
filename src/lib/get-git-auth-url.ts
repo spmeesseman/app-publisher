@@ -1,3 +1,5 @@
+import { IContext } from "../interface";
+
 const { parse, format } = require("url"); // eslint-disable-line node/no-deprecated-api
 const { isNil } = require("lodash");
 const hostedGitInfo = require('hosted-git-info');
@@ -26,7 +28,7 @@ export = getGitAuthUrl;
  *
  * @return {String} The formatted Git repository URL.
  */
-async function getGitAuthUrl({ cwd, env, options: { repo, branch } })
+async function getGitAuthUrl({ cwd, env, options: { repo, branch } }: IContext)
 {
     const info = hostedGitInfo.fromUrl(repo, { noGitPlus: true });
     const { protocol, ...parsed } = parse(repo);

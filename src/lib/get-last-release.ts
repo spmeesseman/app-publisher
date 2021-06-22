@@ -3,6 +3,7 @@ import semver from "semver";
 import pLocate from "p-locate";
 const debug = require("debug")("app-publisher:get-last-release");
 import { getTags, isRefInHistory, getTagHead } from "./repo";
+import { IContext } from "../interface";
 
 export = getLastRelease;
 
@@ -22,11 +23,11 @@ export = getLastRelease;
  * - Sort the versions
  * - Retrieve the highest version
  *
- * @param {Object} context app-publisher context.
+ * @param context app-publisher context.
  *
  * @return {Promise<LastRelease>} The last tagged release or `undefined` if none is found.
  */
-async function getLastRelease({ cwd, env, options, logger })
+async function getLastRelease({ cwd, env, options, logger }: IContext)
 {
     //
     // Generate a regex to parse tags formatted with `tagFormat`
@@ -35,7 +36,7 @@ async function getLastRelease({ cwd, env, options, logger })
     // so it's guaranteed to not be present in the `tagFormat`.
     //
     const tagRegexp = `^${escapeRegExp(template(options.tagFormat)({ version: " " })).replace(" ", "(.+)")}`,
-          tagsRaw = await getTags({ env, options, logger }, options.repoType);
+          tagsRaw = await getTags({ env, options, logger } as IContext, options.repoType);
 
     const tags = tagsRaw
                  .map((tag: any) => ({ tag, version: (tag.match(tagRegexp) || new Array(2))[1] }))
@@ -51,7 +52,7 @@ async function getLastRelease({ cwd, env, options, logger })
     if (tag)
     {
         logger.info(`Found ${options.repoType} tag ${tag.tag} associated with version ${tag.version}`);
-        return { head: await getTagHead({options, logger}, tag.tag, { cwd, env }), ...tag };
+        return { head: await getTagHead({options, logger} as IContext, tag.tag, { cwd, env }), ...tag };
     }
 
     logger.info(`No ${options.repoType} tag version found`);

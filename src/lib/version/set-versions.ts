@@ -8,6 +8,7 @@ import { setMakefileVersion } from "./makefile";
 import { setMantisBtVersion } from "./mantisbt";
 import { setPomVersion } from "./pom";
 import { setNpmVersion } from "./npm";
+import { IContext } from "../../interface";
 
 export = setVersions;
 
@@ -19,43 +20,45 @@ export = setVersions;
  *
  * @param context context
  */
-async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}): Promise<void>
+async function setVersions(context: IContext): Promise<void>
 {
+    const options = context.options,
+          logger = context.logger;
     //
     // NPM managed project, update package.json if required
     //
     if (await pathExists("package.json")) {
-        await setNpmVersion({options, logger, lastRelease, nextRelease, cwd, env});
+        await setNpmVersion(context);
     }
     //
     // AppPublisher publishrc version
     //
     if (options.version) {
-        await setAppPublisherVersion({options, logger, nextRelease, cwd, env});
+        await setAppPublisherVersion(context);
     }
     //
     // ExtJs build
     //
     if (await pathExists("app.json") && (await pathExists("workspace.json") || await pathExists("build.xml"))) {
-        await setExtJsVersion({options, logger, nextRelease, cwd, env});
+        await setExtJsVersion(context);
     }
     //
     // Maven managed project, update pom.xml if required
     //
     if (await pathExists("pom.xml")) {
-        setPomVersion({options, logger, nextRelease, cwd, env});
+        setPomVersion(context);
     }
     //
     // Mantisbt plugin project, update main plugin file if required
     //
     if (options.mantisbtPlugin) {
-        await setMantisBtVersion({options, logger, nextRelease, cwd, env});
+        await setMantisBtVersion(context);
     }
     //
     // C project, update main rc file if required
     //
     if (options.cProjectRcFile) {
-        await setMakefileVersion({options, logger, nextRelease, cwd, env});
+        await setMakefileVersion(context);
     }
     //
     // If this is a .NET build, update assemblyinfo file
@@ -66,7 +69,7 @@ async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}
     // if ($AssemblyInfoLoc -is [system.string] && ![string]::IsNullOrEmpty($AssemblyInfoLoc))
     // {
     if ((await getDotNetFiles(logger)).length > 0) {
-        await setDotNetVersion({options, logger, nextRelease, cwd, env});
+        await setDotNetVersion(context);
     }
     // }
     // else if ($AssemblyInfoLoc -is [System.Array] && $AssemblyInfoLoc.Length -gt 0) {
@@ -77,12 +80,16 @@ async function setVersions({options, logger, lastRelease, nextRelease, cwd, env}
     //
     // Version bump specified files in publishrc config 'versionFiles'
     //
-    await setVersionFiles({options, logger, lastRelease, nextRelease, cwd, env});
+    await setVersionFiles(context);
 }
 
 
-async function setVersionFiles({options, logger, lastRelease, nextRelease, cwd, env}): Promise<void>
+async function setVersionFiles(context: IContext): Promise<void>
 {
+    const options = context.options,
+          logger = context.logger,
+          nextRelease = context.nextRelease,
+          lastRelease = context.lastRelease;
     let incremental = false;
 
     logger.log("Preparing version files");
@@ -101,7 +108,7 @@ async function setVersionFiles({options, logger, lastRelease, nextRelease, cwd, 
     if (!nextRelease.version.includes("."))
     {
         incremental = true;
-        for (const c of nextRelease.version.length) {
+        for (const c of nextRelease.version) {
             semVersion = `${semVersion}${c}.`;
         }
         semVersion = semVersion.substring(0, semVersion.length - 1);
@@ -113,7 +120,7 @@ async function setVersionFiles({options, logger, lastRelease, nextRelease, cwd, 
     let semVersionCUR = "";
     if (!lastRelease.version.includes("."))
     {
-        for (const c of lastRelease.version.length) {
+        for (const c of lastRelease.version) {
             semVersionCUR = `${semVersionCUR}${c}.`;
         }
         semVersionCUR = semVersionCUR.substring(0, semVersionCUR.length - 1);
@@ -172,10 +179,10 @@ async function setVersionFiles({options, logger, lastRelease, nextRelease, cwd, 
             //
             if (incremental === true)
             {
-                rc = await replaceInFile(vFile, `"${semVersionCUR}"`, `"semVersion"`);
+                rc = await replaceInFile(vFile, `"${semVersionCUR}"`, `"${semVersion}"`);
                 if (rc !== true)
                 {
-                    rc = await replaceInFile(vFile, `'${semVersionCUR}'`, `'semVersion'`);
+                    rc = await replaceInFile(vFile, `'${semVersionCUR}'`, `'${semVersion}'`);
                     if (rc !== true)
                     {
                         rc = await replaceInFile(vFile, semVersionCUR, semVersion);
@@ -186,7 +193,7 @@ async function setVersionFiles({options, logger, lastRelease, nextRelease, cwd, 
             // Allow manual modifications to vFile and commit to modified list
             // Edit-File will add this file to options.versionFilesEdited
             //
-            await editFile({nextRelease, options, logger, cwd, env}, vFile);
+            await editFile(context, vFile);
         }
     }
 }
