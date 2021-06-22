@@ -1,5 +1,6 @@
 
 import * as fs from "fs";
+import { filter } from "lodash";
 import * as path from "path";
 import { addEdit } from "../repo";
 import { getPsScriptLocation, timeout } from "./utils";
@@ -54,15 +55,23 @@ function copyFileSync(src: string, dst: string) {
 //
 // TODO - make a pure async imp.
 //
-export async function copyDir(src: string, dst: string)
+export async function copyDir(src: string, dst: string, filter?: RegExp, copyWithBaseFolder = false)
 {
     return new Promise<boolean>(async (resolve, reject) =>
     {
-        let files = [];
+        if (!fs.lstatSync(src).isDirectory()) {
+            resolve(false);
+        }
         //
         // Check if folder needs to be created or merged
         //
-        const tgtDir = path.join(path.resolve(dst), path.basename(src));
+        let tgtDir;
+        if (!copyWithBaseFolder) {
+            tgtDir = path.resolve(dst);
+        }
+        else {
+            tgtDir = path.join(path.resolve(dst), path.basename(src));
+        }
         if (!fs.existsSync(tgtDir)) {
             try {
                 await createDir(tgtDir);
@@ -74,27 +83,31 @@ export async function copyDir(src: string, dst: string)
         //
         // Copy
         //
-        if (fs.lstatSync(src).isDirectory())
+        const files = fs.readdirSync(src);
+        for (const file of files)
         {
-            files = fs.readdirSync(src);
-            for (const file of files)
-            {
-                const newSrc = path.join(src, file);
-                if (fs.lstatSync(newSrc).isDirectory()) {
-                    try {
-                        await copyDir(newSrc, tgtDir);
-                    }
-                    catch (e) {
-                        reject(e);
-                    }
+            const newSrc = path.join(src, file);
+            if (fs.lstatSync(newSrc).isDirectory()) {
+                try {
+                    await copyDir(newSrc, tgtDir, filter, copyWithBaseFolder);
                 }
-                else {
-                    try {
+                catch (e) {
+                    reject(e);
+                }
+            }
+            else {
+                try {
+                    if (filter) {
+                        if (filter.test(newSrc)) {
+                            await copyFile(newSrc, tgtDir);
+                        }
+                    }
+                    else {
                         await copyFile(newSrc, tgtDir);
                     }
-                    catch (e) {
-                        reject(e);
-                    }
+                }
+                catch (e) {
+                    reject(e);
                 }
             }
         }
@@ -106,8 +119,12 @@ export async function copyDir(src: string, dst: string)
 
 export async function createDir(dir: string)
 {
-    return new Promise<boolean>((resolve, reject) => {
+    return new Promise<boolean>(async (resolve, reject) => {
         try {
+            const baseDir = path.dirname(dir);
+            if (!(await pathExists(baseDir))) {
+                await createDir(baseDir);
+            }
             fs.mkdir(path.resolve(dir), { mode: 0o777 }, (err) => {
                 if (err) {
                     reject(err);

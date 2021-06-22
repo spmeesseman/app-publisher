@@ -1,10 +1,8 @@
 
 import * as path from "path";
-import { runScripts } from "../utils/utils";
-import { copyDir, createDir, pathExists, copyFile } from "../utils/fs";
+import { copyDir, pathExists, copyFile } from "../utils/fs";
 import { addEdit } from "../repo";
 import { IContext } from "../../interface";
-const copydir = require("copy-dir");
 
 export = doDistRelease;
 
@@ -66,18 +64,7 @@ async function doDistRelease(context: IContext)
     // Copy contents of dist dir to target location, and pdf docs to docs location
     //
     if (!options.dryRun)
-    {
-        //
-        // SoftwareImages Upload
-        //
-        // Create directory on network drive
-        // TargetNetLocation is defined above as it is needed for email notification fn as well
-        //
-        if (!(await pathExists(targetNetLocation))) {
-            logger.log(`Create directory ${targetNetLocation}`);
-            await createDir(targetNetLocation);
-        }
-        //
+    {   //
         // Copy all files in 'dist' directory that start with options.projectName, and the history file
         //
         logger.log(`Deploying files to ${targetNetLocation}`);
@@ -87,12 +74,6 @@ async function doDistRelease(context: IContext)
         //
         if (options.distDocPath)
         {   //
-            // Create directory on doc share
-            //
-            if (!(await pathExists(targetDocLocation))) {
-                await createDir(targetDocLocation);
-            }
-            //
             // Copy all pdf files in 'dist' and 'doc' and 'documentation' directories
             //
             let docDirSrc = options.distDocPathSrc;
@@ -133,11 +114,7 @@ async function doDistRelease(context: IContext)
             if (docDirSrc)
             {
                 logger.log(`Deploying pdf documentation to ${targetDocLocation}`);
-                await copydir(docDirSrc, targetDocLocation, {
-                    filter: (stat: string, filepath: string, filename: string) => {
-                        return stat === "file" && path.extname(filepath).toLowerCase() === ".pdf";
-                    }
-                });
+                await copyDir(docDirSrc, targetDocLocation, /.*\.pdf/i);
             }
             else {
                 logger.warn("Skipping Dist doc push to shared drive / directory, doc direcory not found");
