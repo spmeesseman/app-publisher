@@ -1475,7 +1475,7 @@ export async function doChangelogFileEdit({ options, commits, logger, lastReleas
             //
             tmpCommits += "- ";
             if (scope !== "") {
-                tmpCommits += "**scope`:** ";
+                tmpCommits += `**${scope}:** `;
             }
             //
             // FOr multi-line comments, do some special processing
