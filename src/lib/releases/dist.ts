@@ -133,7 +133,7 @@ async function doDistRelease(context: IContext)
             }
         }
         else {
-            logger.warn("   Skipped dist release doc push, source doc direcory not found");
+            logger.warn("   Skipped dist release doc push, source doc directory not found");
         }
     }
     else {

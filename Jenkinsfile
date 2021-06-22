@@ -41,8 +41,9 @@ pipeline {
             locations: [
             [
                 cancelProcessOnExternalsFail: true,
+                credentialsId: "6ff47a32-994c-4ac2-9016-edb075a98e5b", // jenkins.tr.pjats.com
                 // credentialsId: "7e4d2229-822b-401c-919b-2e492d6eae27", // Build Server
-                credentialsId: "9168a4c0-47d2-423b-b676-3df3adc0d9df",    // Local Dev
+                // credentialsId: "9168a4c0-47d2-423b-b676-3df3adc0d9df",    // Local Dev
                 depthOption: "infinity",
                 ignoreExternalsOption: true,
                 local: ".",
