@@ -91,8 +91,9 @@ async function doMantisRelease({ options, logger, nextRelease })
                     //
                     // The format to upload an asset is the base64 encoded binary file data
                     //
-                    logger.log("Reading file asset");
+                    logger.log(`Reading file asset ${asset}`);
                     const fileData = await readFile(asset);
+                    logger.log(`   File size: ${fileData.length} bytes`);
                     if (fileData && fileData.length > 0)
                     {   //
                         // Base 64 encode file data

@@ -73,7 +73,7 @@ async function run(context: any, plugins: any): Promise<boolean>
 `----------------------------------------------------------------------------
  CI Environment Details
 ----------------------------------------------------------------------------
-        `;
+`;
         context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
         if (isCi)
         {
@@ -86,7 +86,7 @@ async function run(context: any, plugins: any): Promise<boolean>
             context.stdout.write(`  Build URL         : ${ciBuildUrl}${EOL}`);
         }
         else {
-            context.stdout.write("  No known CI environment was found\n");
+            context.stdout.write("  No known CI environment was found" + EOL);
         }
         return true;
     }
@@ -120,7 +120,7 @@ async function run(context: any, plugins: any): Promise<boolean>
     if (!options.taskModeStdOut)
     {
         const mode = options.isNodeJsEnv ? "Node.js" : "bin mode";
-        context.stdout.write("\n");
+        context.stdout.write(EOL);
         logger.log(`Running ${pkg.name} version ${pkg.version} in ${mode}`);
     }
 

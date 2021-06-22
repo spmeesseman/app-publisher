@@ -123,8 +123,13 @@ async function doGithubRelease({ options, logger, lastRelease, nextRelease, env 
             if (options.githubAssets.length > 0)
             {
                 logger.log("Uploading GitHub assets");
-                for (const asset of options.githubAssets)
+                for (const ghAsset of options.githubAssets)
                 {
+                    let asset = ghAsset;
+                    if (ghAsset.includes("|")) {
+                        asset = ghAsset.split("|")[0];
+                    }
+
                     if (await pathExists(asset))
                     {
                         //
@@ -139,8 +144,10 @@ async function doGithubRelease({ options, logger, lastRelease, nextRelease, env 
                         //
                         // The request to upload an asset is the raw binary file data
                         //
-                        const request = await readFile(asset);
-                        if (request)
+                        logger.log(`Reading file asset ${asset}`);
+                        const fileData = await readFile(asset);
+                        logger.log(`   File size: ${fileData.length} bytes`);
+                        if (fileData)
                         {   //
                             // Upload the asset via GitHub API.
                             //
@@ -153,7 +160,7 @@ async function doGithubRelease({ options, logger, lastRelease, nextRelease, env 
                             {
                                 try {
                                     response2 = await got(url, {
-                                        body: request,
+                                        body: fileData,
                                         responseType: "json",
                                         method: "POST",
                                         headers
