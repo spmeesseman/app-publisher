@@ -354,7 +354,7 @@ async function runNodeScript(context: any, plugins: any)
         version: undefined,
         tag: undefined,
         notes: undefined,
-        edits: undefined
+        edits: []
     };
 
     //
@@ -431,11 +431,6 @@ async function runNodeScript(context: any, plugins: any)
     //
     // nextRelease.notes = await plugins.generateNotes(context);
     nextRelease.notes = createSectionFromCommits(context);
-
-    //
-    // Track modified and created files / directories - initialize
-    //
-    nextRelease.edits = [];
 
     //
     // TODO - Plugins maybe?

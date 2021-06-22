@@ -1522,7 +1522,7 @@ export async function doChangelogFileEdit({ options, commits, logger, lastReleas
 
         tmpCommits = tmpCommits.trim();
         let changeLogContents = await readFile(options.changelogFile);
-        changeLogContents = changeLogContents.replace(changelogTitle, "").trim();
+        changeLogContents = changeLogContents.replace(new RegExp(changelogTitle, "i"), "").trim();
 
         let changeLogFinal = `${changelogTitle}${EOL}${EOL}`;
         if (tmpCommits) {
