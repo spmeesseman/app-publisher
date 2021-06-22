@@ -1,12 +1,12 @@
 # APP-PUBLISHER CHANGE LOG
 
-## Version 2.7.2
+## Version 2.7.2 (June 17th, 2021)
 
 ### Bug Fixes
 
 - An unnecessary history file entry is still being created in a tmp directory and scheduled to be added to version control when the --task-commit command line switch is used.
 
-## Version 2.7.1
+## Version 2.7.1 (June 17th, 2021)
 
 ### Bug Fixes
 
@@ -58,8 +58,7 @@
 
     Add detailed logging.
 
-Version 2.6.2
-June 15th, 2021
+## Version 2.6.2 (June 15th, 2021)
 
 - Bug Fix
 
@@ -72,8 +71,14 @@ June 15th, 2021
     The '--version-force-next' command line switch is not accepted by the
     argument parser.
 
-Version 2.6.0
-June 15th, 2021
+## Version 2.6.1 (June 15th, 2021)
+
+- Bug Fix
+
+    The '--version-force-current' command line switch is not accepted by the
+    argument parser.
+
+## Version 2.6.0 (June 15th, 2021)
 
 - Feature
 
@@ -84,16 +89,19 @@ June 15th, 2021
     Using this option instructs the process to output the pre-release identifier
     from a specified branch name or version string.
 
-Version 2.6.1
-June 15th, 2021
+## Version 2.5.2 (June 15th, 2021)
 
-- Bug Fix
+- Documentation:  Readme
 
-    The '--version-force-current' command line switch is not accepted by the
-    argument parser.
+    Remove reference to Jenkins token value.
 
-Version 2.5.0
-June 15th, 2021
+## Version 2.5.1 (June 15th, 2021)
+
+- Refactoring
+
+    The 'usage' help output does not line up vertically.
+
+## Version 2.5.0 (June 15th, 2021)
 
 - Feature
 
@@ -105,22 +113,14 @@ June 15th, 2021
     Using this option instructs the process to use the provided pre-release
     identifier while calculating the new version.
 
-Version 2.5.1
-June 15th, 2021
+## Version 2.4.0 (June 14th, 2021)
 
-- Refactoring
+- Feature
 
-    The 'usage' help output does not line up vertically.
+    Add support for version control and replacement in Maven pom.xml project
+    files.
 
-Version 2.5.2
-June 15th, 2021
-
-- Documentation:  Readme
-
-    Remove reference to Jenkins token value.
-
-Version 2.3.0
-June 5th, 2021
+## Version 2.3.0 (June 5th, 2021)
 
 - Feature
 
@@ -160,66 +160,41 @@ June 5th, 2021
     for the 'next version'.  Note that a version number will not be calculated,
     and a VCS request will be skipped
 
-Version 2.4.0
-June 14th, 2021
-
-- Feature
-
-    Add support for version control and replacement in Maven pom.xml project
-    files.
-
-Version 2.2.2
-June 5th, 2021
-
-- Bug Fix
-
-    Flag type command line args should accept a positional parameter of Y/N/y/n.
-    Or, if omitted, and the option is specified, default the flag value to "Y".
-
-Version 2.2.3
-June 5th, 2021
-
-- Bug Fix
-
-    Flag type command line arguments should just default to "Y" is there is no
-    positional value specified (behaving like a boolean type).
-
-Version 2.2.4
-June 5th, 2021
-
-- Bug Fix
-
-    Flag type command line arguments should just default to "Y" is there is no
-    positional value specified (behaving like a boolean type).
-
-Version 2.2.5
-June 5th, 2021
+## Version 2.2.5 (June 5th, 2021)
 
 - Refactoring
 
     Output task related message to the console when a task finishes, not the
     standard "release successful" message.
 
-Version 2.1.2
-June 4th, 2021
+## Version 2.2.4 (June 5th, 2021)
 
-- Bug Fix:  General
+- Bug Fix
 
-    The stdout output is double line broken if the output is from a task that is
-    to output data to stdout.
+    Flag type command line arguments should just default to "Y" is there is no
+    positional value specified (behaving like a boolean type).
 
-- Bug Fix: CI
+## Version 2.2.3 (June 5th, 2021)
 
-    The CI environment is not being set to use the Subversion service module
-    properties, continues to use 'Git' as the default.
+- Bug Fix
 
-- Refactoring:  Changelog
+    Flag type command line arguments should just default to "Y" is there is no
+    positional value specified (behaving like a boolean type).
 
-    Remove CI related tags ([skip-ci], etc) from commit messages when formatting
-    the changelog/history file entry.
+## Version 2.2.2 (June 5th, 2021)
 
-Version 2.2.0
-June 5th, 2021
+- Bug Fix
+
+    Flag type command line args should accept a positional parameter of Y/N/y/n.
+    Or, if omitted, and the option is specified, default the flag value to "Y".
+
+## Version 2.2.1 (June 5th, 2021)
+
+- Bug Fix
+
+    Stdout commands are still outputting some log messages to the console.
+
+## Version 2.2.0 (June 5th, 2021)
 
 - Feature
 
@@ -243,15 +218,58 @@ June 5th, 2021
         SVN_AUTHOR_NAME
         SVN_TOKEN
 
-Version 2.2.1
-June 5th, 2021
+## Version 2.1.2 (June 4th, 2021)
+
+- Bug Fix:  General
+
+    The stdout output is double line broken if the output is from a task that is
+    to output data to stdout.
+
+- Bug Fix: CI
+
+    The CI environment is not being set to use the Subversion service module
+    properties, continues to use 'Git' as the default.
+
+- Refactoring:  Changelog
+
+    Remove CI related tags ([skip-ci], etc) from commit messages when formatting
+    the changelog/history file entry.
+
+## Version 2.1.1 (June 4th, 2021)
 
 - Bug Fix
 
-    Stdout commands are still outputting some log messages to the console.
+    Running the process with the cmd line options '--task-version-current' or
+    '--task-version-next' are outputting some additional text to the console
+    other than just the just version number itself.
 
-Version 2.0.0
-June 3rd, 2021
+## Version 2.1.0 (June 4th, 2021)
+
+- Feature
+
+    Add new 'task mode' command line switch:
+
+        --task-ci-env-set
+
+    Using this option instructs the process to export relevant build variables
+    to a file that can be used to inject environment varilables into the CI's
+    build process.  The following variables are exported:
+
+        AP_CHANGELOG_FILE
+        AP_CURRENT_VERSION
+        AP_NEXT_VERSION
+
+- Bug Fix
+
+    Commits that fit onto a single line in the history file should have a '.'
+    character inserted at the end if one does not exist already.
+
+- Bug Fix
+
+    Running the process in bin command mode throws errors when running it on
+    the app-publisher project itself.
+
+## Version 2.0.0 (June 3rd, 2021)
 
 - Feature
 
@@ -384,44 +402,46 @@ June 3rd, 2021
 
     Add initial section on 'task mode' commands.
 
-Version 2.1.0
-June 4th, 2021
+## Version 1.22.0 (June 1st, 2021)
+
+- Documentation:  Readme
+
+    Testing ci
 
 - Feature
 
-    Add new 'task mode' command line switch:
+    Add new publisrc property to skip changelog/history file edits:
 
-        --task-ci-env-set
+        skipChangelogEdits
 
-    Using this option instructs the process to export relevant build variables
-    to a file that can be used to inject environment varilables into the CI's
-    build process.  The following variables are exported:
+    Setting this flag to "Y" will skip editing of the changelog/history file,
+    and it will be used as output by the parser without intervention.
 
-        AP_CHANGELOG_FILE
-        AP_CURRENT_VERSION
-        AP_NEXT_VERSION
+    Refactoring
 
-- Bug Fix
+    When run in a CI environment, all interaction properties should be
+    automatically disabled regardless of what is secified in the publishrc file:
 
-    Commits that fit onto a single line in the history file should have a '.'
-    character inserted at the end if one does not exist already.
-
-- Bug Fix
-
-    Running the process in bin command mode throws errors when running it on
-    the app-publisher project itself.
-
-Version 2.1.1
-June 4th, 2021
+        promptVersion
+        skipChangelogEdits
+        skipVersionEdits
+        versionFilesEditAlways
 
 - Bug Fix
 
-    Running the process with the cmd line options '--task-version-current' or
-    '--task-version-next' are outputting some additional text to the console
-    other than just the just version number itself.
+    When specifying a branch name, the commits since the last tag found are
+    still being read from the trunk when creating the changelog / history file.
 
-Version 1.21.0
-May 28th, 2021
+- Refactoring
+
+    Add initial detailed help option, include the supported publishrc
+    properties.
+
+    Detailed help can be displayed with the command line options:
+
+        -h2  ,  --help-detailed
+
+## Version 1.21.0 (May 28th, 2021)
 
 - Feature
 
@@ -476,48 +496,24 @@ May 28th, 2021
     When a publish run fails, print the error code to the console in addition to
     the error message.
 
-Version 1.22.0
-June 1st, 2021
-
-- Documentation:  Readme
-
-    Testing ci
-
-- Feature
-
-    Add new publisrc property to skip changelog/history file edits:
-
-        skipChangelogEdits
-
-    Setting this flag to "Y" will skip editing of the changelog/history file,
-    and it will be used as output by the parser without intervention.
-
-    Refactoring
-
-    When run in a CI environment, all interaction properties should be
-    automatically disabled regardless of what is secified in the publishrc file:
-
-        promptVersion
-        skipChangelogEdits
-        skipVersionEdits
-        versionFilesEditAlways
+## Version 1.20.2 (May 23rd, 2021)
 
 - Bug Fix
 
-    When specifying a branch name, the commits since the last tag found are
-    still being read from the trunk when creating the changelog / history file.
+    The current version is not read from package.json if the node_modules
+    directory doesn't exist, and falls back to parsing the history file. If
+    the history file deosnt exist (e.g. for an initial release), an error
+    occurs.
 
-- Refactoring
+## Version 1.20.1 (May 19th, 2021)
 
-    Add initial detailed help option, include the supported publishrc
-    properties.
+- Bug Fix
 
-    Detailed help can be displayed with the command line options:
+    The specified branch name in the .publishrc.json file is not applied to the
+    version control command to check for the latest comits since the previous
+    release.
 
-        -h2  ,  --help-detailed
-
-Version 1.20.0
-April 30th, 2021
+## Version 1.20.0 (April 30th, 2021)
 
 - Feature
 
@@ -543,47 +539,7 @@ April 30th, 2021
     Unversioned files in the defined distribution folder are not added to
     version control when setting the 'distAddAllVc' configuration value to 'Y'.
 
-Version 1.20.1
-May 19th, 2021
-
-- Bug Fix
-
-    The specified branch name in the .publishrc.json file is not applied to the
-    version control command to check for the latest comits since the previous
-    release.
-
-Version 1.20.2
-May 23rd, 2021
-
-- Bug Fix
-
-    The current version is not read from package.json if the node_modules
-    directory doesn't exist, and falls back to parsing the history file. If
-    the history file deosnt exist (e.g. for an initial release), an error
-    occurs.
-
-Version 1.19.2
-May 10th, 2020
-
-- Bug Fix:  Changelog
-
-    When there is a period character in a commit scope, the formatted subject
-    line in the changelog/history file for that commit is not being broken apart
-    and formatted correctly.
-
-Version 1.19.3
-May 10th, 2020
-
-- Bug Fix:  Changelog
-
-    The fix in the previous version was applied to the incorrect parsing regex.
-
-    Original issue:  When there is a period character in a commit scope, the
-    formatted subject line in the changelog/history file for that commit is not
-    being broken apart and formatted correctly.
-
-Version 1.19.4
-October 18th, 2020
+## Version 1.19.4 (October 18th, 2020)
 
 - Bug Fix
 
@@ -616,8 +572,54 @@ October 18th, 2020
 
     [Fixes #1896]
 
-Version 1.18.0
-January 31st, 2020
+## Version 1.19.3 (May 10th, 2020)
+
+- Bug Fix:  Changelog
+
+    The fix in the previous version was applied to the incorrect parsing regex.
+
+    Original issue:  When there is a period character in a commit scope, the
+    formatted subject line in the changelog/history file for that commit is not
+    being broken apart and formatted correctly.
+
+## Version 1.19.2 (May 10th, 2020)
+
+- Bug Fix:  Changelog
+
+    When there is a period character in a commit scope, the formatted subject
+    line in the changelog/history file for that commit is not being broken apart
+    and formatted correctly.
+
+## Version 1.19.1 (April 20th, 2020)
+
+- Bug Fix
+
+    During automatic version replacement in files that contain the version
+    number, any custom defined version property that uses an upper case
+    character is being lower cased.
+
+    [Fixes #1913]
+
+- Bug Fix
+
+    Unbroken lines in a commit comment that are  longer than the defined
+    historyLineLen property in .publishrc are breaking the release process
+    when building the new history file secton.
+
+    [Fixes #1936]
+
+## Version 1.19.0 (March 26th, 2020)
+
+- Feature:  Documentation Release
+
+    Add support for specifying a local docs directory in the publishrc config
+    file to use for the documentation upload source directory.  Currently it is
+    hard coded to look for a directory called "doc", "docs", or "documentation"
+    at the project root.
+
+    [Closes #1858]
+
+## Version 1.18.0 (January 31st, 2020)
 
 - Feature:  CLI
 
@@ -654,96 +656,7 @@ January 31st, 2020
     When the release notification email is sent in 'publish' mode, the log does
     not show the success stamp like it does when in 'dry run' mode.
 
-Version 1.19.0
-March 26th, 2020
-
-- Feature:  Documentation Release
-
-    Add support for specifying a local docs directory in the publishrc config
-    file to use for the documentation upload source directory.  Currently it is
-    hard coded to look for a directory called "doc", "docs", or "documentation"
-    at the project root.
-
-    [Closes #1858]
-
-Version 1.19.1
-April 20th, 2020
-
-- Bug Fix
-
-    During automatic version replacement in files that contain the version
-    number, any custom defined version property that uses an upper case
-    character is being lower cased.
-
-    [Fixes #1913]
-
-- Bug Fix
-
-    Unbroken lines in a commit comment that are  longer than the defined
-    historyLineLen property in .publishrc are breaking the release process
-    when building the new history file secton.
-
-    [Fixes #1936]
-
-Version 1.15.1
-January 7th, 2020
-
-- Bug Fix:  General
-
-    Release fails if the history file contains no asterisk line.
-
-    Most PJ projects contain a line of 75+ asterisks in the history file
-    separating the date/version from the changelog entries.
-
-    Add support for history files that only contain a dashed line to separate
-    the date/version from the changelog entries.
-
-    [Fixes #1378]
-
-- Bug Fix:  MantisBT Release
-
-    Release fails to upload if project name contains spaces.
-
-    [Fixes #1380]
-
-Version 1.16.0
-January 9th, 2020
-
-- Feature:  General
-
-    Add support for version replacement using custom tag.
-
-    This is acheived via the following new property in .publishrc.json:
-
-        versionReplaceTags
-
-    This new property can be specified as a string, or an array of strings. that
-    can be used for version updating in custom version files defined in the
-    "versionFiles" property of .publishrc.json.
-
-    For example:
-
-    Aassume the new version number is 1.1.0 and the old version number is 1.0.5,
-    and the following is defined in .publishrc.json:
-
-         "versionReplaceTags": "PROJECT_VERSION = "
-
-    This will cause any occurences of "DATABASE_VERSION = 1.0.5" in the files
-    specified in "versionFiles" will be replaced with the string
-    "PROJECT_VERSION = 1.1.0" .
-
-    [Closes #1399]
-
-- Bug Fix:  Network Release
-
-    The contents in the directory specified as the 'dist' directory are not
-    recursively uploaded to the specified network drive location.  Only files
-    in the base folder are uploaded.
-
-    [Fixes #1393]
-
-Version 1.17.0
-January 11th, 2020
+## Version 1.17.0 (January 11th, 2020)
 
 - Documentation:  Readme
 
@@ -790,37 +703,62 @@ January 11th, 2020
 
     [Closes #1413]
 
-Version 1.14.1
-November 22nd, 2019
+## Version 1.16.0 (January 9th, 2020)
 
-- Bug Fix:  Email
+- Feature:  General
 
-    Notification is not sent if all three preoperties 'distRelease',
-    'npmRelease', and 'nugetRelease' are not enabled in .publishrc.json.
+    Add support for version replacement using custom tag.
 
-    [Fixes #1142]
+    This is acheived via the following new property in .publishrc.json:
 
-Version 1.14.2
-December 19th, 2019
+        versionReplaceTags
+
+    This new property can be specified as a string, or an array of strings. that
+    can be used for version updating in custom version files defined in the
+    "versionFiles" property of .publishrc.json.
+
+    For example:
+
+    Aassume the new version number is 1.1.0 and the old version number is 1.0.5,
+    and the following is defined in .publishrc.json:
+
+         "versionReplaceTags": "PROJECT_VERSION = "
+
+    This will cause any occurences of "DATABASE_VERSION = 1.0.5" in the files
+    specified in "versionFiles" will be replaced with the string
+    "PROJECT_VERSION = 1.1.0" .
+
+    [Closes #1399]
+
+- Bug Fix:  Network Release
+
+    The contents in the directory specified as the 'dist' directory are not
+    recursively uploaded to the specified network drive location.  Only files
+    in the base folder are uploaded.
+
+    [Fixes #1393]
+
+## Version 1.15.1 (January 7th, 2020)
 
 - Bug Fix:  General
 
-    The history file is not populated if a commit contains an indented numbered
-    list.  The following script error is seen:
+    Release fails if the history file contains no asterisk line.
 
-        Cannot execute command 'is', no such command or program can be found.
+    Most PJ projects contain a line of 75+ asterisks in the history file
+    separating the date/version from the changelog entries.
 
-    [Fixes #1292]
+    Add support for history files that only contain a dashed line to separate
+    the date/version from the changelog entries.
 
-- Bug Fix:  Releases
+    [Fixes #1378]
 
-    Github release is created successfully but as of v1.14 it is showing as a
-    draft on Github, must manually publish.
+- Bug Fix:  MantisBT Release
 
-    [Fixes #1256]
+    Release fails to upload if project name contains spaces.
 
-Version 1.15.0
-December 22nd, 2019
+    [Fixes #1380]
+
+## Version 1.15.0 (December 22nd, 2019)
 
 - Feature
 
@@ -853,57 +791,34 @@ December 22nd, 2019
 
     [Closes #286]
 
-Version 1.13.17
-November 12th, 2019
+## Version 1.14.2 (December 19th, 2019)
 
-- Bug Fix:  Changelog
+- Bug Fix:  General
 
-    Perform indentation on broken lines.
+    The history file is not populated if a commit contains an indented numbered
+    list.  The following script error is seen:
 
-    If a commit message contains indented text, and the text is longer than the
-    maximum line length, pre-pad each of the broken lines with the same
-    indentation size used.
+        Cannot execute command 'is', no such command or program can be found.
 
-    [Fixes #1054]
+    [Fixes #1292]
 
-- Bug Fix
+- Bug Fix:  Releases
 
-    Line lengths are still not broken up correctly when creating the history
-    file entries.   Can still be 1-2 characters off.
+    Github release is created successfully but as of v1.14 it is showing as a
+    draft on Github, must manually publish.
 
-    [References #177]
+    [Fixes #1256]
 
-Version 1.13.18
-November 12th, 2019
+## Version 1.14.1 (November 22nd, 2019)
 
-- Bug Fix:  Changelog
+- Bug Fix:  Email
 
-    When applying indentation to broken indented lines, take into consideration
-    if the indentation is an unordered (using asterisk markers) or an ordered
-    list.  Line up subsequent broken lines underneath the first word of the
-    indented text, as opposed to lining up underneath the list number or marker.
+    Notification is not sent if all three preoperties 'distRelease',
+    'npmRelease', and 'nugetRelease' are not enabled in .publishrc.json.
 
-- Bug Fix:  Changelog
+    [Fixes #1142]
 
-    Entries that are only one line are being indented an extra 4 spaces since
-    Version 1.13.16.
-
-- Bug Fix:  Changelog
-
-    If a space character is accidentally entered in a commit message preceding a
-    line broken ticket number tag, unnecessary line breaks are added before the
-    tag.
-
-    This fix allows just one space character before a line broken ticket number
-    tag.
-
-- Bug Fix:  Changelog
-
-    The functionality to perform indentation on broken lines that was added in
-    the previous releases does not cut lines a maximum length in some cases.
-
-Version 1.14.0
-November 18th, 2019
+## Version 1.14.0 (November 18th, 2019)
 
 - Feature:  General
 
@@ -932,28 +847,54 @@ November 18th, 2019
     afterwards.  The tag is created when the release is made and does not
     include the modified versioned files.
 
-Version 1.13.14
-November 8th, 2019
+## Version 1.13.18 (November 12th, 2019)
 
 - Bug Fix:  Changelog
 
-    Ticket tag links in the Mantis release changelog were broken in the 1.13.13
-    release.
-
-    [References #1030]
-
-Version 1.13.15
-November 9th, 2019
+    When applying indentation to broken indented lines, take into consideration
+    if the indentation is an unordered (using asterisk markers) or an ordered
+    list.  Line up subsequent broken lines underneath the first word of the
+    indented text, as opposed to lining up underneath the list number or marker.
 
 - Bug Fix:  Changelog
 
-    Ticket tags that are on a separate line in the commit message are being
-    padded with extra line breaks when the history file entries are created.
+    Entries that are only one line are being indented an extra 4 spaces since
+    Version 1.13.16.
 
-    [Fixes #1034]
+- Bug Fix:  Changelog
 
-Version 1.13.16
-November 11th, 2019
+    If a space character is accidentally entered in a commit message preceding a
+    line broken ticket number tag, unnecessary line breaks are added before the
+    tag.
+
+    This fix allows just one space character before a line broken ticket number
+    tag.
+
+- Bug Fix:  Changelog
+
+    The functionality to perform indentation on broken lines that was added in
+    the previous releases does not cut lines a maximum length in some cases.
+
+## Version 1.13.17 (November 12th, 2019)
+
+- Bug Fix:  Changelog
+
+    Perform indentation on broken lines.
+
+    If a commit message contains indented text, and the text is longer than the
+    maximum line length, pre-pad each of the broken lines with the same
+    indentation size used.
+
+    [Fixes #1054]
+
+- Bug Fix
+
+    Line lengths are still not broken up correctly when creating the history
+    file entries.   Can still be 1-2 characters off.
+
+    [References #177]
+
+## Version 1.13.16 (November 11th, 2019)
 
 - Bug Fix:  Changelog
 
@@ -989,41 +930,25 @@ November 11th, 2019
     entries in the history file with only a patch level version bump as opposed
     to the minor version bump given to 'perf'.
 
-Version 1.13.12
-October 29th, 2019
-
-- Feature:  Changelog
-
-    Allow edit of auto generated changelog file before uploading mantisbt
-    release. [closes #186]
+## Version 1.13.15 (November 9th, 2019)
 
 - Bug Fix:  Changelog
 
-    If there are a mix of history file entries that contain a subject, and ones
-    that do not contains a subject line, the github/mantis changelog becomes
-    corrupted.
+    Ticket tags that are on a separate line in the commit message are being
+    padded with extra line breaks when the history file entries are created.
+
+    [Fixes #1034]
+
+## Version 1.13.14 (November 8th, 2019)
 
 - Bug Fix:  Changelog
 
-    If there is only one entry in the history file, and it does not contain a
-    subject line, the mantis/github release fails.
+    Ticket tag links in the Mantis release changelog were broken in the 1.13.13
+    release.
 
-    [fixes #741]
+    [References #1030]
 
-- Bug Fix:  History File
-
-    Generated text lines sometimes extend past header max length.
-
-    [fixes #177]
-
-- Bug Fix
-
-    Prompt for initial version on first project release.
-
-    [fixes #323]
-
-Version 1.13.13
-November 8th, 2019
+## Version 1.13.13 (November 8th, 2019)
 
 - Feature:  Changelog
 
@@ -1058,46 +983,39 @@ November 8th, 2019
 
     [Fixes #994]
 
-Version 1.13.9
-September 7th, 2019
+## Version 1.13.12 (October 29th, 2019)
+
+- Feature:  Changelog
+
+    Allow edit of auto generated changelog file before uploading mantisbt
+    release. [closes #186]
+
+- Bug Fix:  Changelog
+
+    If there are a mix of history file entries that contain a subject, and ones
+    that do not contains a subject line, the github/mantis changelog becomes
+    corrupted.
+
+- Bug Fix:  Changelog
+
+    If there is only one entry in the history file, and it does not contain a
+    subject line, the mantis/github release fails.
+
+    [fixes #741]
+
+- Bug Fix:  History File
+
+    Generated text lines sometimes extend past header max length.
+
+    [fixes #177]
 
 - Bug Fix
 
-    The release changelog html is malformed if the history file section contains
-    a line break, followed by four or more spaces, followed by another line
-    break.
+    Prompt for initial version on first project release.
 
-- Refactoring
+    [fixes #323]
 
-    Email footer app stamp should read 'Do not respond to this email message'.
-
-- Refactoring
-
-    Run mantisbt/github releases before version control check in, before
-    dry run changes are reverted.  Enables easier debugging while changelog
-    parser is pre-stable.
-
-Version 1.13.10
-October 10th, 2019
-
-- Bug Fix
-
-    Using a scope in a commit message causes that message subect to be discluded
-    from determing the next version.
-
-- Bug Fix
-
-    The subject "perf" should perform a minor version increment, not a patch
-    level increment.
-
-    [fixes #799]
-
-- Refactoring
-
-    Remove windows installer build
-
-Version 1.13.11
-October 29th, 2019
+## Version 1.13.11 (October 29th, 2019)
 
 - Bug Fix
 
@@ -1119,25 +1037,59 @@ October 29th, 2019
 
     [fixes #825]
 
-Version 1.13.5
-August 15th, 2019
+## Version 1.13.10 (October 10th, 2019)
 
 - Bug Fix
 
-    The previous fix for the version being bumped back to the previous version
-    on publish runs past the first one did not work as intended.
-
-Version 1.13.6
-August 15th, 2019
+    Using a scope in a commit message causes that message subect to be discluded
+    from determing the next version.
 
 - Bug Fix
 
-    For an NPM release, if the 'npmPackDist' flag is set, but the output tarball
-    is not yet under version control, the publish run fails to add it before
-    commiting version changes and tagging version.
+    The subject "perf" should perform a minor version increment, not a patch
+    level increment.
 
-Version 1.13.7
-August 24th, 2019
+    [fixes #799]
+
+- Refactoring
+
+    Remove windows installer build
+
+## Version 1.13.9 (September 7th, 2019)
+
+- Bug Fix
+
+    The release changelog html is malformed if the history file section contains
+    a line break, followed by four or more spaces, followed by another line
+    break.
+
+- Refactoring
+
+    Email footer app stamp should read 'Do not respond to this email message'.
+
+- Refactoring
+
+    Run mantisbt/github releases before version control check in, before
+    dry run changes are reverted.  Enables easier debugging while changelog
+    parser is pre-stable.
+
+## Version 1.13.8 (August 31st, 2019)
+
+- Bug Fix:  Releases
+
+    The mantis/github release fails when generating the changelog if any of the
+    numbered items in a history text file contains a space between the last
+    digit and the period character used to terminate.
+
+    For example:
+
+        12 .  commit text here
+
+    as opposed to correct syntax:
+
+        -  commit text here
+
+## Version 1.13.7 (August 24th, 2019)
 
 - Bug Fix:  Changelog
 
@@ -1162,57 +1114,22 @@ August 24th, 2019
 
     [fixes #346]
 
-Version 1.13.8
-August 31st, 2019
-
-- Bug Fix:  Releases
-
-    The mantis/github release fails when generating the changelog if any of the
-    numbered items in a history text file contains a space between the last
-    digit and the period character used to terminate.
-
-    For example:
-
-        12 .  commit text here
-
-    as opposed to correct syntax:
-
-        -  commit text here
-
-Version 1.13.2
-August 14th, 2019
-
-- Documentation:  readme
-
-    Add initial detail section for config parameters.
+## Version 1.13.6 (August 15th, 2019_
 
 - Bug Fix
 
-    An ampersand in bugs page or homepage causes an error. [fixes #173]
+    For an NPM release, if the 'npmPackDist' flag is set, but the output tarball
+    is not yet under version control, the publish run fails to add it before
+    commiting version changes and tagging version.
+
+## Version 1.13.5 (August 15th, 2019)
 
 - Bug Fix
 
-    Version is not being bumped in publishrc if using version config.
+    The previous fix for the version being bumped back to the previous version
+    on publish runs past the first one did not work as intended.
 
-Version 1.13.3
-August 15th, 2019
-
-- Documentation:  readme
-
-    Update information on publishrc configuration parameters.
-
-- Feature
-
-    Provide config for version files to always edit.
-
-    The following publishrc parameter has been added:
-
-        versionFilesEditAlways
-
-    [closes #252]
-
-Version 1.13.4
-August 15th, 2019
+## Version 1.13.4 (August 15th, 2019)
 
 - Bug Fix
 
@@ -1228,31 +1145,77 @@ August 15th, 2019
 
     The config npmPackDist does not have its output checked in. [fixes #258]
 
-Version 1.11.5
-August 9th, 2019
+## Version 1.13.3 (August 15th, 2019)
+
+- Documentation:  readme
+
+    Update information on publishrc configuration parameters.
+
+- Feature
+
+    Provide config for version files to always edit.
+
+    The following publishrc parameter has been added:
+
+        versionFilesEditAlways
+
+    [closes #252]
+
+## Version 1.13.2 (August 14th, 2019)
+
+- Documentation:  readme
+
+    Add initial detail section for config parameters.
 
 - Bug Fix
 
-    When performing a dry run, the 'skipVersionEdits' config should be overriden
-    or disabled.
-
-    Setting dryRun="Y" will now cause skipVersionEdits ro be set to "N" in all
-    cases.
-
-    [fixes #248]
+    An ampersand in bugs page or homepage causes an error. [fixes #173]
 
 - Bug Fix
 
-    The first publish run for a project doesn't write to the changelog/history
-    file. [fixes #253]
+    Version is not being bumped in publishrc if using version config.
+
+## Version 1.13.1 (August 13rd, 2019)
 
 - Bug Fix
 
-    PDF documentation is not copied to the directory release documentation
-    path. [fixes #251]
+    The newly added .publishrc version in 1.13.0 does not get updated on a
+    publish run.
 
-Version 1.12.0
-August 12nd, 2019
+- Refactoring
+
+    Do not run post-build commands on a dry run.
+
+## Version 1.13.0 (August 13rd, 2019)
+
+- Feature
+
+    Add support for using version number in publishrc for base application
+    version.
+
+    [closes #254]
+
+- Bug Fix
+
+    Exit if a environment variable replacement cant be made.
+
+    [closes #247]
+
+- Bug Fix
+
+    Commits that are entered without a valid per-determined subject causes an
+    error when parsing the changelog for a MantisBT release.
+
+    [fixes #236]
+
+- Bug Fix
+
+    Commit comments with line breaks improperly indent in the table formatted
+    MantisBT/GitHub release changelog when using history text file for parsing.
+
+    [fixes #300]
+
+## Version 1.12.0 (August 12nd, 2019)
 
 - Feature
 
@@ -1298,50 +1261,52 @@ August 12nd, 2019
 
     [closes #284]
 
-Version 1.13.0
-August 13rd, 2019
-
-- Feature
-
-    Add support for using version number in publishrc for base application
-    version.
-
-    [closes #254]
+## Version 1.11.5 (August 9th, 2019)
 
 - Bug Fix
 
-    Exit if a environment variable replacement cant be made.
+    When performing a dry run, the 'skipVersionEdits' config should be overriden
+    or disabled.
 
-    [closes #247]
+    Setting dryRun="Y" will now cause skipVersionEdits ro be set to "N" in all
+    cases.
 
-- Bug Fix
-
-    Commits that are entered without a valid per-determined subject causes an
-    error when parsing the changelog for a MantisBT release.
-
-    [fixes #236]
+    [fixes #248]
 
 - Bug Fix
 
-    Commit comments with line breaks improperly indent in the table formatted
-    MantisBT/GitHub release changelog when using history text file for parsing.
-
-    [fixes #300]
-
-Version 1.13.1
-August 13rd, 2019
+    The first publish run for a project doesn't write to the changelog/history
+    file. [fixes #253]
 
 - Bug Fix
 
-    The newly added .publishrc version in 1.13.0 does not get updated on a
-    publish run.
+    PDF documentation is not copied to the directory release documentation
+    path. [fixes #251]
 
-- Refactoring
+## Version 1.11.4 (August 6th, 2019)
 
-    Do not run post-build commands on a dry run.
+- Bug Fix
 
-Version 1.11.2
-August 1st, 2019
+    Notepad windows open in background after first edit, Notepadd++ behaves as
+    intended.  [fixes #256]
+
+## Version 1.11.3 (August 5th, 2019)
+
+- Build System:  NPM
+
+    Remove @types/aggregate-error and @types/get-stream dependencies, packages
+    now come with their own type definitions.
+
+- Bug Fix
+
+    Release changelog built from markdown showing 'Featur' instead of 'Feature'
+
+- Bug Fix
+
+    Release changelog built from markdown showing does not bold the subject
+    part in the commit message breakdown.
+
+## Version 1.11.2 (August 1st, 2019)
 
 - Documentation:  README
 
@@ -1363,48 +1328,7 @@ August 1st, 2019
     When installing globally, the install process always fails the first time
     with the error '@spmeesseman/json/lib/json.js' file does not exist.
 
-Version 1.11.3
-August 5th, 2019
-
-- Build System:  NPM
-
-    Remove @types/aggregate-error and @types/get-stream dependencies, packages
-    now come with their own type definitions.
-
-- Bug Fix
-
-    Release changelog built from markdown showing 'Featur' instead of 'Feature'
-
-- Bug Fix
-
-    Release changelog built from markdown showing does not bold the subject
-    part in the commit message breakdown.
-
-Version 1.11.4
-August 6th, 2019
-
-- Bug Fix
-
-    Notepad windows open in background after first edit, Notepadd++ behaves as
-    intended.  [fixes #256]
-
-Version 1.11.0
-July 27th, 2019
-
-- Feature
-
-    Add support for multiple MantisBT releases in one publish run.
-
-- Feature
-
-    Add support for providing a MantisBT API token in publishrc as opposed to
-    setting a system environment variable.
-
-    Note that setting the MANTISBT_API_TOKEN environment variable is still an
-    option.
-
-Version 1.11.1
-July 29th, 2019
+## Version 1.11.1 (July 29th, 2019)
 
 - Documentation:  README
 
@@ -1431,37 +1355,21 @@ July 29th, 2019
     Add support for the same style changelog html to be pushed for a GitHub
     release as that of a MantisBT release
 
-Version 1.10.6
-July 27th, 2019
+## Version 1.11.0 (July 27th, 2019)
 
-- Bug Fix
+- Feature
 
-    History file link is still incorrect in the release email notification for
-    non network released projects
+    Add support for multiple MantisBT releases in one publish run.
 
-Version 1.10.7
-July 27th, 2019
+- Feature
 
-- Refactoring
+    Add support for providing a MantisBT API token in publishrc as opposed to
+    setting a system environment variable.
 
-    Improve the display of the various project links in the release email
-    notification.
+    Note that setting the MANTISBT_API_TOKEN environment variable is still an
+    option.
 
-Version 1.10.8
-July 27th, 2019
-
-- Build System
-
-    The NPM location link is broken in the release notification email due to
-    an invalid config 'npmRegistry' in publishrc.
-
-- Bug Fix
-
-    The project links display change in the release email notification displays
-    incorrectly with all text in a row with no spaces.
-
-Version 1.10.9
-July 27th, 2019
+## Version 1.10.9 (July 27th, 2019)
 
 - Bug Fix
 
@@ -1473,8 +1381,46 @@ July 27th, 2019
     Forcefully create new files throughout application, in a case where the
     file already exists, it should be overwritten.
 
-Version 1.10.3
-July 27th, 2019
+## Version 1.10.8 (July 27th, 2019)
+
+- Build System
+
+    The NPM location link is broken in the release notification email due to
+    an invalid config 'npmRegistry' in publishrc.
+
+- Bug Fix
+
+    The project links display change in the release email notification displays
+    incorrectly with all text in a row with no spaces.
+
+## Version 1.10.7 (July 27th, 2019)
+
+- Refactoring
+
+    Improve the display of the various project links in the release email
+    notification.
+
+## Version 1.10.6 (July 27th, 2019)
+
+- Bug Fix
+
+    History file link is still incorrect in the release email notification for
+    non network released projects
+
+## Version 1.10.5 (July 27th, 2019)
+
+- Bug Fix
+
+    Validating the determined new version number causes publish run to fail for
+    non-npm based projects.
+
+## Version 1.10.4 (July 27th, 2019)
+
+- Bug Fix
+
+    The npm install fails with 'cannot find module marked'.
+
+## Version 1.10.3 (July 27th, 2019)
 
 - Feature
 
@@ -1497,33 +1443,20 @@ July 27th, 2019
     automated version tag, it is used as the revision base for retrieving commits
     since the last release, thereby missing all the appropriate commit messages.
 
-Version 1.10.4
-July 27th, 2019
-
-- Bug Fix
-
-    The npm install fails with 'cannot find module marked'.
-
-Version 1.10.5
-July 27th, 2019
-
-- Bug Fix
-
-    Validating the determined new version number causes publish run to fail for
-    non-npm based projects.
-
-Version 1.9.1
-July 26th, 2019
+## Version 1.10.2 (July 26th, 2019)
 
 - Refactoring
 
-    Add the following content to the end of automated release emails:
+    Enhance email notification signature line.
 
-        1) Application signature
-        2) A note stating not to reply to the automated email
+## Version 1.10.1 (July 26th, 2019)
 
-Version 1.10.0
-July 26th, 2019
+- Bug Fix
+
+    The email notification signature line is misaligned and displays a broken
+    html tag.
+
+## Version 1.10.0 (July 26th, 2019)
 
 - Feature
 
@@ -1545,23 +1478,30 @@ July 26th, 2019
 
     [fixes #215]
 
-Version 1.10.1
-July 26th, 2019
-
-- Bug Fix
-
-    The email notification signature line is misaligned and displays a broken
-    html tag.
-
-Version 1.10.2
-July 26th, 2019
+## Version 1.9.1 (July 26th, 2019)
 
 - Refactoring
 
-    Enhance email notification signature line.
+    Add the following content to the end of automated release emails:
 
-Version 1.8.0
-July 21st, 2019
+        1) Application signature
+        2) A note stating not to reply to the automated email
+
+## Version 1.9.0 (July 26th, 2019)
+
+- Feature
+
+    Add support for MantisBT Plugin type releases.
+
+## Version 1.8.1 (July 24th, 2019)
+
+- Bug Fix
+
+    If a history file entry is line broken, and the beginning word of the new
+    line does not start with an alphanumeric character, the text for that entry
+    is not properly formatted in the changelog sent to the MantisBT Releases API.
+
+## Version 1.8.0 (July 21st, 2019)
 
 - Feature
 
@@ -1585,32 +1525,24 @@ July 21st, 2019
     contains a numeric character (1-9) followed by a comma, and any characters
     that follow, are styled in bold.
 
-Version 1.8.1
-July 24th, 2019
+## Version 1.7.5 (July 20th, 2019)
 
 - Bug Fix
 
-    If a history file entry is line broken, and the beginning word of the new
-    line does not start with an alphanumeric character, the text for that entry
-    is not properly formatted in the changelog sent to the MantisBT Releases API.
-
-Version 1.9.0
-July 26th, 2019
-
-- Feature
-
-    Add support for MantisBT Plugin type releases.
-
-Version 1.7.3
-July 17th, 2019
+    Attempt to fix a random error 'access is denied' when the version in the
+    sencha config of the package.json file is being updated.
 
 - Bug Fix
 
-    If the distRelease flag is set for a network folder path type release, but
-    the distDocPath flag is not set, the publish run fails.
+    The history text sent for a mantisbt release contains bolded numbered lines
+    for items 1-9, but not for any items numbered 10 or higher.
 
-Version 1.7.4
-July 19th, 2019
+- Bug Fix
+
+    The history text sent for a mantisbt release sometimes writes off the side
+    of the Releases page and is not wrapped properly.
+
+## Version 1.7.4 (July 19th, 2019)
 
 - Feature
 
@@ -1628,26 +1560,36 @@ July 19th, 2019
     Line breaks around inner numbered lists of a single release note are being
     removed, and the entire inner list is bolded.
 
-Version 1.7.5
-July 20th, 2019
+## Version 1.7.3 (July 17th, 2019)
 
 - Bug Fix
 
-    Attempt to fix a random error 'access is denied' when the version in the
-    sencha config of the package.json file is being updated.
+    If the distRelease flag is set for a network folder path type release, but
+    the distDocPath flag is not set, the publish run fails.
+
+## Version 1.7.2 (July 13rd, 2019)
 
 - Bug Fix
 
-    The history text sent for a mantisbt release contains bolded numbered lines
-    for items 1-9, but not for any items numbered 10 or higher.
+    The file description feature for a mantisbt release added in the last
+    version does not work if the description contains a space
 
-- Bug Fix
+## Version 1.7.1 (July 13rd, 2019)
 
-    The history text sent for a mantisbt release sometimes writes off the side
-    of the Releases page and is not wrapped properly.
+- Feature
 
-Version 1.7.0
-July 13rd, 2019
+    Add support for mantisbt release file/asset descriptions.
+
+    A description can be provided along with the asset file location with a '|'
+    separator in the mantisbtAssets config, for example:
+
+    build/app-publisher.tgz|NPM Tarball
+
+- Build System:  App Publisher
+
+    Add mantisbtAsset file descriptions to publishrc.json.
+
+## Version 1.7.0 (July 13rd, 2019)
 
 - Feature
 
@@ -1670,56 +1612,17 @@ July 13rd, 2019
     The history file has an additional unecessary newline at the end of the new
     section that is generated during the publish run.
 
-Version 1.7.1
-July 13rd, 2019
-
-- Feature
-
-    Add support for mantisbt release file/asset descriptions.
-
-    A description can be provided along with the asset file location with a '|'
-    separator in the mantisbtAssets config, for example:
-
-    build/app-publisher.tgz|NPM Tarball
-
-- Build System:  App Publisher
-
-    Add mantisbtAsset file descriptions to publishrc.json.
-
-Version 1.7.2
-July 13rd, 2019
+## Version 1.6.5 (July 13rd, 2019)
 
 - Bug Fix
 
-    The file description feature for a mantisbt release added in the last
-    version does not work if the description contains a space
+    Partial errors when creating a release are indicated as success in runtime
+    log.
 
-Version 1.6.2
-July 4th, 2019
+    The log will now display the return HTML from the Mantis REST service on
+    any partial error.
 
-- Bug Fix
-
-    The extracted history for the changelog sent to the MantisBT Releases
-    Plugin contains line breaks too short for web display.
-
-Version 1.6.3
-July 13rd, 2019
-
-- Build System
-
-    Add history.txt to list of file assets to upload to MantisBT Releases
-    Plugin.
-
-- Bug Fix
-
-    When a MantisBT release is uploaded, only parts of the changelog from a
-    history file  are stripped of line break delimiters.
-
-    Proper behaviour should replace all line breaks aside from double line
-    breaks, for full width HTML display.
-
-Version 1.6.4
-July 13rd, 2019
+## Version 1.6.4 (July 13rd, 2019)
 
 - Minor Feature
 
@@ -1735,45 +1638,36 @@ July 13rd, 2019
     Some history entries do not have line breaks removed.  All single line
     breaks should be removed for html browser display.
 
-Version 1.6.5
-July 13rd, 2019
+## Version 1.6.3 (July 13rd, 2019)
+
+- Build System
+
+    Add history.txt to list of file assets to upload to MantisBT Releases
+    Plugin.
 
 - Bug Fix
 
-    Partial errors when creating a release are indicated as success in runtime
-    log.
+    When a MantisBT release is uploaded, only parts of the changelog from a
+    history file  are stripped of line break delimiters.
 
-    The log will now display the return HTML from the Mantis REST service on
-    any partial error.
+    Proper behaviour should replace all line breaks 
 
-Version 1.5.14
-June 27th, 2019
+## Version 1.6.2 (July 4th, 2019)
 
 - Bug Fix
 
-    If more than one occurrence of an environment tag is used in publishrc,
-    only the first occurrence gets replaced.
+    The extracted history for the changelog sent to the MantisBT Releases
+    Plugin contains line breaks too short for web display.aside from double line
+    breaks, for full width HTML display.
 
-    For example:
-
-    "buildCommand": [ "${CODE_HOME}\ant\ant.bat", "${CODE_HOME}\nsis\makensis" ]
-
-    The 2nd command fails as the tag is not replaced.
-
-    [fixes #90]
+## Version 1.6.1 (July 4th, 2019)
 
 - Bug Fix
 
-    Publish fails if one of the following conditions holds:
+    History file is not properly sent to Releases plugin api, and no release is
+    created when calling the POST REST API.
 
-        (1) Project has no package.json file.
-        (2) No repository defined in package.json but one is defined in the
-            publishrc config file.
-
-    [fixes #91]
-
-Version 1.6.0
-July 4th, 2019
+## Version 1.6.0 (July 4th, 2019)
 
 - Feature
 
@@ -1800,30 +1694,38 @@ July 4th, 2019
     Note that the project name defined in .publishrc.json must match the
     MantisBT project name.
 
-Version 1.6.1
-July 4th, 2019
+## Version 1.5.14 (June 27th, 2019)
 
 - Bug Fix
 
-    History file is not properly sent to Releases plugin api, and no release is
-    created when calling the POST REST API.
+    If more than one occurrence of an environment tag is used in publishrc,
+    only the first occurrence gets replaced.
 
-Version 1.5.10
-June 4th, 2019
+    For example:
 
-- Bug Fix
+    "buildCommand": [ "${CODE_HOME}\ant\ant.bat", "${CODE_HOME}\nsis\makensis" ]
 
-    In the previous release, an internally defined duplicate command line flag causes the publish to fail immediately after starting.
+    The 2nd command fails as the tag is not replaced.
 
-Version 1.5.11
-June 4th, 2019
+    [fixes #90]
 
 - Bug Fix
 
-    The check to see if the "dist" path is under version control is failing, and is not being checked in with other touched files at the end of the publish run, thereby missing the version tag as well.
+    Publish fails if one of the following conditions holds:
 
-Version 1.5.12
-June 4th, 2019
+        (1) Project has no package.json file.
+        (2) No repository defined in package.json but one is defined in the
+            publishrc config file.
+
+    [fixes #91]
+
+## Version 1.5.13 (June 6th, 2019)
+
+- Bug Fix
+
+    For a distribution type release, the file upload to the directory specified by 'distReleasePath' is not being performed.
+
+## Version 1.5.12 (June 4th, 2019)
 
 - Bug Fix
 
@@ -1831,39 +1733,19 @@ June 4th, 2019
     it should only cause a patch number bump (for semantically versioned
     projects only).
 
-Version 1.5.13
-June 6th, 2019
+## Version 1.5.11 (June 4th, 2019)
 
 - Bug Fix
 
-    For a distribution type release, the file upload to the directory specified by 'distReleasePath' is not being performed.
+    The check to see if the "dist" path is under version control is failing, and is not being checked in with other touched files at the end of the publish run, thereby missing the version tag as well.
 
-Version 1.5.7
-June 3rd, 2019
-
-- Bug Fix
-
-    Setting the 'textEditor' config value to an empty string will still open
-    notepad for each file that is version edited during the publish run.
-
-- Code Refactoring
-
-    Ignore commits with a subject of "chore" when making auto-entries in the
-    history/changelog files.
-
-Version 1.5.8
-June 3rd, 2019
+## Version 1.5.10 (June 4th, 2019)
 
 - Bug Fix
 
-    Github release is tagging version before touched version files are commited.
+    In the previous release, an internally defined duplicate command line flag causes the publish to fail immediately after starting.
 
-- Code Refactoring
-
-    Add check for git repo type before making github release.
-
-Version 1.5.9
-June 4th, 2019
+## Version 1.5.9 (June 4th, 2019)
 
 - Bug Fix
 
@@ -1881,16 +1763,39 @@ June 4th, 2019
 
     Exit when --no-ci flag is not passed instead of running in dry mode
 
-Version 1.5.4
-June 3rd, 2019
+## Version 1.5.8 (June 3rd, 2019)
 
 - Bug Fix
 
-    Running 1.5 for a subversion build in run #1 causes an error and publish
-    exits.
+    Github release is tagging version before touched version files are commited.
 
-Version 1.5.5
-June 3rd, 2019
+- Code Refactoring
+
+    Add check for git repo type before making github release.
+
+## Version 1.5.7 (June 3rd, 2019)
+
+- Bug Fix
+
+    Setting the 'textEditor' config value to an empty string will still open
+    notepad for each file that is version edited during the publish run.
+
+- Code Refactoring
+
+    Ignore commits with a subject of "chore" when making auto-entries in the
+    history/changelog files.
+
+## Version 1.5.6 (June 3rd, 2019)
+
+- Bug Fix
+
+    During a github release, the logged response values are not displaying.
+
+- Bug Fix
+
+    A Github release fails to upload any assets past the first one.
+
+## Version 1.5.5 (June 3rd, 2019)
 
 - Bug Fix
 
@@ -1904,19 +1809,35 @@ June 3rd, 2019
     the first line break in alignment with the 1st line (including the log
     stamp).
 
-Version 1.5.6
-June 3rd, 2019
+## Version 1.5.4 (June 3rd, 2019)
 
 - Bug Fix
 
-    During a github release, the logged response values are not displaying.
+    Running 1.5 for a subversion build in run #1 causes an error and publish
+    exits.
+
+## Version 1.5.3 (June 3rd, 2019)
 
 - Bug Fix
 
-    A Github release fails to upload any assets past the first one.
+    Package.json point to incorrect startup file for cli, publish run fails.
 
-Version 1.5.0
-June 3rd, 2019
+## Version 1.5.2 (June 3rd, 2019)
+
+- Bug Fix
+
+    When installing v1.5.1, the installation fails with:
+
+        Cannot locate ./build/index.js
+
+## Version 1.5.1 (June 3rd, 2019)
+
+- Bug Fix
+
+    External application stderr is logging with the error icon when it is just
+    info.
+
+## Version 1.5.0 (June 3rd, 2019)
 
 - Feature
 
@@ -1931,47 +1852,7 @@ June 3rd, 2019
     Validate current version found and next version calculated before proceeding
     with publish run.
 
-Version 1.5.1
-June 3rd, 2019
-
-- Bug Fix
-
-    External application stderr is logging with the error icon when it is just
-    info.
-
-Version 1.5.2
-June 3rd, 2019
-
-- Bug Fix
-
-    When installing v1.5.1, the installation fails with:
-
-        Cannot locate ./build/index.js
-
-Version 1.5.3
-June 3rd, 2019
-
-- Bug Fix
-
-    Package.json point to incorrect startup file for cli, publish run fails.
-
-Version 1.4.5
-May 29th, 2019
-
-- Bug Fix
-
-    Git tag is created in the local repository but not being pushed to the configured remote origin.
-
-- Code Refactoring
-
-    The following packages are now bundled in an attempt to fix the error
-    received when trying to install this package locally to a project:
-
-        @spmeesseman/json
-        marked
-
-Version 1.4.6
-May 31st, 2019
+## Version 1.4.6 (May 31st, 2019)
 
 - Build System:  NPM
 
@@ -2003,19 +1884,41 @@ May 31st, 2019
 
     Add full set of tslint definitions to tslint.json for typescript styling.
 
-Version 1.4.1
-May 28th, 2019
+## Version 1.4.5 (May 29th, 2019)
 
 - Bug Fix
 
-    The changelog is being overwritten with the new commits instead of being appended to.
+    Git tag is created in the local repository but not being pushed to the configured remote origin.
 
-- Bug Fix
+- Code Refactoring
 
-    Regression - The automatic version tag was broken in previous release.
+    The following packages are now bundled in an attempt to fix the error
+    received when trying to install this package locally to a project:
 
-Version 1.4.2
-May 29th, 2019
+        @spmeesseman/json
+        marked
+
+## Version 1.4.4 (May 29th, 2019)
+
+- Code Refactoring
+
+    Removed all test references to semantic-release, fixed json package
+    reference
+
+## Version 1.4.3 (May 29th, 2019)
+
+- Bug Fix:  npm
+
+    Regression - The scope name is being replaced with npm username when
+    publishing to the NPM server.
+
+- Code Refactoring
+
+    Previously, when touching package.json to update version and repsository
+    info specified in publishrc, CRLF linebreaks were used.  LF linebreaks will
+    now be used as NPM specifies this.
+
+## Version 1.4.2 (May 29th, 2019)
 
 - Documentation:  README.md
 
@@ -2060,47 +1963,17 @@ May 29th, 2019
 
     The version is not bumped in assemblyinfo.cs .net app releases when the app uses non-semantic incremental versioning.
 
-Version 1.4.3
-May 29th, 2019
+## Version 1.4.1 (May 28th, 2019)
 
-- Bug Fix:  npm
+- Bug Fix
 
-    Regression - The scope name is being replaced with npm username when
-    publishing to the NPM server.
+    The changelog is being overwritten with the new commits instead of being appended to.
 
-- Code Refactoring
+- Bug Fix
 
-    Previously, when touching package.json to update version and repsository
-    info specified in publishrc, CRLF linebreaks were used.  LF linebreaks will
-    now be used as NPM specifies this.
+    Regression - The automatic version tag was broken in previous release.
 
-Version 1.4.4
-May 29th, 2019
-
-- Code Refactoring
-
-    Removed all test references to semantic-release, fixed json package
-    reference
-
-Version 1.3.0
-May 25th, 2019
-
-- Documentation
-
-    Add initial section in README for explanation of configuration parameters.
-
-- Feature
-
-    Add functionality to produce marked down commit entry generation for a
-    changelog file in the same manner as a text history file is generated.
-
-- Breaking Change
-
-    The "npmUser" configuration parameter has been removed, use "author" and
-    "contributors" fields in package.json.
-
-Version 1.4.0
-May 28th, 2019
+## Version 1.4.0 (May 28th, 2019)
 
 - Feature
 
@@ -2199,8 +2072,23 @@ May 28th, 2019
 
     Title case app name in notification email subject line.
 
-Version 1.2.0
-May 24th, 2019
+## Version 1.3.0 (May 25th, 2019)
+
+- Documentation
+
+    Add initial section in README for explanation of configuration parameters.
+
+- Feature
+
+    Add functionality to produce marked down commit entry generation for a
+    changelog file in the same manner as a text history file is generated.
+
+- Breaking Change
+
+    The "npmUser" configuration parameter has been removed, use "author" and
+    "contributors" fields in package.json.
+
+## Version 1.2.0 (May 24th, 2019)
 
 - Documentation Corrections
 
@@ -2250,19 +2138,7 @@ May 24th, 2019
 
     The commit sbuject tag "project" tag is not being converted to its proper title when the history file is auto-populated from version control comments.
 
-Version 1.1.5
-May 15th, 2019
-
-- Bug Fix
-
-    After installing package globally, the app-builder command throws an error that it cannot find the publish script.
-
-- Bug Fix
-
-    Non-npm released installer projects managed by npm are failing to change the package.json version.
-
-Version 1.1.6
-May 15th, 2019
+## Version 1.1.6 (May 15th, 2019)
 
 - Feature
 
@@ -2286,22 +2162,29 @@ May 15th, 2019
     If the published release is both "installer type" and "npm type", a (non-
     fatal) error occurs when trying to set the package.json version twice.
 
-Version 1.1.3
-May 14th, 2019
+## Version 1.1.5 (May 15th, 2019)
 
 - Bug Fix
 
-    Package upload to npm.development.pjats.com fails.
+    After installing package globally, the app-builder command throws an error that it cannot find the publish script.
 
-Version 1.1.4
-May 14th, 2019
+- Bug Fix
+
+    Non-npm released installer projects managed by npm are failing to change the package.json version.
+
+## Version 1.1.4 (May 14th, 2019)
 
 - Bug Fix
 
     Environment variable placeholders in .publishconfig do not get replaced at
     runtime.
 
-Version 1.1.2
-May 13th, 2019
+## Version 1.1.3 (May 14th, 2019)
+
+- Bug Fix
+
+    Package upload to npm.development.pjats.com fails.
+
+## Version 1.1.2 (May 13th, 2019)
 
 - Initial Release
