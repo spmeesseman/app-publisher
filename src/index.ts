@@ -1041,7 +1041,7 @@ function logPowershell(data: string, logger: any, isStdOutCmd: boolean)
 }
 
 
-function logErrors({ logger, stderr }, err)
+async function logErrors({ options, logger, stderr, cwd, env }, err: any, nextRelease: any)
 {
     const errors = util.extractErrors(err).sort(error => (error.semanticRelease ? -1 : 0));
     for (const error of errors)
@@ -1056,12 +1056,19 @@ function logErrors({ logger, stderr }, err)
         }
         else {
             logger.error("An error occurred while running app-publisher: %O", error);
+            //
+            // Revert all changes if dry run, and configured to do so
+            //
+            if (options.dryRun && options.dryRunVcRevert)
+            {
+                await revert({options, nextRelease, logger}, { cwd, env});
+            }
         }
     }
 }
 
 
-async function callFail(context, plugins, err)
+async function callFail(context: any, plugins: any, err: any)
 {
     const errors = util.extractErrors(err).filter(err => err.semanticRelease);
     if (errors.length > 0)
@@ -1071,7 +1078,7 @@ async function callFail(context, plugins, err)
             await plugins.fail({ ...context, errors });
         } catch (error)
         {
-            logErrors(context, error);
+            await logErrors(context, error, context.nextRelease);
         }
     }
 }
@@ -1105,7 +1112,7 @@ export = async (opts = {}, { cwd = process.cwd(), env = process.env, stdout = un
     }
     catch (error)
     {
-        logErrors(context, error);
+        await logErrors(context, error, { edits: []});
         unhook();
         throw error;
     }

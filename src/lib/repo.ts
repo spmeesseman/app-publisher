@@ -70,6 +70,11 @@ export async function commit({options, nextRelease, logger}, execaOpts: any)
     const changeListAdd: string = nextRelease.edits.filter((e: any) => e.type === "A").map((e: any) => e.path).join(" ").trim(),
           changeList: string = nextRelease.edits.filter((e: any) => e.type !== "I").map((e: any) => e.path).join(" ").trim();
 
+    logger.info("Commit changes");
+    logger.info(`   Total Edits     : ${nextRelease.edits.length}`);
+    logger.info(`   Additions       : ${changeListAdd.length}`);
+    logger.info(`   Total to commit : ${changeList.length}`);
+
     if (options.repoType === "git")
     {
         if (changeListAdd)
