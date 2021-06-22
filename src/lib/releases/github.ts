@@ -25,6 +25,15 @@ async function doGithubRelease({ options, logger, lastRelease, nextRelease, env 
 
     if (githubChangelog)
     {   //
+        // Log the changelog contents if this is a dry run
+        //
+        if (options.dryRun === true)
+        {
+            logger.log("Dry run has generated an html changelog to test functionality:");
+            logger.log(githubChangelog);
+        }
+
+        //
         // TODO - Allow user to edit html changelog
         //
         if (options.githubChgLogEdit === "Y")

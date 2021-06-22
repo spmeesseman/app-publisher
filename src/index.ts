@@ -65,7 +65,7 @@ async function run(context: any, plugins: any): Promise<boolean>
     }
 
     //
-    // If user specified 'cfg' or '--config', then just display config and exit
+    // If user specified '--task-ci-env' then just display config and exit
     //
     if (options.taskCiEnv)
     {
@@ -77,17 +77,16 @@ async function run(context: any, plugins: any): Promise<boolean>
         context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
         if (isCi)
         {
-            context.stdout.write("  CI Name           : " + ciName);
-            context.stdout.write("  CI Branch         : " + ciBranch);
-            context.stdout.write("  Is PR             : " + isPr);
-            context.stdout.write("  Commit            : " + isPr);
-            context.stdout.write("  Root              : " + ciRoot);
-            context.stdout.write("  Commit            : " + ciCommit);
-            context.stdout.write("  Build             : " + ciBuild);
-            context.stdout.write("  Build URL         : " + ciBuildUrl);
+            context.stdout.write(`  CI Name           : ${ciName}${EOL}`);
+            context.stdout.write(`  CI Branch         : ${ciBranch}${EOL}`);
+            context.stdout.write(`  Is PR             : ${isPr}${EOL}`);
+            context.stdout.write(`  Root              : ${ciRoot}${EOL}`);
+            context.stdout.write(`  Commit            : ${ciCommit}${EOL}`);
+            context.stdout.write(`  Build             : ${ciBuild}${EOL}`);
+            context.stdout.write(`  Build URL         : ${ciBuildUrl}${EOL}`);
         }
         else {
-            context.stdout.write("  No known CI environment was found");
+            context.stdout.writeLine("  No known CI environment was found\n");
         }
         return true;
     }
