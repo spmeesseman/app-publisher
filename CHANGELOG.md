@@ -1,5 +1,21 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.0.0 (June 22nd, 2021)
+
+### Features
+
+- Use pure NodeJS based implementation (BETA).
+
+    To use the underlying NodeJS based implementation, the following command
+    line switch can be used:
+
+        --node
+
+    By default, the underlying implementation used will continue to use NodeJS
+    for the loader and PowerShell for the publish run and/or all tasks.  The
+    PowerShell implementation will be depracated in favor of NodeJS when it
+    becomes stable.
+
 ## Version 2.7.2 (June 17th, 2021)
 
 ### Bug Fixes
