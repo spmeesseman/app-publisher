@@ -365,8 +365,12 @@ async function runNodeScript(context: IContext, plugins: any)
     //
     if (!nextRelease.level)
     {
-        logger.log("There are no relevant commits, no new version is released.");
-        return false;
+        if (!options.taskGithubRelease && !options.taskMantisRelease && !options.taskNpmRelease && !options.taskDistRelease) {
+            logger.log("There are no relevant commits, no new version is released.");
+            return false;
+        }
+        nextRelease.level = "nochange";
+        options.versionForceCurrent = context.lastRelease.version;
     }
 
     //
@@ -473,9 +477,7 @@ async function runNodeScript(context: IContext, plugins: any)
     //
     // Pre-build scipts (.publishrc)
     //
-    if (!options.taskMode) {
-        await util.runScripts({ options, logger, cwd, env }, "preBuild", options.preBuildCommand, true, true);
-    }
+    await util.runScripts({ options, logger, cwd, env }, "preBuild", options.preBuildCommand, true, true);
 
     //
     // Update relevant local files with the new version #
@@ -500,6 +502,11 @@ async function runNodeScript(context: IContext, plugins: any)
             }
         }
     }
+
+    //
+    // Post-build scripts (.publishrc)
+    //
+    await util.runScripts({ options, logger, cwd, env }, "postBuild", options.postBuildCommand);
 
     //
     // NPM release
@@ -551,13 +558,6 @@ async function runNodeScript(context: IContext, plugins: any)
     }
 
     //
-    // Post-build scripts (.publishrc)
-    //
-    if (!options.taskMode) {
-        await util.runScripts({ options, logger, cwd, env }, "postBuild", options.postBuildCommand);
-    }
-
-    //
     // If a l4 task is processed, we'll be done
     //
     taskDone = await processTasks4(context);
@@ -583,6 +583,10 @@ async function runNodeScript(context: IContext, plugins: any)
         // Perform Github release
         //
         const ghRc = await doGithubRelease(context);
+        if (options.taskMode && ghRc.error) {
+            logTaskResult(ghRc.error, logger);
+            return false;
+        }
         //
         // Post-github release (.publishrc)
         //
@@ -590,15 +594,18 @@ async function runNodeScript(context: IContext, plugins: any)
             await util.runScripts({ options, logger, cwd, env }, "postGithubRelease", options.githubReleasePostCommand);
         }
         //
-        // If this is task mode, we're done
+        // Check task mode
         //
         else {
-            await publishGithubRelease({options, nextRelease, logger});
+            // await publishGithubRelease({options, nextRelease, logger});
             logTaskResult(ghRc.error || true, logger);
             if (!hasMoreTasks(options, getTasks5())) {
                 return true;
             }
         }
+        //
+        // Set flag to 'publish' release once changes are committed and tag is created
+        //
         didGithubRelease = true;
     }
 
@@ -616,6 +623,10 @@ async function runNodeScript(context: IContext, plugins: any)
         // Perform MantisBT release
         //
         const mantisRc = await doMantisbtRelease(context);
+        if (options.taskMode && mantisRc.error) {
+            logTaskResult(mantisRc.error, logger);
+            return false;
+        }
         //
         // Post-mantis release scripts (.publishrc)
         //
@@ -626,7 +637,7 @@ async function runNodeScript(context: IContext, plugins: any)
         // If this is task mode, we're done
         //
         else {
-            logTaskResult(mantisRc.error || true, logger);
+            logTaskResult(true, logger);
             if (!hasMoreTasks(options, getTasks5())) {
                 return true;
             }
@@ -657,9 +668,7 @@ async function runNodeScript(context: IContext, plugins: any)
     //
     // Pre-commit scripts
     //
-    if (!options.taskMode) {
-        await util.runScripts(context, "preCommit", options.preCommitCommand); // (.publishrc)
-    }
+    await util.runScripts(context, "preCommit", options.preCommitCommand); // (.publishrc)
 
     //
     // Commit / Tag
@@ -680,19 +689,11 @@ async function runNodeScript(context: IContext, plugins: any)
         {
             await tag(context, { cwd, env });
             await push(context, { cwd, env });
-            logger.success((options.dryRun ? "Dry run - " : "") + `Created tag ${nextRelease.tag}`);
             //
             // If there was a Github release made, then publish it and re-tag
             //
-            if (didGithubRelease)
-            {
-                if (!options.dryRun) {
-                    await publishGithubRelease(context);
-                    logger.success(`Published Github release tagged @ ${nextRelease.tag}`);
-                }
-                else {
-                    logger.success(`Dry run - Published Github release tagged @ ${nextRelease.tag}`);
-                }
+            if (didGithubRelease) {
+                await publishGithubRelease(context);
             }
         }
         //
