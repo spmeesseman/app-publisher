@@ -609,7 +609,7 @@ export const publishRcOpts =
         true,
         "string",
         ".publishrc.[json/yml/yaml/js]",
-        [ "-rc", "--rc-file" ],
+        [ "-rc", "--rcfile", "--rc-file" ],
         {
             help: "The publishrc file to read the initial configuration from.",
             usage: [

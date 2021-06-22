@@ -18,22 +18,19 @@ async function doDistRelease({ options, logger, nextRelease, cwd, env })
     logger.log("Starting Distribution release");
 
     //
-    // Run pre distribution-release scripts if specified
-    //
-    runScripts({ options, logger, cwd, env }, "preDistRelease", options.distReleasePreCommand);
-
-    //
     // Copy history file to dist directory
     //
     if (options.historyFile)
     {
         await copyFile(options.historyFile, options.pathToDist);
     }
+
     //
     // Create remote paths
     //
     targetNetLocation = path.normalize(path.join(options.distReleasePath, options.projectName, nextRelease.version));
     targetDocLocation = path.normalize(path.join(options.distDocPath, options.projectName, nextRelease.version));
+
     //
     // Check for legacy Deploy.xml script.  The scipt should at least be modified to NOT
     // send the notification email.
