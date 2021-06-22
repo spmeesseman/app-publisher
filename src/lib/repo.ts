@@ -255,7 +255,7 @@ export async function getHead({options, logger}: IContext, execaOpts: any)
  *
  * @returns The commit sha of the tag in parameter or `null`.
  */
-export async function getTagHead({options, logger}: IContext, tagName: any, execaOpts: { cwd: any; env: any; })
+export async function getTagHead({options, logger}: IContext, tagName: any, execaOpts: { cwd: any; env: any }): Promise<string>
 {
     try {
         if (options.repoType === "git")
@@ -297,7 +297,7 @@ export async function getTags({env, options, logger}: IContext, execaOpts: any)
     {
         return (await execa.stdout("git", ["tag"], execaOpts))
             .split("\n")
-            .map((tag: { trim: () => void; }) => tag.trim()) // um ok
+            .map((tag: { trim: () => void }) => tag.trim()) // um ok
             .filter(Boolean); // why??
     }
     else if (options.repoType === "svn")

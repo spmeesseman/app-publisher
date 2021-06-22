@@ -30,7 +30,7 @@ export interface IEdit
 
 export interface ILastRelease
 {
-    head: any;
+    head: string;
     tag: string;
     version: string;
     versionInfo: IVersionInfo;
@@ -49,6 +49,6 @@ export interface INextRelease
 export interface IVersionInfo
 {
     version: string;
-    versionInfo: any;
+    versionInfo: string[];
     versionSystem: string;
 }

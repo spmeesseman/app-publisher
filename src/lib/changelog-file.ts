@@ -41,6 +41,7 @@ function containsValidSubject(options, line: string): boolean
 
 /**
  * Gets version from changelog file by looking at the 'title' of the lastentry
+ *
  * @param context context
  */
 export async function getVersion({ options, logger })
@@ -173,6 +174,7 @@ export async function createReleaseChangelog({ options, logger }, version: strin
 
 /**
  * Creates a changelog entry for the history/changelog file using the commits list
+ *
  * @since 2.8.0
  *
  * @param context context

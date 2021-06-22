@@ -18,7 +18,7 @@ export async function getPomVersion({logger}): Promise<{ version: string, versio
     //
 
     let version = "";
-    const mavenVersionInfo = [];
+    const mavenVersionInfo: string[] = [];
 
     logger.log("Retrieving Maven plugin version from $AssemblyInfoLocation");
 

@@ -188,7 +188,7 @@ module.exports = {
         "no-multiple-empty-lines": "off",
         "no-new-func": "warn",
         "no-new-wrappers": "warn",
-        "no-null/no-null": "warn",
+        "no-null/no-null": "off",
         "no-redeclare": "warn",
         "no-return-await": "warn",
         "no-sequences": "off",

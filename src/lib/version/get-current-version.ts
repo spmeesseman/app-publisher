@@ -6,12 +6,13 @@ import { getMantisBtVersion } from "./mantisbt";
 import { getPomVersion } from "./pom";
 import { isString } from "../utils/utils";
 import { pathExists } from "../utils/fs";
+import { IVersionInfo } from "../../interface";
 
 
 export = getCurrentVersion;
 
 
-async function getCurrentVersion(context: any): Promise<{ version: string | undefined, versionSystem: string | undefined, versionInfo: string | undefined }>
+async function getCurrentVersion(context: any): Promise<IVersionInfo>
 {
     const options = context.options,
           logger = context.logger,
