@@ -2,23 +2,23 @@
 export interface ICommit
 {
     author?: string;
-    message: string;
-    revision?: string;
     date?: string;
     gitTags?: string;
+    message: string;
+    revision?: string;
 }
 
 export interface IContext
 {
     commits: ICommit[];
-    options: any;
-    logger: any;
     cwd: string;
     env: any;
+    lastRelease: ILastRelease;
+    logger: any;
+    nextRelease: INextRelease;
+    options: any;
     stdout: any;
     stderr: any;
-    lastRelease: ILastRelease;
-    nextRelease: INextRelease;
 }
 
 export interface IEdit
@@ -38,9 +38,9 @@ export interface ILastRelease
 
 export interface INextRelease
 {
-    notes: string;
     edits: IEdit[];
     level: string;
+    notes: string;
     tag: string;
     version: string;
     versionInfo: IVersionInfo;
