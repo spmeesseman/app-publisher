@@ -151,9 +151,6 @@ async function doGithubRelease({ options, logger, lastRelease, nextRelease, env 
                         {   //
                             // Upload the asset via GitHub API.
                             //
-                            // TODO
-                            //
-                            // url = $Response.upload_url
                             url = url.replace("{?name,label}", "") + "?name=" + assetName;
                             let response2: any;
                             if (!options.dryRun)
@@ -271,7 +268,6 @@ async function publishGithubRelease({options, nextRelease, logger})
                 }
             };
         }
-        // const jso = JSON.parse(response.body);
         //
         // Make sure an upload_url value exists on the response object to check for success
         //
