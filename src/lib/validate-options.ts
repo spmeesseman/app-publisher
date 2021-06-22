@@ -419,14 +419,6 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
         }
     }
 
-    if (options.skipDeployPush) {
-        options.skipDeployPush = options.skipDeployPush.toUpperCase();
-        if (options.skipDeployPush !== "Y" && options.skipDeployPush !== "N") {
-            logger.error("Invalid value specified for skipDeployPush, accepted values are y/n/Y/N");
-            return false;
-        }
-    }
-
     if (options.dryRunVcRevert) {
         options.dryRunVcRevert = options.dryRunVcRevert.toUpperCase();
         if (options.dryRunVcRevert !== "Y" && options.dryRunVcRevert !== "N") {

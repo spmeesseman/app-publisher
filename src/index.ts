@@ -638,7 +638,7 @@ async function runNodeScript(context: IContext, plugins: any)
     //
     if (!options.taskMode)
     {
-        if (options.skipDeployPush !== "Y" && !options.dryRun)
+        if (!options.dryRun)
         {
             await util.runScripts(context, "deploy", options.deployCommand); // (.publishrc)
         }

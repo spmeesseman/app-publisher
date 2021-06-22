@@ -4,3 +4,4 @@ node_modules
 ap.env
 README.md
 .publishrc.*.json
+README.pdf

@@ -78,7 +78,6 @@
     "repoType":          "svn",
     "skipCommit":        "N",
     "skipChangelogEdits":"N",
-    "skipDeployPush":    "N",
     "skipVersionEdits":  "Y",
     "testEmailRecip":    "spmeesseman@gmail.com",
     "textEditor":        "notepad",

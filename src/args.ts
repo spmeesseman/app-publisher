@@ -676,15 +676,6 @@ export const publishRcOpts =
         "finished."
     ],
 
-    skipDeployPush: [
-        true,
-        "flag",
-        "N",
-        "Skip uploading installer to network release folder (primarily used for releasing",
-        "from hom office where two datacenters cannot be reached at the same time, in",
-        "this case the installer files are manually copied)."
-    ],
-
     skipVersionEdits: [
         true,
         "flag",

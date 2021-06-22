@@ -4426,15 +4426,6 @@ if ($options.skipChangelogEdits) {
     $SKIPCHANGELOGEDITS = $options.skipChangelogEdits
 }
 #
-# Skip uploading dist files to dist release folder (primarily used for releasing
-# from home office where two datacenters cannot be reached at the same time, in this
-# case the installer files are manually copied)
-#
-$SKIPDEPLOYPUSH = "N"
-if ($options.skipDeployPush) {
-    $SKIPDEPLOYPUSH = $options.skipDeployPush
-}
-#
 # Skip version edits (notepad/notepad++ window)
 #
 $SKIPVERSIONEDITS = "N"
@@ -5154,13 +5145,6 @@ if (![string]::IsNullOrEmpty($CPROJECTRCFILE)) {
         exit 1
     }
 }
-if (![string]::IsNullOrEmpty($SKIPDEPLOYPUSH)) {
-    $SKIPDEPLOYPUSH = $SKIPDEPLOYPUSH.ToUpper()
-    if ($SKIPDEPLOYPUSH -ne "Y" -and $SKIPDEPLOYPUSH -ne "N") {
-        LogMessage "Invalid value specified for skipDeployPush, accepted values are y/n/Y/N" "red"
-        exit 1
-    }
-}
 if (![string]::IsNullOrEmpty($DRYRUNVCREVERT)) {
     $DRYRUNVCREVERT = $DRYRUNVCREVERT.ToUpper()
     if ($DRYRUNVCREVERT -ne "Y" -and $DRYRUNVCREVERT -ne "N") {
@@ -5346,7 +5330,6 @@ LogMessage "   Prompt version   : $PROMPTVERSION"
 LogMessage "   Repo             : $_Repo"
 LogMessage "   RepoType         : $_RepoType"
 LogMessage "   Skip chglog edit : $SKIPCHANGELOGEDITS"
-LogMessage "   Skip deploy/push : $SKIPDEPLOYPUSH"
 LogMessage "   Skip version edit: $SKIPVERSIONEDITS"
 LogMessage "   Task mode        : $TASKMODE"
 LogMessage "   Task stdout mode : $TASKMODESTDOUT"
@@ -6645,92 +6628,83 @@ if ($DISTRELEASE -eq "Y" -and !$TASKMODE)
     $TargetNetLocation = [Path]::Combine($DISTRELEASEPATH, $PROJECTNAME, $VERSION)
     $TargetDocLocation = [Path]::Combine($DISTDOCPATH, $PROJECTNAME, $VERSION)
     #
-    # Check for legacy Deploy.xml script.  The scipt should at least be modified to NOT
-    # send the notification email.
+    # Copy contents of dist dir to target location, and pdf docs to docs location
     #
-    if ($SKIPDEPLOYPUSH -ne "Y")
+    if ($DRYRUN -eq $false) 
     {
-        # Copy contents of dist dir to target location, and pdf docs to docs location
+        LogMessage "Deploying distribution files to specified location:"
+        LogMessage "   $TargetNetLocation"
         #
-        if ($DRYRUN -eq $false) 
+        # SoftwareImages Upload
+        #
+        # Create directory on network drive
+        # TargetNetLocation is defined above as it is needed for email notification fn as well
+        #
+        if (!(Test-Path($TargetNetLocation))) {
+            LogMessage "Create directory $TargetNetLocation"
+            New-Item -Path "$TargetNetLocation" -ItemType "directory" | Out-Null
+            CheckPsCmdSuccess
+        }
+        #
+        # Copy all files in 'dist' directory that start with $PROJECTNAME, and the history file
+        #
+        LogMessage "Deploying files to $TargetNetLocation"
+        Copy-Item "$PATHTODIST\*" -Destination "$TargetNetLocation" -Recurse | Out-Null
+        CheckPsCmdSuccess
+        #
+        # DOC
+        #
+        if ($DISTDOCPATH -ne "")
         {
-            LogMessage "Deploying distribution files to specified location:"
-            LogMessage "   $TargetNetLocation"
             #
-            # SoftwareImages Upload
+            # Create directory on doc share
             #
-            # Create directory on network drive
-            # TargetNetLocation is defined above as it is needed for email notification fn as well
-            #
-            if (!(Test-Path($TargetNetLocation))) {
-                LogMessage "Create directory $TargetNetLocation"
-                New-Item -Path "$TargetNetLocation" -ItemType "directory" | Out-Null
-                CheckPsCmdSuccess
-            }
-            #
-            # Copy all files in 'dist' directory that start with $PROJECTNAME, and the history file
-            #
-            LogMessage "Deploying files to $TargetNetLocation"
-            Copy-Item "$PATHTODIST\*" -Destination "$TargetNetLocation" -Recurse | Out-Null
+            New-Item -Path "$TargetDocLocation" -ItemType "directory" | Out-Null
             CheckPsCmdSuccess
             #
-            # DOC
+            # Copy all pdf files in 'dist' and 'doc' and 'documentation' directories
             #
-            if ($DISTDOCPATH -ne "")
+            $DocDirSrc = $DISTDOCPATHSRC
+            if ([string]::IsNullOrEmpty($DocDirSrc)) 
             {
-                #
-                # Create directory on doc share
-                #
-                New-Item -Path "$TargetDocLocation" -ItemType "directory" | Out-Null
-                CheckPsCmdSuccess
-                #
-                # Copy all pdf files in 'dist' and 'doc' and 'documentation' directories
-                #
-                $DocDirSrc = $DISTDOCPATHSRC
-                if ([string]::IsNullOrEmpty($DocDirSrc)) 
-                {
-                    if (Test-Path("documentation")) {
-                        $DocDirSrc = "documentation"
-                    }
-                    elseif (Test-Path("doc")) {
-                        $DocDirSrc = "doc"
-                    }
-                    elseif (Test-Path("docs")) {
-                        $DocDirSrc = "docs"
-                    }
-                    elseif (![string]::IsNullOrEmpty($PATHTOMAINROOT))
-                    {
-                        if (Test-Path("$PATHTOMAINROOT\doc")) {
-                            $DocDirSrc = "$PATHTOMAINROOT\doc"
-                        }
-                        if (Test-Path("$PATHTOMAINROOT\docs")) {
-                            $DocDirSrc = "$PATHTOMAINROOT\docs"
-                        }
-                        if (Test-Path("$PATHTOMAINROOT\documentation")) {
-                            $DocDirSrc = "$PATHTOMAINROOT\documentation"
-                        }
-                    }
+                if (Test-Path("documentation")) {
+                    $DocDirSrc = "documentation"
                 }
-                if (![string]::IsNullOrEmpty($DocDirSrc)) 
-                {
-                    LogMessage "Deploying pdf documentation to $TargetDocLocation"
-                    Copy-Item "$DocDirSrc\*.pdf" -Destination "$TargetDocLocation" | Out-Null
-                    CheckPsCmdSuccess
-                    #LogMessage "Deploying txt documentation to $TargetDocLocation"
-                    #Copy-Item "$DocDirSrc\*.txt" -Destination "$TargetDocLocation" | Out-Null
-                    #CheckPsCmdSuccess
+                elseif (Test-Path("doc")) {
+                    $DocDirSrc = "doc"
                 }
-                else {
-                    LogMessage "Skipping documentation network push, doc direcory not found" "darkyellow"
+                elseif (Test-Path("docs")) {
+                    $DocDirSrc = "docs"
+                }
+                elseif (![string]::IsNullOrEmpty($PATHTOMAINROOT))
+                {
+                    if (Test-Path("$PATHTOMAINROOT\doc")) {
+                        $DocDirSrc = "$PATHTOMAINROOT\doc"
+                    }
+                    if (Test-Path("$PATHTOMAINROOT\docs")) {
+                        $DocDirSrc = "$PATHTOMAINROOT\docs"
+                    }
+                    if (Test-Path("$PATHTOMAINROOT\documentation")) {
+                        $DocDirSrc = "$PATHTOMAINROOT\documentation"
+                    }
                 }
             }
-        }
-        else {
-            LogMessage "Dry run, skipping basic push to network drive" "magenta"
+            if (![string]::IsNullOrEmpty($DocDirSrc)) 
+            {
+                LogMessage "Deploying pdf documentation to $TargetDocLocation"
+                Copy-Item "$DocDirSrc\*.pdf" -Destination "$TargetDocLocation" | Out-Null
+                CheckPsCmdSuccess
+                #LogMessage "Deploying txt documentation to $TargetDocLocation"
+                #Copy-Item "$DocDirSrc\*.txt" -Destination "$TargetDocLocation" | Out-Null
+                #CheckPsCmdSuccess
+            }
+            else {
+                LogMessage "Skipping documentation network push, doc direcory not found" "darkyellow"
+            }
         }
     }
     else {
-        LogMessage "Skipped network release push (user specified)" "magenta"
+        LogMessage "Dry run, skipping basic push to network drive" "magenta"
     }
 
     #
@@ -7171,7 +7145,7 @@ if ($MANTISBTRELEASE -eq "Y" -and (!$TASKMODE -or $TASKMANTISBT))
 #
 if (!$TASKMODE)
 {
-    if ($SKIPDEPLOYPUSH -ne "Y" -and $DRYRUN -eq $false)
+    if ( $DRYRUN -eq $false)
     {
         RunScripts "deploy" $DEPLOYCOMMAND $false $false
     }
