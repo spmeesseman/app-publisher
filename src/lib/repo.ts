@@ -90,10 +90,10 @@ export async function commit({options, nextRelease, logger}, execaOpts: any)
         {
             logger.info("Committing touched files to git version control");
             if (!options.dryRun) {
-                proc = await execa("git", [ "commit", "-m", `"chore(release): v${nextRelease.version} [skip ci]`, "--", changeList ], execaOpts);
+                proc = await execa("git", [ "commit", "-m", `"chore(release): v${nextRelease.version} [skip ci]"`, "--", changeList ], execaOpts);
             }
             else {
-                proc = await execa("git", [ "commit", "--dry-run", "-m", `"chore(release): v${nextRelease.version} [skip ci]`, "--", changeList  ], execaOpts);
+                proc = await execa("git", [ "commit", "--dry-run", "-m", `"chore(release): v${nextRelease.version} [skip ci]"`, "--", changeList  ], execaOpts);
             }
             if (proc.code === 0) {
                 logger.info("Pushing touched files to svn version control");
@@ -126,7 +126,7 @@ export async function commit({options, nextRelease, logger}, execaOpts: any)
         {
             logger.info("Committing touched files to svn version control");
             if (!options.dryRun) {
-                await execSvn(["commit", changeList, "-m", `chore: v${nextRelease.version} [skip ci]` ], execaOpts);
+                await execSvn(["commit", changeList, "-m", `"chore: v${nextRelease.version} [skip ci]"` ], execaOpts);
             }
             else {
                 await execSvn(["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
