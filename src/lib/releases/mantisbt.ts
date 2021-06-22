@@ -1,31 +1,39 @@
 
 import * as path from "path";
+import semver from "semver";
 import { btoa } from "../utils/utils";
 import { pathExists, writeFile, readFile } from "../utils/fs";
 import { createReleaseChangelog } from "../changelog-file";
 import { contentTypeMap } from "./content-type-map";
 import { isString } from "lodash";
 import { APP_NAME } from "../definitions/constants";
-import { IContext } from "../../interface";
+import { IContext, IReturnStatus } from "../../interface";
 const got = require("got");
 
 export = doMantisRelease;
 
 
-async function doMantisRelease({ options, logger, nextRelease }: IContext)
+async function doMantisRelease({ options, logger, nextRelease }: IContext): Promise<IReturnStatus>
 {
     logger.log("Starting MantisBT release");
-    logger.log(`Creating MantisBT v${nextRelease.version} release`);
+    logger.log(`   Version : ${nextRelease.version}`);
 
-    let rc = {
+    let rc: IReturnStatus = {
         success: true,
         error: undefined
     };
 
+    if (semver.prerelease(semver.clean(nextRelease.version)))
+    {
+        rc = { success: false, error: `MantisBT release v${nextRelease.version} failure - cannot pubish a pre-release` };
+        logger.error(rc.error);
+        return rc;
+    }
+
     let dryRun = 0;
     if (options.dryRun)
     {
-        logger.log("Dry run only, will pass 'dryrun' flag to Mantis Releases API");
+        logger.log("   Dry run only, will pass 'dryrun' flag to Mantis Releases API");
         dryRun = 1;
     }
 
@@ -39,23 +47,23 @@ async function doMantisRelease({ options, logger, nextRelease }: IContext)
         //
         if (options.dryRun === true)
         {
-            logger.log("Dry run has generated an html changelog to test functionality:");
-            logger.log(mantisChangelog);
+            logger.log("   Dry run has generated an html changelog to test functionality:");
+            logger.stdout.write(mantisChangelog);
         }
 
         //
         // TODO - Allow user to edit html changelog
         //
-        if (options.mantisbtChgLogEdit === "Y")
-        {
-            // const tmpFile = path.join(env.Temp, "changelog.tmp.html");
-            // writeFile(tmpFile, mantisChangelog);
-            // timeout(750);
-            // $TextEditorProcess = Start-Process -filepath "notepad" -args $TmpFile -PassThru
-            // $TextEditorProcess.WaitForInputIdle() | Out-Null
-            // Wait-Process -Id $TextEditorProcess.Id | Out-Null
-            // mantisChangelog = Get-Content -path $TmpFile -Raw
-        }
+        // if (options.mantisbtChgLogEdit === "Y")
+        // {
+        //     // const tmpFile = path.join(env.Temp, "changelog.tmp.html");
+        //     // writeFile(tmpFile, mantisChangelog);
+        //     // timeout(750);
+        //     // $TextEditorProcess = Start-Process -filepath "notepad" -args $TmpFile -PassThru
+        //     // $TextEditorProcess.WaitForInputIdle() | Out-Null
+        //     // Wait-Process -Id $TextEditorProcess.Id | Out-Null
+        //     // mantisChangelog = Get-Content -path $TmpFile -Raw
+        // }
 
         //
         // Set up the request body for the 'create release' request
@@ -72,7 +80,7 @@ async function doMantisRelease({ options, logger, nextRelease }: IContext)
         //
         if (options.mantisbtAssets.length > 0)
         {
-            logger.log("Building MantisBT assets list");
+            logger.log("   Building MantisBT assets list");
             for (const mbtAsset of options.mantisbtAssets)
             {
                 let asset = mbtAsset;
@@ -92,9 +100,9 @@ async function doMantisRelease({ options, logger, nextRelease }: IContext)
                     //
                     // The format to upload an asset is the base64 encoded binary file data
                     //
-                    logger.log(`Reading file asset ${asset}`);
+                    logger.log(`   Reading file asset ${asset}`);
                     const fileData = await readFile(asset);
-                    logger.log(`   File size: ${fileData.length} bytes`);
+                    logger.log(`      File size: ${fileData.length} bytes`);
                     if (fileData && fileData.length > 0)
                     {   //
                         // Base 64 encode file data
@@ -112,11 +120,11 @@ async function doMantisRelease({ options, logger, nextRelease }: IContext)
                         request.assets.push(assetData);
                     }
                     else {
-                        logger.warn(`Partially failed to build MantisBT asset ${assetName} - could not read input file`);
+                        logger.warn(`   Partially failed to build MantisBT asset ${assetName} - could not read input file`);
                     }
                 }
                 else {
-                    logger.log(`Partially failed to build MantisBT asset ${assetName} - input file does not exist`);
+                    logger.log(`   Partially failed to build MantisBT asset ${assetName} - input file does not exist`);
                 }
             }
         }
@@ -140,17 +148,17 @@ async function doMantisRelease({ options, logger, nextRelease }: IContext)
             // Send the REST POST to create the release w/ assets
             //
             const url = options.mantisbtUrl[i] + "/plugins/Releases/api/releases/" + encPrjName;
-            logger.log("Sending Add-Release REST request to " + url);
+            logger.log("   Sending Add-Release REST request to " + url);
             //
             // Send it off
             //
             let response: any;
             try {
                 response = await got(url, {
-                    json: request,
+                    headers,
                     method: "POST",
                     responseType: "json",
-                    headers
+                    json: request
                 });
             }
             catch (e) {

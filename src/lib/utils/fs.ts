@@ -7,7 +7,7 @@ import { getPsScriptLocation, timeout } from "./utils";
 const execa = require("execa");
 
 
-export async function copyFile(src: string, dst: string)
+export function copyFile(src: string, dst: string)
 {
     return new Promise<boolean>(async (resolve, reject) =>
     {   //
@@ -55,7 +55,7 @@ function copyFileSync(src: string, dst: string) {
 //
 // TODO - make a pure async imp.
 //
-export async function copyDir(src: string, dst: string, filter?: RegExp, copyWithBaseFolder = false)
+export function copyDir(src: string, dst: string, filter?: RegExp, copyWithBaseFolder = false)
 {
     return new Promise<boolean>(async (resolve, reject) =>
     {
@@ -117,7 +117,7 @@ export async function copyDir(src: string, dst: string, filter?: RegExp, copyWit
 }
 
 
-export async function createDir(dir: string)
+export function createDir(dir: string)
 {
     return new Promise<boolean>(async (resolve, reject) => {
         try {
@@ -139,7 +139,7 @@ export async function createDir(dir: string)
 }
 
 
-export async function pathExists(file: string, resolve = true): Promise<boolean>
+export function pathExists(file: string, resolve = true): Promise<boolean>
 {
     return new Promise<boolean>((resolve, reject) => {
         try {
@@ -157,15 +157,32 @@ export async function pathExists(file: string, resolve = true): Promise<boolean>
 }
 
 
-export async function readFile(file: string): Promise<string>
+export function readFile(file: string): Promise<string>
 {
-    return new Promise<string>((resolve, reject) => {
+    return new Promise<string>(async (resolve, reject) => {
+        try {
+            const buf = await readFileBuf(file);
+            if (buf) {
+                resolve(buf.toString());
+            }
+            resolve("");
+        }
+        catch (e) {
+            reject(e);
+        }
+    });
+}
+
+
+export function readFileBuf(file: string): Promise<Buffer>
+{
+    return new Promise<Buffer>((resolve, reject) => {
         try {
             fs.readFile(path.resolve(file), (e, data) => {
                 if (e) {
                     reject(e);
                 }
-                resolve(data ? data.toString() : "");
+                resolve(data);
             });
         }
         catch (e) {
@@ -175,7 +192,7 @@ export async function readFile(file: string): Promise<string>
 }
 
 
-export async function deleteFile(file: string): Promise<void>
+export function deleteFile(file: string): Promise<void>
 {
     return new Promise<void>(async (resolve, reject) =>
     {
@@ -206,7 +223,7 @@ export async function deleteFile(file: string): Promise<void>
  * @param file The file path to write to
  * @param data The data to write
  */
-export async function writeFile(file: string, data: string): Promise<void>
+export function writeFile(file: string, data: string): Promise<void>
 {
     return new Promise<void>((resolve, reject) => {
         try {
@@ -224,7 +241,7 @@ export async function writeFile(file: string, data: string): Promise<void>
 }
 
 
-export async function appendFile(file: string, data: string): Promise<void>
+export function appendFile(file: string, data: string): Promise<void>
 {
     return new Promise<void>((resolve, reject) => {
         try {
