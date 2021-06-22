@@ -86,7 +86,7 @@ async function run(context: any, plugins: any): Promise<boolean>
             context.stdout.write(`  Build URL         : ${ciBuildUrl}${EOL}`);
         }
         else {
-            context.stdout.writeLine("  No known CI environment was found\n");
+            context.stdout.write("  No known CI environment was found\n");
         }
         return true;
     }
