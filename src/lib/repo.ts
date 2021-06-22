@@ -96,12 +96,12 @@ export async function commit({options, nextRelease, logger}, execaOpts: any)
         {
             const chgListPaths = changeList.map((e: any) => e.path);
             logger.info("Committing touched files to git version control");
-            logger.info("   " + changeList.join(" "));
+            logger.info("   " + chgListPaths.join(" "));
             if (!options.dryRun) {
-                proc = await execa("git", [ "commit", "-m", `"chore(release): v${nextRelease.version} [skip ci]"`, "--", changeList ], execaOpts);
+                proc = await execa("git", [ "commit", "-m", `"chore(release): v${nextRelease.version} [skip ci]"`, "--", ...chgListPaths ], execaOpts);
             }
             else {
-                proc = await execa("git", [ "commit", "--dry-run", "-m", `"chore(release): v${nextRelease.version} [skip ci]"`, "--", changeList  ], execaOpts);
+                proc = await execa("git", [ "commit", "--dry-run", "-m", `"chore(release): v${nextRelease.version} [skip ci]"`, "--", ...chgListPaths  ], execaOpts);
             }
             if (proc.code === 0) {
                 logger.info("Pushing touched files to svn version control");
