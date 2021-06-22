@@ -76,7 +76,12 @@ export async function commit({options, nextRelease, logger}, execaOpts: any)
         {
             logger.info("Adding unversioned touched files to git version control");
             logger.info("   " + changeListAdd);
-            proc = await execa("git", [ "add", "--", changeListAdd ], execaOpts);
+            if (!options.dryRun) {
+                proc = await execa("git", [ "add", "--", changeListAdd ], execaOpts);
+            }
+            else {
+                proc = await execa("git", [ "add", "--dry-run", "--", changeListAdd ], execaOpts);
+            }
             if (proc.code !== 0) {
                 logger.warning("Add file(s) to VCS failed");
             }
@@ -110,16 +115,21 @@ export async function commit({options, nextRelease, logger}, execaOpts: any)
         {
             logger.info("Adding unversioned touched files to svn version control");
             logger.info("   " + changeListAdd);
-            await execSvn([ "add", changeListAdd ], execaOpts);
+            if (!options.dryRun) {
+                await execSvn([ "add", changeListAdd ], execaOpts);
+            }
+            else {
+                await execSvn(["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
+            }
         }
         if (changeList)
         {
             logger.info("Committing touched files to svn version control");
             if (!options.dryRun) {
-                await execa("svn", ["commit", changeList, "-m", `chore: v${nextRelease.version} [skip ci]` ], execaOpts);
+                await execSvn(["commit", changeList, "-m", `chore: v${nextRelease.version} [skip ci]` ], execaOpts);
             }
             else {
-                await execa("svn", ["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
+                await execSvn(["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
             }
         }
     }
@@ -416,12 +426,10 @@ export async function isIgnored({options, logger}, objectPath: string, execaOpts
     {
         if (await pathExists(".gitignore"))
         {
-            const fileData = await readFile(".gitignore");
-            if (fileData && fileData.length > 0) {
-                if (new RegExp(`^${objectPath}$`, "gm").test(fileData)) {
-                    logger.info("   This file is being ignored from version control");
-                    return true;
-                }
+            const proc = await execa("git", ["check-ignore", "--quiet", objectPath ], execaOpts);
+            if (proc.code === 0) {
+                logger.info("   This file is being ignored from version control");
+                return true;
             }
         }
     }
