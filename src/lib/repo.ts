@@ -426,10 +426,17 @@ export async function isIgnored({options, logger}, objectPath: string, execaOpts
     {
         if (await pathExists(".gitignore"))
         {
-            const proc = await execa("git", ["check-ignore", "--quiet", objectPath ], execaOpts);
-            if (proc.code === 0) {
-                logger.info("   This file is being ignored from version control");
-                return true;
+            try {
+                const proc = await execa("git", ["check-ignore", "--quiet", objectPath ], execaOpts);
+                if (proc.code === 0) {
+                    logger.info("   This file is being ignored from version control");
+                    return true;
+                }
+            }
+            catch (e) {
+                if (e.code !== 1) {
+                    throw(e);
+                }
             }
         }
     }
