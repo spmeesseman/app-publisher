@@ -4,6 +4,7 @@ import { isFunction } from "lodash";
 import { pathExists } from "./fs";
 import { addEdit } from "../repo";
 import { IContext } from "../../interface";
+import { EOL } from "os";
 const execa = require("execa");
 // const find = require("find-process");
 
@@ -175,11 +176,17 @@ export function isString(value: any): value is string
 }
 
 
-export function logWarning(msg: string, logger: any)
+export function logWarning(context: IContext, msg: string, err: string | Error)
 {
-    logger.warn("!!!");
-    logger.warn(`!!! ${msg}`);
-    logger.warn("!!!");
+    context.logger.warn("!!!");
+    context.logger.warn(`!!! ${msg}`);
+    if (err) {
+        context.logger.warn("!!! The non-fatal error encountered was:");
+        err = err.toString().replace(/\r\n/g, `${EOL}!!! `).replace(/\n/g, `${EOL}!!! `);
+        context.stdout.write(`!!! ${err}${EOL}`);
+
+    }
+    context.logger.warn("!!!");
 }
 
 

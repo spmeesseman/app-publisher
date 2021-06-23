@@ -710,7 +710,7 @@ async function runNodeScript(context: IContext, plugins: any)
             }
             catch (e) {
                 logger.warn(`Failed to committed changes for v${nextRelease.version}`);
-                util.logWarning("Manually commit the changes using the commit message format 'chore: vX.X.X'", logger);
+                util.logWarning(context, "Manually commit the changes using the commit message format 'chore: vX.X.X'", e);
             }
         }
         //
@@ -724,7 +724,7 @@ async function runNodeScript(context: IContext, plugins: any)
             }
             catch (e) {
                 logger.warn(`Failed to tag v${nextRelease.version}`);
-                util.logWarning(`Manually tag the repository using the tag '${nextRelease.tag}'`, logger);
+                util.logWarning(context, `Manually tag the repository using the tag '${nextRelease.tag}'`, e);
             }
             //
             // If there was a Github release made, then publish it and re-tag
@@ -739,7 +739,7 @@ async function runNodeScript(context: IContext, plugins: any)
                 }
                 catch (e) {
                     logger.warn(`Failed to tag v${nextRelease.version}`);
-                    util.logWarning("Manually publish the release using the GitHub website", logger);
+                    util.logWarning(context, "Manually publish the release using the GitHub website", e);
                 }
             }
         }
