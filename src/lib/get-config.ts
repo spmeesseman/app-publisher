@@ -2,7 +2,6 @@ import { castArray, pickBy, isNil, isString, isPlainObject } from "lodash";
 const readPkgUp = require("read-pkg-up");
 const cosmiconfig = require("cosmiconfig");
 const resolveFrom = require("resolve-from");
-const debug = require("debug")("app-publisher:config");
 const { repoUrl } = require("./repo");
 const PLUGINS_DEFINITIONS = require("./definitions/plugins");
 const plugins = require("./plugins");
@@ -42,7 +41,7 @@ async function getConfig(context: any, opts: any)
     const { cwd, env } = context;
     const { config, filepath } = (await cosmiconfig(configName, { searchPlaces: configFiles }).search(cwd)) || { config: {}, filepath: "" };
 
-    debug("load config from: %s", filepath);
+    context.logger.log("Load config from " + filepath);
 
     // Merge config file options and CLI/API options
     let options = { ...config, ...opts };
@@ -121,8 +120,6 @@ async function getConfig(context: any, opts: any)
         optStr = optStr.replace(new RegExp(envVar, "gmi"), process.env[key].replace(/\\/, "\\\\"));
     }
     options = JSON.parse(optStr);
-
-    debug("options values: %O", options);
 
     return { options, plugins: await plugins({ ...context, options }, pluginsPath) };
 }

@@ -1,9 +1,9 @@
 import { escapeRegExp, template } from "lodash";
 import semver from "semver";
 import pLocate from "p-locate";
-const debug = require("debug")("app-publisher:get-last-release");
 import { getTags, isRefInHistory, getTagHead } from "./repo";
 import { IContext } from "../interface";
+import { EOL } from "os";
 
 export = getLastRelease;
 
@@ -27,8 +27,9 @@ export = getLastRelease;
  *
  * @return {Promise<LastRelease>} The last tagged release or `undefined` if none is found.
  */
-async function getLastRelease({ cwd, env, options, logger }: IContext)
+async function getLastRelease(context: IContext)
 {
+    const { cwd, env, options, logger } = context;
     //
     // Generate a regex to parse tags formatted with `tagFormat`
     // by replacing the `version` variable in the template by `(.+)`.
@@ -45,9 +46,11 @@ async function getLastRelease({ cwd, env, options, logger }: IContext)
                  )
                  .sort((a: any, b: any) => semver.rcompare(a.version, b.version));
 
-    debug("found tags: %o", tags);
+    if (options.verbose) {
+        context.stdout.write("Tags:" + EOL + tags.toString());
+    }
 
-    const tag: any = await pLocate(tags, (tag: any) => isRefInHistory(tag.tag, { cwd, env }, options, true), { preserveOrder: true });
+    const tag: any = await pLocate(tags, (tag: any) => isRefInHistory(context, tag.tag, true), { preserveOrder: true });
 
     if (tag)
     {

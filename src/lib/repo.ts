@@ -1,11 +1,9 @@
 
 import * as path from "path";
 import { isString } from "./utils/utils";
-import { deleteFile, pathExists, readFile } from "./utils/fs";
+import { deleteFile, pathExists } from "./utils/fs";
 import { IContext } from "../interface";
-import getLogger from "./get-logger";
 const execa = require("execa");
-const debug = require("debug")("app-publisher:git");
 const xml2js = require("xml2js");
 
 
@@ -456,7 +454,7 @@ export async function isBranchUpToDate({options, logger, cwd, env}: IContext, br
     }
     catch (error)
     {
-        debug(error);
+        logger.error("Exception in isBranchUpToDate: " + error.toString());
         throw error;
     }
 }
@@ -469,14 +467,15 @@ export async function isBranchUpToDate({options, logger, cwd, env}: IContext, br
  *
  * @returns `true` if the current working directory is in a git repository, falsy otherwise.
  */
-export async function isGitRepo(execaOpts: { cwd: any; env: any })
+export async function isGitRepo(context: IContext)
 {
+    const { logger, cwd, env } = context;
     try
     {
-        return (await execa("git", ["rev-parse", "--git-dir"], execaOpts)).code === 0;
+        return (await execa("git", ["rev-parse", "--git-dir"], {cwd, env })).code === 0;
     }
     catch (error) {
-        debug(error);
+        logger.error("Exception in isGitRepo: " + error.toString());
     }
 }
 
@@ -538,16 +537,17 @@ export async function isIgnored({options, logger, cwd, env}: IContext, objectPat
  *
  * @returns `true` if the reference is in the history of the current branch, falsy otherwise.
  */
-export async function isRefInHistory(ref: any, execaOpts: any, { repo, branch, repoType }, isTags = false)
+export async function isRefInHistory(context: IContext, ref: any, isTags = false)
 {
+    const { options: {repo, branch, repoType}, cwd, env, logger } = context;
     try
     {
         if (repoType === "git") {
-            await execa("git", ["merge-base", "--is-ancestor", ref, "HEAD"], execaOpts);
+            await execa("git", ["merge-base", "--is-ancestor", ref, "HEAD"], {cwd, env});
         }
         else if (repoType === "svn") {
             const tagLoc = !isTags ? repo : repo.replace("trunk", "tags").replace("branches/" + branch, "tags");
-            await execa("svn", ["ls", tagLoc + "/" + ref], execaOpts);
+            await execa("svn", ["ls", tagLoc + "/" + ref], {cwd, env});
         }
         else {
             throw new Error("Invalid repository type");
@@ -555,7 +555,7 @@ export async function isRefInHistory(ref: any, execaOpts: any, { repo, branch, r
         return true;
     }
     catch (error) {
-        debug(error);
+        logger.error("Exception in isRefInHistory: " + error.toString());
     }
 
     return false;
@@ -571,14 +571,15 @@ export async function isRefInHistory(ref: any, execaOpts: any, { repo, branch, r
  *
  * @returns `true` if the current working directory is in a git repository, falsy otherwise.
  */
-export async function isSvnRepo(execaOpts: { cwd: any; env: any })
+export async function isSvnRepo(context: IContext)
 {
+    const { logger, cwd, env } = context;
     try
     {
-        return (await execa("svn", ["info"], execaOpts)).code === 0;
+        return (await execa("svn", ["info"], {cwd, env })).code === 0;
     }
     catch (error) {
-        debug(error);
+        logger.error("Exception in isSvnRepo: " + error.toString());
     }
 }
 
@@ -685,7 +686,7 @@ export async function repoUrl({options, logger, cwd, env}: IContext)
     }
     catch (error)
     {
-        debug(error);
+        logger.error("Exception in repoUrl: " + error.toString());
     }
 }
 
@@ -895,7 +896,7 @@ export async function verifyAuth(context: IContext)
     }
     catch (error)
     {
-        debug(error);
+        logger.error("Exception in verifyAuth: " + error.toString());
         throw error;
     }
 }
@@ -909,18 +910,19 @@ export async function verifyAuth(context: IContext)
  *
  * @return `true` if valid, falsy otherwise.
  */
-export async function verifyTagName(tagName: string, execaOpts: any, repoType = "git")
+export async function verifyTagName(context: IContext, tagName: string)
 {
+    const { options : { repoType }, logger, cwd, env } = context;
     try
     {
         if (repoType === "git") {
-            return (await execa("git", ["check-ref-format", `refs/tags/${tagName}`], execaOpts)).code === 0;
+            return (await execa("git", ["check-ref-format", `refs/tags/${tagName}`], {cwd, env})).code === 0;
         }
         else if (repoType === "svn") {
             //
             // TODO
             //
-            return (await execa("svn", ["check-ref-format", `refs/tags/${tagName}`], execaOpts)).code === 0;
+            return (await execa("svn", ["check-ref-format", `refs/tags/${tagName}`], {cwd, env})).code === 0;
         }
         else {
             throw new Error("Invalid repository type");
@@ -928,7 +930,7 @@ export async function verifyTagName(tagName: string, execaOpts: any, repoType = 
     }
     catch (error)
     {
-        debug(error);
+        logger.error("Exception in verifyTagName: " + error.toString());
         throw error;
     }
 }

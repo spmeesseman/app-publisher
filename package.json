@@ -27,12 +27,9 @@
         "@types/semver": "^6.0.1",
         "aggregate-error": "^3.0.0",
         "chalk": "^2.4.2",
-        "conventional-changelog-spm": "^1.2.3",
         "cosmiconfig": "^5.2.1",
-        "debug": "^4.1.1",
         "execa": "^1.0.0",
         "figures": "^3.0.0",
-        "find-process": "^1.4.4",
         "get-stream": "^5.1.0",
         "git-log-parser": "^1.2.0",
         "glob": "^7.1.4",
@@ -40,11 +37,9 @@
         "gradient-string": "^1.2.0",
         "hook-std": "^2.0.0",
         "json": "^9.0.6",
-        "jsonc-parser": "^2.1.0",
         "lodash": "^4.17.21",
         "marked": "^0.7.0",
-        "marked-terminal": "^3.2.0",
-        "minimatch": "^3.0.4",
+        "marked-terminal": "^3.3.0",
         "nodemailer": "^6.6.1",
         "p-locate": "^4.1.0",
         "p-reduce": "^2.1.0",
@@ -76,6 +71,9 @@
         "mocha-multi-reporters": "^1.1.7",
         "nyc": "^15.1.0",
         "prettier": "^1.18.2",
+        "source-map-support": "^0.5.19",
+        "ts-loader": "^9.2.3",
+        "ts-node": "^10.0.0",
         "tslint": "^5.18.0",
         "typescript": "^3.5.3"
     },
@@ -125,13 +123,20 @@
         "res"
     ],
     "keywords": [
+        "ci",
+        "continuous integration",
+        "ci tools",
+        "ci utilities",
         "release",
+        "automated release",
         "publish",
         "svn",
         "git",
+        "npm",
+        "github",
         "mantisbt"
     ],
     "publishConfig": {
-        "access": "restricted"
+        "access": "public"
     }
 }

@@ -1,9 +1,9 @@
 import { isPlainObject, isFunction, noop, cloneDeep, omit } from "lodash";
-const debug = require("debug")("app-publisher:plugins");
 import getError from "../get-error";
 const { extractErrors } = require("../utils");
 import PLUGINS_DEFINITIONS from "../definitions/plugins";
 import { loadPlugin, parseConfig } from "./utils";
+import { EOL } from "os";
 
 export = (context: any, type: any, pluginOpt: any, pluginsPath: string) =>
 {
@@ -17,7 +17,9 @@ export = (context: any, type: any, pluginOpt: any, pluginsPath: string) =>
     const pluginName = name.pluginName ? name.pluginName : isFunction(name) ? `[Function: ${name.name}]` : name;
     const plugin = loadPlugin(context, name, pluginsPath);
 
-    debug(`options for ${pluginName}/${type}: %O`, config);
+    if (options.verbose) {
+        context.stdout.write(`Options for ${pluginName}/${type}${EOL}` + JSON.stringify(config, undefined, 2));
+    }
 
     let func;
     if (isFunction(plugin))
@@ -27,7 +29,7 @@ export = (context: any, type: any, pluginOpt: any, pluginsPath: string) =>
     else if (isPlainObject(plugin) && plugin[type] && isFunction(plugin[type]))
     {
         func = plugin[type].bind(null, cloneDeep({ ...options, ...config }));
-    } 
+    }
     else
     {
         throw getError("EPLUGIN", { type, pluginName });
