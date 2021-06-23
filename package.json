@@ -118,10 +118,7 @@
     },
     "main": "./build/bin/app-publisher.js",
     "bin": {
-        "app-publisher": "./build/bin/app-publisher.js",
-        "app-publisher-json": "./node_modules/json/lib/json.js",
-        "app-publisher-marked": "./node_modules/marked/bin/marked",
-        "app-publisher-semver": "./node_modules/semver/bin/semver.js"
+        "app-publisher": "./build/bin/app-publisher.js"
     },
     "files": [
         "build/*.js",
