@@ -1,13 +1,7 @@
 {
-    // "compilerOptions": {
-	// 	"module": "commonjs",
-	// 	"target": "es2019",
-	// 	"lib": ["ES2019"],
-	// 	"outDir": "dist",
-	// 	"rootDir": "src",
-	// 	"sourceMap": true
-	// },
-    "include": ["src/**/*"],
+    "include": [
+        "src/**/*"
+    ],
     "exclude": [
         "node_modules",
         "doc",
@@ -18,40 +12,22 @@
         "testFixture",
         ".eslint.js"
     ],
-    // "compilerOptions": {
-	// 	"target": "es2019",
-	// 	"lib": ["ES2019"],
-	// 	"module": "commonjs",
-	// 	"outDir": "build",
-	// 	"moduleResolution": "node",
-	// 	"rootDir": "src",
-	// 	// "strict": true,
-	// 	"sourceMap": true,
-	// 	"allowSyntheticDefaultImports":true
-	// },
     "compilerOptions": {
         "module": "commonjs",
+        // 	"target": "es2019",
         "target": "es6",
+        // 	"moduleResolution": "node",
         "outDir": "build",
         "rootDir": "src",
         "sourceMap": true,
+        // "strict": true,
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
+        //"esModuleInterop": true,
+        // 	"lib": ["ES2019"],
         "lib": [
             "dom",
             "es6"
-        ],
+        ]
     }
-	// 	// "allowSyntheticDefaultImports":true,
-    //     "sourceMap": true,
-    //     //"allowSyntheticDefaultImports": true,
-    //     //"esModuleInterop": true,
-    //     /* Strict Type-Checking Option */
-    //     // "strict": true,   /* enable all strict type-checking options */
-    //     /* Additional Checks */
-    //     "noUnusedLocals": false /* Report errors on unused locals. */
-    //     // "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
-    //     // "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
-    //     // "noUnusedParameters": true,  /* Report errors on unused parameters. */
-    // }
 }
