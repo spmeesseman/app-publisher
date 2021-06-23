@@ -705,16 +705,27 @@ async function runNodeScript(context: IContext, plugins: any)
         //
         if (!options.taskTag || options.taskCommit || !options.taskMode)
         {
-            await commit(context);
-            logger.success((options.dryRun ? "Dry run - " : "") + `Successfully committed changes for v${nextRelease.version}`);
+            try {
+                await commit(context);
+            }
+            catch (e) {
+                logger.warn(`Failed to committed changes for v${nextRelease.version}`);
+                util.logWarning("Manually commit the changes using the commit message format 'chore: vX.X.X'", logger);
+            }
         }
         //
         // Create the tag before calling the publish plugins as some require the tag to exists
         //
         if (!options.taskCommit || options.taskTag || !options.taskMode)
         {
-            await tag(context);
-            await push(context);
+            try {
+                await tag(context);
+                await push(context);
+            }
+            catch (e) {
+                logger.warn(`Failed to tag v${nextRelease.version}`);
+                util.logWarning(`Manually tag the repository using the tag '${nextRelease.tag}'`, logger);
+            }
             //
             // If there was a Github release made, then publish it and re-tag
             //
@@ -723,7 +734,13 @@ async function runNodeScript(context: IContext, plugins: any)
             // patch request here
             //
             if (githubReleaseId) {
-                await publishGithubRelease(context, githubReleaseId);
+                try {
+                    await publishGithubRelease(context, githubReleaseId);
+                }
+                catch (e) {
+                    logger.warn(`Failed to tag v${nextRelease.version}`);
+                    util.logWarning("Manually publish the release using the GitHub website", logger);
+                }
             }
         }
         //

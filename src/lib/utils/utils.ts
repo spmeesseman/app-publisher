@@ -175,6 +175,14 @@ export function isString(value: any): value is string
 }
 
 
+export function logWarning(msg: string, logger: any)
+{
+    logger.warn("!!!");
+    logger.warn(`!!! ${msg}`);
+    logger.warn("!!!");
+}
+
+
 export function properCase(name: string)
 {
     if (!name) {

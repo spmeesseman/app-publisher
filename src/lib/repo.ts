@@ -122,7 +122,7 @@ export async function commit({options, nextRelease, logger, cwd, env}: IContext)
     }
     else if (options.repoType === "svn")
     {
-        if (changeListAdd)
+        if (changeListAdd.length > 0)
         {
             const chgListPathsAdded = changeListAdd.map((e: any) => e.path);
             logger.info("Adding unversioned touched files to svn version control");
@@ -134,7 +134,7 @@ export async function commit({options, nextRelease, logger, cwd, env}: IContext)
                 await execSvn(["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
             }
         }
-        if (changeList)
+        if (changeList.length > 0)
         {
             const chgListPaths = changeList.map((e: any) => e.path);
             logger.info("Committing touched files to svn version control");
@@ -150,6 +150,8 @@ export async function commit({options, nextRelease, logger, cwd, env}: IContext)
     else {
         throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
     }
+
+    logger.success((options.dryRun ? "Dry run - " : "") + `Successfully committed changes for v${nextRelease.version}`);
 }
 
 
