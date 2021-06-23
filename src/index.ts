@@ -121,6 +121,7 @@ async function run(context: IContext, plugins: any)
     {
         const mode = options.isNodeJsEnv ? "Node.js" : "bin mode";
         context.stdout.write(EOL);
+        logger.log("Loaded config from " + options.configFilePath);
         logger.log(`Running ${pkg.name} version ${pkg.version} in ${mode}`);
     }
 

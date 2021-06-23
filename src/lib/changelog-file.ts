@@ -829,7 +829,7 @@ export async function doChangelogFileEdit(context: IContext)
         let tmpCommits,
             changeLogFinal = "";
 
-        if (!options.taskChangelogHtmlView && !options.taskChangelogHtmlFile) {
+        if (!options.taskChangelogHtmlView && !options.taskChangelogHtmlFile) {console.log(8);
             tmpCommits = nextRelease.changelog.notes || createChangelogSectionFromCommits(context);
         }
         else {
@@ -838,10 +838,11 @@ export async function doChangelogFileEdit(context: IContext)
 
         if (options.taskChangelog || !options.taskMode)
         {
-            if (!newChangelog) {
-                tmpCommits = EOL;
+            if (!newChangelog && !tmpCommits.endsWith(EOL)) {
+                tmpCommits += EOL;
             }
-            tmpCommits = `## ${options.versionText} ${nextRelease.version} (${fmtDate})${EOL}${EOL}${tmpCommits}`;
+
+            tmpCommits = `## ${options.versionText} ${nextRelease.version} (${fmtDate})${EOL}${EOL}${tmpCommits}`.trimRight();
 
             let changeLogContents = await readFile(options.changelogFile);
             changeLogContents = changeLogContents.replace(new RegExp(changelogTitle, "i"), "").trim();
@@ -860,6 +861,7 @@ export async function doChangelogFileEdit(context: IContext)
             }
             changeLogFinal += tmpCommits;
         }
+        changeLogFinal = changeLogFinal.trim() + EOL;
         //
         // Write content to file
         //

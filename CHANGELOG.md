@@ -1,5 +1,12 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.0.2 (June 23rd, 2021)
+
+### Bug Fixes
+
+- commit messages with a scope are not figuring into the calculation of the next version
+- **Mantis Release:** assets upload with incorrect file names [skip ci]
+
 ## Version 3.0.1 (June 23rd, 2021)
 
 ### Bug Fixes

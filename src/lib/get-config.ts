@@ -41,14 +41,14 @@ async function getConfig(context: any, opts: any)
     const { cwd, env } = context;
     const { config, filepath } = (await cosmiconfig(configName, { searchPlaces: configFiles }).search(cwd)) || { config: {}, filepath: "" };
 
-    context.logger.log("Load config from " + filepath);
-
     // Merge config file options and CLI/API options
     let options = { ...config, ...opts };
     if (options.ci === false)
     {
         options.noCi = true;
     }
+
+    options.configFilePath = filepath;
 
     const pluginsPath = { path: undefined };
     let extendPaths;
