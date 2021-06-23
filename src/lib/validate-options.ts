@@ -483,10 +483,6 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
         return false;
     }
 
-    if (!options.vcTagPrefix) {
-        options.vcTagPrefix = "v";
-    }
-
     if (!options.versionText) {
         options.versionText = "Version";
     }
