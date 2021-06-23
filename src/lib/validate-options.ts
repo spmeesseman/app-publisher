@@ -597,6 +597,6 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
     //
     // Good to go...
     //
-    logger.success("Success - options validated");
+    logger.log("Options validated");
     return true;
 }

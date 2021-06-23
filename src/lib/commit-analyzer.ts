@@ -19,37 +19,37 @@ async function getReleaseLevel({ options, commits, logger })
             logger.log("   Major (breaking change)");
             level = "major";
         }
-        else if (msg.startsWith("majfeat:") || msg.startsWith("featmaj:")) // bump major on major feature
+        else if (/^majfeat|featmaj[:\(]{1}/.test(msg)) // bump major on major feature
         {
             logger.log("   Major (feature)");
             level = "major";
         }
-        else if (msg.startsWith("feat:")) // bump minor on feature
+        else if (/^feat[:\(]{1}/.test(msg)) // bump minor on feature
         {
             logger.log("   Minor (feature)");
             level = "minor";
         }
-        else if (msg.startsWith("perf:")) // bump minor on feature
+        else if (/^perf[:\(]{1}/.test(msg)) // bump minor on feature
         {
             logger.log("   Minor (performance enhancement)");
             level = "minor";
         }
-        else if (msg.startsWith("featmin:") || msg.startsWith("minfeat:")) // bump patch on minor feature
+        else if (/^minfeat|featmin[:\(]{1}/.test(msg)) // bump patch on minor feature
         {
             logger.log("   Patch (minor feature)");
             if (!level) { level = "patch"; }
         }
-        else if (msg.startsWith("perfmin:") || msg.startsWith("minperf:")) // bump patch on minor performance enh.
+        else if (/^minperf|perfmin[:\(]{1}/.test(msg)) // bump patch on minor performance enh.
         {
             logger.log("   Patch (minor performance enhancement)");
             if (!level) { level = "patch"; }
         }
-        else if (msg.startsWith("fix:")) // bump patch on fix
+        else if (/^fix[:\(]{1}/.test(msg)) // bump patch on fix
         {
             logger.log("   Patch (fix)");
             if (!level) { level = "patch"; }
         }
-        else if (msg.startsWith("refactor:")) // bump patch on refactoring
+        else if (/^refactor[:\(]{1}/.test(msg)) // bump patch on refactoring
         {
             logger.log("   Patch (refactoring)");
             if (!level) { level = "patch"; }

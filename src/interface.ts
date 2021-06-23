@@ -16,6 +16,36 @@ export interface IChangelogEntry
 }
 
 
+/*
+Git commit output:
+{
+  commit: {
+    long: 'acd531bdcbd5e5da5a2c2c03756a912c1997e900',
+    short: 'acd531b'
+  },
+  tree: {
+    long: 'e2e01a2bfc4e6e3e2aa65faacf7393c1378d4575',
+    short: 'e2e01a2'
+  },
+  author: {
+    name: 'Scott Meesseman',
+    email: 'spmeesseman@gmail.com',
+    date: 2021-06-23T15:16:33.000Z
+  },
+  committer: {
+    name: 'Scott Meesseman',
+    email: 'spmeesseman@gmail.com',
+    date: 2021-06-23T15:16:33.000Z
+  },
+  subject: 'fix(mantis release): assets upload with incorrect file names [skip ci]',
+  body: '',
+  hash: 'acd531bdcbd5e5da5a2c2c03756a912c1997e900',
+  message: 'fix(mantis release): assets upload with incorrect file names [skip ci]',
+  gitTags: '(HEAD -> master, origin/master)',
+  committerDate: 2021-06-23T15:16:33.000Z
+}
+*/
+
 export interface ICommit
 {
     author?: string;
