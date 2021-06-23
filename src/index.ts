@@ -701,7 +701,7 @@ async function runNodeScript(context: IContext, plugins: any)
     //
     // Post - NPM release
     //
-    if (packageJsonModified && options.npmRelease === "Y" && (!options.taskMode || options.taskNpmRelease))
+    if (packageJsonModified)
     {   //
         // Restore any configured package.json values to the original values
         //
