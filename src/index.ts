@@ -285,7 +285,7 @@ async function runNodeScript(context: IContext, plugins: any)
     // VCS Authentication
     //
     try {
-        await verifyAuth(context, { cwd, env });
+        await verifyAuth(context);
     }
     catch (error) {
         throw error;
@@ -299,7 +299,7 @@ async function runNodeScript(context: IContext, plugins: any)
     //
     // Fetch tags (git only)
     //
-    await fetch(context, { cwd, env });
+    await fetch(context);
 
     //
     // Populate context with last release info
@@ -351,7 +351,7 @@ async function runNodeScript(context: IContext, plugins: any)
     //
     const nextRelease = {
         level: await getReleaseLevel(context),
-        head: await getHead(context, { cwd, env }),
+        head: await getHead(context),
         version: undefined,
         tag: undefined,
         notes: undefined,
@@ -679,7 +679,7 @@ async function runNodeScript(context: IContext, plugins: any)
         //
         if (!options.taskTag || options.taskCommit || !options.taskMode)
         {
-            await commit(context, { cwd, env });
+            await commit(context);
             logger.success((options.dryRun ? "Dry run - " : "") + `Successfully committed changes for v${nextRelease.version}`);
         }
         //
@@ -687,10 +687,14 @@ async function runNodeScript(context: IContext, plugins: any)
         //
         if (!options.taskCommit || options.taskTag || !options.taskMode)
         {
-            await tag(context, { cwd, env });
-            await push(context, { cwd, env });
+            await tag(context);
+            await push(context);
             //
             // If there was a Github release made, then publish it and re-tag
+            //
+            // TODO - I think we can do just one release creation request at this point, and do
+            // a 'draft: false' here, instead of doing it b4 the commit/tag, and then issuing a
+            // patch request here
             //
             if (githubReleaseId) {
                 await publishGithubRelease(context, githubReleaseId);
@@ -701,7 +705,7 @@ async function runNodeScript(context: IContext, plugins: any)
         //
         if (options.dryRun && options.dryRunVcRevert)
         {
-            await revert(context, { cwd, env});
+            await revert(context);
         }
     }
 
@@ -1071,7 +1075,7 @@ async function callFail(context, plugins, err)
     //
     if (context.options.dryRun && context.options.dryRunVcRevert)
     {
-        await revert(context, context);
+        await revert(context);
     }
 
     const errors = util.extractErrors(err).filter(err => err.semanticRelease);

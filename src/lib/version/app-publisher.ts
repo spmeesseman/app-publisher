@@ -36,7 +36,7 @@ export async function setAppPublisherVersion({nextRelease, options, logger, cwd,
         }
         for (const file of files)
         {
-            if (await pathExists(file) && !(await isIgnored({options, logger} as IContext, file, {cwd, env})))
+            if (await pathExists(file) && !(await isIgnored({options, logger, cwd, env} as IContext, file)))
             {
                 logger.log(`Setting version ${nextRelease.version} in ` + relative(cwd, file));
                 // const publishrcJson = require(path.join(process.cwd(), file));

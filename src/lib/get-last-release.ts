@@ -36,7 +36,7 @@ async function getLastRelease({ cwd, env, options, logger }: IContext)
     // so it's guaranteed to not be present in the `tagFormat`.
     //
     const tagRegexp = `^${escapeRegExp(template(options.tagFormat)({ version: " " })).replace(" ", "(.+)")}`,
-          tagsRaw = await getTags({ env, options, logger } as IContext, options.repoType);
+          tagsRaw = await getTags({ env, options, logger } as IContext);
 
     const tags = tagsRaw
                  .map((tag: any) => ({ tag, version: (tag.match(tagRegexp) || new Array(2))[1] }))
@@ -52,7 +52,7 @@ async function getLastRelease({ cwd, env, options, logger }: IContext)
     if (tag)
     {
         logger.info(`Found ${options.repoType} tag ${tag.tag} associated with version ${tag.version}`);
-        return { head: await getTagHead({options, logger} as IContext, tag.tag, { cwd, env }), ...tag };
+        return { head: await getTagHead({options, logger, cwd, env} as IContext, tag.tag), ...tag };
     }
 
     logger.info(`No ${options.repoType} tag version found`);

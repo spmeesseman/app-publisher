@@ -8,7 +8,7 @@ const debug = require("debug")("app-publisher:git");
 const xml2js = require("xml2js");
 
 
-export async function addEdit({options, nextRelease, logger,  env, cwd}: IContext, pathToAdd: string | string[])
+export async function addEdit({options, nextRelease, logger, env, cwd}: IContext, pathToAdd: string | string[])
 {
     if (!pathToAdd || pathToAdd.length === 0) {
         return;
@@ -18,10 +18,10 @@ export async function addEdit({options, nextRelease, logger,  env, cwd}: IContex
     {
         let editType = "M";
         const pathResolved = path.relative(cwd, path.resolve(p)),
-              versioned = await isVersioned({options, logger} as IContext, pathResolved, {cwd, env});
+              versioned = await isVersioned({options, logger, cwd, env} as IContext, pathResolved);
         if (!versioned)
         {
-            const ignored = await isIgnored({options, logger} as IContext, pathResolved, {cwd, env});
+            const ignored = await isIgnored({options, logger, cwd, env} as IContext, pathResolved);
             // const dir = path.dirname(pathResolved);
             // if (!(await isVersioned({options}, dir, {cwd, env}))) {
             //     _add(dir); // , true);
@@ -59,9 +59,10 @@ export async function addEdit({options, nextRelease, logger,  env, cwd}: IContex
  *
  * @throws {Error} if the commit failed or the repository type is invalid.
  */
-export async function commit({options, nextRelease, logger}: IContext, execaOpts: any)
+export async function commit({options, nextRelease, logger, cwd, env}: IContext)
 {
     let proc: any;
+    const execaOpts = { cwd, env };
 
     if (!nextRelease.edits || nextRelease.edits.length === 0) {
         logger.info("Commit - Nothing to commit");
@@ -159,8 +160,10 @@ export async function commit({options, nextRelease, logger}: IContext, execaOpts
  * @returns `true` if the tag exists, `false` otherwise
  * @throws {Error} If the `git` or `svn` command fails or the repository type is invalid.
  */
-export async function doesTagExist({options, logger}: IContext, tag: string, execaOpts: any): Promise<boolean>
+export async function doesTagExist({options, logger, cwd, env}: IContext, tag: string): Promise<boolean>
 {
+    const execaOpts = { cwd, env };
+
     logger.info("Check tag exists : " + tag);
 
     if (options.repoType === "git")
@@ -253,8 +256,10 @@ async function execSvn(svnArgs: string[], execaOpts: any, stdout = false)
  * @param context context
  * @param execaOpts execa options
  */
-export async function fetch({ options, logger }: IContext, execaOpts: any)
+export async function fetch({ options, logger, cwd, env }: IContext)
 {
+    const execaOpts = { cwd, env };
+
     if (options.repoType === "git")
     {
         try {
@@ -281,8 +286,9 @@ export async function fetch({ options, logger }: IContext, execaOpts: any)
  *
  * @returns The sha of the HEAD commit.
  */
-export async function getHead({options, logger}: IContext, execaOpts: any)
+export async function getHead({options, logger, cwd, env}: IContext)
 {
+    const execaOpts = { cwd, env };
     try {
         if (options.repoType === "git") {
             return await execa.stdout("git", ["rev-parse", "HEAD"], execaOpts);
@@ -321,8 +327,9 @@ function getSvnTagLocation(options)
  *
  * @returns The commit sha of the tag in parameter or `null`.
  */
-export async function getTagHead({options, logger}: IContext, tagName: any, execaOpts: { cwd: any; env: any }): Promise<string>
+export async function getTagHead({options, logger, cwd, env}: IContext, tagName: any): Promise<string>
 {
+    const execaOpts = { cwd, env };
     try {
         if (options.repoType === "git")
         {
@@ -357,8 +364,9 @@ export async function getTagHead({options, logger}: IContext, tagName: any, exec
  * @returns List of tags.
  * @throws {Error} If the `git` or `svn` command fails or the repository type is invalid.
  */
-export async function getTags({env, options, logger}: IContext, execaOpts: any)
+export async function getTags({options, logger, cwd, env}: IContext)
 {
+    const execaOpts = { cwd, env };
     logger.info("Get tags");
 
     if (options.repoType === "git")
@@ -371,7 +379,7 @@ export async function getTags({env, options, logger}: IContext, execaOpts: any)
               parser = new xml2js.Parser(),
               tagLocation = getSvnTagLocation(options);
 
-        const xml = await execSvn([ "log", "--xml", `${tagLocation}`, "--verbose", "--limit", "50" ], true);
+        const xml = await execSvn([ "log", "--xml", `${tagLocation}`, "--verbose", "--limit", "50" ], execaOpts, true);
 
         logger.info("Parsing response from SVN");
         try {
@@ -419,9 +427,10 @@ export async function getTags({env, options, logger}: IContext, execaOpts: any)
  *
  * @returns `true` is the HEAD of the current local branch is the same as the HEAD of the remote branch, falsy otherwise.
  */
-export async function isBranchUpToDate({options, logger}: IContext, branch: any, execaOpts: any)
+export async function isBranchUpToDate({options, logger, cwd, env}: IContext, branch: any)
 {
-    const remoteHead = await execa.stdout("git", ["ls-remote", "--heads", "origin", branch], execaOpts);
+    const execaOpts = { cwd, env },
+          remoteHead = await execa.stdout("git", ["ls-remote", "--heads", "origin", branch], execaOpts);
     try
     {
         if (options.repoType === "git") {
@@ -464,8 +473,10 @@ export async function isGitRepo(execaOpts: { cwd: any; env: any })
 }
 
 
-export async function isIgnored({options, logger}: IContext, objectPath: string, execaOpts: any)
+export async function isIgnored({options, logger, cwd, env}: IContext, objectPath: string)
 {
+    const execaOpts = { cwd, env };
+
     // const excapedRegex = escapeRegExp(objectPath);
     logger.info(`Check ignored property for '${objectPath}'`);
 
@@ -578,10 +589,11 @@ export async function isSvnRepo(execaOpts: { cwd: any; env: any })
  * @throws {Error} if the repository type is invalid
  * @returns `true` if the specifed file or directory is under version control, `false` otherwise.
  */
-export async function isVersioned({options, logger}: IContext, objectPath: string, execaOpts: any)
+export async function isVersioned({options, logger, cwd, env}: IContext, objectPath: string)
 {
     let isVersioned = false,
         stdout: string;
+    const execaOpts = { cwd, env };
 
     try {
         if (options.repoType === "svn")
@@ -618,8 +630,9 @@ export async function isVersioned({options, logger}: IContext, objectPath: strin
  *
  * @throws {Error} if the push failed or the repository type is invalid.
  */
-export async function push({options, logger}: IContext, execaOpts: any)
+export async function push({options, logger, cwd, env}: IContext)
 {
+    const execaOpts = { cwd, env };
     if (options.repoType === "git") {
         if (!options.dryRun) {
             await execa("git", ["push", "--tags", options.repo], execaOpts);
@@ -644,8 +657,9 @@ export async function push({options, logger}: IContext, execaOpts: any)
  *
  * @returns The value of the remote git URL.
  */
-export async function repoUrl({options, logger}: IContext, execaOpts: any)
+export async function repoUrl({options, logger, cwd, env}: IContext)
 {
+    const execaOpts = { cwd, env };
     try
     {
         if (options.repoType === "git") {
@@ -674,9 +688,10 @@ export async function repoUrl({options, logger}: IContext, execaOpts: any)
  * @param execaOpts Options to pass to `execa`.
  * @param repoType Repositorytype, one of 'git' or 'svn'
  */
-export async function revert({options, nextRelease, logger}: IContext, execaOpts: any)
+export async function revert({options, nextRelease, logger, cwd, env}: IContext)
 {
-    const changeListAdd = nextRelease.edits.filter((e: any) => e.type === "A"),
+    const execaOpts = { cwd, env },
+          changeListAdd = nextRelease.edits.filter((e: any) => e.type === "A"),
           changeListModify = nextRelease.edits.filter((e: any) => e.type === "M");
 
     // const changeListAdd: string = edits.filter((e: any) => e.type === "A").map((e: any) => e.path).join(" ").trim(),
@@ -732,10 +747,11 @@ export async function revert({options, nextRelease, logger}: IContext, execaOpts
  *
  * @throws {Error} if the tag creation failed or the repository type is invalid.
  */
-export async function tag({options, logger, nextRelease}: IContext, execaOpts: any)
+export async function tag({options, logger, nextRelease, cwd, env}: IContext)
 {
     let tagMessage: string,
         tagLocation: string;
+    const execaOpts = { cwd, env };
 
     if (options.repoType === "git")
     {
@@ -820,8 +836,10 @@ function throwVcsError(msg: string, logger: any)
  *
  * @throws {Error} if not authorized to push or the repository type is invalid.
  */
-export async function verifyAuth({ options, logger }: IContext, execaOpts: any)
+export async function verifyAuth(context: IContext)
 {
+    const { options, logger, cwd, env } = context,
+          execaOpts = { cwd, env };
     try
     {
         if (options.repoType === "git") {
@@ -829,7 +847,7 @@ export async function verifyAuth({ options, logger }: IContext, execaOpts: any)
                 await execa("git", ["push", "--dry-run", options.repo, `HEAD:${options.branch}`], execaOpts);
             }
             catch (error) {
-                if (!(await isBranchUpToDate(options.branch, context, options)))
+                if (!(await isBranchUpToDate(context, options.branch)))
                 {
                     logger.info(
                         `The local branch ${

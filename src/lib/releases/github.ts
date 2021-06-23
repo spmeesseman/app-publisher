@@ -85,10 +85,10 @@ async function doGithubRelease(context: IContext): Promise<IReturnStatus>
         //
         // We need to tag the repository with the version tag if it doesnt exist already
         //
-        if (!(await doesTagExist(context, nextRelease.tag, { cwd, env})))
+        if (!(await doesTagExist(context, nextRelease.tag)))
         {
-            await tag(context, { cwd, env });
-            await push(context, { cwd, env });
+            await tag(context);
+            await push(context);
         }
     }
     else {
