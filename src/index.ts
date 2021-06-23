@@ -30,6 +30,7 @@ import { doChangelogFileEdit, doHistoryFileEdit, getReleaseChangelogs } from "./
 import { commit, fetch, verifyAuth, getHead, tag, push, revert } from "./lib/repo";
 import { EOL } from "os";
 import { IContext, INextRelease } from "./interface";
+import runDevCodeTests = require("./test");
 const envCi = require("@spmeesseman/env-ci");
 const pkg = require("../package.json");
 
@@ -201,13 +202,7 @@ async function run(context: IContext, plugins: any)
         };
     }
 
-    if (options.node)
-    {
-        await runNodeScript(context, plugins);
-    }
-    else {
-        await runPowershellScript(options, logger);
-    }
+    await runRelease(context, plugins);
 }
 
 
@@ -240,7 +235,7 @@ function hasMoreTasks(options: any, tasks: string[])
 }
 
 
-async function runNodeScript(context: IContext, plugins: any)
+async function runRelease(context: IContext, plugins: any)
 {
     const { cwd, env, options, logger } = context;
 
@@ -837,25 +832,6 @@ async function processTasks1(context: IContext): Promise<boolean>
 }
 
 
-function getTasks3()
-{
-    return [ "taskTouchVersions" ];
-}
-
-
-function getTasks4()
-{
-    return [ "taskCiEnvInfo", "taskCiEnvSet", "taskVersionInfo", "taskVersionNext" ];
-}
-
-
-function getTasks5()
-{
-    return [ "taskCommit", "taskDistRelease", "taskGithubRelease", "taskMantisbtRelease",
-             "taskNpmRelease", "taskNugetRelease", "taskTag" ];
-}
-
-
 /**
  * Tasks that can be processed without retrieving commits, but last release info is required
  *
@@ -949,155 +925,22 @@ async function processTasks4(context: IContext): Promise<boolean>
 }
 
 
-async function runPowershellScript(options: any, logger: any)
+function getTasks3()
 {
-    //
-    // Find Powershell script
-    //
-    // Perform search in the following order:
-    //
-    //     1. Local node_modules
-    //     2. Local script dir
-    //     3. Global node_modules
-    //     4. Windows install
-    //
-    const ps1Script = util.getPsScriptLocation("app-publisher");
-    if (!ps1Script) {
-        logger.error("Could not find powershell script app-publisher.ps1");
-        return;
-    }
-
-    //
-    // Launch Powershell script
-    //
-    // const ec = child_process.spawnSync("powershell.exe", [`${ps1Script} ${options}`], { stdio: "inherit"});
-    // if (ec.status !== 0)
-    // {
-    //    logger.error("Powershell script exited with error code " + ec.status.toString());
-    //    return ec.status;
-    // }
-    // logger.success("Published release successfully");
-    // logger.success(`Published release ${nextRelease.version}`);
-    const isStdOutCmd = options.taskModeStdOut,
-          child = child_process.spawn("powershell.exe", [`${ps1Script} '${JSON.stringify(options)}'`], { stdio: ["pipe", "pipe", "pipe"], env: process.env});
-    // const child = child_process.spawn("powershell.exe", [`${ps1Script} ${options}`], { stdio: ["pipe", "inherit", "inherit"] });
-
-    child.stdout.setEncoding("utf8");
-    child.stderr.setEncoding("utf8");
-
-    process.stdin.on("data", data => {
-        if (!child.killed) {
-            child.stdin.write(data);
-        }
-    });
-
-    child.stdout.on("data", data =>
-    {
-        if (child.killed) {
-            return;
-        }
-        logPowershell(data, logger, isStdOutCmd);
-    });
-
-    child.stderr.on("data", data => {
-        if (child.killed) {
-            return;
-        }
-        logPowershell(data, logger, isStdOutCmd);
-    });
-
-    let iCode: number | null;
-    child.on("exit", code =>
-    {
-        // if (fs.existsSync("ap.env"))
-        // {
-        //     const envContent = fs.readFileSync("ap.env");
-        //     if (envContent)
-        //     {
-        //         const envVars = envContent.toString().split("\n");
-        //         process.env.AP_CURRENT_VERSION = envVars[0];
-        //         process.env.AP_NEXT_VERSION = envVars[1];
-        //         process.env.AP_CHANGELOG_FILE = envVars[2];
-        //         fs.unlinkSync("ap.env");
-        //     }
-        // }
-        iCode = code;
-        if (iCode === 0) {
-            if (!isStdOutCmd) {
-                if (!options.taskMode) {
-                    logger.success("Successfully published release");
-                }
-                else {
-                    logger.success("Successfully completed task(s)");
-                }
-            }
-        }
-        else {
-            logger.error(`Failed to publish release - return code '${iCode}'`);
-        }
-        process.exit(iCode);
-    });
+    return [ "taskTouchVersions" ];
 }
 
 
-function logPowershell(data: string, logger: any, isStdOutCmd: boolean)
+function getTasks4()
 {
-    if (!data) {
-        return;
-    }
+    return [ "taskCiEnvInfo", "taskCiEnvSet", "taskVersionInfo", "taskVersionNext" ];
+}
 
-    //
-    // Trim
-    //
-    data = data.trimRight();
-    while (data[0] === "\n" || data[0] === "\r") {
-        data = data.substring(1);
-    }
 
-    if (!data) {
-        return;
-    }
-
-    const isError = data.includes("[ERROR] ");
-
-    if (isStdOutCmd && !isError) {
-        console.log(data);
-        return;
-    }
-
-    if (data.includes("\r\n")) {
-        data.replace(/\r\n/gm, "\r\n                                  ");
-    }
-    else if (data.includes("\n")) {
-        data.replace(/\n/gm, "\n                                  ");
-    }
-    if (data.includes("[INFO] ")) {
-        logger.log(data.substring(7));
-    }
-    else if (data.includes("[NOTICE] ")) {
-        logger.log(data.substring(9));
-    }
-    else if (data.includes("[WARNING] ")) {
-        logger.warn(data.substring(10));
-    }
-    else if (data.includes("[SUCCESS] ")) {
-        logger.success(data.substring(10));
-    }
-    else if (isError) {
-        logger.error(data.substring(8));
-    }
-    else if (data.includes("[PROMPT] ")) {
-        logger.star(data.substring(9));
-    }
-    else if (data.includes("[INPUT] ")) {
-        logger.star(data.substring(8));
-    }
-    else if (data.includes("[RAW] ")) {
-        console.log(data.substring(6));
-    }
-    else {
-        logger.log(data);
-    }
+function getTasks5()
+{
+    return [ "taskCommit", "taskDistRelease", "taskGithubRelease", "taskMantisbtRelease",
+             "taskNpmRelease", "taskNugetRelease", "taskTag" ];
 }
 
 
@@ -1121,7 +964,7 @@ function logErrors({ logger, stderr }, err)
 }
 
 
-async function callFail(context, plugins, err)
+async function callFail(context: IContext, plugins, err)
 {
     //
     // Revert all changes if dry run, and configured to do so
@@ -1187,44 +1030,3 @@ export = async (opts = {}, { cwd = process.cwd(), env = process.env, stdout = un
         throw error;
     }
 };
-
-
-function runDevCodeTests()
-{
-    // const edits = [{
-    //     path: "src/test.txt",
-    //     type: "M"
-    // },
-    // {
-    //     path: "dist/install.com",
-    //     type: "A"
-    // },
-    // {
-    //     path: "install/dist/installer.msi",
-    //     type: "M"
-    // }];
-    // const changeListAdd: string = edits.filter((e: any) => e.type === "A").map((e: any) => e.path).join(" ").trim(),
-    //       changeListModify: string = edits.filter((e: any) => e.type === "M").map((e: any) => e.path).join(" ").trim();
-    // console.log(1, changeListAdd);
-    // console.log(2, changeListModify);
-
-//     const stdout = `.gitattributes
-// .gitignore
-// .publishrc.spm.json
-// .releaserc.json
-// CHANGELOG.md
-// README.spm.json
-// README.spmeesseman.md
-// ap.env
-// azure-pipelines.yml
-// build
-// node_modules
-// package.spm.json
-// package.spmeesseman.json`;
-
-    // const excapedRegex = util.escapeRegExp("^.publishrc.spm.json$");
-    // console.log(1, new RegExp(`^${excapedRegex}$`, "gm").test(stdout));
-    // console.log(2, new RegExp(`^.publishrc.spm.json$`, "gm").test(stdout));
-    // console.log(3, new RegExp(`^\\\\.publishrc\\\\.spm\\\\.json$`, "gm").test(stdout));
-    // console.log(1, new RegExp(`node_modules$`, "gm").test(stdout));
-}

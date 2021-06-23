@@ -417,16 +417,6 @@ export const publishRcOpts =
         }
     ],
 
-    node: [
-        true,
-        "boolean",
-        false,
-        [ "-n", "--node" ],
-        {
-            help: "Run in nodejs mode (BETA)."
-        }
-    ],
-
     npmPackDist: [
         true,
         "flag",
