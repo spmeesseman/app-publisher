@@ -12,18 +12,22 @@ const got = require("got");
 export = doMantisRelease;
 
 
-async function doMantisRelease({ options, logger, nextRelease }: IContext): Promise<IReturnStatus>
+async function doMantisRelease(context: IContext): Promise<IReturnStatus>
 {
+    const { options, logger, nextRelease } = context;
+
     logger.log("Starting MantisBT release");
     logger.log(`   Version : ${nextRelease.version}`);
 
-    let rc: IReturnStatus = {
-        success: true
+    const rc: IReturnStatus = {
+        id: -1,
+        success: false,
+        error: undefined
     };
 
     if (semver.prerelease(semver.clean(nextRelease.version)))
     {
-        rc = { success: false, error: `MantisBT release v${nextRelease.version} failure - cannot pubish a pre-release` };
+        rc.error = `MantisBT release v${nextRelease.version} failure - cannot pubish a pre-release`;
         logger.error(rc.error);
         return rc;
     }
@@ -39,9 +43,9 @@ async function doMantisRelease({ options, logger, nextRelease }: IContext): Prom
           mantisChangelog = nextRelease.changelog.htmlNotes;
 
     if (!mantisChangelog) {
-        rc = { success: false, error: `MantisBT release v${nextRelease.version} failure - no changelog` };
+        rc.error = `MantisBT release v${nextRelease.version} failure - no changelog`;
         logger.error(rc.error);
-        return;
+        return rc;
     }
     //
     // Log the changelog contents if this is a dry run
@@ -163,7 +167,7 @@ async function doMantisRelease({ options, logger, nextRelease }: IContext): Prom
             });
         }
         catch (e) {
-            rc = { success: false, error: `MantisBT release v${nextRelease.version} failure - ${e.toString()}` };
+            rc.error = `MantisBT release v${nextRelease.version} failure - ${e.toString()}`;
             logger.error(rc.error);
             return rc;
         }
@@ -186,10 +190,12 @@ async function doMantisRelease({ options, logger, nextRelease }: IContext): Prom
             }
         }
         else {
-            rc = { success: false, error: `MantisBT release v${nextRelease.version} failure - no response` };
+            rc.error = `MantisBT release v${nextRelease.version} failure - no response`;
             logger.error(rc.error);
+            return rc;
         }
     }
 
+    rc.success = true;
     return rc;
 }

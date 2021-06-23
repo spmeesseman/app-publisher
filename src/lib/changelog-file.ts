@@ -1716,11 +1716,12 @@ function getFormattedSubject({options}, subject: string)
 }
 
 
-export async function getReleaseChangelog(context: IContext, version?: string): Promise<IChangelog>
+export async function getReleaseChangelogs(context: IContext, version?: string): Promise<IChangelog>
 {
     const {options, nextRelease} = context,
-          getHtmlLog = context.options.taskGithubRelease || context.options.taskMantisbtRelease,
-          getFileLog = context.options.taskEmail;
+          getHtmlLog = context.options.taskGithubRelease || context.options.taskMantisbtRelease ||
+                       (!options.taskMode && (options.githubRelease === "Y" || options.mantisbtRelease === "Y")),
+          getFileLog = context.options.taskEmail || (!options.taskMode && options.emailNotification === "Y");
 
     let fileNotes: string,
         htmlNotes: string,

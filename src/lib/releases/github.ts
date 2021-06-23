@@ -18,14 +18,15 @@ async function doGithubRelease(context: IContext): Promise<IReturnStatus>
     logger.log(`   Version : ${nextRelease.version}`);
     logger.log(`   Creating GitHub release associated to tag ${nextRelease.tag}`);
 
-    let rc: IReturnStatus = {
+    const rc: IReturnStatus = {
+        id: -1,
         success: false,
         error: undefined
     };
 
     const githubChangelog = nextRelease.changelog.htmlNotes;
     if (!githubChangelog) {
-        rc = { success: false, error: `GitHub release v${nextRelease.version} failure - no changelog` };
+        rc.error = `GitHub release v${nextRelease.version} failure - no changelog`;
         logger.error(rc.error);
         return rc;
     }
@@ -36,7 +37,7 @@ async function doGithubRelease(context: IContext): Promise<IReturnStatus>
     if (options.dryRun === true)
     {
         logger.log("   Dry run has generated an html changelog to test functionality:");
-        logger.stdout.write(githubChangelog);
+        context.stdout.write(githubChangelog);
     }
 
     //
