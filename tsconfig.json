@@ -10,7 +10,7 @@
         "script",
         "**/*.spec.ts",
         "testFixture",
-        ".eslint.js"
+        "**/*.js"
     ],
     "compilerOptions": {
         "module": "commonjs",
