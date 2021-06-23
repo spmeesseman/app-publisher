@@ -152,6 +152,67 @@ export async function commit({options, nextRelease, logger}: IContext, execaOpts
 
 
 /**
+ * Checks if a tag exists in the repository
+ *
+ * @param execaOpts Options to pass to `execa`.
+ *
+ * @returns `true` if the tag exists, `false` otherwise
+ * @throws {Error} If the `git` or `svn` command fails or the repository type is invalid.
+ */
+export async function doesTagExist({options, logger}: IContext, tag: string, execaOpts: any): Promise<boolean>
+{
+    logger.info("Check tag exists : " + tag);
+
+    if (options.repoType === "git")
+    {
+        return (await execa.stdout("git", ["tag"], execaOpts))
+                           .split("\n")
+                           .map((tag: { trim: () => void }) => tag.trim())
+                           .filter((f: string) => f === tag)
+                           .length > 0;
+    }
+    else if (options.repoType === "svn")
+    {
+        const tags: string[] = [],
+              parser = new xml2js.Parser(),
+              tagLocation = getSvnTagLocation(options);
+
+        const xml = await execSvn([ "log", "--xml", `${tagLocation}`, "--verbose", "--limit", "50" ], true);
+
+        logger.info("Parsing response from SVN");
+        try {
+            parser.parseString(xml, (err: any, result: any) =>
+            {
+                if (err) {
+                    throw new Error(err);
+                }
+                for (const logEntry of result.log.logentry) {
+                    for (const p of logEntry.paths) {
+                        const pathObj = p.path[0],
+                              regex = new RegExp(`.*/tags/(${options.vcTagPrefix}[0-9\.]+)`),
+                              match = regex.exec(pathObj._);
+                        if (pathObj.$ && pathObj.$.action === "A" && pathObj.$.kind === "dir" && match && match[1] === tag)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            });
+        }
+        catch (e) {
+            logger.error("Response could not be parsed, invalid module, no commits found, or no version tag exists");
+            throw e;
+        }
+    }
+    else {
+        throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
+    }
+
+    return false;
+}
+
+
+/**
  * Executes svn command with credentials if set in the environment.
  *
  * @since 2.8.0
@@ -246,6 +307,11 @@ export async function getHead({options, logger}: IContext, execaOpts: any)
 }
 
 
+function getSvnTagLocation(options)
+{
+    return options.repo.replace("trunk", "tags").replace("branches/" + options.branch, "tags");
+}
+
 
 /**
  * Get the commit sha for a given tag.
@@ -288,39 +354,24 @@ export async function getTagHead({options, logger}: IContext, tagName: any, exec
  *
  * @param execaOpts Options to pass to `execa`.
  *
- * @returns List of git tags.
+ * @returns List of tags.
  * @throws {Error} If the `git` or `svn` command fails or the repository type is invalid.
  */
 export async function getTags({env, options, logger}: IContext, execaOpts: any)
 {
+    logger.info("Get tags");
+
     if (options.repoType === "git")
     {
-        return (await execa.stdout("git", ["tag"], execaOpts))
-            .split("\n")
-            .map((tag: { trim: () => void }) => tag.trim()) // um ok
-            .filter(Boolean); // why??
+        return (await execa.stdout("git", ["tag"], execaOpts)).split("\n").map((tag: { trim: () => void }) => tag.trim()).filter(Boolean);
     }
     else if (options.repoType === "svn")
     {
-        let xml: string;
         const tags: string[] = [],
-              svnUser = env.SVN_AUTHOR_NAME,
-              svnToken = env.SVN_TOKEN,
               parser = new xml2js.Parser(),
-              tagLocation = options.repo.replace("trunk", "tags").replace("branches/" + options.branch, "tags");
+              tagLocation = getSvnTagLocation(options);
 
-        //
-        // TODO - how to pass quotes to execa?  i.e. `"${tagLocation}"` they are encoded as %22 and we get:
-        //   E170000: Illegal repository URL '%22https://svn.development.pjats.com/pja/app-publisher/tags%22'\r\n
-        //
-        if (svnUser && svnToken) {
-            xml = await execa.stdout("svn", ["log", "--xml", `${tagLocation}`, "--verbose", "--limit", "50", "--non-interactive",
-                                             "--no-auth-cache", "--username", svnUser, "--password", `${svnToken}`], execaOpts);
-        }
-        else {
-            xml = await execa.stdout("svn", ["log", "--xml", `${tagLocation}`, "--verbose", "--limit", "50", "--non-interactive",
-                                             "--no-auth-cache"], execaOpts);
-        }
+        const xml = await execSvn([ "log", "--xml", `${tagLocation}`, "--verbose", "--limit", "50" ], true);
 
         logger.info("Parsing response from SVN");
         try {
@@ -686,14 +737,6 @@ export async function tag({options, logger, nextRelease}: IContext, execaOpts: a
     let tagMessage: string,
         tagLocation: string;
 
-    if (options.pathPreRoot && !options.vcTagPrefix)
-    {
-        logger.warn("Skipping version tag, 'vcTagPrefix' must be set for subprojects");
-        logger.warn("The project must be tagged manually using the following command:");
-        logger.warn(`   svn copy "${options.repo}" "${tagLocation}/PREFIX-v${nextRelease.version}" -m "chore(release): tag v${nextRelease.version} [skip ci]"`);
-        return;
-    }
-
     if (options.repoType === "git")
     {
         tagLocation = nextRelease.tag;
@@ -702,8 +745,10 @@ export async function tag({options, logger, nextRelease}: IContext, execaOpts: a
             tagLocation = `${options.vcTagPrefix}-${nextRelease.tag}`;
             tagMessage = `chore(release): tag ${options.vcTagPrefix} version ${nextRelease.version} [skip ci]`;
         }
+
         logger.info(`Tagging Git version at ${tagLocation}`);
-        if (options.githubRelease !== "Y") {
+
+        if (options.githubRelease !== "Y" || options.taskGithubRelease) {
             if (!options.dryRun) {
                 await execa("git", ["tag", "-a", tagLocation, "-m", tagMessage], execaOpts);
             }
@@ -745,13 +790,12 @@ export async function tag({options, logger, nextRelease}: IContext, execaOpts: a
         if (!options.dryRun) {
             await execSvn(["copy", options.repo, tagLocation, "-m", tagMessage], execaOpts);
         }
-        else {
-            logger.info("   Dry run, tag not performed");
-        }
     }
     else {
         throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
     }
+
+    logger.success((options.dryRun ? "Dry run - " : "") + `Created tag ${nextRelease.tag}`);
 }
 
 

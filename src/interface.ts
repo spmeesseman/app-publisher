@@ -28,6 +28,13 @@ export interface IEdit
 }
 
 
+export interface IReturnStatus
+{
+    error: string | undefined;
+    success: boolean;
+}
+
+
 export interface ILastRelease
 {
     head: string;

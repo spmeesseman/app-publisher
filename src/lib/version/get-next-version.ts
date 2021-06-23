@@ -12,10 +12,14 @@ function getNextVersion({nextRelease: {level}, lastRelease, logger})
         if (lastRelease.versionInfo.versionSystem === "incremental") {
             version = (parseInt(lastRelease.version) + 1).toString();
         }
-        else {
+        else if (level !== "nochange") {
             version = semver.inc(lastRelease.version, level);
+            logger.log(`The next version is ${version}`);
         }
-        logger.log(`The next version is ${version}`);
+        else {
+            version = lastRelease.version;
+            logger.log(`The next version is set to the current version ${version}`);
+        }
     }
     else {
         if (lastRelease.versionInfo.versionSystem === "incremental") {
