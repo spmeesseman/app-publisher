@@ -9,12 +9,12 @@
         "email": "smeesseman@pjats.com"
     },
     "bugs": {
-        "url": "https://app1.development.pjats.com/svn/web/listing.php?repname=pja&path=%2Fapp-publisher%2Ftrunk%2F/issues"
+        "url": "https://github.com/spmeesseman/app-publisher/issues"
     },
-    "homepage": "https://app1.development.pjats.com/svn/web/listing.php?repname=pja&path=%2Fapp-publisher%2Ftrunk%2F/issues",
+    "homepage": "https://github.com/spmeesseman/app-publisher",
     "repository": {
         "type": "git",
-        "url": "https://svn.development.pjats.com/pja/app-publisher/trunk"
+        "url": "https://github.com/spmeesseman/app-publisher.git"
     },
     "dependencies": {
         "@spmeesseman/arg-parser": "^1.1.5",

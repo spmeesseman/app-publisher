@@ -1,5 +1,21 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.0.1 (June 23rd, 2021)
+
+### Bug Fixes
+
+- spaces are being removed in changelog scope names
+- tags are being created with an additional 'v' pre-pended [skip ci]
+- **Changelog:** commits are not being sorted alphabetically when creating the history/changelog entry. [skip ci]
+- **Changelog:** creating the html changelog with the -task-changelog-html-* tasks is not parsing the notes correctly [skip ci]
+- **Github Release:** assets fails to upload
+
+### Refactoring
+
+- gracefully exit wih success if commit or tag fails, print message indicating manual action required on failure [skip ci]
+- the --task-changelog-view task is not prining the version header [skip ci]
+- **Tasks:** allow mantis and github release tasks w/o constraint of existing changes since previous release
+
 ## Version 3.0.0 (June 22nd, 2021)
 
 ### Features
