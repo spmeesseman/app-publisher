@@ -47,7 +47,7 @@ async function getLastRelease(context: IContext)
                  .sort((a: any, b: any) => semver.rcompare(a.version, b.version));
 
     if (options.verbose) {
-        context.stdout.write("Tags:" + EOL + tags.toString());
+        context.stdout.write("Tags:" + EOL + JSON.stringify(tags, undefined, 2));
     }
 
     const tag: any = await pLocate(tags, (tag: any) => isRefInHistory(context, tag.tag, true), { preserveOrder: true });
