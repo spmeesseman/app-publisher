@@ -515,6 +515,18 @@ async function runNodeScript(context: IContext, plugins: any)
     }
 
     //
+    // Pre - NPM release
+    //
+    let packageJsonModified = false;
+    if (options.npmRelease === "Y" && (!options.taskMode || options.taskNpmRelease))
+    {   //
+        // User can specify values in publishrc that override what;s in the package.json
+        // file.  Manipulate the package.json file if needed
+        //
+        packageJsonModified = await npm.setPackageJson({options, logger});
+    }
+
+    //
     // Build scipts (.publishrc)
     //
     if (!options.taskMode || options.taskBuild) {
@@ -556,12 +568,6 @@ async function runNodeScript(context: IContext, plugins: any)
         // Run pre npm-release scripts if specified
         //
         await util.runScripts({options, logger, cwd, env}, "postNpmRelease", options.npmReleasePostCommand);
-        //
-        // Restore any configured package.json values to the original values
-        //
-        if (packageJsonModified) {
-            await npm.restorePackageJson(context);
-        }
     }
 
     //
@@ -690,6 +696,16 @@ async function runNodeScript(context: IContext, plugins: any)
     //
     if (!options.taskMode && (options.emailNotification === "Y" || options.taskEmail)) {
         await sendNotificationEmail(context, nextRelease.version);
+    }
+
+    //
+    // Post - NPM release
+    //
+    if (packageJsonModified && options.npmRelease === "Y" && (!options.taskMode || options.taskNpmRelease))
+    {   //
+        // Restore any configured package.json values to the original values
+        //
+        await npm.restorePackageJson(context);
     }
 
     //
