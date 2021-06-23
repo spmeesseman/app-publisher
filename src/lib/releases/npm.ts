@@ -15,6 +15,7 @@ export let defaultName: string;
 export let defaultRepo: string;
 export let defaultRepoType: string;
 export let defaultScope: string;
+export let defaultNameWoScope: string;
 
 
 export async function doNpmRelease(context: IContext)
@@ -184,18 +185,17 @@ export async function setPackageJson({options, logger})
     //
     // Scope/name - package.json
     //
-    if (!defaultName) {
-        defaultName = packageJson.name;
-        if (defaultName.includes("@") && defaultName.includes("/")) {
-            defaultScope = defaultName.substring(0, defaultName.indexOf("/"));
-        }
+    defaultName = packageJson.name;
+    if (defaultName.startsWith("@") && defaultName.includes("/")) {
+        defaultScope = defaultName.substring(0, defaultName.indexOf("/"));
+        defaultNameWoScope = defaultName.substring(defaultName.indexOf("/") + 1);
     }
 
-    if (options.npmScope)
+    if (options.npmScope && defaultScope && defaultNameWoScope)
     {
         if (!defaultName.includes(options.npmScope))
         {
-            const name = options.npmScope + "/" + options.projectName;
+            const name = options.npmScope + "/" + defaultNameWoScope;
             logger.log(`Setting package name in package.json: ${name}`);
             packageJson.name = name;
             //
@@ -277,7 +277,7 @@ export async function restorePackageJson({options, logger})
     //
     // Scope/name - package.json
     //
-    if (options.npmScope && !defaultName.includes(options.npmScope))
+    if (defaultName && options.npmScope && !defaultName.includes(options.npmScope))
     {
         logger.log("Reset default package name in package.json: " + defaultName);
         packageJson.name = defaultName;

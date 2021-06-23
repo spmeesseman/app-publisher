@@ -26,7 +26,7 @@ import { template } from "lodash";
 import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
 import { sendNotificationEmail } from "./lib/email";
 import { writeFile } from "./lib/utils/fs";
-import { doChangelogFileEdit, doHistoryFileEdit, getReleaseChangelog } from "./lib/changelog-file";
+import { doChangelogFileEdit, doHistoryFileEdit, getReleaseChangelogs } from "./lib/changelog-file";
 import { commit, fetch, verifyAuth, getHead, tag, push, revert } from "./lib/repo";
 import { EOL } from "os";
 import { IContext, INextRelease } from "./interface";
@@ -445,7 +445,7 @@ async function runNodeScript(context: IContext, plugins: any)
     //
     // nextRelease.changelog.notes = await plugins.generateNotes(context);
     // if (!nextRelease.changelog || !nextRelease.changelog.notes) {
-           nextRelease.changelog = await getReleaseChangelog(context);
+           nextRelease.changelog = await getReleaseChangelogs(context);
     // }
 
     //
@@ -747,7 +747,7 @@ async function runNodeScript(context: IContext, plugins: any)
         //
         // Revert all changes if dry run, and configured to do so
         //
-        if (options.dryRun && options.dryRunVcRevert)
+        if (options.dryRun && options.dryRunVcRevert === "Y")
         {
             await revert(context);
         }

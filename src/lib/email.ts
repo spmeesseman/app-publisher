@@ -3,7 +3,7 @@ import * as nodemailer from "nodemailer";
 import { IContext } from "../interface";
 import { properCase } from "./utils/utils";
 import { npmLocation } from "./releases/npm";
-import { getReleaseChangelog } from "./changelog-file";
+import { getReleaseChangelogs } from "./changelog-file";
 
 
 // async..await is not allowed in global scope, must use a wrapper
@@ -29,8 +29,9 @@ export async function sendNotificationEmail(context: IContext, version: string):
     let emailBody = getEmailHeader({options, logger}, version);
 
     emailBody += "<br>Most Recent History File Entry:<br><br>";
-    if (!nextRelease || !nextRelease.changelog) {
-        const changelog = await getReleaseChangelog(context, version);
+    if (!nextRelease || !nextRelease.changelog || !nextRelease.changelog.fileNotes)
+    {
+        const changelog = await getReleaseChangelogs(context, version);
         if (changelog) {
             emailBody += changelog.fileNotes;
         }
