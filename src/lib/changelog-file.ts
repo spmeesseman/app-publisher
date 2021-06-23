@@ -1100,11 +1100,15 @@ async function getChangelog({ options, logger }, version: string, numsections: n
 
     if (isString(listOnly) && listOnly === "parts")
     {
+        const typeParts = [],
+              msgParts = [],
+              contents2: IChangelogEntry[] = [];
+
         logger.log("Determining changelog parts");
 
-        const typeParts = [];
-        const msgParts = [];
-
+        //
+        // Replace line feeds with html line breaks
+        //
         contents = contents.replace(/\r\n/gm, "<br>");
         contents = contents.replace(/\n/gm, "<br>");
         contents = contents.replace(/\t/gm, "&nbsp;&nbsp;&nbsp;&nbsp;");
@@ -1117,7 +1121,7 @@ async function getChangelog({ options, logger }, version: string, numsections: n
         //     ### Features
         //
         //     - feature 1
-        //     - featire 2
+        //     - feature 2
         //
         //     ### Bug Fixes
         //
@@ -1136,8 +1140,8 @@ async function getChangelog({ options, logger }, version: string, numsections: n
         // Get the 'msgParts', this will be the matching commit messages to the types list
         // extracted above.
         //
-        let match: RegExpExecArray;
-        let regex = new RegExp(/\w*(?<=^|>)(- ){1}.+?(?=(<br>-|<br>##|$))/g);
+        let match: RegExpExecArray,
+            regex = new RegExp(/\w*(?<=^|>)(- ){1}.+?(?=(<br>-|<br>##|$))/g);
         while ((match = regex.exec(contents)) !== null)
         {
             let value = match[0].substring(2);
@@ -1151,8 +1155,6 @@ async function getChangelog({ options, logger }, version: string, numsections: n
             msgParts.push(value.trim());
         }
 
-        const contents2: IChangelogEntry[] = [];
-
         if (msgParts.length !== typeParts.length) {
             logger.error("Error parsing changelog for commit parts");
             logger.error("Message parts array length $(msgParts.length) is less than types array length $(typeParts.length)");
@@ -1161,10 +1163,10 @@ async function getChangelog({ options, logger }, version: string, numsections: n
 
         for (let i = 0; i < typeParts.length; i++)
         {
-            let scope = "";
-            let tickets = "";
+            let scope = "",
+                tickets = "",
+                message = msgParts[i];
             const subject = typeParts[i];
-            let message = msgParts[i];
             //
             // Extract scope
             //
