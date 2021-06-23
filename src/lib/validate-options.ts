@@ -558,16 +558,23 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
         (options.taskTouchVersions && options.taskEmail) || (options.taskMantisbtRelease && options.taskEmail) ||
         (options.taskMantisbtRelease && options.taskTouchVersions) || (options.taskMantisbtRelease && options.taskChangelog) ||
         (options.taskGithubRelease && options.taskEmail) || (options.taskGithubRelease && options.taskTouchVersions) ||
-        (options.taskGithubRelease && options.taskChangelog))
+        (options.taskGithubRelease && options.taskChangelog) || (options.taskChangelogView && options.taskChangelogHtmlView) ||
+        (options.taskChangelogFile && options.taskChangelogHtmlFile) ||
+        (options.taskChangelog && (options.taskChangelogFile || options.taskChangelogHtmlFile)) ||
+        (options.taskChangelog && (options.taskChangelogView || options.taskChangelogHtmlView)))
     {
         logger.error("Invalid options specified:");
         logger.error("  Two or more of the specified tasks cannot be used together");
-        logger.error("    changeLog     : " + options.changeLogOnly);
-        logger.error("    email         : " + options.emailOnly);
-        logger.error("    githubRelease : " + options.githubRelease);
-        logger.error("    mantisRelease : " + options.mantisbtRelease);
-        logger.error("    republish     : " + options.republish);
-        logger.error("    touchVersions : " + options.touchVersions);
+        logger.error("    changeLog           : " + options.taskChangelog);
+        logger.error("    changeLog view      : " + options.taskChangelogView);
+        logger.error("    changeLog view hmtl : " + options.taskChangelogHtmlView);
+        logger.error("    changeLog file     : " + options.taskChangelogFile);
+        logger.error("    changeLog file hmtl : " + options.taskChangelogHtmlFile);
+        logger.error("    email               : " + options.taskEmail);
+        logger.error("    githubRelease       : " + options.taskGithubRelease);
+        logger.error("    mantisRelease       : " + options.taskMantisbtRelease);
+        logger.error("    republish           : " + options.republish);
+        logger.error("    touchVersions       : " + options.taskTouchVersions);
         return false;
     }
 

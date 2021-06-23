@@ -48,25 +48,6 @@ function containsValidSubject(options, line: string): boolean
 
 
 /**
- * Gets version from changelog file by looking at the 'title' of the lastentry
- *
- * @since 3.0.0
- * @param context context
- */
-export async function getVersion({ options, logger })
-{
-    const contents = options.historyFile ?
-                        await getHistory({ options, logger }, undefined, 1) as string :
-                        await getChangelog({ options, logger }, undefined, 1) as string;
-    const index1 = contents.indexOf(`>${options.versionText}&nbsp;`, 0) + options.versionText.length + 7;
-    const index2 = contents.indexOf("<br>", index1);
-    const curversion = contents.substring(index1, index2 - index1);
-    logger.log(`   Found version ${curversion}`);
-    return curversion;
-}
-
-
-/**
  * Creates an html changelog for use with a MantisBT or GitHub release.
  * This method extracts the notes in the hostory/changelog file for the specified
  * version to build the content.
@@ -76,20 +57,30 @@ export async function getVersion({ options, logger })
  * @param useFaIcons Use font aweome icons
  * @param includeStyling include css styling
  */
-async function createReleaseChangelog({ options, logger }, version: string, useFaIcons = false, includeStyling = false)
+async function createReleaseChangelog({ options, logger }, version: string, useFaIcons = false, includeStyling = false, inputFile?: string)
 {
     let changeLog = "",
         changeLogParts: string | any[];
 
-    logger.log("Converting changelog markdown to release changelog html");
+    logger.log("Converting changelog notes to html release notes");
+    if (options.verbose) {
+        logger.log("   Use icons : " + useFaIcons);
+        logger.log("   Inlcude styling : " + useFaIcons);
+    }
 
     if (options.historyFile)
     {
-        changeLogParts = await getHistory({ options, logger }, version, 1, "parts");
+        if (!inputFile) {
+            inputFile = options.historyFile;
+        }
+        changeLogParts = await getHistory({ options, logger }, version, 1, "parts", inputFile);
     }
     else if (options.changelogFile)
     {
-        changeLogParts = await getChangelog({ options, logger }, version, 1, "parts");
+        if (!inputFile) {
+            inputFile = options.changelogFile;
+        }
+        changeLogParts = await getChangelog({ options, logger }, version, 1, "parts", inputFile);
     }
 
     if (!changeLogParts || changeLogParts.length === 0 || changeLogParts[0] === "error") {
@@ -188,41 +179,6 @@ async function createReleaseChangelog({ options, logger }, version: string, useF
     }
 
     return changeLog;
-}
-
-
-export async function getReleaseChangelog(context: IContext, version?: string): Promise<IChangelog>
-{
-    const {options, nextRelease} = context,
-          getHtmlLog = context.options.taskGithubRelease || context.options.taskMantisbtRelease,
-          getFileLog = context.options.taskEmail;
-
-    let fileNotes: string,
-        htmlNotes: string,
-        notes: string;
-
-    if (getFileLog)
-    {
-        if (options.historyFile) {
-            fileNotes = await getHistory(context, version || nextRelease.version, 1) as string;
-        }
-        else if (options.changelogFile) {
-            fileNotes = await getChangelog(context, version || nextRelease.version, 1) as string;
-        }
-    }
-
-    if (getHtmlLog) {
-        htmlNotes = await createReleaseChangelog(context, version || nextRelease.version);
-    }
-
-    if (options.historyFile) {
-        notes = createHistorySectionFromCommits(context);
-    }
-    else if (options.changelogFile) {
-        notes = createChangelogSectionFromCommits(context);
-    }
-
-    return { notes, fileNotes, htmlNotes };
 }
 
 
@@ -815,39 +771,237 @@ function createChangelogSectionFromCommits({ options, commits, logger }: IContex
 }
 
 
-function getChangelogTypes(changeLog: string)
+export async function doChangelogFileEdit(context: IContext)
 {
-    const changelogTypes = [],
-          regex = new RegExp(/\w*(?<=### ).+?(?=(<br>-))/gm);
-    let match: RegExpExecArray;
-    while ((match = regex.exec(changeLog)) !== null)
+    const { options, logger, lastRelease, nextRelease, env, cwd } = context,
+          originalFile = options.changelogFile;
+
+    logger.log("Preparing changelog file");
+
+    if (options.taskChangelogFile || options.taskChangelogHtmlFile)
     {
-        let section = match[0];
-        //
-        // Trim plurality
-        //
-        if (section.endsWith("es<br>") && section !== "Features<br>") {
-            section = section.substring(0, section.length - 6);
-        }
-        else if (section.endsWith("s<br>") && section !== "Miscellaneous<br>") {
-            section = section.substring(0, section.length - 5);
-        }
-        //
-        // count the messages for each section and add the subjects to the types array
-        //
-        let match2: RegExpExecArray;
-        const regex = new RegExp(`\\w*(?<=${section}).+?(?=(<br>###|$))`, "gm");
-        while ((match2 = regex.exec(changeLog)) !== null)
+        options.changelogFile = options.taskChangelogFile || options.taskChangelogHtmlFile;
+        if (await pathExists(options.changelogFile))
         {
-            let i1 = match2[0].indexOf("<br>- ");
-            while (i1 !== -1) {
-                changelogTypes.push(section.replace("<br>", "").trim());
-                i1 = match2[0].indexOf("<br>- ", i1 + 1);
-            }
+            await deleteFile(options.changelogFile);
+        }
+    }
+    else if (options.taskMode && !options.taskChangelog)
+    {
+        options.changelogFile = path.join(os.tmpdir(), `changelog.${nextRelease.version}.md`);
+        if (await pathExists(options.changelogFile))
+        {
+            await deleteFile(options.changelogFile);
         }
     }
 
-    return changelogTypes;
+    //
+    // If changelog markdown file doesnt exist, create one with the project name as a title
+    //
+    let newChangelog = false;
+    const changeLogPath = path.dirname(options.changelogFile);
+
+    if (changeLogPath !== "" && !(await pathExists(changeLogPath)))
+    {
+        logger.log("Creating changeLog file directory");
+        await createDir(changeLogPath);
+    }
+
+    if (!(await pathExists(options.changelogFile)))
+    {
+        if (options.taskChangelog || !options.taskMode)
+        {
+            logger.log("Create changelog file directory");
+            await writeFile(options.changelogFile, options.projectName + EOL + EOL);
+        }
+        else
+        {
+            await writeFile(options.changelogFile, "");
+        }
+        newChangelog = true;
+    }
+
+    if ((lastRelease.version !== nextRelease.version || newChangelog || options.taskMode))
+    {
+        const changelogTitle = `# ${options.projectName} Change Log`.toUpperCase(),
+              fmtDate = getFormattedDate();
+
+        let tmpCommits,
+            changeLogFinal = "";
+
+        if (!options.taskChangelogHtmlView && !options.taskChangelogHtmlFile) {
+            tmpCommits = nextRelease.changelog.notes || createChangelogSectionFromCommits(context);
+        }
+        else {
+            tmpCommits = nextRelease.changelog.htmlNotes || await createReleaseChangelog(context, nextRelease.version, false, false, originalFile);
+        }
+
+        if (options.taskChangelog || !options.taskMode)
+        {
+            if (!newChangelog) {
+                tmpCommits = EOL;
+            }
+            tmpCommits = `## ${options.versionText} ${nextRelease.version} (${fmtDate})${EOL}${EOL}${tmpCommits}`;
+
+            let changeLogContents = await readFile(options.changelogFile);
+            changeLogContents = changeLogContents.replace(new RegExp(changelogTitle, "i"), "").trim();
+
+            changeLogFinal = `${changelogTitle}${EOL}${EOL}`;
+            if (tmpCommits) {
+                changeLogFinal = `${changeLogFinal}${tmpCommits}${EOL}${EOL}`;
+            }
+            if (changeLogContents) {
+                changeLogFinal = `${changeLogFinal}${changeLogContents}${EOL}`;
+            }
+        }
+        else {
+            if (!options.taskChangelogFile && !options.taskChangelogHtmlFile && !options.taskChangelogHtmlView) {
+                changeLogFinal += `${EOL}Pending ${options.versionText} ${nextRelease.version} Changelog:${EOL}${EOL}${EOL}`;
+            }
+            changeLogFinal += tmpCommits;
+        }
+        //
+        // Write content to file
+        //
+        await writeFile(options.changelogFile, changeLogFinal);
+    }
+    else {
+        logger.warn("Version match, not touching changelog file");
+    }
+
+    //
+    // Allow manual modifications to history file
+    //
+    await editFile({nextRelease, options, logger, cwd, env}, options.changelogFile);
+}
+
+
+export async function doHistoryFileEdit(context: IContext)
+{
+    const fmtDate = getFormattedDate(),
+          { options, logger, lastRelease, nextRelease, env, cwd} = context,
+          originalFile = options.historyFile;
+    logger.log("Preparing history file");
+
+    if (options.taskChangelogFile || options.taskChangelogHtmlFile)
+    {
+        options.historyFile = options.taskChangelogFile || options.taskChangelogHtmlFile;
+        if (await pathExists(options.historyFile))
+        {
+            await deleteFile(options.historyFile);
+        }
+    }
+    else if (options.taskMode && !options.taskChangelog)
+    {
+        options.historyFile = path.join(os.tmpdir(), `history.${nextRelease.version}.txt`);
+        if (await pathExists(options.historyFile))
+        {
+            await deleteFile(options.historyFile);
+        }
+    }
+
+    //
+    // If history file doesnt exist, create one with the project name as a title
+    //
+    let isNewHistoryFile = false,
+        isNewHistoryFileHasContent = false;
+    const historyPath = path.dirname(options.historyFile);
+
+    if (historyPath && !(await pathExists(historyPath)))
+    {
+        logger.log("Creating history file directory");
+        await createDir(historyPath);
+    }
+
+    if (!(await pathExists(options.historyFile)))
+    {
+        logger.log("Creating new history file");
+        if (options.taskChangelog || !options.taskMode)
+        {
+            await writeFile(options.historyFile, options.projectName + EOL + EOL);
+        }
+        else
+        {
+            await writeFile(options.historyFile, "");
+        }
+        isNewHistoryFile = true;
+    }
+    else
+    {   //
+        // If the history file already existed, but had no entries, we need to still set the 'new' flag
+        //
+        const contents = await readFile(options.historyFile);
+        if (contents.indexOf(options.versionText) === -1)
+        {
+            isNewHistoryFile = true;
+            isNewHistoryFileHasContent = true;
+        }
+    }
+
+    if (!(await pathExists(options.historyFile)))
+    {
+        logger.error("Could not create history file, exiting");
+        throw new Error("140");
+    }
+
+    //
+    // Add the 'Version X' line, date, and commit content
+    //
+    if (lastRelease.version !== nextRelease.version || isNewHistoryFile || options.taskMode)
+    {
+        let tmpCommits: string;
+        if (!options.taskChangelogHtmlView && !options.taskChangelogHtmlFile) {
+            tmpCommits = nextRelease.changelog.notes || createHistorySectionFromCommits(context);
+        }
+        else {
+            tmpCommits = nextRelease.changelog.htmlNotes || await createReleaseChangelog(context, nextRelease.version, true, false, originalFile);
+        }
+
+        //
+        // New file
+        //
+        if (isNewHistoryFile && !isNewHistoryFileHasContent && (options.taskChangelog || !options.taskMode)) {
+            const historyFileTitle = options.projectName + " History";
+            await appendFile(options.historyFile, historyFileTitle + EOL + EOL);
+        }
+
+        //
+        // Touch history file with the latest version info, either update existing, or create
+        // a new one if it doesnt exist
+        //
+        // Add lines 'version', 'date', then the header content
+        //
+        // Write the formatted commits text to options.historyFile
+        // Formatted commits are also contained in the temp text file $Env:TEMP\history.txt
+        // Replace all newline pairs with cr/nl pairs as SVN will have sent commit comments back
+        // with newlines only
+        //
+        if ((options.taskChangelog || !options.taskMode) && await pathExists(options.historyHdrFile))
+        {
+            const historyHeader = await readFile(options.historyHdrFile);
+            await appendFile(options.historyFile, `${EOL}${options.versionText} ${nextRelease.version}${EOL}${fmtDate}${EOL}${historyHeader}${EOL}${tmpCommits}`);
+        }
+        else {
+            if (options.taskChangelog || !options.taskMode) {
+                logger.warn("History header template not found");
+                await appendFile(options.historyFile, `${EOL}${options.versionText} ${nextRelease.version}${EOL}${fmtDate}${EOL}${EOL}${EOL}${tmpCommits}`);
+            }
+            else if (!options.taskChangelogFile && !options.taskChangelogHtmlFile && !options.taskChangelogHtmlView) {
+                await appendFile(options.historyFile, `${EOL}Pending ${options.versionText} ${nextRelease.version} Changelog:${EOL}${EOL}${EOL}${tmpCommits}`);
+            }
+            else {
+                await appendFile(options.historyFile, tmpCommits.trim());
+            }
+        }
+    }
+    else {
+        logger.warn("Version match, not touching history file");
+    }
+
+    //
+    // Allow manual modifications to history file
+    //
+    await editFile({nextRelease, options, logger, cwd, env}, options.historyFile, true);
 }
 
 
@@ -859,17 +1013,20 @@ function getChangelogTypes(changeLog: string)
  * @param numsections # of section to extract
  * @param listOnly retrieve an array of strings only, not a formatted string
  */
-async function getChangelog({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false): Promise<IChangelogEntry[] | string>
+async function getChangelog({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false, inputFile?: string): Promise<IChangelogEntry[] | string>
 {
+    if (!inputFile) {
+        inputFile = options.changelogFile;
+    }
     //
     // Make sure user entered correct cmd line params
     //
-    if (!options.changelogFile) {
+    if (!inputFile) {
         logger.error("Error: No changelog file specified");
         throw new Error("160");
     }
 
-    if (!(await pathExists(options.changelogFile))) {
+    if (!(await pathExists(inputFile))) {
         logger.warn("No changelog file exists");
         return "";
     }
@@ -879,7 +1036,7 @@ async function getChangelog({ options, logger }, version: string, numsections: n
     }
 
     logger.log("Extract section from changelog file");
-    logger.log(`   Input File         : '${options.changelogFile}'`);
+    logger.log(`   Input File         : '${inputFile}'`);
     logger.log(`   Num Sections       : '${numsections}'`);
     logger.log(`   Version string     : '${options.versionText}'`);
     logger.log(`   List only          : '${listOnly}'`);
@@ -910,7 +1067,7 @@ async function getChangelog({ options, logger }, version: string, numsections: n
     //
     // Read in contents of file
     //
-    let contents = await readFile(options.changelogFile);
+    let contents = await readFile(inputFile);
 
     //
     // Initialize parsing variables
@@ -952,11 +1109,33 @@ async function getChangelog({ options, logger }, version: string, numsections: n
         contents = contents.replace(/\n/gm, "<br>");
         contents = contents.replace(/\t/gm, "&nbsp;&nbsp;&nbsp;&nbsp;");
 
+        //
+        // The getChangelogTypes() method returns a list of types for each note in the section.
+        //
+        // For example:
+        //
+        //     ### Features
+        //
+        //     - feature 1
+        //     - featire 2
+        //
+        //     ### Bug Fixes
+        //
+        //     - bug fix 1
+        //
+        // Will return a list like:
+        //
+        //    [ "Features", "Features", "Bug Fixes" ]
+        //
         typeParts.push(...getChangelogTypes(contents));
         if (typeParts.length === 0) {
             throw new Error("166");
         }
 
+        //
+        // Get the 'msgParts', this will be the matching commit messages to the types list
+        // extracted above.
+        //
         let match: RegExpExecArray;
         let regex = new RegExp(/\w*(?<=^|>)(- ){1}.+?(?=(<br>-|<br>##|$))/g);
         while ((match = regex.exec(contents)) !== null)
@@ -986,24 +1165,28 @@ async function getChangelog({ options, logger }, version: string, numsections: n
             let tickets = "";
             const subject = typeParts[i];
             let message = msgParts[i];
-            if (msgParts[i].includes(":")) {
-                scope = msgParts[i].substring(0, msgParts[i].indexOf(":")).replace("**", "").trim();
-                message = msgParts[i].substring(msgParts[i].indexOf(":") + 1).replace("**", "").trim();
+            //
+            // Extract scope
+            //
+            if (/^(\*\*.+\:\*\* )/.test(msgParts[i])) {
+                scope = msgParts[i].substring(0, msgParts[i].indexOf(":**")).replace("**", "").trim();
             }
+            //
+            // Extract message and ticket tags
+            //
             regex = new RegExp(/\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/gi);
             while ((match = regex.exec(msgParts[i])) !== null)
             {
-                tickets = match[0];
-                tickets = match[0].replace(/\[/, "").replace("]", "").trim();
-                tickets = properCase(tickets.replace("&nbsp;", " "));
-                message = message.replace(new RegExp("/<br><br>" + match[0], "g"), "");
-                message = message.replace(new RegExp("<br>" + match[0], "g"), "").trim();
-                message = message.replace(new RegExp("&nbsp;&nbsp;&nbsp;&nbsp;" + match[0], "g"), "").trim();
-                message = message.replace(new RegExp("&nbsp;&nbsp;&nbsp;" + match[0], "g"), "").trim();
-                message = message.replace(new RegExp("&nbsp;&nbsp;" + match[0], "g"), "").trim();
-                message = message.replace(new RegExp("&nbsp;" + match[0], "g"), "").trim();
-                message = message.replace(new RegExp(" " + match[0], "g"), "").trim();
-                message = message.replace(new RegExp(match[0], "g"), "").trim();
+                tickets = match[0].replace(/\[/, "").replace("]", "");
+                tickets = properCase(tickets.replace(/&nbsp;/g, " ")).trim();
+                message = message.replace(new RegExp("/<br><br>" + match[0], "g"), "")
+                                 .replace(new RegExp("<br>" + match[0], "g"), "")
+                                 .replace(new RegExp("&nbsp;&nbsp;&nbsp;&nbsp;" + match[0], "g"), "")
+                                 .replace(new RegExp("&nbsp;&nbsp;&nbsp;" + match[0], "g"), "")
+                                 .replace(new RegExp("&nbsp;&nbsp;" + match[0], "g"), "")
+                                 .replace(new RegExp("&nbsp;" + match[0], "g"), "")
+                                 .replace(new RegExp(" " + match[0], "g"), "")
+                                 .replace(new RegExp(match[0], "g"), "").trim();
             }
             contents2.push({ subject, scope, message, tickets });
         }
@@ -1026,6 +1209,74 @@ async function getChangelog({ options, logger }, version: string, numsections: n
 }
 
 
+function getChangelogTypes(changeLog: string)
+{
+    const changelogTypes = [],
+          regex = new RegExp(/\w*(?<=### ).+?(?=(<br>-))/gm);
+    let match: RegExpExecArray;
+    while ((match = regex.exec(changeLog)) !== null)
+    {
+        let section = match[0];
+        //
+        // Trim plurality
+        //
+        if (section.endsWith("es<br>") && section !== "Features<br>") {
+            section = section.substring(0, section.length - 6);
+        }
+        else if (section.endsWith("s<br>") && section !== "Miscellaneous<br>") {
+            section = section.substring(0, section.length - 5);
+        }
+        //
+        // count the messages for each section and add the subjects to the types array
+        //
+        let match2: RegExpExecArray;
+        const regex = new RegExp(`\\w*(?<=${section}).+?(?=(<br>###|$))`, "gm");
+        while ((match2 = regex.exec(changeLog)) !== null)
+        {
+            let i1 = match2[0].indexOf("<br>- ");
+            while (i1 !== -1) {
+                changelogTypes.push(section.replace("<br>", "").trim());
+                i1 = match2[0].indexOf("<br>- ", i1 + 1);
+            }
+        }
+    }
+
+    return changelogTypes;
+}
+
+
+function getFormattedDate()
+{
+    const monthNames = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+
+    let fmtDate = "";
+    const date = new Date(),
+          month = monthNames[date.getMonth()],
+          year = date.getFullYear();
+    let day = date.getDate().toString();
+
+    if (day === "11" || day === "12" || day === "13")
+    {
+        day = `${day}th`;
+    }
+    else
+    {
+        switch (day[day.length - 1])
+        {
+            case "1": day = `${day}st`; break;
+            case "2": day = `${day}nd`; break;
+            case "3": day = `${day}rd`; break;
+            default: day = `${day}th`; break;
+        }
+    }
+    fmtDate = `${month} ${day}, ${year}`;
+    return fmtDate;
+}
+
+
 /**
  * Gets history file section using the hostory/changelog file by parsing the sepcified versions section
  *
@@ -1034,36 +1285,32 @@ async function getChangelog({ options, logger }, version: string, numsections: n
  * @param numsections # of section to extract
  * @param listOnly retrieve an array of strings only, not a formatted string
  */
-async function getHistory({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false): Promise<IChangelogEntry[] | string>
+async function getHistory({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false, inputFile?: string): Promise<IChangelogEntry[] | string>
 {
     const iNumberOfDashesInVersionLine = 20;
     let finalContents = "";
+
+    if (!inputFile) {
+        inputFile = options.historyFile;
+    }
     //
     // Make sure user entered correct cmd line params
     //
-    if (!options.historyFile) {
+    if (!inputFile) {
         logger.error("Error: No history file specified");
         throw new Error("160");
     }
 
-    if (!(await pathExists(options.historyFile))) {
+    if (!(await pathExists(inputFile))) {
         logger.warn("History file does not exist");
         return finalContents;
     }
 
     logger.log("Extract from history.txt file");
-    logger.log(`   Input File         : '${options.historyFile}'`);
+    logger.log(`   Input File         : '${inputFile}'`);
     logger.log(`   Num Sections       : '${numsections}'`);
     logger.log(`   Version string     : '${options.versionText}'`);
     logger.log(`   List only          : '${listOnly}'`);
-    logger.log(`   Target Location    : '${options.distReleasePath}'`);
-    logger.log(`   NPM                : '${options.npmRelease}'`);
-    logger.log(`   Nuget              : '${options.nugetRelease}'`);
-    logger.log(`   MantisBT release   : '${options.mantisbtRelease}'`);
-    logger.log(`   MantisBT url       : '${options.mantisbtUrl}'`);
-    logger.log(`   History file href  : '${options.historyHref}'`);
-    logger.log(`   Email hrefs        : '${options.emailHrefs}'`);
-    logger.log(`   Vc web path        : '${options.vcWebPath}'`);
 
     //
     // Code operation:
@@ -1083,7 +1330,7 @@ async function getHistory({ options, logger }, version: string, numsections: num
     //
     // Read in contents of file
     //
-    contents = await readFile(options.historyFile);
+    contents = await readFile(inputFile);
     //
     // Initialize parsing variables
     //
@@ -1095,7 +1342,7 @@ async function getHistory({ options, logger }, version: string, numsections: num
     // Loop to find our search text
     //
     while (index1 >= 0)
-    {
+    {   //
         // Get index of field name
         //
         index1 = contents.lastIndexOf(`${options.versionText} `, index1);
@@ -1418,38 +1665,6 @@ async function getHistory({ options, logger }, version: string, numsections: num
 }
 
 
-function getFormattedDate()
-{
-    const monthNames = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-    ];
-
-    let fmtDate = "";
-    const date = new Date(),
-          month = monthNames[date.getMonth()],
-          year = date.getFullYear();
-    let day = date.getDate().toString();
-
-    if (day === "11" || day === "12" || day === "13")
-    {
-        day = `${day}th`;
-    }
-    else
-    {
-        switch (day[day.length - 1])
-        {
-            case "1": day = `${day}st`; break;
-            case "2": day = `${day}nd`; break;
-            case "3": day = `${day}rd`; break;
-            default: day = `${day}th`; break;
-        }
-    }
-    fmtDate = `${month} ${day}, ${year}`;
-    return fmtDate;
-}
-
-
 function getFormattedSubject({options}, subject: string)
 {
     let formattedSubject = subject.toLowerCase();
@@ -1497,220 +1712,55 @@ function getFormattedSubject({options}, subject: string)
 }
 
 
-export async function doChangelogFileEdit(context: IContext)
+export async function getReleaseChangelog(context: IContext, version?: string): Promise<IChangelog>
 {
-    const { options, logger, lastRelease, nextRelease, env, cwd } = context;
+    const {options, nextRelease} = context,
+          getHtmlLog = context.options.taskGithubRelease || context.options.taskMantisbtRelease,
+          getFileLog = context.options.taskEmail;
 
-    logger.log("Preparing changelog file");
+    let fileNotes: string,
+        htmlNotes: string,
+        notes: string;
 
-    if (options.taskChangelogFile)
+    if (getFileLog)
     {
-        options.changelogFile = options.taskChangelogFile;
-        if (await pathExists(options.changelogFile))
-        {
-            await deleteFile(options.changelogFile);
+        if (options.historyFile) {
+            fileNotes = await getHistory(context, version || nextRelease.version, 1) as string;
         }
-    }
-    else if (options.taskMode && !options.taskChangelog)
-    {
-        options.changelogFile = path.join(os.tmpdir(), `changelog.${nextRelease.version}.md`);
-        if (await pathExists(options.changelogFile))
-        {
-            await deleteFile(options.changelogFile);
+        else if (options.changelogFile) {
+            fileNotes = await getChangelog(context, version || nextRelease.version, 1) as string;
         }
     }
 
-    //
-    // If changelog markdown file doesnt exist, create one with the project name as a title
-    //
-    let newChangelog = false;
-    const changeLogPath = path.dirname(options.changelogFile);
-
-    if (changeLogPath !== "" && !(await pathExists(changeLogPath)))
-    {
-        logger.log("Creating changeLog file directory");
-        await createDir(changeLogPath);
+    if (getHtmlLog) {
+        htmlNotes = await createReleaseChangelog(context, version || nextRelease.version);
     }
 
-    if (!(await pathExists(options.changelogFile)))
-    {
-        if (options.taskChangelog || !options.taskMode)
-        {
-            logger.log("Create changelog file directory");
-            await writeFile(options.changelogFile, options.projectName + EOL + EOL);
-        }
-        else
-        {
-            await writeFile(options.changelogFile, "");
-        }
-        newChangelog = true;
+    if (options.historyFile) {
+        notes = createHistorySectionFromCommits(context);
+    }
+    else if (options.changelogFile) {
+        notes = createChangelogSectionFromCommits(context);
     }
 
-    if ((lastRelease.version !== nextRelease.version || newChangelog || options.taskMode))
-    {
-        const changelogTitle = `# ${options.projectName} Change Log`.toUpperCase(),
-              fmtDate = getFormattedDate();
-
-        let tmpCommits = nextRelease.changelog.notes || createChangelogSectionFromCommits(context),
-            changeLogFinal = "";
-
-        if (options.taskChangelog || !options.taskMode)
-        {
-            if (!newChangelog) {
-                tmpCommits = EOL;
-            }
-            tmpCommits = `## ${options.versionText} ${nextRelease.version} (${fmtDate})${EOL}${EOL}${tmpCommits}`;
-
-            let changeLogContents = await readFile(options.changelogFile);
-            changeLogContents = changeLogContents.replace(new RegExp(changelogTitle, "i"), "").trim();
-
-            changeLogFinal = `${changelogTitle}${EOL}${EOL}`;
-            if (tmpCommits) {
-                changeLogFinal = `${changeLogFinal}${tmpCommits}${EOL}${EOL}`;
-            }
-            if (changeLogContents) {
-                changeLogFinal = `${changeLogFinal}${changeLogContents}${EOL}`;
-            }
-        }
-        else {
-            if (!options.taskChangelogFile) {
-                changeLogFinal += `${EOL}Pending ${options.versionText} ${nextRelease.version} Changelog:${EOL}${EOL}${EOL}`;
-            }
-            changeLogFinal += tmpCommits;
-        }
-        //
-        // Write content to file
-        //
-        await writeFile(options.changelogFile, changeLogFinal);
-    }
-    else {
-        logger.warn("Version match, not touching changelog file");
-    }
-
-    //
-    // Allow manual modifications to history file
-    //
-    await editFile({nextRelease, options, logger, cwd, env}, options.changelogFile);
+    return { notes, fileNotes, htmlNotes };
 }
 
 
-export async function doHistoryFileEdit(context: IContext)
+/**
+ * Gets version from changelog file by looking at the 'title' of the lastentry
+ *
+ * @since 3.0.0
+ * @param context context
+ */
+export async function getVersion({ options, logger })
 {
-    const fmtDate = getFormattedDate(),
-          { options, commits, logger, lastRelease, nextRelease, env, cwd} = context;
-    logger.log("Preparing history file");
-
-    if (options.taskChangelogFile)
-    {
-        options.historyFile = options.taskChangelogFile;
-        if (await pathExists(options.historyFile))
-        {
-            await deleteFile(options.historyFile);
-        }
-    }
-    else if (options.taskMode && !options.taskChangelog)
-    {
-        options.historyFile = path.join(os.tmpdir(), `history.${nextRelease.version}.txt`);
-        if (await pathExists(options.historyFile))
-        {
-            await deleteFile(options.historyFile);
-        }
-    }
-
-    //
-    // If history file doesnt exist, create one with the project name as a title
-    //
-    let isNewHistoryFile = false,
-        isNewHistoryFileHasContent = false;
-    const historyPath = path.dirname(options.historyFile);
-
-    if (historyPath && !(await pathExists(historyPath)))
-    {
-        logger.log("Creating history file directory");
-        await createDir(historyPath);
-    }
-
-    if (!(await pathExists(options.historyFile)))
-    {
-        logger.log("Creating new history file");
-        if (options.taskChangelog || !options.taskMode)
-        {
-            await writeFile(options.historyFile, options.projectName + EOL + EOL);
-        }
-        else
-        {
-            await writeFile(options.historyFile, "");
-        }
-        isNewHistoryFile = true;
-    }
-    else
-    {   //
-        // If the history file already existed, but had no entries, we need to still set the 'new' flag
-        //
-        const contents = await readFile(options.historyFile);
-        if (contents.indexOf(options.versionText) === -1)
-        {
-            isNewHistoryFile = true;
-            isNewHistoryFileHasContent = true;
-        }
-    }
-
-    if (!(await pathExists(options.historyFile)))
-    {
-        logger.error("Could not create history file, exiting");
-        throw new Error("140");
-    }
-
-    //
-    // Add the 'Version X' line, date, and commit content
-    //
-    if (lastRelease.version !== nextRelease.version || isNewHistoryFile || options.taskMode)
-    {
-        const tmpCommits = nextRelease.changelog.notes || createHistorySectionFromCommits(context);
-
-        //
-        // New file
-        //
-        if (isNewHistoryFile && !isNewHistoryFileHasContent && (options.taskChangelog || !options.taskMode)) {
-            const historyFileTitle = options.projectName + " History";
-            await appendFile(options.historyFile, historyFileTitle + EOL + EOL);
-        }
-
-        //
-        // Touch history file with the latest version info, either update existing, or create
-        // a new one if it doesnt exist
-        //
-        // Add lines 'version', 'date', then the header content
-        //
-        // Write the formatted commits text to options.historyFile
-        // Formatted commits are also contained in the temp text file $Env:TEMP\history.txt
-        // Replace all newline pairs with cr/nl pairs as SVN will have sent commit comments back
-        // with newlines only
-        //
-        if ((options.taskChangelog || !options.taskMode) && await pathExists(options.historyHdrFile))
-        {
-            const historyHeader = await readFile(options.historyHdrFile);
-            await appendFile(options.historyFile, `${EOL}${options.versionText} ${nextRelease.version}${EOL}${fmtDate}${EOL}${historyHeader}${EOL}${tmpCommits}`);
-        }
-        else {
-            if (options.taskChangelog || !options.taskMode) {
-                logger.warn("History header template not found");
-                await appendFile(options.historyFile, `${EOL}${options.versionText} ${nextRelease.version}${EOL}${fmtDate}${EOL}${EOL}${EOL}${tmpCommits}`);
-            }
-            else if (!options.taskChangelogFile) {
-                await appendFile(options.historyFile, `${EOL}Pending ${options.versionText} ${nextRelease.version} Changelog:${EOL}${EOL}${EOL}${tmpCommits}`);
-            }
-            else {
-                await appendFile(options.historyFile, tmpCommits.trim());
-            }
-        }
-    }
-    else {
-        logger.warn("Version match, not touching history file");
-    }
-
-    //
-    // Allow manual modifications to history file
-    //
-    await editFile({nextRelease, options, logger, cwd, env}, options.historyFile, true);
+    const contents = options.historyFile ?
+                        await getHistory({ options, logger }, undefined, 1) as string :
+                        await getChangelog({ options, logger }, undefined, 1) as string;
+    const index1 = contents.indexOf(`>${options.versionText}&nbsp;`, 0) + options.versionText.length + 7;
+    const index2 = contents.indexOf("<br>", index1);
+    const curversion = contents.substring(index1, index2 - index1);
+    logger.log(`   Found version ${curversion}`);
+    return curversion;
 }

@@ -251,6 +251,16 @@ async function runNodeScript(context: IContext, plugins: any)
         return false;
     }
 
+    if (options.verbose) {
+        const title =
+`----------------------------------------------------------------------------
+    Options Object
+----------------------------------------------------------------------------
+`;
+        context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
+        logger.log(JSON.stringify(options, undefined, 3));
+    }
+
     //
     // If a l1 task is processed, we'll be done
     //
@@ -445,29 +455,46 @@ async function runNodeScript(context: IContext, plugins: any)
     //
     // Edit/touch changelog / history file
     //
-    const doChangelog = options.taskChangelog || options.taskChangelogView || options.taskChangelogFile || !options.taskMode;
+    const doChangelog = options.taskChangelog || options.taskChangelogView || options.taskChangelogView ||
+                        options.taskChangelogHtmlView || options.taskChangelogFile || !options.taskMode;
     if (options.historyFile && doChangelog)
-    {
+    {   //
+        // TODO - html cl for current version
+        //
+        if (options.taskChangelogHtmlFile || options.taskChangelogHtmlView) {
+            nextRelease.version = context.lastRelease.version;
+        }
+        //
+        // Do edit/view
+        //
         await doHistoryFileEdit(context);
         //
         // If this is task mode, we're done if there aren't any higher lvl tasks left to run
         //
         if (options.taskMode) {
             logTaskResult(true, logger);
-            if (!hasMoreTasks(options, getTasks5())) {
+            if (options.taskChangelogHtmlFile || options.taskChangelogHtmlView || !hasMoreTasks(options, getTasks5())) {
                 return true;
             }
         }
     }
     else if (options.changelogFile && doChangelog)
-    {
+    {   //
+        // TODO - html cl for current version
+        //
+        if (options.taskChangelogHtmlFile || options.taskChangelogHtmlView) {
+            nextRelease.version = context.lastRelease.version;
+        }
+        //
+        // Do edit/view
+        //
         await doChangelogFileEdit(context);
         //
         // If this is task mode, we're done if there aren't any higher lvl tasks left to run
         //
         if (options.taskMode) {
             logTaskResult(true, logger);
-            if (!hasMoreTasks(options, getTasks5())) {
+            if (options.taskChangelogHtmlFile || options.taskChangelogHtmlView || !hasMoreTasks(options, getTasks5())) {
                 return true;
             }
         }
@@ -922,9 +949,7 @@ async function runPowershellScript(options: any, logger: any)
     // }
     // logger.success("Published release successfully");
     // logger.success(`Published release ${nextRelease.version}`);
-    const isTaskCmd = options.taskChangelog || options.taskEmail || options.taskTouchVersions || options.taskMantisbtRelease ||
-                      options.taskVersionCurrent || options.taskVersionNext || options.taskCiEnvSet,
-          isStdOutCmd = options.taskModeStdOut,
+    const isStdOutCmd = options.taskModeStdOut,
           child = child_process.spawn("powershell.exe", [`${ps1Script} '${JSON.stringify(options)}'`], { stdio: ["pipe", "pipe", "pipe"], env: process.env});
     // const child = child_process.spawn("powershell.exe", [`${ps1Script} ${options}`], { stdio: ["pipe", "inherit", "inherit"] });
 
@@ -970,11 +995,11 @@ async function runPowershellScript(options: any, logger: any)
         iCode = code;
         if (iCode === 0) {
             if (!isStdOutCmd) {
-                if (!isTaskCmd) {
+                if (!options.taskMode) {
                     logger.success("Successfully published release");
                 }
                 else {
-                    logger.success("Successfully completed task");
+                    logger.success("Successfully completed task(s)");
                 }
             }
         }

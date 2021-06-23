@@ -711,15 +711,42 @@ export const publishRcOpts =
         "",
         [ "-tcf", "--task-changelog-file" ],
         {
-            help: "Export the next release's current changelog to the specified file.\n" +
-                  "The specified file can be a relative or an absolute path.\n" +
+            help: "Export the next release's current changelog to the specified file,\n" +
+                  "can be a relative or an absolute path.\n" +
                   "Ignored if the option '--task-changelog-view' is used.",
             usage: [
                 "app-publisher -tcf install/dist/history.txt",
                 "app-publisher -tcf build/doc/changelog/changelog.md",
-                "app-publisher -tcf c:\\projects\\changelogs\\projectname",
+                "app-publisher -tcf c:\\projects\\changelogs\\projectname\\cl.md",
                 "app-publisher --task-changelog-file build/tmp/version_notes.txt"
             ]
+        }
+    ],
+
+    taskChangelogHtmlFile: [
+        true,
+        "string",
+        "",
+        [ "-tchf", "--task-changelog-html-file" ],
+        {
+            help: "Export the next release's current changelog in HTML release format to\n" +
+                  "the specified file, can be a relative or an absolute path.\n" +
+                  "Ignored if the option '--task-changelog-view' is used.",
+            usage: [
+                "app-publisher --task-changelog-html-file install/tmp/version_notes.html"
+            ]
+        }
+    ],
+
+    taskChangelogHtmlView: [
+        true,
+        "boolean",
+        false,
+        [ "-tchv", "--task-changelog-html-view" ],
+        {
+            help: "Export the next release's current changelog in HTML release format and\n" +
+                  "view using the editor specified in the .publishrc file. The created file\n" +
+                  "is a copy stored in a temporary directory specified by the OS."
         }
     ],
 
