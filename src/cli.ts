@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { env, stderr } from "process"; // eslint-disable-line node/prefer-global/process
+import { env, stderr } from "process";
 import * as util from "util";
 import hideSensitive = require("./lib/hide-sensitive");
 import gradient from "gradient-string";

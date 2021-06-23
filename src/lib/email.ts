@@ -1,9 +1,9 @@
 import * as nodemailer from "nodemailer";
-import { getHistory, getChangelog } from "./changelog-file";
+import { IContext } from "../interface";
 import { properCase } from "./utils/utils";
 
 // async..await is not allowed in global scope, must use a wrapper
-export async function sendNotificationEmail({options, logger}, version: string): Promise<boolean>
+export async function sendNotificationEmail({options, nextRelease, logger}: IContext, version: string): Promise<boolean>
 {
     //
     // Check to make sure all necessary parameters are set
@@ -21,27 +21,10 @@ export async function sendNotificationEmail({options, logger}, version: string):
         return false;
     }
 
-    let emailBody = "";
-    if (options.historyFile)
-    {
-        logger.log("   Converting history text to html");
-        emailBody = await getHistory({options, logger}, version, 1) as string;
-    }
-    else if (options.changelogFile)
-    {
-        logger.log("   Converting changelog markdown to html");
-        emailBody = await getChangelog({options, logger}, version, 1) as string;
-    }
-    else {
+    let emailBody = nextRelease.changelog.fileNotes;
+    if (!emailBody) {
         logger.error("   Notification could not be sent, history file not specified");
         return false;
-    }
-
-    if (!emailBody || emailBody.length === 0 || emailBody[0] === "error") {
-        emailBody = "There was an error extracting the changelog, notify development";
-    }
-    else {
-        emailBody = emailBody[0];
     }
 
     //

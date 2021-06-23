@@ -1,4 +1,21 @@
 
+export interface IChangelog
+{
+    fileNotes?: string;
+    htmlNotes?: string;
+    notes: string;
+    entries?: IChangelogEntry[];
+}
+
+export interface IChangelogEntry
+{
+    subject: string;
+    scope: string;
+    message: string;
+    tickets: string;
+}
+
+
 export interface ICommit
 {
     author?: string;
@@ -46,9 +63,10 @@ export interface ILastRelease
 
 export interface INextRelease
 {
+    changelog: IChangelog;
     edits: IEdit[];
+    head: string;
     level: string;
-    notes: string;
     tag: string;
     version: string;
     versionInfo: IVersionInfo;

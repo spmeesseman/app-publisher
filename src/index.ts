@@ -26,7 +26,7 @@ import { template } from "lodash";
 import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
 import { sendNotificationEmail } from "./lib/email";
 import { writeFile } from "./lib/utils/fs";
-import { createSectionFromCommits, doChangelogFileEdit, doHistoryFileEdit } from "./lib/changelog-file";
+import { doChangelogFileEdit, doHistoryFileEdit, getReleaseChangelog } from "./lib/changelog-file";
 import { commit, fetch, verifyAuth, getHead, tag, push, revert } from "./lib/repo";
 import { EOL } from "os";
 import { IContext, INextRelease } from "./interface";
@@ -61,6 +61,9 @@ async function run(context: IContext, plugins: any)
         isCi, branch: ciBranch, isPr, name: ciName, root: ciRoot, build: ciBuild, buildUrl: ciBuildUrl, commit: ciCommit
     } = envCi({ env, cwd });
 
+    //
+    // Set branch to CI branch if not already set
+    //
     if (!options.branch) {
         options.branch = ciBranch;
     }
@@ -109,10 +112,6 @@ async function run(context: IContext, plugins: any)
                 break;
             }
         }
-    }
-
-    if (options.taskMode) {
-        options.verbose = false;
     }
 
     //
@@ -185,11 +184,6 @@ async function run(context: IContext, plugins: any)
         logger[options.dryRun ? "warn" : "log"](
             `Run automated release from branch '${options.branch}'${options.dryRun ? " in dry-run mode" : ""}`
         );
-    }
-
-    if (options.verbose) // even if it's a stdout type task
-    {
-        logger.log(JSON.stringify(options, undefined, 3));
     }
 
     //
@@ -349,12 +343,12 @@ async function runNodeScript(context: IContext, plugins: any)
     //
     // Populate next release info
     //
-    const nextRelease = {
+    const nextRelease: INextRelease = {
         level: await getReleaseLevel(context),
         head: await getHead(context),
         version: undefined,
         tag: undefined,
-        notes: undefined,
+        changelog: undefined,
         edits: [],
         versionInfo: undefined
     };
@@ -434,9 +428,12 @@ async function runNodeScript(context: IContext, plugins: any)
 
     //
     // Create release notes / changelog
+    // TODO - Plugins maybe?
     //
-    // nextRelease.notes = await plugins.generateNotes(context);
-    nextRelease.notes = createSectionFromCommits(context);
+    // nextRelease.changelog.notes = await plugins.generateNotes(context);
+    // if (!nextRelease.changelog || !nextRelease.changelog.notes) {
+           nextRelease.changelog = await getReleaseChangelog(context);
+    // }
 
     //
     // TODO - Plugins maybe?
@@ -721,13 +718,13 @@ async function runNodeScript(context: IContext, plugins: any)
     if (options.dryRun)
     {
         logger.log(`Release notes for version ${nextRelease.version}:`);
-        if (nextRelease.notes)
+        if (nextRelease.changelog.notes)
         {
             if (options.changelogFile) {
-                context.stdout.write(marked(nextRelease.notes));
+                context.stdout.write(marked(nextRelease.changelog.notes));
             }
             else {
-                context.stdout.write(nextRelease.notes.replace(/\r\n/g, "\n"));
+                context.stdout.write(nextRelease.changelog.notes.replace(/\r\n/g, "\n"));
             }
         }
     }

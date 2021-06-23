@@ -30,7 +30,7 @@ export = {
                 ...context,
                 nextRelease: {
                     ...nextRelease,
-                    notes: `${nextRelease.notes ? `${nextRelease.notes}${RELEASE_NOTES_SEPARATOR}` : ""}${notes}`,
+                    notes: `${nextRelease.changelog.notes ? `${nextRelease.changelog.notes}${RELEASE_NOTES_SEPARATOR}` : ""}${notes}`,
                 },
             }),
         }),
@@ -50,7 +50,7 @@ export = {
                 {
                     context.nextRelease.head = newGitHead;
                     // Regenerate the release notes
-                    context.nextRelease.notes = await generateNotes(context);
+                    context.nextRelease.changelog.notes = await generateNotes(context);
                 }
 
                 // Call the next prepare plugin with the updated `nextRelease`

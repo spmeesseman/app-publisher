@@ -3,11 +3,21 @@ import * as path from "path";
 import { readFile, pathExists, writeFile, createDir, appendFile, deleteFile } from "./utils/fs";
 import { editFile, properCase, isString } from "./utils/utils";
 import { npmLocation } from "./releases/npm";
-import { addEdit } from "./repo";
+import { addEdit, commit } from "./repo";
+import { IChangelog, IChangelogEntry, ICommit, IContext } from "../interface";
 const execa = require("execa");
 const os = require("os"), EOL = os.EOL;
 
 
+/**
+ * Checks to see if a first line in a commit message contains a valid subject.
+ *
+ * @private
+ * @since 3.0.0
+ * @param options options
+ * @param line commit message line containg subject
+ * @returns 'true' if a valid subject is found, `false` otherwise
+ */
 function containsValidSubject(options, line: string): boolean
 {
     let valid = false;
@@ -42,22 +52,33 @@ function containsValidSubject(options, line: string): boolean
 /**
  * Gets version from changelog file by looking at the 'title' of the lastentry
  *
+ * @since 3.0.0
  * @param context context
  */
 export async function getVersion({ options, logger })
 {
     const contents = options.historyFile ?
-                        await getHistory({ options, logger }, undefined, 1) :
-                        await getChangelog({ options, logger }, undefined, 1);
+                        await getHistory({ options, logger }, undefined, 1) as string :
+                        await getChangelog({ options, logger }, undefined, 1) as string;
     const index1 = contents.indexOf(`>${options.versionText}&nbsp;`, 0) + options.versionText.length + 7;
     const index2 = contents.indexOf("<br>", index1);
-    const curversion = (contents as string).substring(index1, index2 - index1);
+    const curversion = contents.substring(index1, index2 - index1);
     logger.log(`   Found version ${curversion}`);
     return curversion;
 }
 
 
-export async function createReleaseChangelog({ options, logger }, version: string, useFaIcons = false, includeStyling = false)
+/**
+ * Creates an html changelog for use with a MantisBT or GitHub release.
+ * This method extracts the notes in the hostory/changelog file for the specified
+ * version to build the content.
+ *
+ * @param context context
+ * @param version The version to extract the notes from in the history/changelog file.
+ * @param useFaIcons Use font aweome icons
+ * @param includeStyling include css styling
+ */
+async function createReleaseChangelog({ options, logger }, version: string, useFaIcons = false, includeStyling = false)
 {
     let changeLog = "",
         changeLogParts: string | any[];
@@ -77,7 +98,7 @@ export async function createReleaseChangelog({ options, logger }, version: strin
         return changeLog;
     }
 
-    if (includeStyling === true)
+    if (includeStyling)
     {
         changeLog += "<span><style type=\"text/css\" scoped>";
         changeLog += ".changelog-table td { padding-top: 5px; padding-bottom: 5px; }";
@@ -91,7 +112,7 @@ export async function createReleaseChangelog({ options, logger }, version: strin
     for (const commit of changeLogParts)
     {
         changeLog += "<tr>";
-        if (useFaIcons === true)
+        if (useFaIcons)
         {
             changeLog += "<td nowrap valign=\"top\" style=\"font-weight:bold;color:#5090c1\"><b>";
             if (commit.subject.includes("Fix")) {
@@ -172,6 +193,41 @@ export async function createReleaseChangelog({ options, logger }, version: strin
 }
 
 
+export async function getReleaseChangelog(context: IContext): Promise<IChangelog>
+{
+    const {options, nextRelease} = context,
+          getHtmlLog = context.options.taskGithubRelease || context.options.taskMantisbtRelease,
+          getFileLog = context.options.taskEmail;
+
+    let fileNotes: string,
+        htmlNotes: string,
+        notes: string;
+
+    if (getFileLog)
+    {
+        if (options.historyFile) {
+            fileNotes = await getHistory(context, nextRelease.version, 1) as string;
+        }
+        else if (options.changelogFile) {
+            fileNotes = await getChangelog(context, nextRelease.version, 1) as string;
+        }
+    }
+
+    if (getHtmlLog) {
+        htmlNotes = await createReleaseChangelog(context, nextRelease.version);
+    }
+
+    if (options.historyFile) {
+        notes = createHistorySectionFromCommits(context);
+    }
+    else if (options.changelogFile) {
+        notes = createChangelogSectionFromCommits(context);
+    }
+
+    return { notes, fileNotes, htmlNotes };
+}
+
+
 /**
  * Creates a changelog entry for the history/changelog file using the commits list
  *
@@ -179,7 +235,7 @@ export async function createReleaseChangelog({ options, logger }, version: strin
  *
  * @param context context
  */
-export function createSectionFromCommits({ options, commits, logger })
+function createHistorySectionFromCommits({ options, commits, logger }: IContext)
 {
     let comments = "";
     let commentNum = 1;
@@ -188,7 +244,7 @@ export function createSectionFromCommits({ options, commits, logger })
         return comments;
     }
 
-    logger.log(`Building changelog section from ${commits.length} commits`);
+    logger.log(`Building history section from ${commits.length} commits`);
 
     //
     // Parse the commit messages
@@ -208,8 +264,7 @@ export function createSectionFromCommits({ options, commits, logger })
         {
             Object.entries(options.commitMsgMap).forEach((keys) =>
             {
-                const property = keys[0],
-                        value: any = keys[1];
+                const value: any = keys[1];
                 if (msgLwr.startsWith(value.name) && !value.include) {
                     customIgnoreFound = true;
                 }
@@ -589,6 +644,179 @@ export function createSectionFromCommits({ options, commits, logger })
 }
 
 
+function createChangelogSectionFromCommits({ options, commits, logger }: IContext)
+{
+    let tmpCommits = "",
+        lastSection = "";
+    const sectionless: string[] = [];
+
+    if (!commits || commits.length === 0) {
+        return tmpCommits;
+    }
+
+    logger.log(`Building changelog section from ${commits.length} commits`);
+
+    function formatCommitPart(section: string, scope: string, commitMsg: string): string
+    {
+        let fmtCommitMsg = "- ";
+
+        if (!section) {
+            return fmtCommitMsg + commitMsg;
+        }
+
+        section = section.toLowerCase().trim();
+        scope = scope ? properCase(scope.toLowerCase().trim()) : undefined;
+
+        //
+        // Ignore chores, progress, and custom specified psubjects to ignore
+        //
+        if (section.toLowerCase() === "chore" || section.toLowerCase() === "progress" ||
+            section.toLowerCase() === "project" || section.toLowerCase() === "style") {
+            return "";
+        }
+
+        let doContinue = false;
+        if (options.commitMsgMap)
+        {
+            Object.entries(options.commitMsgMap).forEach((keys) =>
+            {
+                if (section.toLowerCase() === keys[0] && !(keys[1] as any).include) {
+                    doContinue = true;
+                }
+            });
+        }
+        if (doContinue) {
+            return "";
+        }
+
+        //
+        // Start the comment list item, add scope in bold if necessary
+        //
+        if (scope) {
+            fmtCommitMsg += `**${scope}:** `;
+        }
+
+        //
+        // Add the message that followed the subject and scope
+        //
+        fmtCommitMsg += commitMsg;
+
+        //
+        // For multi-line comments, do some special processing
+        //
+        if (fmtCommitMsg.includes(EOL))
+        {
+            const tmpCommitParts = fmtCommitMsg.split(EOL);
+            fmtCommitMsg += tmpCommitParts[0];
+            for (let i = 1; i < tmpCommitParts.length; i++)
+            {
+                if (tmpCommitParts[i] === "") {
+                    continue;
+                }
+                fmtCommitMsg += `${EOL}${EOL}\t${tmpCommitParts[i]}${EOL}`;
+            }
+            fmtCommitMsg += EOL;
+        }
+        else {
+            fmtCommitMsg += EOL;
+        }
+        //
+        // Record last subject, we only print the subject when it differes from previous
+        //
+
+        //
+        // Print out the subject as a title if it is different than the previous sections
+        // title.  Comments are alphabetized.
+        //
+        if (section !== lastSection) {
+            const tmpSection = getFormattedSubject({options}, section);
+            fmtCommitMsg = `${EOL}### ${tmpSection}${EOL}${EOL}${fmtCommitMsg}`;
+        }
+        lastSection = section;
+        return fmtCommitMsg;
+    }
+
+    //
+    // Loop through the commits and build the markdown for appending to the changelog
+    //
+    for (const commit of commits)
+    {
+        if (!commit || !commit.message) {
+            continue;
+        }
+
+        const tmpCommit = commit.message.trim().replace(/\r\n/gm, "\n").replace(/\n/gm, EOL);
+        //
+        // If there is no subject, then store the message in an array to process after
+        // all of the commits with subject headers are processed.
+        //
+        // If the subject contains a scope, for example:
+        //
+        //     docs(readme)
+        //
+        // Then extract "readme" as the scope, and "docs" as the subject
+        //
+        let matched = false,
+            match: RegExpExecArray;
+        let regex = new RegExp(/^([a-z]+)\(([a-z0-9\- ]*)\)\s*: */gm);
+        while ((match = regex.exec(tmpCommit)) !== null) // subject - all lower case, or numbers
+        {
+            matched = true;
+            if (options.verbose) {
+                logger.info("Format commit message");
+                logger.info("   Section : " + match[1]);
+                logger.info("   Scope   : " + match[2]);
+            }
+            tmpCommits += formatCommitPart(match[1], match[2], tmpCommit.replace(match[0], ""));
+        }
+
+        regex = new RegExp(/^([a-z]+)\s*: */gm);
+        while ((match = regex.exec(tmpCommit)) !== null) // subject - all lower case, or numbers
+        {
+            matched = true;
+            if (options.verbose) {
+                logger.info("Format commit message");
+                logger.info("   Section : " + match[1]);
+            }
+            tmpCommits += formatCommitPart(match[1], undefined, tmpCommit.replace(match[0], ""));
+        }
+
+        if (!matched) {
+            if (options.verbose) {
+                logger.info("Unformatted commit message, no section or subject");
+            }
+            sectionless.push(tmpCommit);
+        }
+    }
+
+    //
+    // Add any commits that did not contain a conventional commit subject
+    //
+    if (sectionless.length > 0)
+    {
+        tmpCommits += `${EOL}### Other Notes${EOL}${EOL}`;
+        for (const commit of sectionless)
+        {
+            tmpCommits += `- ${commit}\r\n`;
+        }
+    }
+
+    //
+    // TODO
+    //
+    // Perform spell checking (currently the projectoxford has been taken down after the
+    // Microsoft deal with the facial rec api)
+    //
+    // tmpCommits = CheckSpelling tmpCommits false
+    //
+    // Write the formatted commits text to the top of options.changelogFile, but underneath the
+    // changelog title
+    //
+
+    return tmpCommits.trim();
+}
+
+
 function getEmailHeader(options: any, version: string)
 {
     let szHrefs = "";
@@ -695,7 +923,15 @@ function getChangelogTypes(changeLog: string)
 }
 
 
-export async function getChangelog({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false, includeEmailHdr = false)
+/**
+ * Gets changelog file section using the hostory/changelog file by parsing the sepcified versions section
+ *
+ * @param context context
+ * @param version The version to extract the notes from in the history/changelog file.
+ * @param numsections # of section to extract
+ * @param listOnly retrieve an array of strings only, not a formatted string
+ */
+async function getChangelog({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false, includeEmailHdr = false): Promise<IChangelogEntry[] | string>
 {
     //
     // Make sure user entered correct cmd line params
@@ -755,7 +991,7 @@ export async function getChangelog({ options, logger }, version: string, numsect
     //
     // Read in contents of file
     //
-    let contents: string | any[] = await readFile(options.changelogFile);
+    let contents = await readFile(options.changelogFile);
 
     //
     // Initialize parsing variables
@@ -817,7 +1053,7 @@ export async function getChangelog({ options, logger }, version: string, numsect
             msgParts.push(value.trim());
         }
 
-        contents = [];
+        const contents2: IChangelogEntry[] = [];
 
         if (msgParts.length !== typeParts.length) {
             logger.error("Error parsing changelog for commit parts");
@@ -850,10 +1086,10 @@ export async function getChangelog({ options, logger }, version: string, numsect
                 message = message.replace(new RegExp(" " + match[0], "g"), "").trim();
                 message = message.replace(new RegExp(match[0], "g"), "").trim();
             }
-            contents.push({ subject, scope, message, tickets });
+            contents2.push({ subject, scope, message, tickets });
         }
 
-        return contents;
+        return contents2;
     }
 
     //
@@ -877,7 +1113,15 @@ export async function getChangelog({ options, logger }, version: string, numsect
 }
 
 
-export async function getHistory({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false)
+/**
+ * Gets history file section using the hostory/changelog file by parsing the sepcified versions section
+ *
+ * @param context context
+ * @param version The version to extract the notes from in the history/changelog file.
+ * @param numsections # of section to extract
+ * @param listOnly retrieve an array of strings only, not a formatted string
+ */
+async function getHistory({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false): Promise<IChangelogEntry[] | string>
 {
     const iNumberOfDashesInVersionLine = 20;
     let finalContents = "";
@@ -922,7 +1166,7 @@ export async function getHistory({ options, logger }, version: string, numsectio
     // Extract the latest entry
     //
 
-    let contents: string | any[] = "";
+    let contents = "";
     //
     // Read in contents of file
     //
@@ -1109,10 +1353,13 @@ export async function getHistory({ options, logger }, version: string, numsectio
                     tContents = tContents.replace(value, `<b>${value}</b>`);
                 }
             }
+
             contents = tContents;
 
-            if (listOnly === "parts")
-            {
+            if (listOnly !== "parts") {
+                return contents ;
+            }
+            else {
                 const typeParts = [];
                 const msgParts = [];
 
@@ -1177,7 +1424,7 @@ export async function getHistory({ options, logger }, version: string, numsectio
                     msgParts.push(value.trim());
                 }
 
-                contents = [];
+                const contents2: IChangelogEntry[] = [];
                 for (let i = 0; i < typeParts.length; i++)
                 {
                     let scope = "", message = "", tickets = "", subject = typeParts[i];
@@ -1215,11 +1462,10 @@ export async function getHistory({ options, logger }, version: string, numsectio
                         message = message.replace(" " + match[0], "").trim();
                         message = message.replace(match[0], "").trim();
                     }
-                    contents.push({ subject, scope, message, tickets });
+                    contents2.push({ subject, scope, message, tickets });
                 }
+                return contents2;
             }
-
-            return contents;
         }
 
         //
@@ -1257,7 +1503,7 @@ export async function getHistory({ options, logger }, version: string, numsectio
 
     logger.success("   Successful");
 
-    return [ finalContents ];
+    return finalContents;
 }
 
 
@@ -1340,10 +1586,11 @@ function getFormattedSubject({options}, subject: string)
 }
 
 
-export async function doChangelogFileEdit({ options, commits, logger, lastRelease, nextRelease, env, cwd })
+export async function doChangelogFileEdit(context: IContext)
 {
-    const fmtDate = getFormattedDate();
-    logger.log("Start changelog file edit");
+    const { options, logger, lastRelease, nextRelease, env, cwd } = context;
+
+    logger.log("Preparing changelog file");
 
     if (options.taskChangelogFile)
     {
@@ -1376,9 +1623,9 @@ export async function doChangelogFileEdit({ options, commits, logger, lastReleas
 
     if (!(await pathExists(options.changelogFile)))
     {
-        logger.log("Creating changelog file directory and adding to version control");
         if (options.taskChangelog || !options.taskMode)
         {
+            logger.log("Create changelog file directory");
             await writeFile(options.changelogFile, options.projectName + EOL + EOL);
         }
         else
@@ -1390,148 +1637,32 @@ export async function doChangelogFileEdit({ options, commits, logger, lastReleas
 
     if ((lastRelease.version !== nextRelease.version || newChangelog || options.taskMode))
     {
-        let tmpCommits = "",
-            lastSection = "",
-            sectionless = [];
-        const changelogTitle = `# ${options.projectName} Change Log`.toUpperCase();
+        const changelogTitle = `# ${options.projectName} Change Log`.toUpperCase(),
+              fmtDate = getFormattedDate();
 
-        logger.log("Preparing changelog file");
-        //
-        // Touch changelog file with the latest commits
-        //
-        // Add lines 'version', 'date', then the header content
-        //
-        if (!newChangelog) {
-            tmpCommits = "\r\n";
-        }
-        tmpCommits += `## ${options.versionText} ${nextRelease.version} (${fmtDate})\r\n`;
-        //
-        // Loop through the commits and build the markdown for appending to the changelog
-        //
-        for (const commit of commits)
+        let tmpCommits = (nextRelease.changelog.notes || createChangelogSectionFromCommits(context)),
+            changeLogFinal: string;
+
+        if (options.taskChangelog || !options.taskMode)
         {
-            if (!commit || !commit.message) {
-                continue;
+            if (!newChangelog) {
+                tmpCommits = EOL;
             }
+            tmpCommits = `## ${options.versionText} ${nextRelease.version} (${fmtDate})${EOL}${EOL}${tmpCommits}`;
 
-            let scope = "",
-                section: string;
-            let tmpCommit = commit.message.trim();
-            tmpCommit = tmpCommit.replace("\n", "\r\n");
-            const idx1 = tmpCommit.indexOf("("),
-                    idx2 = tmpCommit.indexOf(":");
-            //
-            // If there is no subject, then store the message in an array to process after
-            // all of the commits with subject headers are processed.
-            //
-            // If the subject contains a scope, for example:
-            //
-            //     docs(readme)
-            //
-            // Then extract "readme" as the scope, and "docs" as the subject
-            //
-            if (idx2 === -1) {
-                sectionless += commit;
-                continue;
+            let changeLogContents = await readFile(options.changelogFile);
+            changeLogContents = changeLogContents.replace(new RegExp(changelogTitle, "i"), "").trim();
+
+            changeLogFinal = `${changelogTitle}${EOL}${EOL}`;
+            if (tmpCommits) {
+                changeLogFinal = `${changeLogFinal}${tmpCommits}${EOL}${EOL}`;
             }
-            else if (idx1 !== -1 && idx1 < idx2) {
-                section = tmpCommit.substring(0, idx1).trimRight();
-                scope = properCase(tmpCommit.substring(idx1 + 1, tmpCommit.indexOf(")") - idx1 - 1).toLowerCase().trim());
-            }
-            else {
-                section = properCase(tmpCommit.substring(0, idx2).toLowerCase().trimRight());
-            }
-            //
-            // Ignore chores, progress, and custom specified psubjects to ignore
-            //
-            if (section.toLowerCase() === "chore" || section.toLowerCase() === "progress" ||
-                section.toLowerCase() === "project" || section.toLowerCase() === "style") {
-                continue;
-            }
-            let doContinue = false;
-            if (options.commitMsgMap)
-            {
-                Object.entries(options.commitMsgMap).forEach((keys) =>
-                {
-                    if (section.toLowerCase() === keys[0] && !(keys[1] as any).include) {
-                        doContinue = true;
-                    }
-                });
-            }
-            if (doContinue) {
-                continue;
-            }
-            tmpCommit = tmpCommit.substring(idx2 + 1).trim();
-            //
-            // Print out the subject as a title if it is different than the previous sections
-            // title.  Comments are alphabetized.
-            //
-            if (section !== lastSection) {
-                const tmpSection = getFormattedSubject({options}, section);
-                tmpCommits += `${EOL}### ${tmpSection}${EOL}${EOL}`;
-            }
-            //
-            // Start the comment list item, add scope in bold if necessary
-            //
-            tmpCommits += "- ";
-            if (scope !== "") {
-                tmpCommits += `**${scope}:** `;
-            }
-            //
-            // FOr multi-line comments, do some special processing
-            //
-            if (tmpCommit.includes(EOL))
-            {
-                const tmpCommitParts = tmpCommit.split(EOL);
-                tmpCommits += tmpCommitParts[0];
-                for (let i = 1; i < tmpCommitParts.Length; i++)
-                {
-                    if (tmpCommitParts[i] === "") {
-                        continue;
-                    }
-                    tmpCommits += `${EOL}${EOL}\t${tmpCommitParts[i]}${EOL}`;
-                }
-                tmpCommits += EOL;
-            }
-            else {
-                tmpCommits += `${tmpCommit}${EOL}`;
-            }
-            //
-            // Record last subject, we only print the subject when it differes from previous
-            //
-            lastSection = section;
-        }
-        //
-        // Add any commits that did not contain a conventional commit subject
-        //
-        if (sectionless.length > 0)
-        {
-            tmpCommits += `${EOL}### Other Notes${EOL}${EOL}`;
-            for (const commit of sectionless)
-            {
-                tmpCommits += `- ${commit}\r\n`;
+            if (changeLogContents) {
+                changeLogFinal = `${changeLogFinal}${changeLogContents}${EOL}`;
             }
         }
-        //
-        // Perform spell checking (currently the projectoxford has been taken down after the
-        // Microsoft deal with the facial rec api)
-        //
-        // tmpCommits = CheckSpelling tmpCommits false
-        //
-        // Write the formatted commits text to the top of options.changelogFile, but underneath the
-        // changelog title
-        //
-
-        tmpCommits = tmpCommits.trim();
-        let changeLogContents = await readFile(options.changelogFile);
-        changeLogContents = changeLogContents.replace(new RegExp(changelogTitle, "i"), "").trim();
-
-        let changeLogFinal = `${changelogTitle}${EOL}${EOL}`;
-        if (tmpCommits) {
-            changeLogFinal = `${changeLogFinal}${tmpCommits}${EOL}${EOL}`;
-        }
-        if (changeLogContents) {
-            changeLogFinal = `${changeLogFinal}${changeLogContents}${EOL}`;
+        else {
+            changeLogFinal = tmpCommits;
         }
         //
         // Write content to file
@@ -1549,10 +1680,11 @@ export async function doChangelogFileEdit({ options, commits, logger, lastReleas
 }
 
 
-export async function doHistoryFileEdit({ options, commits, logger, lastRelease, nextRelease, env, cwd})
+export async function doHistoryFileEdit(context: IContext)
 {
-    const fmtDate = getFormattedDate();
-    logger.log("Start history file edit");
+    const fmtDate = getFormattedDate(),
+          { options, commits, logger, lastRelease, nextRelease, env, cwd} = context;
+    logger.log("Preparing history file");
 
     if (options.taskChangelogFile)
     {
@@ -1620,9 +1752,7 @@ export async function doHistoryFileEdit({ options, commits, logger, lastRelease,
     //
     if (lastRelease.version !== nextRelease.version || isNewHistoryFile || options.taskMode)
     {
-        const tmpCommits = nextRelease.notes || createSectionFromCommits({ options, commits, logger});
-
-        logger.log("Preparing history file");
+        const tmpCommits = nextRelease.changelog.notes || createHistorySectionFromCommits(context);
 
         //
         // New file

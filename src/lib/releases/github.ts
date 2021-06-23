@@ -1,8 +1,6 @@
 import * as path from "path";
 import semver from "semver";
-import { timeout } from "../utils/utils";
-import { pathExists, writeFile, readFile, readFileBuf } from "../utils/fs";
-import { createReleaseChangelog } from "../changelog-file";
+import { pathExists, readFileBuf } from "../utils/fs";
 import { contentTypeMap } from "./content-type-map";
 import { APP_NAME } from "../definitions/constants";
 import { IContext, IReturnStatus } from "../../interface";
@@ -25,7 +23,7 @@ async function doGithubRelease(context: IContext): Promise<IReturnStatus>
         error: undefined
     };
 
-    const githubChangelog = await createReleaseChangelog({ options, logger }, nextRelease.version);
+    const githubChangelog = nextRelease.changelog.htmlNotes;
     if (!githubChangelog) {
         rc = { success: false, error: `GitHub release v${nextRelease.version} failure - no changelog` };
         logger.error(rc.error);
