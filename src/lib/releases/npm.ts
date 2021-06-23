@@ -185,20 +185,17 @@ export async function setPackageJson({options, logger})
     //
     // Scope/name - package.json
     //
-    console.log(1, packageJson.name);
     defaultName = packageJson.name;
     if (defaultName.startsWith("@") && defaultName.includes("/")) {
         defaultScope = defaultName.substring(0, defaultName.indexOf("/"));
         defaultNameWoScope = defaultName.substring(defaultName.indexOf("/") + 1);
-        console.log(2, defaultScope, defaultNameWoScope);
     }
-    console.log(22, options.npmScope, defaultScope, defaultNameWoScope);
+
     if (options.npmScope && defaultScope && defaultNameWoScope)
     {
-        console.log(3);
         if (!defaultName.includes(options.npmScope))
-        {console.log(4);
-            const name = options.npmScope + "/" + defaultNameWoScope;console.log(5, name);
+        {
+            const name = options.npmScope + "/" + defaultNameWoScope;
             logger.log(`Setting package name in package.json: ${name}`);
             packageJson.name = name;
             //

@@ -202,7 +202,21 @@ async function run(context: IContext, plugins: any)
         };
     }
 
-    await runRelease(context, plugins);
+    let success = false;
+    try {
+        success = await runRelease(context, plugins);
+        if (!success) {
+            logger.error("Release run returned failure status");
+        }
+    }
+    catch (e) {
+        logger.error("Release run threw failure exception");
+        context.stdout.write(`Exception:  ${e.toString().trimRight()}${EOL}`);
+        // await callFail(context, plugins, e);
+        // throw e;
+    }
+
+    return success;
 }
 
 
@@ -502,14 +516,6 @@ async function runRelease(context: IContext, plugins: any)
     await util.runScripts({ options, logger, cwd, env }, "preBuild", options.preBuildCommand, true, true);
 
     //
-    // Update relevant local files with the new version #
-    //
-    if (!options.taskMode)
-    {
-        await setVersions(context);
-    }
-
-    //
     // Pre - NPM release
     //
     let packageJsonModified = false;
@@ -519,6 +525,14 @@ async function runRelease(context: IContext, plugins: any)
         // file.  Manipulate the package.json file if needed
         //
         packageJsonModified = await npm.setPackageJson({options, logger});
+    }
+
+    //
+    // Update relevant local files with the new version #
+    //
+    if (!options.taskMode)
+    {
+        await setVersions(context);
     }
 
     //
