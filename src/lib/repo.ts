@@ -853,6 +853,9 @@ export async function verifyAuth(context: IContext)
 {
     const { options, logger, cwd, env } = context,
           execaOpts = { cwd, env };
+
+    logger.info("Verify vcs authorization");
+
     try
     {
         if (options.repoType === "git") {
@@ -875,7 +878,7 @@ export async function verifyAuth(context: IContext)
         else if (options.repoType === "svn")
         {
             try {
-                await execa("svn", ["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
+                await execSvn(["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
             }
             catch (error) {
                 if (!error.toString().includes("E195020")) { // Cannot merge into mixed-revision working copy
@@ -912,17 +915,23 @@ export async function verifyAuth(context: IContext)
  */
 export async function verifyTagName(context: IContext, tagName: string)
 {
-    const { options : { repoType }, logger, cwd, env } = context;
+    const { options, logger, cwd, env } = context;
+
+    logger.info("verify tag name");
+    logger.info(`   Tag name      : ${tagName}`);
+
     try
     {
-        if (repoType === "git") {
+        if (options.repoType === "git") {
             return (await execa("git", ["check-ref-format", `refs/tags/${tagName}`], {cwd, env})).code === 0;
         }
-        else if (repoType === "svn") {
+        else if (options.repoType === "svn") {
             //
-            // TODO
+            // TODO - does svn have something similar to git?
             //
-            return (await execa("svn", ["check-ref-format", `refs/tags/${tagName}`], {cwd, env})).code === 0;
+            // const tagLocation = getSvnTagLocation({options, logger});
+            // return (await execSvn(["info", "-r", `${tagLocation}/${tagName}`], {cwd, env})).code === 0;
+            return /v[0-9\.\-]+/.test(tagName);
         }
         else {
             throw new Error("Invalid repository type");
