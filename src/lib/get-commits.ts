@@ -2,7 +2,6 @@ import gitLogParser from "git-log-parser";
 import getStream from "get-stream";
 import { EOL } from "os";
 import { IChangelogEntry, ICommit, IContext } from "../interface";
-const debug = require("debug")("app-publisher:get-commits");
 const execa = require("execa");
 const xml2js = require("xml2js");
 
@@ -20,12 +19,10 @@ async function getCommits(context: IContext): Promise<ICommit[]>
     let commits: ICommit[] = [];
     const { cwd, env, options, lastRelease: { head }, logger } = context;
 
-    if (head)
-    {
-        debug("Use head: %s", head);
+    if (head) {
+        logger.info("Use head " + head);
     }
-    else
-    {
+    else {
         logger.info("No previous release found, retrieving all commits");
     }
 
@@ -111,10 +108,16 @@ async function getCommits(context: IContext): Promise<ICommit[]>
                 for (const logEntry of result.log.logentry) {
                     if (logEntry.msg && logEntry.msg[0]) {
                         commits.push({
-                            author: logEntry.author[0],
+                            author: {
+                                name: logEntry.author[0]
+                            },
+                            committer: {
+                                name: logEntry.author[0]
+                            },
                             message: logEntry.msg[0].trim(),
-                            revision: logEntry.$.revision,
-                            date: logEntry.date[0]
+                            subject: logEntry.msg[0].trim(),
+                            hash: logEntry.$.revision,
+                            committerDate: logEntry.date[0]
                         });
                     }
                 }
@@ -153,7 +156,7 @@ async function getCommits(context: IContext): Promise<ICommit[]>
 
     logger.info(`Found ${commits.length} commits since last release`);
     if (options.verbose) {
-        context.stdout.write(`Parsed commits:${EOL}${commits.map((c: IChangelogEntry) => c.message).join(EOL)}${EOL}`);
+        context.stdout.write(`Parsed commits:${EOL}${commits.map((c) => c.message).join(EOL)}${EOL}`);
     }
 
     return commits;
