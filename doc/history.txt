@@ -4684,3 +4684,62 @@ June 22nd, 2021
     PowerShell implementation will be depracated in favor of NodeJS when it
     becomes stable.
 
+
+Version 3.0.1
+June 23rd, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Continuous Integration:  Jenkinsfile
+    
+    Update to latest v3 API.
+
+2.  Bug Fix
+    
+    Spaces are being removed in changelog scope names when constructing the
+    changelog section entries.
+
+3.  Bug Fix
+    
+    Tags are being created with an additional 'v' pre-pended.
+
+4.  Bug Fix:  Changelog
+    
+    Commits are not being sorted alphabetically when retrieved from the VCS.
+
+5.  Bug Fix:  Changelog
+    
+    Creating the HTML changelog with the --task-changelog-html-* tasks is not
+    parsing the notes correctly.
+
+6.  Bug Fix:  Github Release
+    
+    Assets fails to upload.
+
+7.  Refactoring
+    
+    The --task-changelog-view task is not printing the version header when
+    the project uses a markdown type changelog file.
+
+8.  Refactoring:  Tasks
+    
+    Allow MantisBT and GitHub release tasks w/o the constraint of there having
+    to be existing changes since the previous release.
+
