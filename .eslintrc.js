@@ -163,7 +163,7 @@ module.exports = {
         "import/order": "off",
         "indent": "off",
         "jsdoc/check-alignment": "warn",
-        "jsdoc/check-indentation": "warn",
+        "jsdoc/check-indentation": "off",
         "jsdoc/newline-after-description": "warn",
         "linebreak-style": [
             "warn",

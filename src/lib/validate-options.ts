@@ -122,14 +122,6 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
     }
 
     //
-    // If root path is empty then set to "." , by default its "." but just in case
-    // user sets to empty string in config
-    //
-    if (!options.pathToRoot) {
-        options.pathToRoot = ".";
-    }
-
-    //
     // Set a default NPM registry
     //
     if (!options.npmRegistry) {
@@ -268,17 +260,6 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
                 options.textEditor = "notepad";
             }
         }
-    }
-
-    //
-    // Ensure version control directory exists
-    // options.repoType is either git or svn
-    //
-    if (!options.pathPreRoot && !(await pathExists(path.join(cwd, "." + options.repoType))))
-    {
-        logger.error(`The .${options.repoType} directory was not found`);
-        logger.error("Set pathToPreRoot, or ensure a branch (i.e. trunk) is the root directory");
-        return false;
     }
 
     //

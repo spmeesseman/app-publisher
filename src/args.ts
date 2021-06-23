@@ -64,27 +64,6 @@ export const publishRcOpts =
         "    .publishrc.yml"
     ],
 
-    configName: [
-        true,
-        "string",
-        "",
-        [ "-cn", "--config-name" ],
-        "Use the specified config name.  The config name determines the publishrc",
-        "file to use.  For example, consider the following command line:",
-        "",
-        "    app-publisher --config-name spm",
-        "",
-        "Specifying this will cause the publishrc file named '.publishrc.spm.json",
-        "to be used.",
-        "Note that the default publishrc file is '.publishrc.*'.  A config file can",
-        "be one of four different formats:",
-        "",
-        "    .publishrc.json",
-        "    .publishrc.js",
-        "    .publishrc.yaml",
-        "    .publishrc.yml"
-    ],
-
     cProjectRcFile: [
         true,
         "string",
@@ -485,61 +464,6 @@ export const publishRcOpts =
         "Ignored if distRelease = N."
     ],
 
-    pathToRoot: [
-        true,
-        "string",
-        "",
-        "A relative (not full) path that will equate to the project root as seen",
-        "from the script's location.  For example, if this script is in",
-        "PROJECTDIR\\script, then the rel path to root would be \"..\".  If the",
-        "script is in PROJECTDIR\\install\\script, then the rel path to root would",
-        "be \"..\\..\"",
-        "The value should be relative to the script dir, dont use a full path",
-        "as this will not share across users well keeping project files in",
-        "different directories",
-        "",
-        "Note that this property will be deprecated with the nodejs port in v3.0"
-    ],
-
-    pathPreRoot: [
-        true,
-        "string",
-        "",
-        "This in most cases sould be an empty string if the project is the 'main'",
-        "project.  If a sub-project exists within a main project in SVN, then this",
-        "needs to be set to the relative directory to the project path, as seen from",
-        "the main project root.",
-        "",
-        "For example, the following project contains a layout with 3 separate projects",
-        "'server', 'client', and 'utils':",
-        "",
-        "    ProjectName",
-        "        app",
-        "            client",
-        "            server",
-        "            utils",
-        "",
-        "The main project root is GEMS2.  In the case of each of these projects,",
-        "SVNPREPATH should be set to app\\client, app\\server, or app\\utils, for each",
-        "specific sub-project.",
-        "This mainly is be used for SVN commands which need to be ran in the directory",
-        "containing the .svn folder.",
-        "",
-        "Note that this property will be deprecated with the nodejs port in v3.0"
-    ],
-
-    pathToMainRoot: [
-        true,
-        "string",
-        "",
-        "This in most cases sould be an empty string if the project is the 'main'",
-        "project.  If a sub-project exists within a main project in SVN, then this needs",
-        "to be set to the relative directory to the main project root, as seen from the",
-        "sub-project root.",
-        "",
-        "Note that this property will be deprecated with the nodejs port in v3.0"
-    ],
-
     postBuildCommand: [
         false,
         "string|string[]",
@@ -601,7 +525,20 @@ export const publishRcOpts =
         ".publishrc.[json/yml/yaml/js]",
         [ "-rc", "--rcfile", "--rc-file" ],
         {
-            help: "The publishrc file to read the initial configuration from.",
+            help: "Use the specified config name.  The config name determines the publishrc\n" +
+                  "file to use.  For example, consider the following command line:\n" +
+                  "\n" +
+                  "    app-publisher --config-name spm\n" +
+                  "\n" +
+                  "Specifying this will cause the publishrc file named '.publishrc.spm.json\n" +
+                  "to be used.\n" +
+                  "Note that the default publishrc file is '.publishrc.*'.  Examples:\n" +
+                  "\n" +
+                  "    .publishrc.json\n" +
+                  "    .publishrc.custom.json\n" +
+                  "    .publishrc.js\n" +
+                  "    .publishrc.yaml\n" +
+                  "    .publishrc.yml",
             usage: [
                 "app-publisher --rc-file .publishrc.custom.json"
             ]
