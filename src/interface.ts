@@ -6,6 +6,7 @@ export interface IAuthor
     date?: string;
 }
 
+
 export interface IChangelog
 {
     fileNotes?: string;
@@ -14,6 +15,7 @@ export interface IChangelog
     entries?: IChangelogEntry[];
 }
 
+
 export interface IChangelogEntry
 {
     subject: string;
@@ -21,6 +23,7 @@ export interface IChangelogEntry
     message: string;
     tickets: string;
 }
+
 
 export interface ICommit
 {
@@ -33,6 +36,22 @@ export interface ICommit
     committerDate?: string;
 }
 
+
+export interface ICommitMessageMap
+{
+    definition: ICommitMessageMapEntry;
+}
+
+
+export interface ICommitMessageMapEntry
+{
+    versionBump: string;
+    formatText: string;
+    include: boolean;
+    iconCls: string;
+}
+
+
 export interface IContext
 {
     commits: ICommit[];
@@ -41,7 +60,7 @@ export interface IContext
     lastRelease: ILastRelease;
     logger: any;
     nextRelease: INextRelease;
-    options: any;
+    options: IOptions;
     stdout: any;
     stderr: any;
 }
@@ -69,6 +88,7 @@ export interface ILastRelease
     versionInfo: IVersionInfo;
 }
 
+
 export interface INextRelease
 {
     changelog: IChangelog;
@@ -80,6 +100,7 @@ export interface INextRelease
     versionInfo: IVersionInfo;
 }
 
+
 export interface IVersionInfo
 {
     version: string;
@@ -87,21 +108,13 @@ export interface IVersionInfo
     versionSystem: string;
 }
 
-export interface ICommitMessageMapEntry
-{
-    versionBump: string;
-    formatText: string;
-    include: boolean;
-    iconCls: string;
-}
-
-export interface ICommitMessageMap
-{
-    definition: ICommitMessageMapEntry;
-}
 
 export interface IOptions
 {
+    /**
+     * @readonly
+     */
+    appPublisherVersion: string;
     /**
      * The branch to use
      */
@@ -141,6 +154,12 @@ export interface IOptions
      *     json, js, yaml
      */
     config: boolean;
+    /**
+     * Gets set by get-config
+     *
+     * @readonly
+     */
+    configFilePath: string;
     /**
      * The RC file name in a C Make project.
      */
@@ -292,6 +311,10 @@ export interface IOptions
      * is extracted for display on the project page of the NPM repository.
      */
     homePage: string;
+    /**
+     * @readonly
+     */
+    isNodeJsEnv: boolean;
     /**
      * The MantisBT token or list of tokens to make a MantisBT release with.
      * Represents the user that the release is made under on the 'Releases' page.
@@ -466,8 +489,11 @@ export interface IOptions
      * Skip all version edits in version files.
      * Defaults to N
      */
-    skipVersionEdits: string;  // flag,
-
+    skipVersionEdits: string;  // flag
+    /**
+     * @readonly
+     */
+    tagFormat: string;
     /**
      * Runs all scripts defined by the publishrc property 'buildCommand'
      */
@@ -535,7 +561,6 @@ export interface IOptions
      * in a production build
      */
     taskDevTest: boolean;
-
     /**
      * Perform a 'Dist' release.
      */
@@ -550,13 +575,20 @@ export interface IOptions
      * of the changelog/history file.
      */
     taskGithubRelease: boolean;
-
     /**
      * Perform a 'Mantis' release.
      * The changelog produced for the Mantis release will be created from the most recent entry
      * of the changelog/history file.
      */
     taskMantisbtRelease: boolean;
+    /**
+     * @readonly
+     */
+    taskMode: boolean;
+    /**
+     * @readonly
+     */
+    taskModeStdOut: boolean;
     /**
      * Perform an 'NPM' release (publish).
      */
@@ -631,6 +663,14 @@ export interface IOptions
      * Web path to version control repository
      */
     vcWebPath: string;
+    /**
+     * @readonly
+     */
+    verbose: boolean;
+    /**
+     * @readonly
+     */
+    version: boolean;
     /**
      * A file path or list of file paths to perform version string replacement in.
      */

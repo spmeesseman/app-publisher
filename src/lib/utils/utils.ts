@@ -214,11 +214,15 @@ export function timeout(ms: number)
 const scriptTypesProcessed = [];
 
 
-export async function runScripts({options, logger, cwd, env}, scriptType: string, scripts: string[], throwOnError = false, runInTestMode = false)
+export async function runScripts({options, logger, cwd, env}, scriptType: string, scripts: string | string[], throwOnError = false, runInTestMode = false)
 {
     if (options.taskMode) {
         logger.log(`Running custom ${scriptType} script(s) skipped in task mode`);
         return;
+    }
+
+    if (isString(scripts)) {
+        scripts = [ scripts ];
     }
 
     logger.log(`Running custom '${scriptType}' script(s)`);

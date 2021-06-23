@@ -141,7 +141,7 @@ async function setVersionFiles(context: IContext): Promise<void>
         vFile = vFile.replace(/\${CURRENTVERSION\}/gi, lastRelease.version);
         vFile = vFile.replace(/\$\{LASTVERSION\}/gi, lastRelease.version);
 
-        if (await pathExists(vFile) && !options.versionFilesEdited.includes(vFile))
+        if (await pathExists(vFile))
         {   //
             // Replace version in file
             //
@@ -189,10 +189,6 @@ async function setVersionFiles(context: IContext): Promise<void>
                     }
                 }
             }
-            //
-            // Allow manual modifications to vFile and commit to modified list
-            // Edit-File will add this file to options.versionFilesEdited
-            //
             await editFile(context, vFile);
         }
     }

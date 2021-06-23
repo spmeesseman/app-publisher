@@ -381,7 +381,7 @@ async function runRelease(context: IContext, plugins: any)
     //
     if (!nextRelease.level)
     {
-        if (!options.taskGithubRelease && !options.taskMantisRelease && !options.taskNpmRelease && !options.taskDistRelease) {
+        if (!options.taskGithubRelease && !options.taskMantisbtRelease && !options.taskNpmRelease && !options.taskDistRelease) {
             logger.log("There are no relevant commits, no new version is released.");
             return false;
         }
@@ -561,7 +561,7 @@ async function runRelease(context: IContext, plugins: any)
     //
     if (options.npmRelease === "Y" && (!options.taskMode || options.taskNpmRelease))
     {   //
-        // Run pre npm-release scripts if specified
+        //   Run pre npm-release scripts if specified.  Ignored in task mode.
         //
         await util.runScripts({ options, logger, cwd, env }, "preNpmRelease", options.npmReleasePreCommand);
         //
@@ -569,7 +569,7 @@ async function runRelease(context: IContext, plugins: any)
         //
         await npm.doNpmRelease(context);
         //
-        // Run pre npm-release scripts if specified
+        //  Run pre npm-release scripts if specified.  Ignored in task mode.
         //
         await util.runScripts({options, logger, cwd, env}, "postNpmRelease", options.npmReleasePostCommand);
     }
@@ -581,7 +581,7 @@ async function runRelease(context: IContext, plugins: any)
     {
         logger.log("Starting Distribution release");
         //
-        // Run pre distribution-release scripts if specified
+        // Run pre distribution-release scripts if specified.  Ignored in task mode.
         //
         await util.runScripts({ options, logger, cwd, env }, "preDistRelease", options.distReleasePreCommand);
         //
@@ -589,7 +589,7 @@ async function runRelease(context: IContext, plugins: any)
         //
         await doDistRelease(context);
         //
-        // Run pre distribution-release scripts if specified
+        // Run pre distribution-release scripts if specified.  Ignored in task mode.
         //
         await util.runScripts({ options, logger, cwd, env }, "postDistRelease", options.distReleasePostCommand);
     }
@@ -611,7 +611,7 @@ async function runRelease(context: IContext, plugins: any)
     let githubReleaseId;
     if (options.repoType === "git" && options.githubRelease === "Y" && (!options.taskMode || options.taskGithubRelease))
     {   //
-        // Pre-github release (.publishrc)
+        // Pre-github release (.publishrc).  Ignored in task mode.
         //
         if (!options.taskMode) {
             await util.runScripts({ options, logger, cwd, env }, "preGithubRelease", options.githubReleasePreCommand);
@@ -625,7 +625,7 @@ async function runRelease(context: IContext, plugins: any)
             return false;
         }
         //
-        // Post-github release (.publishrc)
+        // Post-github release (.publishrc).  Ignored in task mode.
         //
         if (!options.taskMode) {
             await util.runScripts({ options, logger, cwd, env }, "postGithubRelease", options.githubReleasePostCommand);
@@ -651,7 +651,7 @@ async function runRelease(context: IContext, plugins: any)
     //
     if (options.mantisbtRelease === "Y" && (!options.taskMode || options.taskMantisbtRelease))
     {   //
-        // Pre-mantis release (.publishrc)
+        // Pre-mantis release (.publishrc).  Ignored in task mode.
         //
         if (!options.taskMode) {
             await util.runScripts({ options, logger, cwd, env }, "preMantisRelease", options.mantisbtReleasePreCommand);
@@ -665,7 +665,7 @@ async function runRelease(context: IContext, plugins: any)
             return false;
         }
         //
-        // Post-mantis release scripts (.publishrc)
+        // Post-mantis release scripts (.publishrc).  Ignored in task mode.
         //
         if (!options.taskMode) {
             await util.runScripts({ options, logger, cwd, env }, "postMantisRelease", options.mantisbtReleasePostCommand);

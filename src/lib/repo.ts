@@ -433,20 +433,22 @@ export async function getTags({options, logger, cwd, env}: IContext)
  *
  * @returns `true` is the HEAD of the current local branch is the same as the HEAD of the remote branch, falsy otherwise.
  */
-export async function isBranchUpToDate({options, logger, cwd, env}: IContext, branch: any)
+export async function isBranchUpToDate(context: IContext, branch: any)
 {
-    const execaOpts = { cwd, env },
-          remoteHead = await execa.stdout("git", ["ls-remote", "--heads", "origin", branch], execaOpts);
+    const {options, logger, cwd, env} = context,
+          execaOpts = { cwd, env };
     try
     {
         if (options.repoType === "git") {
-            return await isRefInHistory(remoteHead.match(/^(\w+)?/)[1], execaOpts, options);
+            const remoteHead = await execa.stdout("git", ["ls-remote", "--heads", "origin", branch], execaOpts);
+            return await isRefInHistory(context, remoteHead.match(/^(\w+)?/)[1]);
         }
         else if (options.repoType === "svn") {
             //
             // TODO
             //
-            return await isRefInHistory(remoteHead.match(/^(\w+)?/)[1], execaOpts, options);
+            return true;
+            // return await isRefInHistory(context, remoteHead.match(/^(\w+)?/)[1]);
         }
         else {
             throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
