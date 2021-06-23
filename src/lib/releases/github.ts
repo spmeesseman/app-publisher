@@ -12,9 +12,6 @@ const got = require("got");
 export { doGithubRelease, publishGithubRelease };
 
 
-let githubReleaseId;
-
-
 async function doGithubRelease(context: IContext): Promise<IReturnStatus>
 {
     const { options, logger, lastRelease, nextRelease, env, cwd } = context;
@@ -154,10 +151,10 @@ async function doGithubRelease(context: IContext): Promise<IReturnStatus>
     //
     if (response && response.body && response.body.upload_url)
     {
-        githubReleaseId = response.body.id;
+        rc.id = response.body.id;
 
         logger.success(`Successfully created GitHub release for v${lastRelease.version}`);
-        logger.log(`   ID         : ${githubReleaseId}`);
+        logger.log(`   ID         : ${rc.id}`);
         logger.log(`   Upload URL : ${response.body.upload_url}`);
         logger.log(`   Tarball URL: ${response.body.zipball_url}`);
         logger.log(`   Zipball URL: ${response.body.tarball_url}`);
@@ -255,70 +252,75 @@ async function doGithubRelease(context: IContext): Promise<IReturnStatus>
 }
 
 
-async function publishGithubRelease({options, nextRelease, logger})
+async function publishGithubRelease({options, nextRelease, logger}, githubReleaseId: string): Promise<IReturnStatus>
 {
-    logger.log(`Publishing GitHub v${nextRelease.version} release`);
+    let rc: IReturnStatus = {
+        success: false
+    };
 
-    if (githubReleaseId)
+    logger.log(`Publish GitHub v${nextRelease.version} release`);
+    if (!githubReleaseId) {
+        logger.warn("Invalid argument - empty GitHub release id");
+        logger.warn("   Skip publishing of GitHub release");
+        return;
+    }
+
+    //
+    // Mark release published
+    // Set up the request body for the 'create release' request
+    //
+    // Set up the request header
+    //
+    const headers = {
+        "Accept": "application/vnd.github.v3+json",
+        "mediaTypeVersion": "v3",
+        "squirrelAcceptHeader": "application/vnd.github.squirrel-girl-preview",
+        "symmetraAcceptHeader": "application/vnd.github.symmetra-preview+json",
+        "Authorization": "token " + process.env.GITHUB_TOKEN,
+        "Content-Type": "application/json; charset=UTF-8"
+    };
+    //
+    // Send the REST POST to publish the release
+    //
+    let response: any;
+    const url = `https://api.github.com/repos/${options.githubUser}/${options.projectName}/releases/${githubReleaseId}`;
+    if (!options.dryRun)
     {
-        logger.log("Marking release as published");
-        //
-        // Mark release published
-        // Set up the request body for the 'create release' request
-        //
-        // Set up the request header
-        //
-        const headers = {
-            "Accept": "application/vnd.github.v3+json",
-            "mediaTypeVersion": "v3",
-            "squirrelAcceptHeader": "application/vnd.github.squirrel-girl-preview",
-            "symmetraAcceptHeader": "application/vnd.github.symmetra-preview+json",
-            "Authorization": "token " + process.env.GITHUB_TOKEN,
-            "Content-Type": "application/json; charset=UTF-8"
-        };
-        //
-        // Send the REST POST to publish the release
-        //
-        let response: any;
-        const url = `https://api.github.com/repos/${options.githubUser}/${options.projectName}/releases/${githubReleaseId}`;
-        if (!options.dryRun)
-        {
-            try {
-                response = await got(url, {
-                    json: {
-                        draft: false
-                    },
-                    method: "PATCH",
-                    responseType: "json",
-                    headers
-                });
-            }
-            catch (e) {
-                const rc = { success: false, error: `GitHub release v${nextRelease.version} publish failure - ${e.toString()}` };
-                logger.error(rc.error);
-                return rc;
-            }
+        try {
+            response = await got(url, {
+                json: {
+                    draft: false
+                },
+                method: "PATCH",
+                responseType: "json",
+                headers
+            });
         }
-        else {
-            logger.log("Dry run - skip rest request, emulate response");
-            response = {
-                body: {
-                    upload_url: "https://this-is-a-dry-run.com"
-                }
-            };
-        }
-        //
-        // Make sure an upload_url value exists on the response object to check for success
-        //
-        if (response && response.body.upload_url)
-        {
-            logger.success(`Successfully patched/published GitHub release v${nextRelease.version}`);
-        }
-        else {
-            logger.error(`Failed to publish/patch GitHub v${nextRelease.version} release`);
+        catch (e) {
+            rc = { success: false, error: `GitHub release v${nextRelease.version} publish failure - ${e.toString()}` };
+            logger.error(rc.error);
+            return rc;
         }
     }
     else {
-        logger.warn("No un-published release id to publish");
+        logger.log("Dry run - skip rest request, emulate response");
+        response = {
+            body: {
+                upload_url: "https://this-is-a-dry-run.com"
+            }
+        };
     }
+    //
+    // Make sure an upload_url value exists on the response object to check for success
+    //
+    if (response && response.body.upload_url)
+    {
+        logger.success(`Successfully patched/published GitHub release v${nextRelease.version}`);
+    }
+    else {
+        logger.error(`Failed to publish/patch GitHub v${nextRelease.version} release`);
+    }
+
+    rc.success = true;
+    return rc;
 }

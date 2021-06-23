@@ -571,7 +571,7 @@ async function runNodeScript(context: IContext, plugins: any)
     //
     // Github release
     //
-    let didGithubRelease = false;
+    let githubReleaseId;
     if (options.repoType === "git" && options.githubRelease === "Y" && (!options.taskMode || options.taskGithubRelease))
     {   //
         // Pre-github release (.publishrc)
@@ -606,7 +606,7 @@ async function runNodeScript(context: IContext, plugins: any)
         //
         // Set flag to 'publish' release once changes are committed and tag is created
         //
-        didGithubRelease = true;
+        githubReleaseId = ghRc.id.toString();
     }
 
     //
@@ -692,8 +692,8 @@ async function runNodeScript(context: IContext, plugins: any)
             //
             // If there was a Github release made, then publish it and re-tag
             //
-            if (didGithubRelease) {
-                await publishGithubRelease(context);
+            if (githubReleaseId) {
+                await publishGithubRelease(context, githubReleaseId);
             }
         }
         //

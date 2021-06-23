@@ -30,8 +30,9 @@ export interface IEdit
 
 export interface IReturnStatus
 {
-    error: string | undefined;
+    error?: string;
     success: boolean;
+    id?: number | string;
 }
 
 

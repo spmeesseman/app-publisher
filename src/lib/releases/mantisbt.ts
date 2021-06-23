@@ -19,8 +19,7 @@ async function doMantisRelease({ options, logger, nextRelease }: IContext): Prom
     logger.log(`   Version : ${nextRelease.version}`);
 
     let rc: IReturnStatus = {
-        success: true,
-        error: undefined
+        success: true
     };
 
     if (semver.prerelease(semver.clean(nextRelease.version)))
@@ -177,8 +176,9 @@ async function doMantisRelease({ options, logger, nextRelease }: IContext): Prom
                     logger.error(response);
                 }
                 else {
+                    rc.id = response.body.id;
                     logger.success(`MantisBT release v${nextRelease.version} success`);
-                    logger.log(`   ID         : ${response.body.id}`);
+                    logger.log(`   ID         : ${rc.id}`);
                     logger.log(`   Message    : ${response.body.msg}`);
                     logger.log(`   URL        : ${options.mantisbtUrl[i]}`);
                 }
