@@ -78,7 +78,7 @@ export async function commit({options, nextRelease, logger, cwd, env}: IContext)
 
     if (options.repoType === "git")
     {
-        if (changeListAdd)
+        if (changeListAdd.length > 0)
         {
             const chgListPathsAdded = changeListAdd.map((e: any) => e.path);
             logger.info("Adding unversioned touched files to git version control");
@@ -93,7 +93,7 @@ export async function commit({options, nextRelease, logger, cwd, env}: IContext)
                 logger.warning("Add file(s) to VCS failed");
             }
         }
-        if (changeList)
+        if (changeList.length > 0)
         {
             const chgListPaths = changeList.map((e: any) => e.path);
             logger.info("Committing touched files to git version control");
@@ -699,7 +699,7 @@ export async function repoUrl({options, logger, cwd, env}: IContext)
  */
 export async function revert({options, nextRelease, logger, cwd, env}: IContext)
 {
-    if (!nextRelease || nextRelease.edits) {
+    if (!nextRelease || !nextRelease.edits) {
         return;
     }
 
