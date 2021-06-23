@@ -1551,8 +1551,8 @@ export async function doChangelogFileEdit(context: IContext)
         const changelogTitle = `# ${options.projectName} Change Log`.toUpperCase(),
               fmtDate = getFormattedDate();
 
-        let tmpCommits = (nextRelease.changelog.notes || createChangelogSectionFromCommits(context)),
-            changeLogFinal: string;
+        let tmpCommits = nextRelease.changelog.notes || createChangelogSectionFromCommits(context),
+            changeLogFinal = "";
 
         if (options.taskChangelog || !options.taskMode)
         {
@@ -1573,7 +1573,10 @@ export async function doChangelogFileEdit(context: IContext)
             }
         }
         else {
-            changeLogFinal = tmpCommits;
+            if (!options.taskChangelogFile) {
+                changeLogFinal += `${EOL}Pending ${options.versionText} ${nextRelease.version} Changelog:${EOL}${EOL}${EOL}`;
+            }
+            changeLogFinal += tmpCommits;
         }
         //
         // Write content to file
