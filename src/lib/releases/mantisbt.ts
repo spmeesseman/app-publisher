@@ -31,7 +31,7 @@ async function doMantisRelease({ options, logger, nextRelease }: IContext): Prom
     let dryRun = 0;
     if (options.dryRun)
     {
-        logger.log("   Dry run only, will pass 'dryrun' flag to Mantis Releases API");
+        logger.log("Dry run only, will pass 'dryrun' flag to Mantis Releases API");
         dryRun = 1;
     }
 
@@ -48,7 +48,7 @@ async function doMantisRelease({ options, logger, nextRelease }: IContext): Prom
     //
     if (options.dryRun === true)
     {
-        logger.log("   Dry run has generated an html changelog to test functionality:");
+        logger.log("Dry run has generated an html changelog to test functionality:");
         logger.stdout.write(mantisChangelog);
     }
 
@@ -81,7 +81,7 @@ async function doMantisRelease({ options, logger, nextRelease }: IContext): Prom
     //
     if (options.mantisbtAssets.length > 0)
     {
-        logger.log("   Building MantisBT assets list");
+        logger.log("Building MantisBT assets list");
         for (const mbtAsset of options.mantisbtAssets)
         {
             let asset = mbtAsset;
@@ -101,9 +101,9 @@ async function doMantisRelease({ options, logger, nextRelease }: IContext): Prom
                 //
                 // The format to upload an asset is the base64 encoded binary file data
                 //
-                logger.log(`   Reading file asset ${asset}`);
+                logger.log(`Reading file asset ${asset}`);
                 const fileData = await readFile(asset);
-                logger.log(`      File size: ${fileData.length} bytes`);
+                logger.log(`   File size: ${fileData.length} bytes`);
                 if (fileData && fileData.length > 0)
                 {   //
                     // Base 64 encode file data
@@ -121,11 +121,11 @@ async function doMantisRelease({ options, logger, nextRelease }: IContext): Prom
                     request.assets.push(assetData);
                 }
                 else {
-                    logger.warn(`   Partially failed to build MantisBT asset ${assetName} - could not read input file`);
+                    logger.warn(`Partially failed to build MantisBT asset ${assetName} - could not read input file`);
                 }
             }
             else {
-                logger.log(`   Partially failed to build MantisBT asset ${assetName} - input file does not exist`);
+                logger.log(`Partially failed to build MantisBT asset ${assetName} - input file does not exist`);
             }
         }
     }
@@ -149,7 +149,7 @@ async function doMantisRelease({ options, logger, nextRelease }: IContext): Prom
         // Send the REST POST to create the release w/ assets
         //
         const url = options.mantisbtUrl[i] + "/plugins/Releases/api/releases/" + encPrjName;
-        logger.log("   Sending Add-Release REST request to " + url);
+        logger.log("Sending Add-Release REST request to " + url);
         //
         // Send it off
         //

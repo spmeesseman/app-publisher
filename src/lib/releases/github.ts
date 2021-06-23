@@ -12,7 +12,7 @@ export { doGithubRelease, publishGithubRelease };
 
 async function doGithubRelease(context: IContext): Promise<IReturnStatus>
 {
-    const { options, logger, lastRelease, nextRelease, env, cwd } = context;
+    const { options, logger, nextRelease, env, cwd } = context;
 
     logger.log("Starting GitHub release");
     logger.log(`   Version : ${nextRelease.version}`);
@@ -103,13 +103,13 @@ async function doGithubRelease(context: IContext): Promise<IReturnStatus>
     {
         const isPreRelease = semver.prerelease(semver.clean(nextRelease.version));
 
-        logger.log("   Submtting reauest to GitHub");
-        logger.log(`      Body length      : ${githubChangelog.length}`);
-        logger.log(`      Draft            : ${!options.taskGithubRelease}`);
-        logger.log(`      Name             : ${nextRelease.tag}`);
-        logger.log(`      Pre-release      : ${isPreRelease}`);
-        logger.log(`      Tag name         : ${nextRelease.tag}`);
-        logger.log(`      Target commitish : ${options.branch}`);
+        logger.log("Submtting release request to GitHub");
+        logger.log(`   Body length      : ${githubChangelog.length}`);
+        logger.log(`   Draft            : ${!options.taskGithubRelease}`);
+        logger.log(`   Name             : ${nextRelease.tag}`);
+        logger.log(`   Pre-release      : ${isPreRelease}`);
+        logger.log(`   Tag name         : ${nextRelease.tag}`);
+        logger.log(`   Target commitish : ${options.branch}`);
 
         try {
             response = await got(url, {
@@ -151,11 +151,13 @@ async function doGithubRelease(context: IContext): Promise<IReturnStatus>
     {
         rc.id = response.body.id;
 
-        logger.success(`Successfully created GitHub release for v${lastRelease.version}`);
-        logger.log(`   ID         : ${rc.id}`);
-        logger.log(`   Upload URL : ${response.body.upload_url}`);
-        logger.log(`   Tarball URL: ${response.body.zipball_url}`);
-        logger.log(`   Zipball URL: ${response.body.tarball_url}`);
+        logger.success("Successfully created GitHub release");
+        logger.log(`   ID          : ${rc.id}`);
+        logger.log(`   Version     : ${nextRelease.version}`);
+        logger.log(`   Tag name    : ${nextRelease.tag}`);
+        logger.log(`   Upload url  : ${response.body.upload_url}`);
+        logger.log(`   Tarball url : ${response.body.zipball_url}`);
+        logger.log(`   Zipball url : ${response.body.tarball_url}`);
         //
         // Creating the release was successful, upload assets if any were specified
         //
