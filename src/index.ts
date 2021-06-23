@@ -552,11 +552,6 @@ async function runNodeScript(context: IContext, plugins: any)
     //
     if (options.npmRelease === "Y" && (!options.taskMode || options.taskNpmRelease))
     {   //
-        // User can specify values in publishrc that override what;s in the package.json
-        // file.  Manipulate the package.json file if needed
-        //
-        const packageJsonModified = await npm.setPackageJson({options, logger});
-        //
         // Run pre npm-release scripts if specified
         //
         await util.runScripts({ options, logger, cwd, env }, "preNpmRelease", options.npmReleasePreCommand);
