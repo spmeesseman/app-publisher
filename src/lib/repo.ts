@@ -3,6 +3,7 @@ import * as path from "path";
 import { isString } from "./utils/utils";
 import { deleteFile, pathExists, readFile } from "./utils/fs";
 import { IContext } from "../interface";
+import getLogger from "./get-logger";
 const execa = require("execa");
 const debug = require("debug")("app-publisher:git");
 const xml2js = require("xml2js");
@@ -178,7 +179,7 @@ export async function doesTagExist({options, logger, cwd, env}: IContext, tag: s
     {
         const tags: string[] = [],
               parser = new xml2js.Parser(),
-              tagLocation = getSvnTagLocation(options);
+              tagLocation = getSvnTagLocation({options, logger});
 
         const xml = await execSvn([ "log", "--xml", `${tagLocation}`, "--verbose", "--limit", "50" ], true);
 
@@ -313,9 +314,13 @@ export async function getHead({options, logger, cwd, env}: IContext)
 }
 
 
-function getSvnTagLocation(options)
+function getSvnTagLocation({options, logger})
 {
-    return options.repo.replace("trunk", "tags").replace("branches/" + options.branch, "tags");
+    const svnTagLoc = options.repo.replace("trunk", "tags").replace("branches/" + options.branch, "tags");
+    if (options.verbose) {
+        logger.info("The svn tag location is " + svnTagLoc);
+    }
+    return svnTagLoc;
 }
 
 
@@ -377,7 +382,7 @@ export async function getTags({options, logger, cwd, env}: IContext)
     {
         const tags: string[] = [],
               parser = new xml2js.Parser(),
-              tagLocation = getSvnTagLocation(options);
+              tagLocation = getSvnTagLocation({options, logger});
 
         const xml = await execSvn([ "log", "--xml", `${tagLocation}`, "--verbose", "--limit", "50" ], execaOpts, true);
 
@@ -389,9 +394,10 @@ export async function getTags({options, logger, cwd, env}: IContext)
                     throw new Error(err);
                 }
                 for (const logEntry of result.log.logentry) {
-                    for (const p of logEntry.paths) {
+                    for (const p of logEntry.paths)
+                    {
                         const pathObj = p.path[0],
-                              regex = new RegExp(`.*/tags/(${options.vcTagPrefix}[0-9\.]+)`),
+                              regex = new RegExp(".*/tags/(v[0-9\.]+)"),
                               match = regex.exec(pathObj._);
                         if (pathObj.$ && pathObj.$.action === "A" && pathObj.$.kind === "dir" && match)
                         {
@@ -690,6 +696,10 @@ export async function repoUrl({options, logger, cwd, env}: IContext)
  */
 export async function revert({options, nextRelease, logger, cwd, env}: IContext)
 {
+    if (!nextRelease || nextRelease.edits) {
+        return;
+    }
+
     const execaOpts = { cwd, env },
           changeListAdd = nextRelease.edits.filter((e: any) => e.type === "A"),
           changeListModify = nextRelease.edits.filter((e: any) => e.type === "M");

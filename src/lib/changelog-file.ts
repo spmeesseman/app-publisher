@@ -2,8 +2,6 @@
 import * as path from "path";
 import { readFile, pathExists, writeFile, createDir, appendFile, deleteFile } from "./utils/fs";
 import { editFile, properCase, isString } from "./utils/utils";
-import { npmLocation } from "./releases/npm";
-import { addEdit, commit } from "./repo";
 import { IChangelog, IChangelogEntry, ICommit, IContext } from "../interface";
 const execa = require("execa");
 const os = require("os"), EOL = os.EOL;
@@ -193,7 +191,7 @@ async function createReleaseChangelog({ options, logger }, version: string, useF
 }
 
 
-export async function getReleaseChangelog(context: IContext): Promise<IChangelog>
+export async function getReleaseChangelog(context: IContext, version?: string): Promise<IChangelog>
 {
     const {options, nextRelease} = context,
           getHtmlLog = context.options.taskGithubRelease || context.options.taskMantisbtRelease,
@@ -206,15 +204,15 @@ export async function getReleaseChangelog(context: IContext): Promise<IChangelog
     if (getFileLog)
     {
         if (options.historyFile) {
-            fileNotes = await getHistory(context, nextRelease.version, 1) as string;
+            fileNotes = await getHistory(context, version || nextRelease.version, 1) as string;
         }
         else if (options.changelogFile) {
-            fileNotes = await getChangelog(context, nextRelease.version, 1) as string;
+            fileNotes = await getChangelog(context, version || nextRelease.version, 1) as string;
         }
     }
 
     if (getHtmlLog) {
-        htmlNotes = await createReleaseChangelog(context, nextRelease.version);
+        htmlNotes = await createReleaseChangelog(context, version || nextRelease.version);
     }
 
     if (options.historyFile) {
@@ -817,76 +815,6 @@ function createChangelogSectionFromCommits({ options, commits, logger }: IContex
 }
 
 
-function getEmailHeader(options: any, version: string)
-{
-    let szHrefs = "";
-    const incHeader = options.historyHref || (options.distRelease === "Y" || options.distRelease === true) ||
-                      (options.npmRelease === "Y" || options.npmRelease === true) ||
-                      (options.nugetRelease === "Y" || options.nugetRelease === true) ||
-                      ((options.mantisbtRelease === "Y" || options.mantisbtRelease === true) && options.mantisbtUrl);
-    if (incHeader)
-    {
-        szHrefs = "<table>";
-
-        szHrefs += `<tr><td colspan=\"2\"><b>${options.projectName} ${options.versionText} ${version} has been released.</b><br><br></td></tr>`;
-
-        if ((options.mantisbtRelease === "Y" || options.mantisbtRelease === true) && options.mantisbtUrl) {
-            szHrefs += `<tr><td>Release Page</td><td style="padding-left:10px"><a href="${options.mantisbtUrl}/set_project.php?project=${options.projectName}&make_default=no&ref=plugin.php%3Fpage=Releases%2Freleases\">Releases - Projects Board</a></td></tr>`;
-        }
-
-        if (options.distRelease === "Y" || options.distRelease === true)
-        {
-            const targetLoc = path.join(options.distReleasePath, options.projectName, version);
-            szHrefs += `<tr><td>Network Location</td><td style="padding-left:10px"><a href="${targetLoc}">Network Drive Location</a></td></tr>`;
-        }
-
-        if (npmLocation && (options.npmRelease === "Y" || options.npmRelease === true))
-        {
-            szHrefs += `<tr><td>NPM Location</td><td style="padding-left:10px"><a href="${npmLocation}">NPM Registry</a></td></tr>`;
-        }
-
-        // if (options.nugetRelease === "Y" || options.nugetRelease === true)
-        // {
-        //     szHrefs += `<tr><td>Nuget Location</td><td style="padding-left:10px"><a href="${options.nugetRelease}">Nuget Registry</a></td></tr>`;
-        // }
-
-        //
-        // history file
-        //
-        if (options.historyHref) {
-            szHrefs += `<tr><td>Complete History</td><td style="padding-left:10px">${options.historyHref}</td></tr>`;
-        }
-        else if (options.distReleasePath && !options.distReleasePath.includes("http://") && !options.distReleasePath.includes("https://")) {
-            szHrefs += `<tr><td>Complete History</td><td style="padding-left:10px"><a href="${options.distReleasePath}/history.txt">History File - Filesystem Storage</a></td></tr>`;
-        }
-        else if (options.mantisbtRelease === "Y" && options.mantisbtUrl && options.vcWebPath) {
-            szHrefs += `<tr><td>Complete History</td><td style="padding-left:10px"><a href="${options.mantisbtUrl}/plugin.php?page=IFramed/main?title=History&url=${options.vcWebPath}%2F${options.projectName}%2Ftrunk%2Fdoc%2Fhistory.txt">History File - Projects Board</a></td></tr>`;
-        }
-
-        for (const emailHref of options.emailHrefs)
-        {
-            let eLink = emailHref,
-                eLinkName = emailHref,
-                eLinkDescrip = "";
-            if (emailHref.includes("|"))
-            {
-                const emailHrefParts = emailHref.split("|");
-                eLink = emailHrefParts[0];
-                eLinkDescrip = emailHrefParts[1];
-                if (emailHrefParts.length > 2) {
-                    eLinkName = emailHrefParts[2];
-                }
-                szHrefs += `<tr><td>${eLinkDescrip}</td><td style="padding-left:10px"><a href="${eLink}">${eLinkName}</a></td></tr>`;
-            }
-        }
-
-        szHrefs += "</table>";
-    }
-
-    return szHrefs;
-}
-
-
 function getChangelogTypes(changeLog: string)
 {
     const changelogTypes = [],
@@ -931,7 +859,7 @@ function getChangelogTypes(changeLog: string)
  * @param numsections # of section to extract
  * @param listOnly retrieve an array of strings only, not a formatted string
  */
-async function getChangelog({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false, includeEmailHdr = false): Promise<IChangelogEntry[] | string>
+async function getChangelog({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false): Promise<IChangelogEntry[] | string>
 {
     //
     // Make sure user entered correct cmd line params
@@ -950,20 +878,11 @@ async function getChangelog({ options, logger }, version: string, numsections: n
         options.versionText = "Version";
     }
 
-    logger.log("Extract from changelog markdown file");
+    logger.log("Extract section from changelog file");
     logger.log(`   Input File         : '${options.changelogFile}'`);
     logger.log(`   Num Sections       : '${numsections}'`);
     logger.log(`   Version string     : '${options.versionText}'`);
     logger.log(`   List only          : '${listOnly}'`);
-    logger.log(`   Target Location    : '${options.distReleasePath}'`);
-    logger.log(`   NPM                : '${options.npmRelease}'`);
-    logger.log(`   Nuget              : '${options.nugetRelease}'`);
-    logger.log(`   MantisBT release   : '${options.mantisbtRelease}'`);
-    logger.log(`   MantisBT url       : '${options.mantisbtUrl}'`);
-    logger.log(`   History file href  : '${options.historyHref}'`);
-    logger.log(`   Email hrefs        : '${options.emailHrefs}'`);
-    logger.log(`   Vc web path        : '${options.vcWebPath}'`);
-    logger.log(`   Include email hdr  : '${includeEmailHdr}'`);
 
     //
     // Code operation:
@@ -1100,12 +1019,6 @@ async function getChangelog({ options, logger }, version: string, numsections: n
     await writeFile(clFile, contents);
     contents = await execa.stdout("marked", ["--breaks", "--gfm", "--file", clFile]);
     await deleteFile(clFile);
-
-    if (includeEmailHdr === true)
-    {
-        const szHrefs = getEmailHeader(options, version);
-        contents = szHrefs + contents;
-    }
 
     logger.success("Successful");
 
@@ -1294,8 +1207,6 @@ async function getHistory({ options, logger }, version: string, numsections: num
     if (version)
     {
         logger.log("   Write header text to message");
-        const szHrefs = getEmailHeader(options, version);
-        finalContents += `${szHrefs}<br>Most Recent History File Entry:<br><br>`;
         logger.log(`   Write ${numsections} history section(s) to message`);
 
         if (listOnly === false) {

@@ -423,7 +423,7 @@ export const publishRcOpts =
         false,
         [ "-n", "--node" ],
         {
-            help: "Run in nodejs mode (alpha)."
+            help: "Run in nodejs mode (BETA)."
         }
     ],
 
