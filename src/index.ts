@@ -177,7 +177,7 @@ async function run(context: IContext, plugins: any)
     {
         logger.warn(`This ${runTxt} was triggered on the branch '${ciBranch}', but is configured to ` +
                     `publish from '${options.branch}'`);
-        logger.warn("   Continuing due to non-ci environment");
+        logger.warn("   Continuing in non-ci environment");
     }
 
     if (!options.taskModeStdOut) {
@@ -190,7 +190,7 @@ async function run(context: IContext, plugins: any)
     // If we're running a task only, then set the logger to empty methods other
     // than the error logger
     //
-    if (options.taskModeStdOut) {
+    if (options.taskModeStdOut && !options.verbose) {
         context.logger = {
             log: () => { /* */ },
             info: () => { /* */ },
@@ -269,6 +269,8 @@ async function runNodeScript(context: IContext, plugins: any)
 
     //
     // If theres not a git url specified in .publishrc or cmd line, get remote origin url
+    //
+    // TODO - for svn too
     //
     if (options.repoType === "git" && !options.repo)
     {

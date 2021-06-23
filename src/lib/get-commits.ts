@@ -1,5 +1,7 @@
 import gitLogParser from "git-log-parser";
 import getStream from "get-stream";
+import { EOL } from "os";
+import { IChangelogEntry, ICommit, IContext } from "../interface";
 const debug = require("debug")("app-publisher:get-commits");
 const execa = require("execa");
 const xml2js = require("xml2js");
@@ -13,9 +15,10 @@ export = getCommits;
  *
  * @return {Promise<Array<Object>>} The list of commits on the branch `branch` since the last release.
  */
-async function getCommits({ cwd, env, options, lastRelease: { head }, logger })
+async function getCommits(context: IContext): Promise<ICommit[]>
 {
-    let commits: any[] = [];
+    let commits: ICommit[] = [];
+    const { cwd, env, options, lastRelease: { head }, logger } = context;
 
     if (head)
     {
@@ -122,8 +125,36 @@ async function getCommits({ cwd, env, options, lastRelease: { head }, logger })
         }
     }
 
+    //
+    // Sort
+    //
+    if (options.verbose) {
+        logger.info("Sorting commit messages");
+    }
+    commits.sort((c1: ICommit, c2: ICommit) =>
+    {
+        const a = c1.message,
+              b = c2.message;
+        if (a && b) {
+            if (/^[a-z]+\([a-z0-9\- ]*\)\s*: *|^[a-z]+\s*: */g.test(a) && /^[a-z]+\([a-z0-9\- ]*\)\s*: *|^[a-z]+\s*: */g.test(b)) {
+                return a.localeCompare(b);
+            }
+            else if (/^[a-z]+\([a-z0-9\- ]*\)\s*: *|^[a-z]+\s*: */g.test(a)) {
+                return -1;
+            }
+            else if (/^[a-z]+\([a-z0-9\- ]*\)\s*: *|^[a-z]+\s*: */g.test(b)) {
+                return 1;
+            }
+        }
+        if (!a) return 1;
+        if (!b) return -1;
+        return 0;
+    });
+
     logger.info(`Found ${commits.length} commits since last release`);
-    debug("Parsed commits: %o", commits);
+    if (options.verbose) {
+        context.stdout.write(`Parsed commits:${EOL}${commits.map((c: IChangelogEntry) => c.message).join(EOL)}${EOL}`);
+    }
 
     return commits;
 }

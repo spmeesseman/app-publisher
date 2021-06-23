@@ -763,9 +763,9 @@ function createChangelogSectionFromCommits({ options, commits, logger }: IContex
         {
             matched = true;
             if (options.verbose) {
-                logger.info("Format commit message");
-                logger.info("   Section : " + match[1]);
-                logger.info("   Scope   : " + match[2]);
+                logger.log("Format commit message");
+                logger.log("   Section : " + match[1]);
+                logger.log("   Scope   : " + match[2]);
             }
             tmpCommits += formatCommitPart(match[1], match[2], tmpCommit.replace(match[0], ""));
         }
@@ -775,15 +775,15 @@ function createChangelogSectionFromCommits({ options, commits, logger }: IContex
         {
             matched = true;
             if (options.verbose) {
-                logger.info("Format commit message");
-                logger.info("   Section : " + match[1]);
+                logger.log("Format commit message");
+                logger.log("   Section : " + match[1]);
             }
             tmpCommits += formatCommitPart(match[1], undefined, tmpCommit.replace(match[0], ""));
         }
 
         if (!matched) {
             if (options.verbose) {
-                logger.info("Unformatted commit message, no section or subject");
+                logger.log("Unformatted commit message, no section or subject");
             }
             sectionless.push(tmpCommit);
         }
