@@ -78,7 +78,9 @@ export async function editFile({ options, nextRelease, logger, cwd, env }, editF
         seekToEnd = seekToEnd || options.versionFilesScrollDown.includes(editFile);
 
         if (!skipEdit)
-        {   //
+        {
+            logger.log("Open/edit " + editFile);
+            //
             // Start Notepad process to edit specified file
             // If this is win32, and we're told to do do, then use the super cool but painfully slow
             // powershell script that will scroll the content in the editor to the end
@@ -181,9 +183,9 @@ export function properCase(name: string)
 
     return name
         .replace(/(?:^\w|[A-Z]|\b\w)/g, (letter, index) => {
-            return index !== 0 ? letter.toLowerCase() : letter.toUpperCase();
-        })
-        .replace(/[\s\-]+/g, "");
+            return index !== 0 && (index >= name.length - 1 || name[index - 1] !== " ") ? letter.toLowerCase() : letter.toUpperCase();
+        });
+        // .replace(/[\s\-]+/g, "");
 }
 
 
