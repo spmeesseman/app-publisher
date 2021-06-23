@@ -53,7 +53,7 @@ async function doMantisRelease(context: IContext): Promise<IReturnStatus>
     if (options.dryRun === true)
     {
         logger.log("Dry run has generated an html changelog to test functionality:");
-        logger.stdout.write(mantisChangelog);
+        context.stdout.write(mantisChangelog);
     }
 
     //
