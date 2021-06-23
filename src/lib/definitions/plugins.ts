@@ -1,7 +1,7 @@
 const { isString, isPlainObject } = require("lodash");
 const { getHead } = require("../repo");
 const hideSensitive = require("../hide-sensitive");
-const { hideSensitiveValues } = require("../utils");
+const { hideSensitiveValues } = require("../utils/utils");
 const { RELEASE_TYPE, RELEASE_NOTES_SEPARATOR } = require("./constants");
 
 export = {

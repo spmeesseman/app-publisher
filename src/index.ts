@@ -439,7 +439,7 @@ async function runRelease(context: IContext, plugins: any)
     }
 
     //
-    // Tag name for next release
+    // Get the tag name for the next release
     //
     nextRelease.tag = template(options.tagFormat)({ version: nextRelease.version });
 
@@ -464,6 +464,7 @@ async function runRelease(context: IContext, plugins: any)
 
     //
     // Edit/touch changelog / history file
+    // Can be a history style TXT or a changeloge type MD
     //
     const doChangelog = options.taskChangelog || options.taskChangelogView || options.taskChangelogView ||
                         options.taskChangelogHtmlView || options.taskChangelogFile || !options.taskMode;
@@ -512,11 +513,17 @@ async function runRelease(context: IContext, plugins: any)
 
     //
     // Pre-build scipts (.publishrc)
+    // Scripts that are run before manipluation of the verson files and before any build
+    // scripts are ran.
     //
     await util.runScripts({ options, logger, cwd, env }, "preBuild", options.preBuildCommand, true, true);
 
     //
     // Pre - NPM release
+    // We can manipulate the package.json file for an npm release with various properties
+    // on the options object.  Can be used to release the same build to multiple npm
+    // repositories.  THis needs to be done now before any version edits are made and before
+    // any build scripts are ran.
     //
     let packageJsonModified = false;
     if (options.npmRelease === "Y" && (!options.taskMode || options.taskNpmRelease))

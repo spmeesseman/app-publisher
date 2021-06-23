@@ -4743,3 +4743,40 @@ June 23rd, 2021
     Allow MantisBT and GitHub release tasks w/o the constraint of there having
     to be existing changes since the previous release.
 
+
+Version 3.0.2
+June 23rd, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+    
+    A failed MantisBT release causes uncaught exceptions.
+
+2.  Bug Fix:  Npm Release
+    
+    Dynamic scoping for a build using relevant .pubishrc properties is not
+    working.
+
+3.  Refactoring:  General
+    
+    Powershell implementation is now removed, application is now a pure NodeJS
+    implementation.
+

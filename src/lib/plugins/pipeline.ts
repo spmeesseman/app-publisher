@@ -1,7 +1,7 @@
-const {identity} = require('lodash');
-const pReduce = require('p-reduce');
-const AggregateError = require('aggregate-error');
-const {extractErrors} = require('../utils');
+const {identity} = require("lodash");
+const pReduce = require("p-reduce");
+const AggregateError = require("aggregate-error");
+const {extractErrors} = require("../utils/utils");
 
 /**
  * A Function that execute a list of function sequencially. If at least one Function ins the pipeline throws an Error or rejects, the pipeline function rejects as well.

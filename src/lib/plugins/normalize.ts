@@ -1,6 +1,6 @@
 import { isPlainObject, isFunction, noop, cloneDeep, omit } from "lodash";
 import getError from "../get-error";
-const { extractErrors } = require("../utils");
+const { extractErrors } = require("../utils/utils");
 import PLUGINS_DEFINITIONS from "../definitions/plugins";
 import { loadPlugin, parseConfig } from "./utils";
 import { EOL } from "os";

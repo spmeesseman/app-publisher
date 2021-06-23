@@ -807,7 +807,7 @@ export async function tag({options, logger, nextRelease, cwd, env}: IContext)
     }
     else if (options.repoType === "svn")
     {
-        tagLocation = options.repo.replace("trunk", "tags").replace("branches/" + options.branch, "tags");
+        tagLocation = getSvnTagLocation({options, logger});
         if (!options.vcTagPrefix || options.vcTagPrefix === ".")
         {
             tagLocation = `${tagLocation}/${nextRelease.tag}`;
@@ -920,7 +920,7 @@ export async function verifyTagName(context: IContext, tagName: string)
     const { options, logger, cwd, env } = context;
 
     logger.info("verify tag name");
-    logger.info(`   Tag name      : ${tagName}`);
+    logger.info(`   Tag format    : ${tagName}`);
 
     try
     {
