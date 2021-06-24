@@ -22,7 +22,7 @@ pipeline {
     //
     // CHECK OUT FROM SVN
     //
-    stage("Checkout") {
+    stage("Prepare Environment") {
       steps {
         //
         // Subversion Checkout
@@ -65,6 +65,7 @@ pipeline {
         // Check for [skip ci] tag on last commit
         //
         script {
+          env.SKIPCI = "0"
           env.PRODUCTIONRELEASE = "0"
           echo "Log changesets and commit messages:"
           def changeLogSets = currentBuild.changeSets
@@ -76,9 +77,10 @@ pipeline {
             if (i == 0 && entries.length > 0) {
               def entry = entries[0]
               if (entry.msg.indexOf("[skip-ci]") != -1 || entry.msg.indexOf("[skip ci]") != -1) {
+                echo "THE 'skip ci' TAG WAS FOUND IN COMMIT"
+                echo "Set build statis to NOT_BUILT"
                 currentBuild.result = 'NOT_BUILT'
-                echo "The 'skip ci' tag was found in commit. Aborting."
-                return
+                env.SKIPCI = "1" 
               }
             }
             //
@@ -105,9 +107,17 @@ pipeline {
             echo "Current tag         : ${env.TAG_NAME}"
             env.PRODUCTIONRELEASE = "0"
           }
+          //
+          // If the [skip ci] tag is found in the last commit, then exit
+          //
+          if (env.SKIPCI == "1") {
+            currentBuild.result = 'NOT_BUILT'
+            echo "The 'skip ci' tag was found in commit. Aborting."
+            bat "exit 0"
+          }
         }
         echo "Production release  : ${env.PRODUCTIONRELEASE}"
-      }
+      } 
     }
 
     //
@@ -115,9 +125,12 @@ pipeline {
     //
     stage("Pre-Build") {
       when {
-        changelog '.+\\[skip ci\\].*'
+        expression { SKIPCI == "0" }
       }
       steps {
+        //
+        // If the [skip ci] tag is found in the last commit, then exit
+        //
         nodejs("Node 12") {
           //
           // NPM Install
@@ -173,6 +186,9 @@ pipeline {
     // BUILD
     //
     stage("Build") {
+      when {
+        expression { SKIPCI == "0" }
+      }
       steps {
         nodejs("Node 12") {
           bat "npm run build"
@@ -184,20 +200,23 @@ pipeline {
     // TESTS
     //
     stage("Tests") {
+      when {
+        expression { SKIPCI == "0" }
+      }
       steps {
         echo "Run tests"
       }
     }
 
     //
-    // Edit history file
+    // HISTORY FILE
     //
-    stage("Edit History File") {
+    stage("History File") {
       //
       // Only when we have a [production-release] commit
       //
       when {
-        expression { PRODUCTIONRELEASE == "1" }
+        expression { PRODUCTIONRELEASE == "1" && SKIPCI == "0" }
         // expression { PRODUCTIONRELEASE == "0" }   // for testing
       }
       steps {
@@ -280,6 +299,9 @@ pipeline {
     // PUBLISH
     //
     stage("Publish") {
+      when {
+        expression { PRODUCTIONRELEASE == "1" && SKIPCI == "0" }
+      }
       steps {
         echo "Store Jenkins Artifacts"
         archiveArtifacts allowEmptyArchive: true, 
@@ -312,18 +334,20 @@ pipeline {
     //
     always { 
       script {
-        mantisIssueAdd keepTicketPrivate: false, threshold: 'failureOrUnstable'
-        mantisIssueUpdate keepNotePrivate: false, recordChangelog: true, setStatusResolved: true, threshold: 'failureOrUnstable'
-        //
-        // send email
-        // email template to be loaded from managed files
-        //  
-        emailext body: '${JELLY_SCRIPT,template="html"}', 
-                attachLog: true,
-                compressLog: true,
-                mimeType: 'text/html',
-                subject: "Build ${BUILD_NUMBER} : " + currentBuild.currentResult + " : " + env.JOB_NAME,
-                to: "smeesseman@pjats.com" // "${params.EMAIL_RECIPIENTS}"
+        if (env.SKIPCI == "0") {
+          mantisIssueAdd keepTicketPrivate: false, threshold: 'failureOrUnstable'
+          mantisIssueUpdate keepNotePrivate: false, recordChangelog: true, setStatusResolved: true, threshold: 'failureOrUnstable'
+          //
+          // send email
+          // email template to be loaded from managed files
+          //  
+          emailext body: '${JELLY_SCRIPT,template="html"}', 
+                  attachLog: true,
+                  compressLog: true,
+                  mimeType: 'text/html',
+                  subject: "Build ${BUILD_NUMBER} : " + currentBuild.currentResult + " : " + env.JOB_NAME,
+                  to: "smeesseman@pjats.com" // "${params.EMAIL_RECIPIENTS}"
+        }
       }
     }
     //
@@ -331,14 +355,16 @@ pipeline {
     //
     success {
       script {
-        //
-        // Production release only post success tasks
-        //
-        if (env.PRODUCTIONRELEASE == "1") {
-          echo "Successful build"
-          echo "    1. Tag version in SVN."
-          echo "    2. Send release email."
-          bat "app-publisher --node --rc-file .publishrc.pja.json --task-commit --task-email"
+        if (env.SKIPCI == "0") {
+          //
+          // Production release only post success tasks
+          //
+          if (env.PRODUCTIONRELEASE == "1") {
+            echo "Successful build"
+            echo "    1. Tag version in SVN."
+            echo "    2. Send release email."
+            bat "app-publisher --node --rc-file .publishrc.pja.json --task-commit --task-email"
+          }
         }
       }
     }
@@ -355,8 +381,12 @@ pipeline {
       //     // tag "release-*"
       //   }
       // }
-      echo "Failed build"
-      echo "    1. Notify."
+      script {
+        if (env.SKIPCI == "0") {
+          echo "Failed build"
+          echo "    1. Notify."
+        }
+      }
     }
   }
 
