@@ -197,11 +197,11 @@ function parseCommitMessage(context: IContext, commit: ICommit)
     if ((match = regex.exec(commit.message)) !== null) // subject - all lower case, or numbers
     {
         if (options.verbose) {
-            logger.log(`   Extracted subject ${match[2]} from commit message`);
-            logger.log(`   Extracted scope ${match[1]} from commit message`);
+            logger.log(`   Extracted subject ${match[1]} from commit message`);
+            logger.log(`   Extracted scope ${match[2]} from commit message`);
         }
-        commit.scope = match[1];
-        commit.subject = match[2];
+        commit.subject = match[1];
+        commit.scope = match[2];
     }
     else
     {
