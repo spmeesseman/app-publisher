@@ -5,3 +5,4 @@ ap.env
 README.md
 .publishrc.*.json
 README.pdf
+install/dist/app-publisher.tgz
