@@ -194,7 +194,7 @@ function parseCommitMessage(context: IContext, commit: ICommit)
     const { options, logger } = context;
     let regex = /^([a-z]+)\(([a-z0-9\- ]*)\)\s*: */gmi;
     let match: RegExpExecArray;
-    if ((match = regex.exec(commit.message)) !== null) // subject - all lower case, or numbers
+    if ((match = regex.exec(commit.message)) !== null)
     {
         if (options.verbose) {
             logger.log(`   Extracted subject ${match[1]} from commit message`);
@@ -206,12 +206,12 @@ function parseCommitMessage(context: IContext, commit: ICommit)
     else
     {
         regex = /^([a-z]+)\s*: */gmi;
-        if ((match = regex.exec(commit.message)) !== null) // subject - all lower case, or numbers
+        if ((match = regex.exec(commit.message)) !== null)
         {
             if (options.verbose) {
                 logger.log(`   Extracted subject ${match[1]} from commit message`);
             }
-            return match[1];
+            commit.subject = match[1];
         }
     }
 }

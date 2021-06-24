@@ -735,7 +735,7 @@ function createChangelogSectionFromCommits({ options, commits, logger }: IContex
         let matched = false,
             match: RegExpExecArray;
         let regex = new RegExp(/^([a-z]+)\(([a-z0-9\- ]*)\)\s*: */gmi);
-        while ((match = regex.exec(tmpCommit)) !== null) // subject - all lower case, or numbers
+        while ((match = regex.exec(tmpCommit)) !== null) // subject / scope
         {
             matched = true;
             if (options.verbose) {
@@ -747,7 +747,7 @@ function createChangelogSectionFromCommits({ options, commits, logger }: IContex
         }
 
         regex = new RegExp(/^([a-z]+)\s*: */gmi);
-        while ((match = regex.exec(tmpCommit)) !== null) // subject - all lower case, or numbers
+        while ((match = regex.exec(tmpCommit)) !== null) // subject
         {
             matched = true;
             if (options.verbose) {
