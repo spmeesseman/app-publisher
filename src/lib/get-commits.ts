@@ -136,6 +136,18 @@ async function getCommits(context: IContext): Promise<ICommit[]>
     }
     commits.sort((c1: ICommit, c2: ICommit) =>
     {
+        if (c1.subject === "build") {
+            return 1;
+        }
+        else if (c2.subject === "build") {
+            return -1;
+        }
+        else if (c1.subject === "ci") {
+            return c2.subject === "build" ? -1 : 1;
+        }
+        else if (c2.subject === "ci") {
+            return c1.subject === "build" ? 1 : -1;
+        }
         const a = c1.message,
               b = c2.message;
         if (a && b) {
