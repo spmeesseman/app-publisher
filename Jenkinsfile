@@ -73,12 +73,14 @@ pipeline {
             //
             // If the [skip ci] tag is found in the last commit, then exit
             //
-            if (i == changeLogSets.size() - 1 && entries.length > 0) {
-              def entry = entries[entries.length - 1]
+            // if (i == changeLogSets.size() - 1 && entries.length > 0) {
+            if (i == 0 && entries.length > 0) {
+              // def entry = entries[entries.length - 1]
+              def entry = entries[0]
               if (entry.msg.indexOf("[skip-ci]") != -1 || entry.msg.indexOf("[skip ci]") != -1) {
                 currentBuild.result = 'NOT_BUILT'
                 echo "The 'skip ci' tag was found in commit. Aborting."
-                success("The 'skip ci' tag was found in commit. Aborting.")
+                return
               }
             }
             //
