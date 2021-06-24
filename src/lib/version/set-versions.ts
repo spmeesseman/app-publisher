@@ -1,6 +1,6 @@
 
 import { pathExists, replaceInFile } from "../utils/fs";
-import { editFile } from "../utils/utils";
+import { editFile, isString } from "../utils/utils";
 import { setAppPublisherVersion } from "./app-publisher";
 import { setDotNetVersion, getDotNetFiles } from "./dotnet";
 import { setExtJsVersion } from "./extjs";
@@ -9,6 +9,7 @@ import { setMantisBtVersion } from "./mantisbt";
 import { setPomVersion } from "./pom";
 import { setNpmVersion } from "./npm";
 import { IContext } from "../../interface";
+import { EOL } from "os";
 
 export = setVersions;
 
@@ -98,8 +99,15 @@ async function setVersionFiles(context: IContext): Promise<void>
         logger.log("   # of files : 0");
         return;
     }
-    logger.log("   # of files : " + options.versionFiles);
-
+    logger.log("   # of files : " + options.versionFiles.length);
+    if (options.verbose) {
+        if (!isString(options.versionFiles)) {
+            context.stdout.write(options.versionFiles.join(EOL) + EOL);
+        }
+        else {
+            context.stdout.write(options.versionFiles + EOL);
+        }
+    }
     //
     // Below is set to handle an assemblyinfo.cs file or other version file in semver format, but the
     // build version type is incremental
@@ -147,7 +155,10 @@ async function setVersionFiles(context: IContext): Promise<void>
             //
             let rc = false;
             logger.log(`Writing new version ${semVersion} to ${vFile}`);
-            if (options.versionReplaceTags.length > 0)
+            //
+            // versionReplaceTags
+            //
+            if (options.versionReplaceTags && options.versionReplaceTags.length > 0)
             {
                 for (const replaceTag of options.versionReplaceTags)
                 {
@@ -157,6 +168,9 @@ async function setVersionFiles(context: IContext): Promise<void>
                     }
                 }
             }
+            //
+            // Replace
+            //
             if (rc !== true)
             {
                 rc = await replaceInFile(vFile, `"${lastRelease.version}"`, `"${semVersion}"`);
