@@ -206,10 +206,12 @@ async function run(context: IContext, plugins: any)
     try {
         success = await runRelease(context, plugins);
         if (!success) {
+            revertChanges(context);
             logger.error("Release run returned failure status");
         }
     }
     catch (e) {
+        await callFail(context, plugins, e);
         const eStr = e.toString();
         logger.error("Release run threw failure exception");
         if (eStr.endsWith("\n")) {
@@ -218,8 +220,6 @@ async function run(context: IContext, plugins: any)
         else {
             logger.error(eStr);
         }
-        // await callFail(context, plugins, e);
-        // throw e;
     }
 
     return success;
@@ -770,10 +770,7 @@ async function runRelease(context: IContext, plugins: any)
         //
         // Revert all changes if dry run, and configured to do so
         //
-        if (options.dryRun && options.dryRunVcRevert === "Y")
-        {
-            await revert(context);
-        }
+        revertChanges(context);
     }
 
     //
@@ -981,16 +978,20 @@ function logErrors({ logger, stderr }, err)
 }
 
 
-async function callFail(context: IContext, plugins, err)
-{
-    //
+async function revertChanges(context: IContext)
+{//
     // Revert all changes if dry run, and configured to do so
     //
     if (context.options.dryRun && context.options.dryRunVcRevert)
     {
         await revert(context);
     }
+}
 
+
+async function callFail(context: IContext, plugins, err)
+{
+    revertChanges(context);
     const errors = util.extractErrors(err).filter(err => err.semanticRelease);
     if (errors.length > 0)
     {
