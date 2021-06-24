@@ -11,10 +11,9 @@
     "bugs": {
         "url": "https://github.com/spmeesseman/app-publisher/issues"
     },
-    "homepage": "https://github.com/spmeesseman/app-publisher/issues",
     "repository": {
         "type": "git",
-        "url": "https://svn.development.pjats.com/pja/app-publisher/trunk"
+        "url": "https://github.com/spmeesseman/app-publisher.git"
     },
     "dependencies": {
         "@spmeesseman/arg-parser": "^1.1.5",

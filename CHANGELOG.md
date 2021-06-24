@@ -1,5 +1,22 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.0.2 (June 23rd, 2021)
+
+### Bug Fixes
+
+- **Mantis Release:** a failed github release causes uncaught exceptions
+- **NPM Release:** commit messages with a scope are not figuring into the calculation of the next version
+- **Dry Run:** dry run changes are not being reverted if dryRunVcRevert flag is set to "Y"
+- **Changelog:** the --task-changelog task is writing a section with 0 messages
+- **NPM Release:** dynamic scoping from pubishrc property not wokring
+- **Verify:** svn runnot verifying tag name exists
+
+### Refactoring
+
+- **Logging:** add tags to verbose logging
+- **General:** powershell implementation is now removed
+- **Npm Release:** dynamic scoping should wait to just before commit/tag stage beofre being restored.
+
 ## Version 3.0.1 (June 23rd, 2021)
 
 ### Bug Fixes
