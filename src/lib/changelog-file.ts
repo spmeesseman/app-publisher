@@ -672,8 +672,6 @@ function createChangelogSectionFromCommits({ options, commits, logger }: IContex
             fmtCommitMsg += `**${scope}:** `;
         }
 
-        commitMsg = `This is a test:${EOL}${EOL}   Test A${EOL}   Test B${EOL}${EOL}This should be the last line.`;
-
         //
         // For multi-line comments, do some special processing
         //
