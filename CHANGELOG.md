@@ -1,5 +1,26 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.0.3 (June 24th, 2021)
+
+### Bug Fixes
+
+- **General:** handful of fixes exposed by interface extension
+- **Changelog:** build and ci subject commit messages should be sorted to the end when creating a new history / changelog section.
+- **Changelog:** html changelog extracted from md type doesnt remove scope name from message.
+- **Changelog:** remove [...] commit tags from commit message entries other than ticket related tags.
+- **General:** builds fail on win32: Command failed: powershell.exe, the term 'undefined' is not recognized as the name of a cmdlet
+- **NPM Release:** dynamic package.json manipulation does not restore homepage or repository url correctly.
+
+### Refactoring
+
+- **Changelog:** uppercased words/acronyms in the commit message subject get title cased when creating the history / changelog file entry.
+- **Changelog:** populate the scope column with 'General' in the HTML changelog if there is no scope in the commit message for that entry.
+- **Changelog:** remove all release tags in the form [* release], e.g.,, etc.
+
+### Continuous Integration
+
+- **Checkout:** if last commit includes the [skip-ci] tag, then exit build.
+
 ## Version 3.0.2 (June 23rd, 2021)
 
 ### Bug Fixes
