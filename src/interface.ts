@@ -36,6 +36,7 @@ export interface ICommit
     gitTags?: string;
     message: string;
     hash: string;
+    scope: string;
     subject: string;
     committerDate?: string;
 }

@@ -28,12 +28,20 @@ async function getCommits(context: IContext): Promise<ICommit[]>
 
     if (options.repoType === "git")
     {
-        function processCommits(commit: ICommit)
+        function processCommits(commit: any)
         {
-            commit.message = commit.message.trim();
-            commit.gitTags = commit.gitTags.trim();
-            commit.subject = extractSubjectFromMessage(context, commit.message);
-            return commit;
+            const c = {
+                author: commit.author,
+                committer: commit.committer,
+                gitTags: commit.gitTags.trim(),
+                hash: commit.hash,
+                message: commit.message.trim(),
+                committerDate: commit.committerDate,
+                scope: undefined,
+                subject: undefined
+            };
+            parseCommitMessage(context, c);
+            return c;
         }
 
         Object.assign(gitLogParser.fields, { hash: "H", message: "B", gitTags: "d", committerDate: { key: "ci", type: Date } });
@@ -106,9 +114,11 @@ async function getCommits(context: IContext): Promise<ICommit[]>
                 //
                 // Parse the commit messages
                 //
-                for (const logEntry of result.log.logentry) {
-                    if (logEntry.msg && logEntry.msg[0]) {
-                        commits.push({
+                for (const logEntry of result.log.logentry)
+                {
+                    if (logEntry.msg && logEntry.msg[0])
+                    {
+                        const commit = {
                             author: {
                                 name: logEntry.author[0]
                             },
@@ -116,10 +126,13 @@ async function getCommits(context: IContext): Promise<ICommit[]>
                                 name: logEntry.author[0]
                             },
                             message: logEntry.msg[0].trim(),
-                            subject: extractSubjectFromMessage(context, logEntry.msg[0].trim()),
                             hash: logEntry.$.revision,
-                            committerDate: logEntry.date[0]
-                        });
+                            committerDate: logEntry.date[0],
+                            scope: undefined,
+                            subject: undefined
+                        };
+                        parseCommitMessage(context, commit);
+                        commits.push(commit);
                     }
                 }
             });
@@ -176,17 +189,29 @@ async function getCommits(context: IContext): Promise<ICommit[]>
 }
 
 
-function extractSubjectFromMessage(context: IContext, msg: string)
+function parseCommitMessage(context: IContext, commit: ICommit)
 {
-    const { options, logger } = context,
-          regex = /^[a-z]+\(([a-z0-9\- ]*)\)\s*: */gm;
+    const { options, logger } = context;
+    let regex = /^([a-z]+)\(([a-z0-9\- ]*)\)\s*: */gmi;
     let match: RegExpExecArray;
-    if ((match = regex.exec(msg)) !== null) // subject - all lower case, or numbers
+    if ((match = regex.exec(commit.message)) !== null) // subject - all lower case, or numbers
     {
         if (options.verbose) {
-            logger.log(`Extracted subject ${match[1]} from commit message`);
+            logger.log(`   Extracted subject ${match[2]} from commit message`);
+            logger.log(`   Extracted scope ${match[1]} from commit message`);
         }
-        return match[1];
+        commit.scope = match[1];
+        commit.subject = match[2];
     }
-    return "";
+    else
+    {
+        regex = /^([a-z]+)\s*: */gmi;
+        if ((match = regex.exec(commit.message)) !== null) // subject - all lower case, or numbers
+        {
+            if (options.verbose) {
+                logger.log(`   Extracted subject ${match[1]} from commit message`);
+            }
+            return match[1];
+        }
+    }
 }
