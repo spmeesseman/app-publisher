@@ -254,7 +254,7 @@ async function execSvn(svnArgs: string[], execaOpts: any, stdout = false)
 /**
  * Unshallow the git repository if necessary and fetch all the tags.
  *
- * @param context context
+ * @param context The run context object.
  * @param execaOpts execa options
  */
 export async function fetch({ options, logger, cwd, env }: IContext)
@@ -846,7 +846,7 @@ function throwVcsError(msg: string, logger: any)
 /**
  * Verify the write access authorization to remote repository with push dry-run.
  *
- * @param context context
+ * @param context The run context object.
  * @param execaOpts Options to pass to `execa`.
  *
  * @throws {Error} if not authorized to push or the repository type is invalid.

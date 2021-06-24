@@ -7,13 +7,20 @@ const execa = require("execa");
 const os = require("os"), EOL = os.EOL;
 
 
+/**
+ * Gets a cleaned section entry, replacing tags such as [skip ci], etc.
+ *
+ * @since 3.0.3
+ * @param msg The changelog / history section entry to clean
+ * @returns Cleaned section entry
+ */
 function cleanMessage(msg: string)
 {
-    return msg.replace(/(?<!\w)(?:Api|Npm|Sso|Svn|Html?)(?= |$|\.)/gm, (m, args): string =>
+    return msg.replace(/(?<!\w)(?:Api|Npm|Sso|Svn|Html?)(?= |$|\.)/gm, (m): string =>
     {
         return m.toUpperCase();
     })
-    .replace(/[ ]*\[(?:skip[ \-]{1}ci|[a-z]+[ \-]{1}release)\]/gmi, (m, args): string =>
+    .replace(/[ ]*\[(?:skip[ \-]{1}ci|[a-z]+[ \-]{1}release)\]/gmi, (m): string =>
     {
         return "";
     });
@@ -65,7 +72,7 @@ function containsValidSubject(options, line: string): boolean
  * This method extracts the notes in the hostory/changelog file for the specified
  * version to build the content.
  *
- * @param context context
+ * @param context The run context object.
  * @param version The version to extract the notes from in the history/changelog file.
  * @param useFaIcons Use font aweome icons
  * @param includeStyling include css styling
@@ -201,7 +208,7 @@ async function createHtmlChangelog({ options, logger }, version: string, useFaIc
  *
  * @since 2.8.0
  *
- * @param context context
+ * @param context The run context object.
  */
 function createHistorySectionFromCommits({ options, commits, logger }: IContext)
 {
@@ -209,10 +216,11 @@ function createHistorySectionFromCommits({ options, commits, logger }: IContext)
     let commentNum = 1;
 
     if (!commits || commits.length === 0) {
+        logger.warn("Cannot build history file section, there are no commits");
         return comments;
     }
 
-    logger.log(`Building history section from ${commits.length} commits`);
+    logger.log(`Build history file section from ${commits.length} commits`);
 
     //
     // Parse the commit messages
@@ -619,10 +627,11 @@ function createChangelogSectionFromCommits({ options, commits, logger }: IContex
     const sectionless: string[] = [];
 
     if (!commits || commits.length === 0) {
+        logger.warn("Cannot build changelog section, there are no commits");
         return tmpCommits;
     }
 
-    logger.log(`Building changelog section from ${commits.length} commits`);
+    logger.log(`Build changelog file section from ${commits.length} commits`);
 
     function formatCommitPart(section: string, scope: string, commitMsg: string): string
     {
@@ -787,10 +796,8 @@ function createChangelogSectionFromCommits({ options, commits, logger }: IContex
 export function createSectionFromCommits(context: IContext)
 {
     if (context.options.historyFile) {
-        context.logger.log("Get txt type history file / changelog");
         return createHistorySectionFromCommits(context);
     }
-    context.logger.log("Get md type changelog");
     return createChangelogSectionFromCommits(context);
 }
 
@@ -800,7 +807,7 @@ async function doChangelogFileEdit(context: IContext)
     const { options, logger, lastRelease, nextRelease, env, cwd } = context,
           originalFile = options.changelogFile;
 
-    logger.log("Preparing changelog file");
+    logger.log("Start changelog file edit");
 
     if (options.taskChangelogFile || options.taskChangelogHtmlFile)
     {
@@ -827,7 +834,7 @@ async function doChangelogFileEdit(context: IContext)
 
     if (changeLogPath !== "" && !(await pathExists(changeLogPath)))
     {
-        logger.log("Creating changeLog file directory");
+        logger.log("Create changeLog file directory");
         await createDir(changeLogPath);
     }
 
@@ -921,7 +928,8 @@ async function doHistoryFileEdit(context: IContext)
     const fmtDate = getFormattedDate(),
           { options, logger, lastRelease, nextRelease, env, cwd} = context,
           originalFile = options.historyFile;
-    logger.log("Preparing history file");
+
+    logger.log("Start history file edit");
 
     if (options.taskChangelogFile || options.taskChangelogHtmlFile)
     {
@@ -949,13 +957,13 @@ async function doHistoryFileEdit(context: IContext)
 
     if (historyPath && !(await pathExists(historyPath)))
     {
-        logger.log("Creating history file directory");
+        logger.log("Create history file directory");
         await createDir(historyPath);
     }
 
     if (!(await pathExists(options.historyFile)))
     {
-        logger.log("Creating new history file");
+        logger.log("Create new history file");
         if (options.taskChangelog || !options.taskMode)
         {
             await writeFile(options.historyFile, options.projectName + EOL + EOL);
@@ -1053,7 +1061,7 @@ async function doHistoryFileEdit(context: IContext)
 /**
  * Gets changelog file section using the hostory/changelog file by parsing the sepcified versions section
  *
- * @param context context
+ * @param context The run context object.
  * @param version The version to extract the notes from in the history/changelog file.
  * @param numsections # of section to extract
  * @param listOnly retrieve an array of strings only, not a formatted string
@@ -1160,7 +1168,7 @@ async function getChangelogFileSections({ options, logger }, version: string, nu
         contents = contents.replace(/\t/gm, "&nbsp;&nbsp;&nbsp;&nbsp;");
 
         //
-        // The getChangelogTypes() method returns a list of types for each note in the section.
+        // The getChangelogSubjectsFromHtml() method returns a list of types for each note in the section.
         //
         // For example:
         //
@@ -1177,7 +1185,7 @@ async function getChangelogFileSections({ options, logger }, version: string, nu
         //
         //    [ "Features", "Features", "Bug Fixes" ]
         //
-        typeParts.push(...getChangelogTypes(contents));
+        typeParts.push(...getChangelogSubjectsFromHtml(contents));
         if (typeParts.length === 0) {
             throw new Error("166");
         }
@@ -1263,7 +1271,14 @@ async function getChangelogFileSections({ options, logger }, version: string, nu
 }
 
 
-function getChangelogTypes(changeLog: string)
+/**
+ * Gets anarray returning the commit types
+ *
+ * @since 3.0.0
+ * @param changeLog HTML formatted changeog / history file section
+ * @returns Array of commit subjects in order of the commits list
+ */
+function getChangelogSubjectsFromHtml(changeLog: string): string[]
 {
     const changelogTypes = [],
           regex = new RegExp(/\w*(?<=### ).+?(?=(<br>-))/gm);
@@ -1299,6 +1314,13 @@ function getChangelogTypes(changeLog: string)
 }
 
 
+/**
+ * Gets the last entered section (latest version) of the changelog / history file.
+ *
+ * @since 3.0.0
+ * @param context The run context object.
+ * @returns The changelog / history file section for the latest version found.
+ */
 async function getFileNotes(context: IContext, version: string)
 {
     const {options, nextRelease, logger} = context;
@@ -1350,7 +1372,7 @@ function getFormattedDate()
 /**
  * Gets history file section using the hostory/changelog file by parsing the sepcified versions section
  *
- * @param context context
+ * @param context The run context object.
  * @param version The version to extract the notes from in the history/changelog file.
  * @param numsections # of section to extract
  * @param listOnly retrieve an array of strings only, not a formatted string
@@ -1782,6 +1804,12 @@ function getFormattedSubject({options}, subject: string)
 }
 
 
+/**
+ * Populates the changelog object of the run context
+ *
+ * @since 3.0.3
+ * @param context The run context object.  The `context.changelog` object will be populated.
+ */
 export async function populateChangelogs(context: IContext)
 {
     const {options, lastRelease, nextRelease, logger} = context,
@@ -1807,6 +1835,14 @@ export async function populateChangelogs(context: IContext)
 }
 
 
+/**
+ * Gets the path to the changelog file for the current project.  This is one of `options.historyFile`
+ * or `options.changelogFile`.
+ *
+ * @since 3.0.3
+ * @param context The run context object.
+ * @returns The path to the project changelog file.
+ */
 export function getProjectChangelogFile(context: IContext)
 {
     const { options } = context;
@@ -1814,16 +1850,26 @@ export function getProjectChangelogFile(context: IContext)
 }
 
 
+/**
+ * Gets whether or not a commit message should be included in a changelog file section.
+ *
+ * @since 3.0.3
+ * @param context The run context object.
+ * @returns `true` if the commit message should be skipped, `false` otherwise
+ */
 export function isSkippedCommitMessage(msg: string)
 {
     const m = msg.trimLeft().toLowerCase();
     return m.startsWith("chore") || m.startsWith("progress") || m.startsWith("style") || m.startsWith("project");
 }
+
+
 /**
- * Gets version from changelog file by looking at the 'title' of the lastentry
+ * Gets version number from the last entered section of the changelog / history file.
  *
  * @since 3.0.0
- * @param context context
+ * @param context The run context object.
+ * @returns The version number of the last section found in the history / changelog file.
  */
 export async function getVersion({ options, logger })
 {

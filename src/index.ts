@@ -816,7 +816,7 @@ async function runRelease(context: IContext, plugins: any)
 /**
  * Tasks that can be processed without retrieving commits and other tag related info
  *
- * @param context context
+ * @param context The run context object.
  */
 async function processTasks1(context: IContext): Promise<boolean>
 {
@@ -852,7 +852,7 @@ async function processTasks1(context: IContext): Promise<boolean>
 /**
  * Tasks that can be processed without retrieving commits, but last release info is required
  *
- * @param context context
+ * @param context The run context object.
  */
 async function processTasks2(context: IContext): Promise<boolean>
 {
@@ -869,7 +869,7 @@ async function processTasks2(context: IContext): Promise<boolean>
  * Tasks that can be processed without retrieving commits, but last and next release info
  * is required
  *
- * @param context context
+ * @param context The run context object.
  */
 async function processTasks3(context: IContext): Promise<boolean>
 {
@@ -885,7 +885,7 @@ async function processTasks3(context: IContext): Promise<boolean>
 /**
  * Tasks that need to be processed "after" retrieving commits and other tag related info
  *
- * @param context context
+ * @param context The run context object.
  */
 async function processTasks4(context: IContext): Promise<boolean>
 {
