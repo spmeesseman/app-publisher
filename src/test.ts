@@ -1,7 +1,17 @@
 export = runDevCodeTests;
 
+//
+// Run with --task-dev-test
+//
 function runDevCodeTests()
 {
+    // let msg = "ApiExtend is an Api that ApiUser the with Api ExtendApi.";
+    // msg = msg.replace(/(?<!\w)(?:Api|Npm|Sso|Svn)(?= |$|\.)/gmi, (m, args): string =>
+    // {
+    //     return m.toUpperCase();
+    // })
+    // .replace(/[ ]*\[skip[ \-]{1}ci\]/gmi, "");
+    // console.log(msg);
     // const edits = [{
     //     path: "src/test.txt",
     //     type: "M"

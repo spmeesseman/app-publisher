@@ -9,10 +9,11 @@ const os = require("os"), EOL = os.EOL;
 
 function cleanMessage(msg: string)
 {
-    return msg.replace(/[ ]*\[skip[ \-]{1}ci\]/gmi, "")
-              .replace(/\[[a-z]+[ \-]{1}release\]/gmi, "")
-              .replace(/Npm/gmi, "NPM")
-              .replace(/Svn/gmi, "SVN");
+    return msg.replace(/(?<!\w)(?:Api|Npm|Sso|Svn)(?= |$|\.)/gmi, (m, args): string =>
+    {
+        return m.toUpperCase();
+    })
+    .replace(/[ ]*\[skip[ \-]{1}ci\]/gmi, "");
 }
 
 
