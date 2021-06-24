@@ -370,7 +370,7 @@ const contentTypeMap = {
     ".prm": "application/octet-stream",
     ".prx": "application/octet-stream",
     ".ps": "application/postscript",
-    ".psc1": "application/PowerShell",
+    ".ps1": "application/PowerShell",
     ".psd": "application/octet-stream",
     ".psess": "application/xml",
     ".psm": "application/octet-stream",

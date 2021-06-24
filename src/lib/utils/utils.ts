@@ -89,10 +89,15 @@ export async function editFile({ options, nextRelease, logger, cwd, env }, editF
             if (process.platform === "win32" && seekToEnd && !options.taskMode)
             {
                 const ps1Script = await getPsScriptLocation("edit-file");
-                await execa.sync("powershell.exe",
-                    [ ps1Script, "-f", editFile, "-e", options.textEditor, "-s", seekToEnd, "-a", options.taskMode ],
-                    { stdio: ["pipe", "pipe", "pipe"], env: process.env}
-                );
+                if (ps1Script) {
+                    await execa.sync("powershell.exe",
+                        [ ps1Script, "-f", editFile, "-e", options.textEditor, "-s", seekToEnd, "-a", options.taskMode ],
+                        { stdio: ["pipe", "pipe", "pipe"], env: process.env}
+                    );
+                }
+                else {
+                    await execa.sync(options.textEditor, [ editFile ]);
+                }
             }
             else {
                 if (options.taskMode) { // unref() so parent doesn't wait
@@ -121,7 +126,12 @@ export function escapeRegExp(text: string)
 
 export async function getPsScriptLocation(scriptFile: string)
 {
-    let ps1Script;
+    let ps1Script: string;
+
+    if (process.platform !== "win32") {
+        return ps1Script;
+    }
+
     if (await pathExists(`.\\node_modules\\@spmeesseman\\${scriptFile}.ps1`)) {
         ps1Script = `.\\node_modules\\@spmeesseman\\${scriptFile}\\script\\${scriptFile}.ps1`;
     }
@@ -141,19 +151,19 @@ export async function getPsScriptLocation(scriptFile: string)
             // Check global node_modules
             //
             const gModuleDir = process.env.CODE_HOME + "\\nodejs\\node_modules";
-            if (await pathExists(gModuleDir + `\\@perryjohnson\\${scriptFile}\\script\\${scriptFile}.ps1`)) {
-                ps1Script = gModuleDir + `\\@perryjohnson\\${scriptFile}\\script\\${scriptFile}.ps1`;
+            if (await pathExists(gModuleDir + `\\@spmeesseman\\${scriptFile}\\script\\${scriptFile}.ps1`)) {
+                ps1Script = gModuleDir + `\\@spmeesseman\\app-publisher\\script\\${scriptFile}.ps1`;
             }
-            else if (await pathExists(gModuleDir + `\\@spmeesseman\\${scriptFile}\\script\\${scriptFile}.ps1`)) {
-                ps1Script = gModuleDir + `\\@spmeesseman\\${scriptFile}\\script\\${scriptFile}.ps1`;
+            else if (await pathExists(gModuleDir + `\\@perryjohnson\\script\\${scriptFile}.ps1`)) {
+                ps1Script = gModuleDir + `\\@perryjohnson\\app-publisher\\script\\${scriptFile}.ps1`;
             }
         }
         // Check windows install
         //
         else if (process.env.APP_PUBLISHER_HOME)
         {
-            if (await pathExists(process.env.APP_PUBLISHER_HOME + `\\${scriptFile}.ps1`)) {
-                ps1Script = `.\\${scriptFile}.ps1`;
+            if (await pathExists(process.env.APP_PUBLISHER_HOME + `\\script\\${scriptFile}.ps1`)) {
+                ps1Script = process.env.APP_PUBLISHER_HOME + `\\script\\${scriptFile}.ps1`;
             }
         }
     }
