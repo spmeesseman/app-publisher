@@ -16,7 +16,7 @@ const os = require("os"), EOL = os.EOL;
  */
 function cleanMessage(msg: string)
 {
-    return msg.replace(/(?<!\w)(?:Api|Npm|Sso|Svn|Html?)(?= |$|\.)/gm, (m): string =>
+    return msg.replace(/(?<!\w)(?:Api|Npm|Sso|Svn|Html?|Crud)(?= |$|\.)/gm, (m): string =>
     {
         return m.toUpperCase();
     })
