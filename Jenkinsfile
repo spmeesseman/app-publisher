@@ -19,9 +19,15 @@ pipeline {
   }
 
   stages {
-    
+    //
+    // CHECK OUT FROM SVN
+    //
     stage("Checkout") {
       steps {
+        //
+        // Subversion Checkout
+        //
+        echo "Subversion checkout..."
         checkout(
           poll: false,
           scm: [
@@ -56,6 +62,7 @@ pipeline {
         //
         // Log commit messages
         // Set variables to use throughout build process
+        // Check for [skip ci] tag on last commit
         //
         script {
           env.PRODUCTIONRELEASE = "0"
@@ -63,6 +70,20 @@ pipeline {
           def changeLogSets = currentBuild.changeSets
           for (int i = 0; i < changeLogSets.size(); i++) {
             def entries = changeLogSets[i].items
+            //
+            // If the [skip ci] tag is found in the last commit, then exit
+            //
+            if (i == changeLogSets.size() - 1 && entries.length > 0) {
+              def entry = entries[entries.length - 1]
+              if (entry.msg.indexOf("[skip-ci]") != -1 || entry.msg.indexOf("[skip ci]") != -1) {
+                currentBuild.result = 'NOT_BUILT'
+                echo "The 'skip ci' tag was found in commit. Aborting."
+                success("The 'skip ci' tag was found in commit. Aborting.")
+              }
+            }
+            //
+            // Set environment control flags and log commit messages
+            //
             for (int j = 0; j < entries.length; j++) {
                 def entry = entries[j]
                 echo "${entry.commitId} by ${entry.author} on ${new Date(entry.timestamp)}: ${entry.msg}"
@@ -93,6 +114,9 @@ pipeline {
     // PRE-BUILD
     //
     stage("Pre-Build") {
+      when {
+        changelog '.+\\[skip ci\\].*'
+      }
       steps {
         nodejs("Node 12") {
           //
