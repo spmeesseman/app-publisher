@@ -28,10 +28,11 @@ async function getCommits(context: IContext): Promise<ICommit[]>
 
     if (options.repoType === "git")
     {
-        function processCommits(commit: any)
+        function processCommits(commit: ICommit)
         {
             commit.message = commit.message.trim();
             commit.gitTags = commit.gitTags.trim();
+            commit.subject = extractSubjectFromMessage(context, commit.message);
             return commit;
         }
 
@@ -115,7 +116,7 @@ async function getCommits(context: IContext): Promise<ICommit[]>
                                 name: logEntry.author[0]
                             },
                             message: logEntry.msg[0].trim(),
-                            subject: logEntry.msg[0].trim(),
+                            subject: extractSubjectFromMessage(context, logEntry.msg[0].trim()),
                             hash: logEntry.$.revision,
                             committerDate: logEntry.date[0]
                         });
@@ -172,4 +173,20 @@ async function getCommits(context: IContext): Promise<ICommit[]>
     }
 
     return commits;
+}
+
+
+function extractSubjectFromMessage(context: IContext, msg: string)
+{
+    const { options, logger } = context,
+          regex = /^[a-z]+\(([a-z0-9\- ]*)\)\s*: */gm;
+    let match: RegExpExecArray;
+    if ((match = regex.exec(msg)) !== null) // subject - all lower case, or numbers
+    {
+        if (options.verbose) {
+            logger.log(`Extracted subject ${match[1]} from commit message`);
+        }
+        return match[1];
+    }
+    return "";
 }
