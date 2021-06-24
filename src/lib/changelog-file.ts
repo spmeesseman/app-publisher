@@ -9,9 +9,10 @@ const os = require("os"), EOL = os.EOL;
 
 function cleanMessage(msg: string)
 {
-    return msg.replace(/\[skip[ \-]{1}ci\]/gmi, "")
+    return msg.replace(/[ ]*\[skip[ \-]{1}ci\]/gmi, "")
               .replace(/\[[a-z]+[ \-]{1}release\]/gmi, "")
-              .trimRight();
+              .replace(/Npm/gmi, "NPM")
+              .replace(/Svn/gmi, "SVN");
 }
 
 
@@ -238,7 +239,7 @@ function createHistorySectionFromCommits({ options, commits, logger }: IContext)
             continue;
         }
 
-        if (msgLwr && !msgLwr.startsWith("chore") && !msgLwr.startsWith("progress") && !msgLwr.startsWith("style") && !msgLwr.startsWith("project"))
+        if (msgLwr && !isSkippedCommitMessage(msgLwr))
         {   //
             // Remove CI related tags
             //
@@ -633,8 +634,7 @@ function createChangelogSectionFromCommits({ options, commits, logger }: IContex
         //
         // Ignore chores, progress, and custom specified psubjects to ignore
         //
-        if (section.toLowerCase() === "chore" || section.toLowerCase() === "progress" ||
-            section.toLowerCase() === "project" || section.toLowerCase() === "style") {
+        if (isSkippedCommitMessage(section)) {
             return "";
         }
 
@@ -1232,6 +1232,12 @@ async function getChangelogFileSections({ options, logger }, version: string, nu
                                  .replace(new RegExp(" " + match[0], "g"), "")
                                  .replace(new RegExp(match[0], "g"), "").trim();
             }
+            if (scope) {
+                message = message.replace(scope, "");
+                while (message[0] === " ") {
+                    message = message.substring(1);
+                }
+            }
             contents2.push({ subject, scope, message, tickets });
         }
 
@@ -1804,6 +1810,11 @@ export function getProjectChangelogFile(context: IContext)
 }
 
 
+export function isSkippedCommitMessage(msg: string)
+{
+    const m = msg.trimLeft().toLowerCase();
+    return m.startsWith("chore") || m.startsWith("progress") || m.startsWith("style") || m.startsWith("project");
+}
 /**
  * Gets version from changelog file by looking at the 'title' of the lastentry
  *
