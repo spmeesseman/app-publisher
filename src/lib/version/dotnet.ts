@@ -53,7 +53,7 @@ export async function getDotNetVersion({logger}): Promise<{ version: string, ver
 }
 
 
-export async function setDotNetVersion({nextRelease, options, logger, cwd, env})
+export async function setDotNetVersion({lastRelease, nextRelease, options, logger, cwd, env})
 {
     let semVersion = "";
     const fileNames = await getDotNetFiles(logger);
@@ -62,7 +62,7 @@ export async function setDotNetVersion({nextRelease, options, logger, cwd, env})
     {
         if (fileNames.length >= 1)
         {
-            if (!nextRelease.version.Contains("."))
+            if (lastRelease.versionInfo.versionSystem === "incremental" || !nextRelease.version.includes("."))
             {
                 for (const c of nextRelease.version) {
                     semVersion = `${semVersion}${c}.`;
@@ -75,7 +75,8 @@ export async function setDotNetVersion({nextRelease, options, logger, cwd, env})
             //
             // Replace version in assemblyinfo file
             //
-            await replaceInFile(fileNames[0], `AssemblyVersion[ ]*[\\(][ ]*["][0-9a-z.]+`, `AssemblyVersion("${semVersion}`);
+            await replaceInFile(fileNames[0], "AssemblyVersion[ ]*[\\(][ ]*[\"][0-9a-z.]+", `AssemblyVersion("${semVersion}.0`);
+            await replaceInFile(fileNames[0], "AssemblyFileVersion[ ]*[\\(][ ]*[\"][0-9a-z.]+", `AssemblyFileVersion("${semVersion}.0`);
             //
             // Allow manual modifications to mantisbt main plugin file and commit to modified list
             //
