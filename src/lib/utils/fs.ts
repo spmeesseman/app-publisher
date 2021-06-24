@@ -276,7 +276,7 @@ export function readFileSync(file: string)
 export async function replaceInFile(file: string, old: string, nu: string, caseSensitive = false)
 {
     const content = await readFile(file),
-          regex = new RegExp(old, caseSensitive ? undefined : "i");
+          regex = new RegExp(old, caseSensitive ? undefined : "gmi");
     let contentNew = "";
     if (!caseSensitive) {
         contentNew = content.replace(regex, nu);
