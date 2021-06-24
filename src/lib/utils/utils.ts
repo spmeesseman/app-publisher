@@ -1,4 +1,5 @@
 
+import { join } from "path";
 import hideSensitive = require("../hide-sensitive");
 import { isFunction } from "lodash";
 import { pathExists } from "./fs";
@@ -74,9 +75,10 @@ export async function editFile({ options, nextRelease, logger, cwd, env }, editF
     if (editFile && await pathExists(editFile))
     {
         const skipEdit = (options.skipVersionEdits === " Y" || options.taskTouchVersions || options.taskChangelogFile) &&
-                         !options.taskChangelogView && (!options.versionFilesEditAlways.includes(editFile) || options.taskMode);
+                         !options.taskChangelogView && !options.taskChangelogHtmlView &&
+                         ((options.versionFilesEditAlways && options.versionFilesEditAlways.includes(editFile)) || options.taskMode);
 
-        seekToEnd = seekToEnd || options.versionFilesScrollDown.includes(editFile);
+        seekToEnd = seekToEnd || (options.versionFilesScrollDown ? options.versionFilesScrollDown.includes(editFile) : false);
 
         if (!skipEdit)
         {
@@ -88,7 +90,7 @@ export async function editFile({ options, nextRelease, logger, cwd, env }, editF
             //
             if (process.platform === "win32" && seekToEnd && !options.taskMode)
             {
-                const ps1Script = await getPsScriptLocation("edit-file");
+                const ps1Script = await getPsScriptLocation("edit-file", {cwd, env});
                 if (ps1Script) {
                     await execa.sync("powershell.exe",
                         [ ps1Script, "-f", editFile, "-e", options.textEditor, "-s", seekToEnd, "-a", options.taskMode ],
@@ -124,51 +126,79 @@ export function escapeRegExp(text: string)
 }
 
 
-export async function getPsScriptLocation(scriptFile: string)
+/**
+ * Locates the powershel script specified by `scriptFile` and returns a path that the
+ * PowerSHell executable can execute.
+ *
+ * @since 3.0.3
+ * @param scriptFile The script filename
+ */
+export async function getPsScriptLocation(scriptFile: string, execaOpts: any): Promise<string | undefined>
 {
-    let ps1Script: string;
-
     if (process.platform !== "win32") {
-        return ps1Script;
+        return;
     }
 
-    if (await pathExists(`.\\node_modules\\@spmeesseman\\${scriptFile}.ps1`)) {
-        ps1Script = `.\\node_modules\\@spmeesseman\\${scriptFile}\\script\\${scriptFile}.ps1`;
+    let p = join(".", "node_modules", "@spmeesseman", "app-publisher", "script", `${scriptFile}.ps1`);
+    if (await pathExists(p)) {
+        return p;
     }
-    else if (await pathExists(`.\\node_modules\\@perryjohnson\\${scriptFile}`)) {
-        ps1Script = `.\\node_modules\\@perryjohnson\\${scriptFile}\\script\\${scriptFile}.ps1`;
+    p = join(".", "node_modules", "@perryjohnson", "app-publisher", "script", `${scriptFile}.ps1`);
+    if (await pathExists(p)) {
+        return p;
     }
-    else if (await pathExists(`.\\script\\${scriptFile}.ps1`)) {
-        ps1Script = `.\\script\\${scriptFile}.ps1`;
+    p = join(".", "script", `${scriptFile}.ps1`);
+    if (await pathExists(p)) {
+        return p;
     }
-    else if (await pathExists(`..\\script\\${scriptFile}.ps1`)) { // dev
-        ps1Script = `..\\script\\${scriptFile}.ps1`;
+    p = join("..", "script", `${scriptFile}.ps1`);
+    if (await pathExists(p)) { // dev
+        return p;
     }
-    else
-    {
-        if (process.env.CODE_HOME)
+
+    //
+    // Global NPM path
+    //
+    try {
+        const globalPath = await execa.stdout("npm", [ "root", "-g" ], execaOpts);
+        if (globalPath)
         {
-            // Check global node_modules
-            //
-            const gModuleDir = process.env.CODE_HOME + "\\nodejs\\node_modules";
-            if (await pathExists(gModuleDir + `\\@spmeesseman\\${scriptFile}\\script\\${scriptFile}.ps1`)) {
-                ps1Script = gModuleDir + `\\@spmeesseman\\app-publisher\\script\\${scriptFile}.ps1`;
+            p = join(globalPath, "@spmeesseman", "app-publisher", "script", `${scriptFile}.ps1`);
+            if (await pathExists(p)) {
+                return p;
             }
-            else if (await pathExists(gModuleDir + `\\@perryjohnson\\script\\${scriptFile}.ps1`)) {
-                ps1Script = gModuleDir + `\\@perryjohnson\\app-publisher\\script\\${scriptFile}.ps1`;
+            p = join(globalPath, "@perryjohnson", "app-publisher", "script", `${scriptFile}.ps1`);
+            if (await pathExists(p)) {
+                return p;
             }
         }
-        // Check windows install
+    }
+    catch (e) { /* */ }
+
+    if (process.env.CODE_HOME)
+    {   //
+        // Check CODE_HOME node_modules
         //
-        else if (process.env.APP_PUBLISHER_HOME)
-        {
-            if (await pathExists(process.env.APP_PUBLISHER_HOME + `\\script\\${scriptFile}.ps1`)) {
-                ps1Script = process.env.APP_PUBLISHER_HOME + `\\script\\${scriptFile}.ps1`;
-            }
+        const gModuleDir = process.env.CODE_HOME + "\\nodejs\\node_modules";
+        p = join(gModuleDir, "@spmeesseman", "app-publisher", "script", `${scriptFile}.ps1`);
+        if (await pathExists(p)) {
+            return p;
+        }
+        p = join(gModuleDir, "@perryjohnson", "app-publisher", "script", `${scriptFile}.ps1`);
+        if (await pathExists(p)) {
+            return p;
         }
     }
-
-    return ps1Script;
+    //
+    // Check windows install
+    //
+    if (process.env.APP_PUBLISHER_HOME)
+    {
+        p = join(process.env.APP_PUBLISHER_HOME, "script", `${scriptFile}.ps1`);
+        if (await pathExists(p)) {
+            return p;
+        }
+    }
 }
 
 
@@ -240,7 +270,7 @@ export async function runScripts({options, logger, cwd, env}, scriptType: string
         logger.log(`   # of scipts: ${scripts.length}`);
     }
 
-    if (scripts && scripts.length > 0) // && !$script:BuildCmdsRun.Contains($ScriptType))
+    if (scripts && scripts.length > 0) // && !$script:BuildCmdsRun.includes($ScriptType))
     {
         if (scriptTypesProcessed.includes(scriptType)) {
             logger.warn(`The script type ${scriptType} has already been ran during this run, skipping`);

@@ -53,8 +53,7 @@ export async function addEdit({options, nextRelease, logger, env, cwd}: IContext
 /**
  * Push to the remote repository.
  *
- * @param repo The remote repository URL.
- * @param execaOpts Options to pass to `execa`.
+ * @param context The run context object.
  *
  * @throws {Error} if the commit failed or the repository type is invalid.
  */
@@ -156,7 +155,8 @@ export async function commit({options, nextRelease, logger, cwd, env}: IContext)
 /**
  * Checks if a tag exists in the repository
  *
- * @param execaOpts Options to pass to `execa`.
+ * @param context The run context object.
+ * @param tag The tag name to check for.
  *
  * @returns `true` if the tag exists, `false` otherwise
  * @throws {Error} If the `git` or `svn` command fails or the repository type is invalid.
@@ -223,6 +223,7 @@ export async function doesTagExist({options, logger, cwd, env}: IContext, tag: s
  *
  * @param svnArgs Arguments to pass to `svn`
  * @param execaOpts Options to pass to `execa`
+ * @param stdout Return stdout as opposed to process rc
  *
  * @returns The process object returned by execa()
  */
@@ -283,7 +284,7 @@ export async function fetch({ options, logger, cwd, env }: IContext)
 /**
  * Get the HEAD sha.
  *
- * @param execaOpts Options to pass to `execa`.
+ * @param context The run context object.
  *
  * @returns The sha of the HEAD commit.
  */
@@ -327,8 +328,8 @@ function getSvnTagLocation({options, logger})
 /**
  * Get the commit sha for a given tag.
  *
+ * @param context The run context object.
  * @param tagName Tag name for which to retrieve the commit sha.
- * @param execaOpts Options to pass to `execa`.
  *
  * @returns The commit sha of the tag in parameter or `null`.
  */
@@ -364,7 +365,7 @@ export async function getTagHead({options, logger, cwd, env}: IContext, tagName:
 /**
  * Get all the repository tags.
  *
- * @param execaOpts Options to pass to `execa`.
+ * @param context The run context object.
  *
  * @returns List of tags.
  * @throws {Error} If the `git` or `svn` command fails or the repository type is invalid.
@@ -428,8 +429,8 @@ export async function getTags({options, logger, cwd, env}: IContext)
 /**
  * Verify the local branch is up to date with the remote one.
  *
+ * @param context The run context object.
  * @param branch The repository branch for which to verify status.
- * @param execaOpts Options to pass to `execa`.
  *
  * @returns `true` is the HEAD of the current local branch is the same as the HEAD of the remote branch, falsy otherwise.
  */
@@ -465,7 +466,7 @@ export async function isBranchUpToDate(context: IContext, branch: any)
 /**
  * Test if the current working directory is a Git repository.
  *
- * @param execaOpts Options to pass to `execa`.
+ * @param context The run context object.
  *
  * @returns `true` if the current working directory is in a git repository, falsy otherwise.
  */
@@ -534,8 +535,9 @@ export async function isIgnored({options, logger, cwd, env}: IContext, objectPat
 /**
  * Verify if the `ref` is in the direct history of the current branch.
  *
+ * @param context The run context object.
  * @param ref The reference to look for.
- * @param execaOpts Options to pass to `execa`.
+ * @param isTags isTags?
  *
  * @returns `true` if the reference is in the history of the current branch, falsy otherwise.
  */
@@ -591,11 +593,8 @@ export async function isSvnRepo(context: IContext)
  *
  * @since 2.8.0
  *
- * @param context run context
+ * @param context The run context object.
  * @param objectPath Path to the file or directory
- * @param execaOpts Options to pass to `execa`
- * @param appendPre manipulate cwd
- * @param changePath manipulate cwd
  *
  * @throws {Error} if the repository type is invalid
  * @returns `true` if the specifed file or directory is under version control, `false` otherwise.
@@ -636,8 +635,7 @@ export async function isVersioned({options, logger, cwd, env}: IContext, objectP
 /**
  * Push to the remote repository.
  *
- * @param repo The remote repository URL.
- * @param execaOpts Options to pass to `execa`.
+ * @param context The run context object.
  *
  * @throws {Error} if the push failed or the repository type is invalid.
  */
@@ -664,7 +662,7 @@ export async function push({options, logger, cwd, env}: IContext)
 /**
  * Get the repository remote URL.
  *
- * @param execaOpts Options to pass to `execa`.
+ * @param context The run context object.
  *
  * @returns The value of the remote git URL.
  */
@@ -695,9 +693,7 @@ export async function repoUrl({options, logger, cwd, env}: IContext)
 
 /**
  * @since 2.8.0
- * @param changeList Changelist.  If not specified, a recursive revert is done
- * @param execaOpts Options to pass to `execa`.
- * @param repoType Repositorytype, one of 'git' or 'svn'
+ * @param context The run context object.
  */
 export async function revert({options, nextRelease, logger, cwd, env}: IContext)
 {
@@ -757,8 +753,7 @@ export async function revert({options, nextRelease, logger, cwd, env}: IContext)
 /**
  * Tag the commit head on the local repository.
  *
- * @param tagName The name of the tag.
- * @param execaOpts Options to pass to `execa`.
+ * @param context The run context object.
  *
  * @throws {Error} if the tag creation failed or the repository type is invalid.
  */
@@ -847,7 +842,6 @@ function throwVcsError(msg: string, logger: any)
  * Verify the write access authorization to remote repository with push dry-run.
  *
  * @param context The run context object.
- * @param execaOpts Options to pass to `execa`.
  *
  * @throws {Error} if not authorized to push or the repository type is invalid.
  */
@@ -910,8 +904,8 @@ export async function verifyAuth(context: IContext)
 /**
  * Verify a tag name is a valid Git reference.
  *
+ * @param context The run context object.
  * @param tagName the tag name to verify.
- * @param execaOpts Options to pass to `execa`.
  *
  * @return `true` if valid, falsy otherwise.
  */
