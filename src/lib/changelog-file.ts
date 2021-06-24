@@ -2,9 +2,17 @@
 import * as path from "path";
 import { readFile, pathExists, writeFile, createDir, appendFile, deleteFile } from "./utils/fs";
 import { editFile, properCase, isString } from "./utils/utils";
-import { IChangelog, IChangelogEntry, ICommit, IContext } from "../interface";
+import { IChangelogEntry, IContext } from "../interface";
 const execa = require("execa");
 const os = require("os"), EOL = os.EOL;
+
+
+function cleanMessage(msg: string)
+{
+    return msg.replace(/\[skip[ \-]{1}ci\]/gmi, "")
+              .replace(/\[[a-z]+[ \-]{1}release\]/gmi, "")
+              .trimRight();
+}
 
 
 /**
@@ -74,14 +82,14 @@ async function createHtmlChangelog({ options, logger }, version: string, useFaIc
         if (!inputFile) {
             inputFile = options.historyFile;
         }
-        changeLogParts = await getHistory({ options, logger }, version, 1, "parts", inputFile);
+        changeLogParts = await getHistoryFileSections({ options, logger }, version, 1, "parts", inputFile);
     }
     else if (options.changelogFile)
     {
         if (!inputFile) {
             inputFile = options.changelogFile;
         }
-        changeLogParts = await getChangelog({ options, logger }, version, 1, "parts", inputFile);
+        changeLogParts = await getChangelogFileSections({ options, logger }, version, 1, "parts", inputFile);
     }
 
     if (!changeLogParts || changeLogParts.length === 0 || changeLogParts[0] === "error") {
@@ -571,7 +579,7 @@ function createHistorySectionFromCommits({ options, commits, logger }: IContext)
                 }
             }
 
-            comments = comments + line + EOL + EOL;
+            comments = comments + cleanMessage(line) + EOL + EOL;
             commentNum++;
         }
     }
@@ -688,7 +696,7 @@ function createChangelogSectionFromCommits({ options, commits, logger }: IContex
             fmtCommitMsg = `${EOL}### ${tmpSection}${EOL}${EOL}${fmtCommitMsg}`;
         }
         lastSection = section;
-        return fmtCommitMsg;
+        return cleanMessage(fmtCommitMsg);
     }
 
     //
@@ -1046,7 +1054,7 @@ async function doHistoryFileEdit(context: IContext)
  * @param numsections # of section to extract
  * @param listOnly retrieve an array of strings only, not a formatted string
  */
-async function getChangelog({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false, inputFile?: string): Promise<IChangelogEntry[] | string>
+async function getChangelogFileSections({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false, inputFile?: string): Promise<IChangelogEntry[] | string>
 {
     if (!inputFile) {
         inputFile = options.changelogFile;
@@ -1287,11 +1295,11 @@ async function getFileNotes(context: IContext, version: string)
     let fileNotes: string;
     if (options.historyFile) {
         logger.log("Get txt type file notes");
-        fileNotes = await getHistory(context, version || nextRelease.version, 1) as string;
+        fileNotes = await getHistoryFileSections(context, version || nextRelease.version, 1) as string;
     }
     else if (options.changelogFile) {
         logger.log("Get md type file notes");
-        fileNotes = await getChangelog(context, version || nextRelease.version, 1) as string;
+        fileNotes = await getChangelogFileSections(context, version || nextRelease.version, 1) as string;
     }
     return fileNotes;
 }
@@ -1337,7 +1345,7 @@ function getFormattedDate()
  * @param numsections # of section to extract
  * @param listOnly retrieve an array of strings only, not a formatted string
  */
-async function getHistory({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false, inputFile?: string): Promise<IChangelogEntry[] | string>
+async function getHistoryFileSections({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false, inputFile?: string): Promise<IChangelogEntry[] | string>
 {
     const iNumberOfDashesInVersionLine = 20;
     let finalContents = "";
@@ -1805,8 +1813,8 @@ export function getProjectChangelogFile(context: IContext)
 export async function getVersion({ options, logger })
 {
     const contents = options.historyFile ?
-                        await getHistory({ options, logger }, undefined, 1) as string :
-                        await getChangelog({ options, logger }, undefined, 1) as string;
+                        await getHistoryFileSections({ options, logger }, undefined, 1) as string :
+                        await getChangelogFileSections({ options, logger }, undefined, 1) as string;
     const index1 = contents.indexOf(`>${options.versionText}&nbsp;`, 0) + options.versionText.length + 7;
     const index2 = contents.indexOf("<br>", index1);
     const curversion = contents.substring(index1, index2 - index1);
