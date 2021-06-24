@@ -672,29 +672,30 @@ function createChangelogSectionFromCommits({ options, commits, logger }: IContex
             fmtCommitMsg += `**${scope}:** `;
         }
 
-        //
-        // Add the message that followed the subject and scope
-        //
-        fmtCommitMsg += commitMsg;
+        commitMsg = `This is a test:${EOL}${EOL}   Test A${EOL}   Test B${EOL}${EOL}This should be the last line.`;
 
         //
         // For multi-line comments, do some special processing
         //
-        if (fmtCommitMsg.includes(EOL))
+        if (commitMsg.includes(EOL))
         {
-            const tmpCommitParts = fmtCommitMsg.split(EOL);
+            const tmpCommitParts = commitMsg.split(EOL);
             fmtCommitMsg += tmpCommitParts[0];
             for (let i = 1; i < tmpCommitParts.length; i++)
             {
-                if (tmpCommitParts[i] === "") {
-                    continue;
+                // if (!tmpCommitParts[i]) { // remove double line breaks
+                //     continue;
+                // }
+                fmtCommitMsg += EOL;
+                if (/^ {2,}/.test(tmpCommitParts[i]) || tmpCommitParts[i].startsWith("\t")) {
+                    fmtCommitMsg += "\t";
                 }
-                fmtCommitMsg += `${EOL}${EOL}\t${tmpCommitParts[i]}${EOL}`;
+                fmtCommitMsg += `\t${tmpCommitParts[i].trim()}`;
             }
             fmtCommitMsg += EOL;
         }
         else {
-            fmtCommitMsg += EOL;
+            fmtCommitMsg += `${commitMsg}${EOL}`;
         }
         //
         // Record last subject, we only print the subject when it differes from previous
@@ -1059,12 +1060,14 @@ async function doHistoryFileEdit(context: IContext)
 
 
 /**
- * Gets changelog file section using the hostory/changelog file by parsing the sepcified versions section
+ * Gets changelog file section using the hostory/changelog file by parsing the sepcified
+ * versions section.
  *
  * @param context The run context object.
  * @param version The version to extract the notes from in the history/changelog file.
  * @param numsections # of section to extract
  * @param listOnly retrieve an array of strings only, not a formatted string
+ * @returns HTML version of the requested cahngelog section(s)
  */
 async function getChangelogFileSections({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false, inputFile?: string): Promise<IChangelogEntry[] | string>
 {
@@ -1370,12 +1373,14 @@ function getFormattedDate()
 
 
 /**
- * Gets history file section using the hostory/changelog file by parsing the sepcified versions section
+ * Gets history file section using the hostory/changelog file by parsing the sepcified
+ * versions section.
  *
  * @param context The run context object.
  * @param version The version to extract the notes from in the history/changelog file.
  * @param numsections # of section to extract
  * @param listOnly retrieve an array of strings only, not a formatted string
+ * @returns HTML version of the requested cahngelog section(s)
  */
 async function getHistoryFileSections({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false, inputFile?: string): Promise<IChangelogEntry[] | string>
 {
