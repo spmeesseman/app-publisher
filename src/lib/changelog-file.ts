@@ -9,7 +9,7 @@ const os = require("os"), EOL = os.EOL;
 
 function cleanMessage(msg: string)
 {
-    return msg.replace(/(?<!\w)(?:Api|Npm|Sso|Svn)(?= |$|\.)/gmi, (m, args): string =>
+    return msg.replace(/(?<!\w)(?:Api|Npm|Sso|Svn|Html?)(?= |$|\.)/gm, (m, args): string =>
     {
         return m.toUpperCase();
     })
@@ -169,7 +169,7 @@ async function createHtmlChangelog({ options, logger }, version: string, useFaIc
             changeLog += commit.scope;
         }
         else {
-            changeLog += "</td><td>";
+            changeLog += "</td>General<td>";
         }
         changeLog += "</td><td width=\"100%\" style=\"padding-left:15px\">";
         changeLog += commit.message;
