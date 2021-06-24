@@ -5,12 +5,15 @@ export = runDevCodeTests;
 //
 function runDevCodeTests()
 {
-    // let msg = "ApiExtend is an Api that ApiUser the with Api ExtendApi.";
-    // msg = msg.replace(/(?<!\w)(?:Api|Npm|Sso|Svn)(?= |$|\.)/gmi, (m, args): string =>
+    // let msg = "ApiExtend is an Api[skip ci] that [skip ci] ApiUser [prod-release] the with [sandbox release] Api ExtendApi. [nightly-release]";
+    // msg = msg.replace(/(?<!\w)(?:Api|Npm|Sso|Svn|Html?)(?= |$|\.)/gm, (m, args): string =>
     // {
     //     return m.toUpperCase();
     // })
-    // .replace(/[ ]*\[skip[ \-]{1}ci\]/gmi, "");
+    // .replace(/[ ]*\[(?:skip[ \-]{1}ci|[a-z]+[ \-]{1}release)\]/gmi, (m, args): string =>
+    // {
+    //     return "";
+    // });
     // console.log(msg);
     // const edits = [{
     //     path: "src/test.txt",

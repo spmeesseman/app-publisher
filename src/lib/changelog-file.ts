@@ -13,7 +13,10 @@ function cleanMessage(msg: string)
     {
         return m.toUpperCase();
     })
-    .replace(/[ ]*\[skip[ \-]{1}ci\]/gmi, "");
+    .replace(/[ ]*\[(?:skip[ \-]{1}ci|[a-z]+[ \-]{1}release)\]/gmi, (m, args): string =>
+    {
+        return "";
+    });
 }
 
 
