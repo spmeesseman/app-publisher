@@ -3,7 +3,6 @@ import * as nodemailer from "nodemailer";
 import { IContext } from "../interface";
 import { properCase } from "./utils/utils";
 import { npmLocation } from "./releases/npm";
-import { getReleaseChangelogs } from "./changelog-file";
 
 
 // async..await is not allowed in global scope, must use a wrapper
@@ -27,22 +26,9 @@ export async function sendNotificationEmail(context: IContext, version: string):
     }
 
     let emailBody = getEmailHeader({options, logger}, version);
-
     emailBody += "<br>Most Recent History File Entry:<br><br>";
-    if (!nextRelease || !nextRelease.changelog || !nextRelease.changelog.fileNotes)
-    {
-        const changelog = await getReleaseChangelogs(context, version);
-        if (changelog) {
-            emailBody += changelog.fileNotes;
-        }
-        else {
-            logger.error("   Notification could not be sent, can't create release notes");
-            return false;
-        }
-    }
-    else {
-        emailBody += nextRelease.changelog.fileNotes;
-    }
+    emailBody += (context.changelog.fileNotes || context.changelog.fileNotesLast);
+
     if (!emailBody) {
         logger.error("   Notification could not be sent, history file not specified");
         return false;
@@ -61,6 +47,10 @@ export async function sendNotificationEmail(context: IContext, version: string):
     logger.log("Sending release notification email");
     try
     {
+        //
+        // TODO - support multiple email recipients
+        //
+
         let to: string;
         let projectNameFmt = options.projectName.replace(/\-/, " ");
         //
@@ -75,12 +65,12 @@ export async function sendNotificationEmail(context: IContext, version: string):
         {
             if (options.emailRecip.length > 0)
             {
-                to = options.emailRecip;
+                to = options.emailRecip[0];
             }
             else {
                 if (options.testEmailRecip.length > 0)
                 {
-                    to = options.testEmailRecip;
+                    to = options.testEmailRecip[0];
                 }
                 else {
                     logger.error("Notification could not be sent, invalid email address specified");
@@ -93,7 +83,7 @@ export async function sendNotificationEmail(context: IContext, version: string):
             subject = "[DRY RUN] " + subject;
             if (options.testEmailRecip.length > 0)
             {
-                to = options.testEmailRecip;
+                to = options.testEmailRecip[0];
             }
             else {
                 logger.error("Notification could not be sent, invalid email address specified");

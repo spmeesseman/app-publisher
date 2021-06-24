@@ -57,12 +57,13 @@ function containsValidSubject(options, line: string): boolean
  * @param useFaIcons Use font aweome icons
  * @param includeStyling include css styling
  */
-async function createReleaseChangelog({ options, logger }, version: string, useFaIcons = false, includeStyling = false, inputFile?: string)
+async function createHtmlChangelog({ options, logger }, version: string, useFaIcons = false, includeStyling = false, inputFile?: string)
 {
     let changeLog = "",
         changeLogParts: string | any[];
 
     logger.log("Converting changelog notes to html release notes");
+    logger.log("   Version   : " + version);
     if (options.verbose) {
         logger.log("   Use icons : " + useFaIcons);
         logger.log("   Inlcude styling : " + useFaIcons);
@@ -771,7 +772,18 @@ function createChangelogSectionFromCommits({ options, commits, logger }: IContex
 }
 
 
-export async function doChangelogFileEdit(context: IContext)
+export function createSectionFromCommits(context: IContext)
+{
+    if (context.options.historyFile) {
+        context.logger.log("Get txt type history file / changelog");
+        return createHistorySectionFromCommits(context);
+    }
+    context.logger.log("Get md type changelog");
+    return createChangelogSectionFromCommits(context);
+}
+
+
+async function doChangelogFileEdit(context: IContext)
 {
     const { options, logger, lastRelease, nextRelease, env, cwd } = context,
           originalFile = options.changelogFile;
@@ -829,11 +841,11 @@ export async function doChangelogFileEdit(context: IContext)
         let tmpCommits,
             changeLogFinal = "";
 
-        if (!options.taskChangelogHtmlView && !options.taskChangelogHtmlFile) {console.log(8);
-            tmpCommits = nextRelease.changelog.notes || createChangelogSectionFromCommits(context);
+        if (!options.taskChangelogHtmlView && !options.taskChangelogHtmlFile) {
+            tmpCommits = context.changelog.notes || createChangelogSectionFromCommits(context);
         }
         else {
-            tmpCommits = nextRelease.changelog.htmlNotes || await createReleaseChangelog(context, nextRelease.version, false, false, originalFile);
+            tmpCommits = context.changelog.htmlNotesLast || await createHtmlChangelog(context, lastRelease.version);
         }
 
         if (options.taskChangelog || !options.taskMode)
@@ -875,10 +887,24 @@ export async function doChangelogFileEdit(context: IContext)
     // Allow manual modifications to history file
     //
     await editFile({nextRelease, options, logger, cwd, env}, options.changelogFile);
+
+    //
+    // Reset
+    //
+    options.changelogFile = originalFile;
 }
 
 
-export async function doHistoryFileEdit(context: IContext)
+export function doEdit(context: IContext)
+{
+    if (context.options.historyFile) {
+        return doHistoryFileEdit(context);
+    }
+    return doChangelogFileEdit(context);
+}
+
+
+async function doHistoryFileEdit(context: IContext)
 {
     const fmtDate = getFormattedDate(),
           { options, logger, lastRelease, nextRelease, env, cwd} = context,
@@ -953,10 +979,10 @@ export async function doHistoryFileEdit(context: IContext)
     {
         let tmpCommits: string;
         if (!options.taskChangelogHtmlView && !options.taskChangelogHtmlFile) {
-            tmpCommits = nextRelease.changelog.notes || createHistorySectionFromCommits(context);
+            tmpCommits = context.changelog.notes || createHistorySectionFromCommits(context);
         }
         else {
-            tmpCommits = nextRelease.changelog.htmlNotes || await createReleaseChangelog(context, nextRelease.version, true, false, originalFile);
+            tmpCommits = context.changelog.htmlNotes || await createHtmlChangelog(context, nextRelease.version, true, false, originalFile);
         }
 
         //
@@ -1004,6 +1030,11 @@ export async function doHistoryFileEdit(context: IContext)
     // Allow manual modifications to history file
     //
     await editFile({nextRelease, options, logger, cwd, env}, options.historyFile, true);
+
+    //
+    // Reset
+    //
+    options.historyFile = originalFile;
 }
 
 
@@ -1038,10 +1069,11 @@ async function getChangelog({ options, logger }, version: string, numsections: n
     }
 
     logger.log("Extract section from changelog file");
-    logger.log(`   Input File         : '${inputFile}'`);
+    logger.log(`   Version            : '${version}'`);
     logger.log(`   Num Sections       : '${numsections}'`);
-    logger.log(`   Version string     : '${options.versionText}'`);
     logger.log(`   List only          : '${listOnly}'`);
+    logger.log(`   Input File         : '${inputFile}'`);
+    logger.log(`   Version string     : '${options.versionText}'`);
 
     //
     // Code operation:
@@ -1246,6 +1278,22 @@ function getChangelogTypes(changeLog: string)
     }
 
     return changelogTypes;
+}
+
+
+async function getFileNotes(context: IContext, version: string)
+{
+    const {options, nextRelease, logger} = context;
+    let fileNotes: string;
+    if (options.historyFile) {
+        logger.log("Get txt type file notes");
+        fileNotes = await getHistory(context, version || nextRelease.version, 1) as string;
+    }
+    else if (options.changelogFile) {
+        logger.log("Get md type file notes");
+        fileNotes = await getChangelog(context, version || nextRelease.version, 1) as string;
+    }
+    return fileNotes;
 }
 
 
@@ -1716,39 +1764,35 @@ function getFormattedSubject({options}, subject: string)
 }
 
 
-export async function getReleaseChangelogs(context: IContext, version?: string): Promise<IChangelog>
+export async function populateChangelogs(context: IContext)
 {
-    const {options, nextRelease} = context,
-          getHtmlLog = context.options.taskGithubRelease || context.options.taskMantisbtRelease ||
-                       (!options.taskMode && (options.githubRelease === "Y" || options.mantisbtRelease === "Y")),
+    const {options, lastRelease, nextRelease, logger} = context,
+          getFileNotesLast = options.taskEmail,
+          getHtmlLog = !options.taskMode && (options.githubRelease === "Y" || options.mantisbtRelease === "Y"),
+          getHtmlLogLast = context.options.taskGithubRelease || context.options.taskMantisbtRelease,
           getFileLog = context.options.taskEmail || (!options.taskMode && options.emailNotification === "Y");
 
-    let fileNotes: string,
-        htmlNotes: string,
-        notes: string;
+    logger.log("Get release changelogs");
 
-    if (getFileLog)
-    {
-        if (options.historyFile) {
-            fileNotes = await getHistory(context, version || nextRelease.version, 1) as string;
-        }
-        else if (options.changelogFile) {
-            fileNotes = await getChangelog(context, version || nextRelease.version, 1) as string;
-        }
-    }
+    context.changelog = { ...context.changelog, ... { // await getReleaseChangelogs(context);
+        entries: undefined,
+        notesLast: undefined,
+        fileNotes: getFileLog ? await getFileNotes(context, nextRelease.version) : undefined,
+        htmlNotes: getHtmlLog ? await createHtmlChangelog(context, nextRelease.version) : undefined,
+        fileNotesLast: getFileNotesLast ? await getFileNotes(context, lastRelease.version) : undefined,
+        htmlNotesLast: getHtmlLogLast ? await createHtmlChangelog(context, lastRelease.version) : undefined
+    }};
 
-    if (getHtmlLog) {
-        htmlNotes = await createReleaseChangelog(context, version || nextRelease.version);
+    if (!context.changelog.notes) {
+        context.changelog.notes = createSectionFromCommits(context);
     }
+}
 
-    if (options.historyFile) {
-        notes = createHistorySectionFromCommits(context);
-    }
-    else if (options.changelogFile) {
-        notes = createChangelogSectionFromCommits(context);
-    }
 
-    return { notes, fileNotes, htmlNotes };
+export function getProjectChangelogFile(context: IContext)
+{
+    const { options } = context;
+    return options.historyFile ? options.historyFile : options.changelogFile;
 }
 
 

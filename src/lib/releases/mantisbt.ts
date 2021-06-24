@@ -40,7 +40,7 @@ async function doMantisRelease(context: IContext): Promise<IReturnStatus>
     }
 
     const notesIsMarkdown = 0,
-          mantisChangelog = nextRelease.changelog.htmlNotes;
+          mantisChangelog = context.changelog.htmlNotes || context.changelog.htmlNotesLast;
 
     if (!mantisChangelog) {
         rc.error = `MantisBT release v${nextRelease.version} failure - no changelog`;

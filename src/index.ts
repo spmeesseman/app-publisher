@@ -26,7 +26,7 @@ import { template } from "lodash";
 import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
 import { sendNotificationEmail } from "./lib/email";
 import { writeFile } from "./lib/utils/fs";
-import { doChangelogFileEdit, doHistoryFileEdit, getReleaseChangelogs } from "./lib/changelog-file";
+import { createSectionFromCommits, doEdit, getProjectChangelogFile, populateChangelogs } from "./lib/changelog-file";
 import { commit, fetch, verifyAuth, getHead, tag, push, revert } from "./lib/repo";
 import { EOL } from "os";
 import { IContext, INextRelease } from "./interface";
@@ -210,8 +210,14 @@ async function run(context: IContext, plugins: any)
         }
     }
     catch (e) {
+        const eStr = e.toString();
         logger.error("Release run threw failure exception");
-        context.stdout.write(`Exception:  ${e.toString().trimRight()}${EOL}`);
+        if (eStr.endsWith("\n")) {
+            context.stdout.write(`Exception:  ${eStr}${EOL}`);
+        }
+        else {
+            logger.error(eStr);
+        }
         // await callFail(context, plugins, e);
         // throw e;
     }
@@ -320,7 +326,7 @@ async function runRelease(context: IContext, plugins: any)
     //
     // Populate context with last release info
     //
-    context.lastRelease = await getLastRelease(context); // calls getTags()
+    const lastRelease = await getLastRelease(context); // calls getTags()
     //
     // Populate context with last release version info
     //
@@ -328,12 +334,12 @@ async function runRelease(context: IContext, plugins: any)
     //    versionSystem (semver or incremental)
     //    versionInfo (for mavn builds and auto constructing version #)
     //
-    context.lastRelease.versionInfo = await getCurrentVersion(context);
+    lastRelease.versionInfo = await getCurrentVersion(context);
     //
     // Check to see if last version found with the latestversion tag matches what was
     // found by examining the local files for version info.  Give a warning if so.
     //
-    if (context.lastRelease.versionInfo !== context.lastRelease.versionInfo)
+    if (lastRelease.version !== lastRelease.versionInfo.version)
     {
         logger.warn("Version mismatch found betw. latest tag and local files version");
     }
@@ -342,9 +348,10 @@ async function runRelease(context: IContext, plugins: any)
     //
     if (options.versionForceCurrent) {
         logger.log("Forcing current version to " + options.versionForceCurrent);
-        context.lastRelease.version = options.versionForceCurrent;
-        context.lastRelease.versionInfo.version = options.versionForceCurrent;
+        lastRelease.version = options.versionForceCurrent;
+        lastRelease.versionInfo.version = options.versionForceCurrent;
     }
+    context.lastRelease = lastRelease;
 
     //
     // If a l2 task is processed, we'll be done
@@ -370,7 +377,6 @@ async function runRelease(context: IContext, plugins: any)
         head: await getHead(context),
         version: undefined,
         tag: undefined,
-        changelog: undefined,
         edits: [],
         versionInfo: undefined
     };
@@ -444,19 +450,25 @@ async function runRelease(context: IContext, plugins: any)
     nextRelease.tag = template(options.tagFormat)({ version: nextRelease.version });
 
     //
+    // The changelog object can have 3 parts, 'fileNotes' that are read from the changelog file
+    // itself, 'notes' with are buiilt from the commit messages, and htmlNotes which are built
+    // from the changelog file itself and converted to heml style changelog.
+    //
+    context.changelog = {
+        entries: undefined,
+        fileNotes: undefined,
+        fileNotesLast: undefined,
+        htmlNotes: undefined,
+        htmlNotesLast: undefined,
+        notes: undefined,
+        notesLast: undefined,
+        file: getProjectChangelogFile(context)
+    };
+
+    //
     // TODO - Plugins maybe?
     //
     // await plugins.verifyRelease(context);
-
-    //
-    // Create release notes / changelog
-    // TODO - Plugins maybe?
-    //
-    // nextRelease.changelog.notes = await plugins.generateNotes(context);
-    // if (!nextRelease.changelog || !nextRelease.changelog.notes) {
-           nextRelease.changelog = await getReleaseChangelogs(context);
-    // }
-
     //
     // TODO - Plugins maybe?
     //
@@ -468,17 +480,15 @@ async function runRelease(context: IContext, plugins: any)
     //
     const doChangelog = options.taskChangelog || options.taskChangelogView || options.taskChangelogView ||
                         options.taskChangelogHtmlView || options.taskChangelogFile || !options.taskMode;
-    if (options.historyFile && doChangelog)
+    if (doChangelog)
     {   //
-        // TODO - html cl for current version
+        // We need to populate 'notes' right now for the changelog/history file edit.
         //
-        if (options.taskChangelogHtmlFile || options.taskChangelogHtmlView) {
-            nextRelease.version = context.lastRelease.version;
-        }
+        context.changelog.notes = createSectionFromCommits(context);
         //
         // Do edit/view
         //
-        await doHistoryFileEdit(context);
+        await doEdit(context);
         //
         // If this is task mode, we're done if there aren't any higher lvl tasks left to run
         //
@@ -489,27 +499,13 @@ async function runRelease(context: IContext, plugins: any)
             }
         }
     }
-    else if (options.changelogFile && doChangelog)
-    {   //
-        // TODO - html cl for current version
-        //
-        if (options.taskChangelogHtmlFile || options.taskChangelogHtmlView) {
-            nextRelease.version = context.lastRelease.version;
-        }
-        //
-        // Do edit/view
-        //
-        await doChangelogFileEdit(context);
-        //
-        // If this is task mode, we're done if there aren't any higher lvl tasks left to run
-        //
-        if (options.taskMode) {
-            logTaskResult(true, logger);
-            if (options.taskChangelogHtmlFile || options.taskChangelogHtmlView || !hasMoreTasks(options, getTasks5())) {
-                return true;
-            }
-        }
-    }
+
+    //
+    // Create release notes / changelog
+    // TODO - Plugins maybe?
+    //
+    // context.changelog.notes = await plugins.generateNotes(context);
+    await populateChangelogs(context);
 
     //
     // Pre-build scipts (.publishrc)
@@ -792,13 +788,13 @@ async function runRelease(context: IContext, plugins: any)
     if (options.dryRun)
     {
         logger.log(`Release notes for version ${nextRelease.version}:`);
-        if (nextRelease.changelog.notes)
+        if (context.changelog.notes)
         {
             if (options.changelogFile) {
-                context.stdout.write(marked(nextRelease.changelog.notes));
+                context.stdout.write(marked(context.changelog.notes));
             }
             else {
-                context.stdout.write(nextRelease.changelog.notes.replace(/\r\n/g, "\n"));
+                context.stdout.write(context.changelog.notes.replace(/\r\n/g, "\n"));
             }
         }
     }
@@ -1024,7 +1020,8 @@ export = async (opts = {}, { cwd = process.cwd(), env = process.env, stdout = un
         options: undefined,
         lastRelease: undefined,
         nextRelease: undefined,
-        commits: undefined
+        commits: undefined,
+        changelog: undefined
     };
     context.logger = getLogger(context);
 

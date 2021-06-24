@@ -2,6 +2,7 @@
 import * as path from "path";
 import { isString } from "./utils/utils";
 import { createDir, pathExists } from "./utils/fs";
+import { IContext } from "../interface";
 
 export = validateOptions;
 
@@ -12,7 +13,7 @@ function error(logger: any, err: string)
     return false;
 }
 
-async function validateOptions({cwd, env, logger, options}): Promise<boolean>
+async function validateOptions({cwd, env, logger, options}: IContext): Promise<boolean>
 {
     const environ = { ...process.env, ...env };
     logger.log("Validating all options...");
@@ -343,15 +344,12 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
     //
     // Mantis Plugin
     //
-    if (options.mantisBtPlugin)
+    if (options.mantisbtPlugin)
     {
-        if (options.mantisBtPlugin instanceof String && typeof(options.mantisBtPlugin) !== "string") {
-            return error(logger, "Invalid value for mantisbtPlugin, must be string type");
-        }
-        if (!options.mantisBtPlugin.includes((".php"))) {
+        if (!options.mantisbtPlugin.includes((".php"))) {
             return error(logger, "Invalid value for mantisbtPlugin, file must have a php extension");
         }
-        if (!(await pathExists(options.mantisBtPlugin))) {
+        if (!(await pathExists(options.mantisbtPlugin))) {
             return error(logger, "Invalid value for mantisbtPlugin, non-existent file specified");
         }
     }
@@ -390,7 +388,7 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
     }
 
     if (options.cProjectRcFile) {
-        if (!options.cProjectRcFile.Contains((".rc"))) {
+        if (!options.cProjectRcFile.toLowerCase().includes((".rc"))) {
             logger.error("Invalid value for cProjectRcFile, file must have an rc extension");
             return false;
         }
@@ -469,6 +467,15 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
     }
 
     //
+    // Must specify one of changelogFile or hisotryFile
+    //
+    if (!options.changelogFile && !options.historyFile)
+    {
+        logger.error("changelogFile or historyFile must be specified");
+        return false;
+    }
+
+    //
     // Check for environment vars that did not get set.  Env vars are wrapped in ${} and will
     // have been replaced by the nodejs config parser if they exist in the env.  Provide a warning
     // if any of the variables are not found in the environment.
@@ -524,9 +531,6 @@ async function validateOptions({cwd, env, logger, options}): Promise<boolean>
     //
     if (options.taskChangelogFile) {
         options.taskChangelog = true;
-    }
-    if (options.taskTouchVersionsCommit) {
-        options.taskTouchVersions = true;
     }
     if (options.taskEmail || options.taskTouchVersions || options.taskMantisbtRelease) {
         options.skipChangelogEdits = "Y";

@@ -12,7 +12,7 @@ export { doGithubRelease, publishGithubRelease };
 
 async function doGithubRelease(context: IContext): Promise<IReturnStatus>
 {
-    const { options, logger, nextRelease, env, cwd } = context;
+    const { options, logger, nextRelease, env } = context;
 
     logger.log("Starting GitHub release");
     logger.log(`   Version : ${nextRelease.version}`);
@@ -24,7 +24,7 @@ async function doGithubRelease(context: IContext): Promise<IReturnStatus>
         error: undefined
     };
 
-    const githubChangelog = nextRelease.changelog.htmlNotes;
+    const githubChangelog = context.changelog.htmlNotes || context.changelog.htmlNotesLast;
     if (!githubChangelog) {
         rc.error = `GitHub release v${nextRelease.version} failure - no changelog`;
         logger.error(rc.error);

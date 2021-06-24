@@ -9,10 +9,14 @@ export interface IAuthor
 
 export interface IChangelog
 {
-    fileNotes?: string;
-    htmlNotes?: string;
+    file: string;
+    fileNotes: string;
+    htmlNotes: string;
     notes: string;
-    entries?: IChangelogEntry[];
+    entries: IChangelogEntry[];
+    fileNotesLast: string;
+    htmlNotesLast: string;
+    notesLast: string;
 }
 
 
@@ -54,6 +58,7 @@ export interface ICommitMessageMapEntry
 
 export interface IContext
 {
+    changelog: IChangelog;
     commits: ICommit[];
     cwd: string;
     env: any;
@@ -91,7 +96,6 @@ export interface ILastRelease
 
 export interface INextRelease
 {
-    changelog: IChangelog;
     edits: IEdit[];
     head: string;
     level: string;
@@ -167,7 +171,7 @@ export interface IOptions
     /**
      * A script or list of scripts to run for the deploy stage
      */
-    deployCommand: string;
+    deployCommand: string | string[];
     /**
      * Add the contents of the directory specified by the 'dist' property to
      * version control, if not already.  Ignored if distRelease = N.
@@ -248,7 +252,7 @@ export interface IOptions
     /**
      * The email address to use as the 'To' address when sending an email notification.
      */
-    emailRecip: string;
+    emailRecip: string | string[];
     /**
      * The email address to use as the 'From' address when sending an email notification.
      */
@@ -643,7 +647,7 @@ export interface IOptions
      * The email address to use as the 'To' address when sending an email notification while
      * running in dry run mode.
      */
-    testEmailRecip: string;
+    testEmailRecip: string | string[];
     /**
      * The editor program to use when opening version files for manual editing.
      * Defaults to notepad.
