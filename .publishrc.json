@@ -56,7 +56,7 @@
     "mantisbtAssets":    [],
     "mantisReleasePreCommand": [],
     "mantisReleasePostCommand": [],
-    "npmPackDist":       "Y",
+    "npmPackDist":       "N",
     "npmRelease":        "Y",
     "npmRegistry":       "https://registry.npmjs.org",
     "npmReleasePreCommand": [],

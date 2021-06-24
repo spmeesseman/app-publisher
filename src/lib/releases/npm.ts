@@ -244,7 +244,7 @@ export async function restorePackageJson({options, logger})
     if (defaultRepo)
     {
         logger.log(`Reset default repo in package.json: ${defaultRepo}`);
-        packageJson.repository.url = options.repo;
+        packageJson.repository.url = defaultRepo;
         modified = true;
     }
     //
@@ -271,7 +271,7 @@ export async function restorePackageJson({options, logger})
     if (defaultHomePage)
     {
         logger.log("Reset default home page in package.json: " + defaultHomePage);
-        packageJson.homepage = defaultBugs;
+        packageJson.homepage = defaultHomePage;
         modified = true;
     }
     //
