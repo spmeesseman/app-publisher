@@ -115,7 +115,7 @@ export async function commit({options, nextRelease, logger, cwd, env}: IContext)
                 proc = await execa("git", [ "commit", "--dry-run", "-m", `"chore(release): v${nextRelease.version} [skip ci]"`, "--", ...chgListPaths  ], execaOpts);
             }
             if (proc.code === 0) {
-                logger.info("Pushing touched files to svn version control");
+                logger.info("Pushing touched files to git version control");
                 if (!options.dryRun) {
                     proc = await execa("git", [ "push", "origin", `${options.branch}:${options.branch}` ], execaOpts);
                 }
