@@ -264,8 +264,6 @@ function createHistorySectionFromCommits({ options, commits, logger }: IContext)
             continue;
         }
 
-msg = `this is a test:${EOL}${EOL}   Test A${EOL}   Test B${EOL}${EOL}This should be the last line.${EOL}${EOL}[fix #33]`;
-
         if (msg && !isSkippedCommitMessage(msgLwr))
         {   //
             // Remove CI related tags
@@ -640,9 +638,6 @@ function createChangelogSectionFromCommits({ options, commits, logger }: IContex
         if (scope) {
             fmtCommitMsg += `**${scope}:** `;
         }
-
-
-commitMsg = `this is a test:${EOL}${EOL}   Test A${EOL}   Test B${EOL}${EOL}This should be the last line.${EOL}${EOL}[fix #33]`;
 
         //
         // For multi-line comments, do some special processing
