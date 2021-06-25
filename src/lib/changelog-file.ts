@@ -775,52 +775,52 @@ export function createSectionFromCommits(context: IContext)
 
 async function doChangelogFileEdit(context: IContext)
 {
+    let newChangelog = false;
     const { options, logger, lastRelease, nextRelease, env, cwd } = context,
           originalFile = options.changelogFile;
 
     logger.log("Start changelog file edit");
 
-    if (options.taskChangelogFile || options.taskChangelogHtmlFile)
+    if (!options.taskChangelogPrint)
     {
-        options.changelogFile = options.taskChangelogFile || options.taskChangelogHtmlFile;
-        if (await pathExists(options.changelogFile))
+        if (options.taskChangelogFile || options.taskChangelogHtmlFile)
         {
-            await deleteFile(options.changelogFile);
+            options.changelogFile = options.taskChangelogFile || options.taskChangelogHtmlFile;
+            if (await pathExists(options.changelogFile))
+            {
+                await deleteFile(options.changelogFile);
+            }
         }
-    }
-    else if (options.taskMode && !options.taskChangelog)
-    {
-        options.changelogFile = path.join(os.tmpdir(), `changelog.${nextRelease.version}.md`);
-        if (await pathExists(options.changelogFile))
+        else if (options.taskMode && !options.taskChangelog)
         {
-            await deleteFile(options.changelogFile);
+            options.changelogFile = path.join(os.tmpdir(), `changelog.${nextRelease.version}.md`);
+            if (await pathExists(options.changelogFile))
+            {
+                await deleteFile(options.changelogFile);
+            }
         }
-    }
 
-    //
-    // If changelog markdown file doesnt exist, create one with the project name as a title
-    //
-    let newChangelog = false;
-    const changeLogPath = path.dirname(options.changelogFile);
+        const changeLogPath = path.dirname(options.changelogFile);
 
-    if (changeLogPath !== "" && !(await pathExists(changeLogPath)))
-    {
-        logger.log("Create changeLog file directory");
-        await createDir(changeLogPath);
-    }
+        if (changeLogPath !== "" && !(await pathExists(changeLogPath)))
+        {
+            logger.log("Create changeLog file directory");
+            await createDir(changeLogPath);
+        }
 
-    if (!(await pathExists(options.changelogFile)))
-    {
-        if (options.taskChangelog || !options.taskMode)
+        if (!(await pathExists(options.changelogFile)))
         {
-            logger.log("Create changelog file directory");
-            await writeFile(options.changelogFile, options.projectName + EOL + EOL);
+            if (options.taskChangelog || !options.taskMode)
+            {
+                logger.log("Create changelog file directory");
+                await writeFile(options.changelogFile, options.projectName + EOL + EOL);
+            }
+            else
+            {
+                await writeFile(options.changelogFile, "");
+            }
+            newChangelog = true;
         }
-        else
-        {
-            await writeFile(options.changelogFile, "");
-        }
-        newChangelog = true;
     }
 
     if ((lastRelease.version !== nextRelease.version || newChangelog || options.taskMode))
@@ -864,10 +864,16 @@ async function doChangelogFileEdit(context: IContext)
             changeLogFinal += tmpCommits;
         }
         changeLogFinal = changeLogFinal.trim() + EOL;
-        //
-        // Write content to file
-        //
-        await writeFile(options.changelogFile, changeLogFinal);
+        if (!options.taskChangelogPrint)
+        {   //
+            // Write content to file
+            //
+            await writeFile(options.changelogFile, changeLogFinal);
+        }
+        else {
+            context.stdout.write(changeLogFinal);
+            return;
+        }
     }
     else {
         logger.warn("Version match, not touching changelog file");
@@ -896,71 +902,74 @@ export function doEdit(context: IContext)
 
 async function doHistoryFileEdit(context: IContext)
 {
+    let isNewHistoryFile = false,
+        isNewHistoryFileHasContent = false;
     const fmtDate = getFormattedDate(),
           { options, logger, lastRelease, nextRelease, env, cwd} = context,
           originalFile = options.historyFile;
 
     logger.log("Start history file edit");
 
-    if (options.taskChangelogFile || options.taskChangelogHtmlFile)
+    if (!options.taskChangelogPrint)
     {
-        options.historyFile = options.taskChangelogFile || options.taskChangelogHtmlFile;
-        if (await pathExists(options.historyFile))
+        if (options.taskChangelogFile || options.taskChangelogHtmlFile)
         {
-            await deleteFile(options.historyFile);
+            options.historyFile = options.taskChangelogFile || options.taskChangelogHtmlFile;
+            if (await pathExists(options.historyFile))
+            {
+                await deleteFile(options.historyFile);
+            }
         }
-    }
-    else if (options.taskMode && !options.taskChangelog)
-    {
-        options.historyFile = path.join(os.tmpdir(), `history.${nextRelease.version}.txt`);
-        if (await pathExists(options.historyFile))
+        else if (options.taskMode && !options.taskChangelog)
         {
-            await deleteFile(options.historyFile);
+            options.historyFile = path.join(os.tmpdir(), `history.${nextRelease.version}.txt`);
+            if (await pathExists(options.historyFile))
+            {
+                await deleteFile(options.historyFile);
+            }
         }
-    }
 
-    //
-    // If history file doesnt exist, create one with the project name as a title
-    //
-    let isNewHistoryFile = false,
-        isNewHistoryFileHasContent = false;
-    const historyPath = path.dirname(options.historyFile);
+        //
+        // If history file doesnt exist, create one with the project name as a title
+        //
+        const historyPath = path.dirname(options.historyFile);
 
-    if (historyPath && !(await pathExists(historyPath)))
-    {
-        logger.log("Create history file directory");
-        await createDir(historyPath);
-    }
-
-    if (!(await pathExists(options.historyFile)))
-    {
-        logger.log("Create new history file");
-        if (options.taskChangelog || !options.taskMode)
+        if (historyPath && !(await pathExists(historyPath)))
         {
-            await writeFile(options.historyFile, options.projectName + EOL + EOL);
+            logger.log("Create history file directory");
+            await createDir(historyPath);
+        }
+
+        if (!(await pathExists(options.historyFile)))
+        {
+            logger.log("Create new history file");
+            if (options.taskChangelog || !options.taskMode)
+            {
+                await writeFile(options.historyFile, options.projectName + EOL + EOL);
+            }
+            else
+            {
+                await writeFile(options.historyFile, "");
+            }
+            isNewHistoryFile = true;
         }
         else
-        {
-            await writeFile(options.historyFile, "");
+        {   //
+            // If the history file already existed, but had no entries, we need to still set the 'new' flag
+            //
+            const contents = await readFile(options.historyFile);
+            if (contents.indexOf(options.versionText) === -1)
+            {
+                isNewHistoryFile = true;
+                isNewHistoryFileHasContent = true;
+            }
         }
-        isNewHistoryFile = true;
-    }
-    else
-    {   //
-        // If the history file already existed, but had no entries, we need to still set the 'new' flag
-        //
-        const contents = await readFile(options.historyFile);
-        if (contents.indexOf(options.versionText) === -1)
-        {
-            isNewHistoryFile = true;
-            isNewHistoryFileHasContent = true;
-        }
-    }
 
-    if (!(await pathExists(options.historyFile)))
-    {
-        logger.error("Could not create history file, exiting");
-        throw new Error("140");
+        if (!(await pathExists(options.historyFile)))
+        {
+            logger.error("Could not create history file, exiting");
+            throw new Error("140");
+        }
     }
 
     //
@@ -999,6 +1008,10 @@ async function doHistoryFileEdit(context: IContext)
         {
             const historyHeader = await readFile(options.historyHdrFile);
             await appendFile(options.historyFile, `${EOL}${options.versionText} ${nextRelease.version}${EOL}${fmtDate}${EOL}${historyHeader}${EOL}${tmpCommits}`);
+        }
+        else if (options.taskChangelogPrint) {
+            context.stdout.write(tmpCommits.trim());
+            return;
         }
         else {
             if (options.taskChangelog || !options.taskMode) {

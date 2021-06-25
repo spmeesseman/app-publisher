@@ -535,6 +535,10 @@ export interface IOptions
      */
     taskChangelogHtmlView: boolean;
     /**
+     * Export the next release's current changelog and output to stdout.
+     */
+    taskChangelogPrint: boolean;
+    /**
      * Export the next release's current changelog and view using the editor specified in the
      * .publishrc file. The created file is a copy stored in a temporary directory specified by
      * the OS.

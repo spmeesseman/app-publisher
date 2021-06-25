@@ -478,7 +478,7 @@ async function runRelease(context: IContext, plugins: any)
     // Edit/touch changelog / history file
     // Can be a history style TXT or a changeloge type MD
     //
-    const doChangelog = options.taskChangelog || options.taskChangelogView || options.taskChangelogView ||
+    const doChangelog = options.taskChangelog || options.taskChangelogView || options.taskChangelogPrint ||
                         options.taskChangelogHtmlView || options.taskChangelogFile || !options.taskMode;
     if (doChangelog)
     {   //

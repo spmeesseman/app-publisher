@@ -544,9 +544,10 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
         (options.taskMantisbtRelease && options.taskTouchVersions) || (options.taskMantisbtRelease && options.taskChangelog) ||
         (options.taskGithubRelease && options.taskEmail) || (options.taskGithubRelease && options.taskTouchVersions) ||
         (options.taskGithubRelease && options.taskChangelog) || (options.taskChangelogView && options.taskChangelogHtmlView) ||
+        (options.taskChangelogView && options.taskChangelogPrint) || (options.taskChangelogPrint && options.taskChangelogHtmlView) ||
         (options.taskChangelogFile && options.taskChangelogHtmlFile) ||
         (options.taskChangelog && (options.taskChangelogFile || options.taskChangelogHtmlFile)) ||
-        (options.taskChangelog && (options.taskChangelogView || options.taskChangelogHtmlView)))
+        (options.taskChangelog && (options.taskChangelogView || options.taskChangelogHtmlView || options.taskChangelogPrint)))
     {
         logger.error("Invalid options specified:");
         logger.error("  Two or more of the specified tasks cannot be used together");
@@ -567,7 +568,7 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
         for (const o in options) {
             if (o.startsWith("task")) {
                 if (options[o] === true) {
-                    if (o !== "taskVersionCurrent" && o !== "taskVersionNext" && o !== "taskVersionInfo" &&
+                    if (o !== "taskVersionCurrent" && o !== "taskVersionNext" && o !== "taskVersionInfo" && o !== "taskChangelogPrint" &&
                         o !== "taskCiEvInfo" && o !== "taskVersionPreReleaseId" && o !== "taskMode" && o !== "taskModeStdOut")
                     {
                         logger.error("The specified task cannot be used with a 'stdout' type task:");

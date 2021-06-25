@@ -25,7 +25,7 @@ export = async () =>
     // Set task mode stdout flag on the options object
     //
     opts.taskModeStdOut = !!(opts.taskVersionCurrent || opts.taskVersionNext || opts.taskVersionInfo ||
-                             opts.taskCiEvInfo || opts.taskVersionPreReleaseId);
+                             opts.taskCiEvInfo || opts.taskVersionPreReleaseId || opts.taskChangelogPrint);
 
     try {  //
           // Display color banner
