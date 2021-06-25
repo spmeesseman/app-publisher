@@ -46,7 +46,6 @@
     "historyLineLen":    80,
     "historyHref":       "<a href=\"https://github.com/spmeesseman/app-publisher/blob/master/CHANGELOG.md\">Changelog</a>",
     "homePage":          "https://github.com/spmeesseman/app-publisher",
-    "interactive":       "N",
     "mantisbtRelease":   "N",
     "mantisbtApiToken":  "",
     "mantisbtChglogEdit":"N",
