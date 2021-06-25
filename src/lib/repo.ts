@@ -91,6 +91,17 @@ export async function commit({options, nextRelease, logger, cwd, env}: IContext)
             if (proc.code !== 0) {
                 logger.warning("Add file(s) to VCS failed");
             }
+            //
+            // Remove 'added' files from thr main changelist if this is a dry run
+            //
+            if (options.dryRun)
+            {
+                for (const c of changeListAdd) {
+                    if (changeList.includes(c)) {
+                        changeList.splice(changeList.indexOf(c), 1);
+                    }
+                }
+            }
         }
         if (changeList.length > 0)
         {
