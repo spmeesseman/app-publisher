@@ -11,7 +11,7 @@
 [![GitHub last commit](https://img.shields.io/github/last-commit/spmeesseman/app%2dpublisher.svg?logo=github)](https://github.com/spmeesseman/app-publisher)
 [![PayPalDonate](https://img.shields.io/badge/paypal-donate-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=YWZXT3KE2L4BA&item_name=taskexplorer&currency_code=USD)
 
-[![app-publisher-cmdline-banner](https://app1.development.pjats.com/svn/web/filedetails.php?repname=pja&path=/app-publisher/trunk/res/readme/cmdline-banner.png&usemime=1)](https://app1.development.pjats.com/svn/web/filedetails.php?repname=pja&path=/app-publisher/trunk/res/readme/cmdline-banner.png&usemime=1)
+![app-publisher-cmdline-banner](../res/cmdline-banner.png?raw=true)
 
 ## Table of Contents
 
