@@ -805,15 +805,7 @@ async function doChangelogFileEdit(context: IContext)
 
         if (!(await pathExists(options.changelogFile)))
         {
-            if (options.taskChangelog || !options.taskMode)
-            {
-                logger.log("Create changelog file directory");
-                await writeFile(options.changelogFile, options.projectName + EOL + EOL);
-            }
-            else
-            {
-                await writeFile(options.changelogFile, "");
-            }
+            await writeFile(options.changelogFile, "");
             newChangelog = true;
         }
     }
