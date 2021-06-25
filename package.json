@@ -17,7 +17,7 @@
         "url": "https://github.com/spmeesseman/app-publisher.git"
     },
     "dependencies": {
-        "@spmeesseman/arg-parser": "^1.1.5",
+        "@spmeesseman/arg-parser": "^1.1.6",
         "@spmeesseman/env-ci": "^1.0.3",
         "@types/env-ci": "*",
         "@types/glob": "^7.1.1",
