@@ -218,19 +218,13 @@ export function isString(value: any): value is string
 
 export function logWarning(context: IContext, msg: string, err: string | Error)
 {
-    context.logger.warn("!!!");
-    context.logger.warn(`!!! ${msg}`);
+    context.logger.warn(msg);
     if (err) {
-        let multiLineSPacer = "";
-        for (let i = 0; i < 34; i++) {
-            multiLineSPacer += " ";
+        const errParts = err.toString().split("\n");
+        context.logger.warn("The non-fatal error encountered was:");
+        for (const errPart of errParts) {
+            context.logger.warn(errPart.trim());
         }
-        context.logger.warn("!!! The non-fatal error encountered was:");
-        err = err.toString().replace(/\r\n/g, `${EOL}${multiLineSPacer}!!! `).replace(/\n/g, `${EOL}${multiLineSPacer}!!! `);
-        context.stdout.write(`!!! ${err}${EOL}`);
-    }
-    else {
-        context.logger.warn("!!!");
     }
 }
 
