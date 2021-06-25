@@ -677,6 +677,16 @@ export const publishRcOpts =
         }
     ],
 
+    taskChangelogPrint: [
+        true,
+        "boolean",
+        false,
+        [ "-tcp", "--task-changelog-print" ],
+        {
+            help: "Export the next release's current changelog and output to stdout."
+        }
+    ],
+
     taskChangelogView: [
         true,
         "boolean",
