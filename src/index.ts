@@ -434,6 +434,11 @@ async function runRelease(context: IContext, plugins: any)
     }
 
     //
+    // Get the tag name for the next release
+    //
+    nextRelease.tag = template(options.tagFormat)({ version: nextRelease.version });
+
+    //
     // If a l3 task is processed, we'll be done
     //
     taskDone = await processTasks3(context);
@@ -443,11 +448,6 @@ async function runRelease(context: IContext, plugins: any)
             return taskDone;
         }
     }
-
-    //
-    // Get the tag name for the next release
-    //
-    nextRelease.tag = template(options.tagFormat)({ version: nextRelease.version });
 
     //
     // The changelog object can have 3 parts, 'fileNotes' that are read from the changelog file

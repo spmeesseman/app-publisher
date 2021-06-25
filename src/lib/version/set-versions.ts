@@ -144,6 +144,9 @@ async function setVersionFiles(context: IContext): Promise<void>
     {
         let vFile = versionFile;
 
+        //
+        // Don't remember why these replacements are here, seems unnecessary
+        //
         vFile = vFile.replace(/\$\{NEWVERSION\}/gi, nextRelease.version);
         vFile = vFile.replace(/\${VERSION\}/gi, nextRelease.version);
         vFile = vFile.replace(/\${CURRENTVERSION\}/gi, lastRelease.version);

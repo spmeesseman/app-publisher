@@ -659,11 +659,6 @@ export interface IOptions
      */
     textEditor: string;
     /**
-     * Tag the version in Version Control when the final release process has finished,
-     * successfully.  Tags in the form: vX.X.X
-     */
-    vcTag: string;  // flag
-    /**
      * Tag prefix for the version tag.  Labels the created tag in the form prefix-vX.X.X.
      * Can be used for sub-projects within a single project.
      */

@@ -919,14 +919,6 @@ export const publishRcOpts =
         "The editor program to use when opening version files for manual editing."
     ],
 
-    vcTag: [
-        true,
-        "flag",
-        "Y",
-        "Tag the version in Version Control when the final release process has finished",
-        "successfully.  Tags in the form: vX.X.X"
-    ],
-
     vcTagPrefix: [
         true,
         "string",

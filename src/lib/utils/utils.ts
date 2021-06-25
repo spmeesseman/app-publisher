@@ -221,12 +221,17 @@ export function logWarning(context: IContext, msg: string, err: string | Error)
     context.logger.warn("!!!");
     context.logger.warn(`!!! ${msg}`);
     if (err) {
+        let multiLineSPacer = "";
+        for (let i = 0; i < 34; i++) {
+            multiLineSPacer += " ";
+        }
         context.logger.warn("!!! The non-fatal error encountered was:");
-        err = err.toString().replace(/\r\n/g, `${EOL}!!! `).replace(/\n/g, `${EOL}!!! `);
+        err = err.toString().replace(/\r\n/g, `${EOL}${multiLineSPacer}!!! `).replace(/\n/g, `${EOL}${multiLineSPacer}!!! `);
         context.stdout.write(`!!! ${err}${EOL}`);
-
     }
-    context.logger.warn("!!!");
+    else {
+        context.logger.warn("!!!");
+    }
 }
 
 

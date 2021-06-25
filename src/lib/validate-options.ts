@@ -123,13 +123,6 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     }
 
     //
-    // Set a default NPM registry
-    //
-    if (!options.npmRegistry) {
-        options.npmRegistry = "https://registry.npmjs.org";
-    }
-
-    //
     // Set up log file
     //
     if (options.writeLog === "Y")
@@ -283,21 +276,28 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     //
     // NPM
     //
-    if (options.npmPackDist === "Y")
-    {
-        if (!options.pathToDist) {
-            logger.error("You must specify 'pathToDist' if 'npmPackDist' flag is set to Y");
-            return false;
-        }
-    }
     if (options.taskNpmRelease) {
         options.npmRelease = "Y";
     }
-    if (options.npmRelease) {
+    if (options.npmRelease)
+    {
         options.npmRelease = options.npmRelease.toUpperCase();
         if (options.npmRelease !== "Y" && options.npmRelease !== "N") {
             logger.error("Invalid value specified for npmRelease, accepted values are y/n/Y/N");
             return false;
+        }
+        if (options.npmPackDist === "Y")
+        {
+            if (!options.pathToDist) {
+                logger.error("You must specify 'pathToDist' if 'npmPackDist' flag is set to Y");
+                return false;
+            }
+        }
+        //
+        // Set a default NPM registry
+        //
+        if (!options.npmRegistry) {
+            options.npmRegistry = "https://registry.npmjs.org";
         }
     }
 
@@ -405,6 +405,9 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
             return false;
         }
     }
+    else {
+        options.dryRunVcRevert = "Y";
+    }
 
     if (options.writeLog) {
         options.writeLog = options.writeLog.toUpperCase();
@@ -418,14 +421,6 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
         options.promptVersion = options.promptVersion.toUpperCase();
         if (options.promptVersion !== "Y" && options.promptVersion !== "N") {
             logger.error("Invalid value specified for promptVersion, accepted values are y/n/Y/N");
-            return false;
-        }
-    }
-
-    if (options.vcTag) {
-        options.vcTag = options.vcTag.toUpperCase();
-        if (options.vcTag !== "Y" && options.vcTag !== "N") {
-            logger.error("Invalid value specified for svnTag, accepted values are y/n/Y/N");
             return false;
         }
     }
@@ -453,7 +448,6 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
             logger.warn("Overriding skipVersionEdits on dry run, auto set to 'N'");
         }
     }
-
     //
     // Check dist release path for dist release
     //
