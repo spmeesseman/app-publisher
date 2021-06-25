@@ -223,7 +223,9 @@ export function logWarning(context: IContext, msg: string, err: string | Error)
         const errParts = err.toString().split("\n");
         context.logger.warn("The non-fatal error encountered was:");
         for (const errPart of errParts) {
-            context.logger.warn(errPart.trim());
+            if (errPart) {
+                context.logger.warn(errPart.trim());
+            }
         }
     }
 }

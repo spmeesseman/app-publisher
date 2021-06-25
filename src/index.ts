@@ -416,7 +416,7 @@ async function runRelease(context: IContext, plugins: any)
             const schema = {
                 properties: {
                     version: {
-                        description: "Enter version number (empty for default)",
+                        description: "Enter version number",
                         pattern: /^(?:[0-9]+\.[0-9]+\.[0-9]+(?:[\-]{0,1}[a-z]+\.[0-9]+){0,1})$|^[0-9]+$/,
                         default: nextRelease.version,
                         message: "Version must contain 0-9 and '.', small chars and '-' for pre-release",
@@ -733,7 +733,7 @@ async function runRelease(context: IContext, plugins: any)
                 await commit(context);
             }
             catch (e) {
-                logger.warn(`Failed to committed changes for v${nextRelease.version}`);
+                logger.warn(`Failed to commit changes for v${nextRelease.version}`);
                 util.logWarning(context, "Manually commit the changes using the commit message format 'chore: vX.X.X'", e);
             }
         }
