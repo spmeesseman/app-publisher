@@ -23,6 +23,19 @@ function cleanMessage(msg: string)
     .replace(/[ ]*\[(?:skip[ \-]{1}ci|[a-z]+[ \-]{1}release)\]/gmi, (m): string =>
     {
         return "";
+    })
+    .replace(/\[{0,1}(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]{0,1}/gmi, (m): string =>
+    {
+        m = m.replace(/(?:bug|issue|close|fix|resolve|ref|reference)/gmi, (m2): string =>
+        {
+            let fm2 = m2;
+            if (/(?:s|ss|sh|x|z)$/.test(m2)) { fm2 += "e"; }
+            fm2 += "s";
+            return fm2;
+        });
+        // if (/(?:s|ss|sh|x|z)$/.test(m)) { fm += "e"; }
+        // fm += "s";
+        return "[" + properCase(m.replace(/[\[\]]/g, "").trim()) + "]";
     });
 }
 
@@ -251,7 +264,9 @@ function createHistorySectionFromCommits({ options, commits, logger }: IContext)
             continue;
         }
 
-        if (msgLwr && !isSkippedCommitMessage(msgLwr))
+msg = `this is a test:${EOL}${EOL}   Test A${EOL}   Test B${EOL}${EOL}This should be the last line.${EOL}${EOL}[fix #33]`;
+
+        if (msg && !isSkippedCommitMessage(msgLwr))
         {   //
             // Remove CI related tags
             //
@@ -360,54 +375,8 @@ function createHistorySectionFromCommits({ options, commits, logger }: IContext)
                 msg = msg.replace(match[0], `:  ${newText}${EOL}${EOL}`);
             }
             //
-            // Take ticket// tags and put them on separate line at bottom of message, skip tags already on
-            // their own line
-            //
-            regex = new RegExp(/[ ]{0,1}\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/gmi);
-            while ((match = regex.exec(msg)) !== null)
-            {
-                newText = match[0].toLowerCase();
-                if (newText.includes("fixed ")) {
-                    newText = newText.replace("fixed ", "fixes ");
-                }
-                else if (newText.includes("fix ")) {
-                    newText = newText.replace("fix ", "fixes ");
-                }
-                else if (newText.includes("closed ")) {
-                    newText = newText.replace("closed ", "closes ");
-                }
-                else if (newText.includes("close ")) {
-                    newText = newText.replace("close ", "closes ");
-                }
-                else if (newText.includes("resolved ")) {
-                    newText = newText.replace("resolved ", "resolves ");
-                }
-                else if (newText.includes("resolve ")) {
-                    newText = newText.replace("resolve ", "resolves ");
-                }
-                else if (newText.includes("reference ")) {
-                    newText = newText.replace("reference ", "references ");
-                }
-                else if (newText.includes("refs ")) {
-                    newText = newText.replace("refs ", "references ");
-                }
-                else if (newText.includes("ref ")) {
-                    newText = newText.replace("ref ", "reference ");
-                }
-                else if (newText.includes("bugs ")) {
-                    newText = "bug ";
-                }
-                else if (newText.includes("issues ")) {
-                    newText = "issue ";
-                }
-                newText = properCase(newText).trim();
-                msg = msg.replace(match[0], `${EOL}${EOL}${newText}`);
-                msg = msg.replace(EOL + EOL + EOL, EOL + EOL);
-                msg = msg.replace("\n\r\n\r\n", "\r\n\r\n");
-            }
-            //
             // Typically when writing the commit messages all lowercase is used.  Capitalize the first
-            // letter following the commit message tag
+            // letter following the commit message subject
             //
             while ((match = /[\r\n]{2}\s*[a-z]/gm.exec(msg)) !== null) {
                 if (match[0].includes(`${EOL}${EOL}`)) { // ps regex is buggy on [\r\n]{2}
@@ -672,6 +641,9 @@ function createChangelogSectionFromCommits({ options, commits, logger }: IContex
             fmtCommitMsg += `**${scope}:** `;
         }
 
+
+commitMsg = `this is a test:${EOL}${EOL}   Test A${EOL}   Test B${EOL}${EOL}This should be the last line.${EOL}${EOL}[fix #33]`;
+
         //
         // For multi-line comments, do some special processing
         //
@@ -772,7 +744,7 @@ function createChangelogSectionFromCommits({ options, commits, logger }: IContex
         tmpCommits += `${EOL}### Other Notes${EOL}${EOL}`;
         for (const commit of sectionless)
         {
-            tmpCommits += `- ${commit}\r\n`;
+            tmpCommits += `- ${commit}${EOL}`;
         }
     }
 
@@ -1212,7 +1184,7 @@ async function getChangelogFileSections({ options, logger }, version: string, nu
 
         if (msgParts.length !== typeParts.length) {
             logger.error("Error parsing changelog for commit parts");
-            logger.error("Message parts array length $(msgParts.length) is less than types array length $(typeParts.length)");
+            logger.error(`Message array length ${msgParts.length} != types array length ${typeParts.length}`);
             throw new Error("167");
         }
 

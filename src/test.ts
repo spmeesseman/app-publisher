@@ -1,3 +1,5 @@
+// import { properCase } from "./lib/utils/utils";
+
 export = runDevCodeTests;
 
 //
@@ -5,6 +7,7 @@ export = runDevCodeTests;
 //
 function runDevCodeTests()
 {
+    // console.log(properCase("fixes"));
     // let msg = "ApiExtend is an Api[skip ci] that [skip ci] ApiUser [prod-release] the with [sandbox release] Api ExtendApi. [nightly-release]";
     // msg = msg.replace(/(?<!\w)(?:Api|Npm|Sso|Svn|Html?)(?= |$|\.)/gm, (m, args): string =>
     // {
