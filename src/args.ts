@@ -942,13 +942,15 @@ export const publishRcOpts =
 
     versionForceCurrent: [
         true,
-        "string",
+        "boolean",
         "",
-        [ "--version-force-current" ],
+        [ "-vfc", "--version-force-current" ],
         {
-            help: "A version number to use as the 'current version'.",
+            help: "Force current version, for use with post release tasks such as re-sending\n" +
+                  "an email notification or performing a GitHub release if for whever reason\n" +
+                  "it failed on the publish run.",
             usage: [
-                "app-publisher --version-force-current 300", "app-publisher --version-force-current 3.0.0"
+                "app-publisher --task-email --version-force-current"
             ]
         }
     ],
@@ -957,7 +959,7 @@ export const publishRcOpts =
         true,
         "string",
         "",
-        [ "--version-force-next", "--version-force" ],
+        [ "-vfn", "--version-force-next" ],
         {
             help: "A version number to use as the 'next version'.  Version calculation will\n" +
                   "not be performed other than for reading in the current version, skipping\n" +

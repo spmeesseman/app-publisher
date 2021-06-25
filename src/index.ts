@@ -1,6 +1,5 @@
 
 import * as util from "./lib/utils/utils";
-import * as child_process from "child_process";
 import * as npm from "./lib/releases/npm";
 import gradient from "gradient-string";
 import chalk from "chalk";
@@ -13,7 +12,7 @@ import getReleaseLevel = require("./lib/commit-analyzer");
 import verify = require("./lib/verify");
 import getCommits = require("./lib/get-commits");
 import getCurrentVersion = require("./lib/version/get-current-version");
-import getNextVersion = require("./lib/version/get-next-version");
+import { getNextVersion, validateNextVersion } from "./lib/version/get-next-version";
 import getLastRelease = require("./lib/get-last-release");
 import getGitAuthUrl = require("./lib/get-git-auth-url");
 import getLogger = require("./lib/get-logger");
@@ -172,14 +171,14 @@ async function run(context: IContext, plugins: any)
     {
         logger.error(`This ${runTxt} was triggered on the branch '${ciBranch}', but is configured to ` +
                      `publish from '${options.branch}'`);
-        logger.error("   A new version won’t be published");
+        logger.error("A new version won’t be published");
         return false;
     }
     else if (ciBranch !== options.branch && !options.taskModeStdOut)
     {
         logger.warn(`This ${runTxt} was triggered on the branch '${ciBranch}', but is configured to ` +
                     `publish from '${options.branch}'`);
-        logger.warn("   Continuing in non-ci environment");
+        logger.warn("Continuing in non-ci environment");
     }
 
     if (!options.taskModeStdOut) {
@@ -237,24 +236,6 @@ function logTaskResult(result: boolean | string, logger: any)
 }
 
 
-function hasMoreTasks(options: any, tasks: string[])
-{
-    let moreTasks = false;
-
-    if (tasks && tasks.length > 0)
-    {
-        for (const task of tasks) {
-            if (options[task] === true) {
-                moreTasks = true;
-                break;
-            }
-        }
-    }
-
-    return moreTasks;
-}
-
-
 async function runRelease(context: IContext, plugins: any)
 {
     const { cwd, env, options, logger } = context;
@@ -278,14 +259,12 @@ async function runRelease(context: IContext, plugins: any)
     }
 
     //
-    // If a l1 task is processed, we'll be done
+    // If a level-1 stdout task is processed, we'll be done
     //
-    let taskDone = await processTasks1(context);
-    if (taskDone !== false) {
+    let taskDone = await processTasksStdOut1(context);
+    if (taskDone) {
         logTaskResult(taskDone, logger);
-        if (taskDone !== true || !hasMoreTasks(options, [ ...getTasks3(), ...getTasks4(), ...getTasks5() ])) {
-            return taskDone;
-        }
+        return taskDone;
     }
 
     //
@@ -301,6 +280,12 @@ async function runRelease(context: IContext, plugins: any)
     if (options.repoType === "git" && !options.repo)
     {
         options.repo = await getGitAuthUrl(context);
+    }
+    //
+    // validateOptions() will have attempted to set repo
+    //
+    if (!options.repo) {
+        logger.error("Repository tmust be specified on cmd line, package.json or publishrc");
     }
 
     //
@@ -324,7 +309,7 @@ async function runRelease(context: IContext, plugins: any)
     await fetch(context);
 
     //
-    // Populate context with last release info
+    // Populate context with last release info, populates version number
     //
     const lastRelease = await getLastRelease(context); // calls getTags()
     //
@@ -341,58 +326,62 @@ async function runRelease(context: IContext, plugins: any)
     //
     if (lastRelease.version !== lastRelease.versionInfo.version)
     {
-        logger.warn("Version mismatch found betw. latest tag and local files version");
+        logger.error("Version mismatch found between latest tag and local files");
+        logger.error("   Tagged : " + lastRelease.version);
+        logger.error("   Local  : " + lastRelease.versionInfo.version);
+        logger.error("Need to correct versioning difference, exiting");
+        throw new Error("101");
     }
-    //
-    // Can force version with --version-force-current
-    //
-    if (options.versionForceCurrent) {
-        logger.log("Forcing current version to " + options.versionForceCurrent);
-        lastRelease.version = options.versionForceCurrent;
-        lastRelease.versionInfo.version = options.versionForceCurrent;
-    }
-    context.lastRelease = lastRelease;
 
     //
-    // If a l2 task is processed, we'll be done
+    // Populate context with last release info
     //
-    taskDone = await processTasks2(context);
-    if (taskDone !== false) {
-        logTaskResult(taskDone, logger);
-        if (taskDone !== true || !hasMoreTasks(options, [ ...getTasks3(), ...getTasks4(), ...getTasks5() ])) {
-            return taskDone;
-        }
-    }
+    context.lastRelease = lastRelease;
 
     //
     // Populate context with commits
     //
-    context.commits = await getCommits(context);
+    if (!options.versionForceCurrent) {
+        context.commits = await getCommits(context);
+    }
 
     //
     // Populate next release info
     //
     const nextRelease: INextRelease = {
-        level: await getReleaseLevel(context),
-        head: await getHead(context),
+        level: undefined,
+        head: undefined,
         version: undefined,
         tag: undefined,
         edits: [],
         versionInfo: undefined
     };
 
+    if (!options.versionForceCurrent)
+    {
+        nextRelease.level = await getReleaseLevel(context);
+        nextRelease.head = await getHead(context);
+    }
+    else if (options.verbose) {
+        logger.log("Skip release level calc and head rev retrieval, versionForceCurrent=true");
+    }
+
     //
-    // If there wer eno commits that set the release level to 'patch', 'minor', or 'major',
+    // If there were no commits that set the release level to 'patch', 'minor', or 'major',
     // then we're done
     //
     if (!nextRelease.level)
-    {
-        if (!options.taskGithubRelease && !options.taskMantisbtRelease && !options.taskNpmRelease && !options.taskDistRelease) {
+    {   //
+        // There are certain tasks a user may want to run after a release is made.  e.g. re-send
+        // a notification email, or redo a Mantis or GitHub release. In these cases, user must
+        // pass the --version-force-current switch on the command line.
+        // validateOptions() willhave made sure that only certin tasks are run with this switch
+        //
+        if (!options.versionForceCurrent)
+        {
             logger.log("There are no relevant commits, no new version is released.");
             return false;
         }
-        nextRelease.level = "nochange";
-        options.versionForceCurrent = context.lastRelease.version;
     }
 
     //
@@ -403,51 +392,62 @@ async function runRelease(context: IContext, plugins: any)
     //
     // Next version
     //
-    const versionInfo = getNextVersion(context);
-    if (options.versionForceNext)
+    if (!options.versionForceCurrent)
     {
-        logger.log("Forcing next version to " + options.versionForceNext);
-        nextRelease.version = options.versionForceNext;
-    }
-    else {
-        nextRelease.version = versionInfo.version;
-        if (options.promptVersion === "Y")
+        nextRelease.versionInfo = getNextVersion(context);
+        if (options.versionForceNext)
         {
-            const schema = {
-                properties: {
-                    version: {
-                        description: "Enter version number",
-                        pattern: /^(?:[0-9]+\.[0-9]+\.[0-9]+(?:[\-]{0,1}[a-z]+\.[0-9]+){0,1})$|^[0-9]+$/,
-                        default: nextRelease.version,
-                        message: "Version must contain 0-9 and '.', small chars and '-' for pre-release",
-                        required: false
-                    }
-                }
-            };
-            const prompt = require("prompt");
-            prompt.start();
-            const { version } = await prompt.get(schema);
-            if (version) {
-                nextRelease.version = version;
+            logger.log("Forcing next version to " + options.versionForceNext);
+            nextRelease.version = options.versionForceNext;
+            if (!validateNextVersion(context))
+            {
+                logger.error("Invalid 'next version' specified");
+                return false;
             }
         }
+        else {
+            nextRelease.version = nextRelease.versionInfo.version;
+            if (options.promptVersion === "Y")
+            {
+                const schema = {
+                    properties: {
+                        version: {
+                            description: "Enter version number",
+                            pattern: /^(?:[0-9]+\.[0-9]+\.[0-9]+(?:[\-]{0,1}[a-zA-Z]+\.[0-9]+){0,1})$|^[0-9]+$/,
+                            default: nextRelease.version,
+                            message: "Version must only contain 0-9, '.', chars and '-' for pre-release",
+                            required: false
+                        }
+                    }
+                };
+                const prompt = require("prompt");
+                prompt.start();
+                const { version } = await prompt.get(schema);
+                if (version) {
+                    nextRelease.version = version;
+                }
+            }
+        }
+    }
+    else {
+        logger.log("Force next version to current version " + lastRelease.version);
+        nextRelease.versionInfo = lastRelease.versionInfo;
+        nextRelease.version = lastRelease.version;
+    }
+
+    //
+    // If a level2 stdout/fileout task is processed, we'll be done
+    //
+    taskDone = await processTasksStdOut2(context);
+    if (taskDone) {
+        logTaskResult(taskDone, logger);
+        return taskDone;
     }
 
     //
     // Get the tag name for the next release
     //
     nextRelease.tag = template(options.tagFormat)({ version: nextRelease.version });
-
-    //
-    // If a l3 task is processed, we'll be done
-    //
-    taskDone = await processTasks3(context);
-    if (taskDone !== false) {
-        logTaskResult(taskDone, logger);
-        if (taskDone !== true || !hasMoreTasks(options, [ ...getTasks4(), ...getTasks5() ])) {
-            return taskDone;
-        }
-    }
 
     //
     // The changelog object can have 3 parts, 'fileNotes' that are read from the changelog file
@@ -478,8 +478,8 @@ async function runRelease(context: IContext, plugins: any)
     // Edit/touch changelog / history file
     // Can be a history style TXT or a changeloge type MD
     //
-    const doChangelog = options.taskChangelog || options.taskChangelogView || options.taskChangelogPrint ||
-                        options.taskChangelogHtmlView || options.taskChangelogFile || !options.taskMode;
+    const doChangelog = !options.versionForceCurrent && (options.taskChangelog || options.taskChangelogView ||
+                        options.taskChangelogPrint || options.taskChangelogHtmlView || options.taskChangelogFile || !options.taskMode);
     if (doChangelog)
     {   //
         // We need to populate 'notes' right now for the changelog/history file edit.
@@ -490,11 +490,11 @@ async function runRelease(context: IContext, plugins: any)
         //
         await doEdit(context);
         //
-        // If this is task mode, we're done if there aren't any higher lvl tasks left to run
+        // If this is task mode, we're done maybe
         //
         if (options.taskMode) {
             logTaskResult(true, logger);
-            if (options.taskChangelogHtmlFile || options.taskChangelogHtmlView || !hasMoreTasks(options, getTasks5())) {
+            if (options.taskChangelogHtmlFile || options.taskChangelogHtmlView || options.taskChangelogPrint) {
                 return true;
             }
         }
@@ -512,7 +512,7 @@ async function runRelease(context: IContext, plugins: any)
     // Scripts that are run before manipluation of the verson files and before any build
     // scripts are ran.
     //
-    await util.runScripts({ options, logger, cwd, env }, "preBuild", options.preBuildCommand, true, true);
+    await util.runScripts(context, "preBuild", options.preBuildCommand, options.taskBuild, true, true);
 
     //
     // Pre - NPM release
@@ -522,59 +522,64 @@ async function runRelease(context: IContext, plugins: any)
     // any build scripts are ran.
     //
     let packageJsonModified = false;
-    if (options.npmRelease === "Y" && (!options.taskMode || options.taskNpmRelease))
+    if (options.npmRelease === "Y" && (!options.taskMode || options.taskNpmRelease || options.taskTouchVersions))
     {   //
         // User can specify values in publishrc that override what;s in the package.json
         // file.  Manipulate the package.json file if needed
         //
         packageJsonModified = await npm.setPackageJson({options, logger});
+        // if (options.taskTouchVersions) {
+        //     packageJsonModified = false; // for taskTouchVersions, we don't restore
+        // }
     }
 
     //
     // Update relevant local files with the new version #
     //
-    if (!options.taskMode)
+    if (!options.versionForceCurrent && (!options.taskMode || options.taskTouchVersions))
     {
         await setVersions(context);
+        //
+        // If this is task mode, we're done maybe
+        //
+        if (options.taskTouchVersions) {
+            logTaskResult(true, logger);
+            return true;
+        }
     }
 
     //
     // Build scipts (.publishrc)
     //
-    if (!options.taskMode || options.taskBuild) {
-        await util.runScripts({ options, logger, cwd, env }, "build", options.buildCommand, true, true);
-        //
-        // If this is task mode, we're done if there aren't any higher lvl tasks left to run
-        //
-        if (options.taskBuild) {
-            logTaskResult(true, logger);
-            if (!hasMoreTasks(options, getTasks5())) {
-                return true;
-            }
-        }
+    await util.runScripts(context, "build", options.buildCommand, options.taskBuild, true, true);
+    //
+    // If this is task mode, lof this task's result
+    //
+    if (options.taskBuild) {
+        logTaskResult(true, logger);
     }
 
     //
     // Post-build scripts (.publishrc)
     //
-    await util.runScripts({ options, logger, cwd, env }, "postBuild", options.postBuildCommand);
+    await util.runScripts(context, "postBuild", options.postBuildCommand, options.taskBuild);
 
     //
     // NPM release
     //
     if (options.npmRelease === "Y" && (!options.taskMode || options.taskNpmRelease))
     {   //
-        //   Run pre npm-release scripts if specified.  Ignored in task mode.
+        //   Run pre npm-release scripts if specified.
         //
-        await util.runScripts({ options, logger, cwd, env }, "preNpmRelease", options.npmReleasePreCommand);
+        await util.runScripts(context, "preNpmRelease", options.npmReleasePreCommand, options.taskNpmRelease);
         //
         // Perform dist / network folder release
         //
         await npm.doNpmRelease(context);
         //
-        //  Run pre npm-release scripts if specified.  Ignored in task mode.
+        //  Run pre npm-release scripts if specified.
         //
-        await util.runScripts({options, logger, cwd, env}, "postNpmRelease", options.npmReleasePostCommand);
+        await util.runScripts(context, "postNpmRelease", options.npmReleasePostCommand, options.taskNpmRelease);
     }
 
     //
@@ -584,28 +589,17 @@ async function runRelease(context: IContext, plugins: any)
     {
         logger.log("Starting Distribution release");
         //
-        // Run pre distribution-release scripts if specified.  Ignored in task mode.
+        // Run pre distribution-release scripts if specified.
         //
-        await util.runScripts({ options, logger, cwd, env }, "preDistRelease", options.distReleasePreCommand);
+        await util.runScripts(context, "preDistRelease", options.distReleasePreCommand, options.taskDistRelease);
         //
         // Perform dist / network folder release
         //
         await doDistRelease(context);
         //
-        // Run pre distribution-release scripts if specified.  Ignored in task mode.
+        // Run pre distribution-release scripts if specified.
         //
-        await util.runScripts({ options, logger, cwd, env }, "postDistRelease", options.distReleasePostCommand);
-    }
-
-    //
-    // If a l4 task is processed, we'll be done
-    //
-    taskDone = await processTasks4(context);
-    if (taskDone !== false) {
-        logTaskResult(taskDone, logger);
-        if (taskDone !== true || !hasMoreTasks(options, getTasks5())) {
-            return taskDone;
-        }
+        await util.runScripts(context, "postDistRelease", options.distReleasePostCommand, options.taskDistRelease);
     }
 
     //
@@ -614,11 +608,9 @@ async function runRelease(context: IContext, plugins: any)
     let githubReleaseId;
     if (options.repoType === "git" && options.githubRelease === "Y" && (!options.taskMode || options.taskGithubRelease))
     {   //
-        // Pre-github release (.publishrc).  Ignored in task mode.
+        // Pre-github release (.publishrc).
         //
-        if (!options.taskMode) {
-            await util.runScripts({ options, logger, cwd, env }, "preGithubRelease", options.githubReleasePreCommand);
-        }
+        await util.runScripts(context, "preGithubRelease", options.githubReleasePreCommand, options.taskGithubRelease);
         //
         // Perform Github release
         //
@@ -627,22 +619,13 @@ async function runRelease(context: IContext, plugins: any)
             logTaskResult(ghRc.error, logger);
             return false;
         }
-        //
-        // Post-github release (.publishrc).  Ignored in task mode.
-        //
-        if (!options.taskMode) {
-            await util.runScripts({ options, logger, cwd, env }, "postGithubRelease", options.githubReleasePostCommand);
+        else if (options.taskGithubRelease) {
+            logTaskResult(true, logger);
         }
         //
-        // Check task mode
+        // Post-github release (.publishrc).
         //
-        else {
-            // await publishGithubRelease({options, nextRelease, logger});
-            logTaskResult(ghRc.error || true, logger);
-            if (!hasMoreTasks(options, getTasks5())) {
-                return true;
-            }
-        }
+        await util.runScripts(context, "postGithubRelease", options.githubReleasePostCommand, options.taskGithubRelease);
         //
         // Set flag to 'publish' release once changes are committed and tag is created
         //
@@ -654,11 +637,9 @@ async function runRelease(context: IContext, plugins: any)
     //
     if (options.mantisbtRelease === "Y" && (!options.taskMode || options.taskMantisbtRelease))
     {   //
-        // Pre-mantis release (.publishrc).  Ignored in task mode.
+        // Pre-mantis release (.publishrc).
         //
-        if (!options.taskMode) {
-            await util.runScripts({ options, logger, cwd, env }, "preMantisRelease", options.mantisbtReleasePreCommand);
-        }
+        await util.runScripts(context, "preMantisRelease", options.mantisbtReleasePreCommand, options.taskMantisbtRelease);
         //
         // Perform MantisBT release
         //
@@ -667,21 +648,13 @@ async function runRelease(context: IContext, plugins: any)
             logTaskResult(mantisRc.error, logger);
             return false;
         }
-        //
-        // Post-mantis release scripts (.publishrc).  Ignored in task mode.
-        //
-        if (!options.taskMode) {
-            await util.runScripts({ options, logger, cwd, env }, "postMantisRelease", options.mantisbtReleasePostCommand);
-        }
-        //
-        // If this is task mode, we're done
-        //
-        else {
+        if (options.taskMantisbtRelease) {
             logTaskResult(true, logger);
-            if (!hasMoreTasks(options, getTasks5())) {
-                return true;
-            }
         }
+        //
+        // Post-mantis release scripts (.publishrc).
+        //
+        await util.runScripts(context, "postMantisRelease", options.mantisbtReleasePostCommand, options.taskMantisbtRelease);
     }
 
     //
@@ -701,7 +674,7 @@ async function runRelease(context: IContext, plugins: any)
     //
     // Notifiation email
     //
-    if (!options.taskMode && (options.emailNotification === "Y" || options.taskEmail)) {
+    if (options.emailNotification === "Y" && (!options.taskMode || options.taskEmail)) {
         await sendNotificationEmail(context, nextRelease.version);
     }
 
@@ -782,7 +755,7 @@ async function runRelease(context: IContext, plugins: any)
     //
     // Display changelog notes if this is a dry run
     //
-    if (options.dryRun)
+    if (options.dryRun && !options.taskMode)
     {
         logger.log(`Release notes for version ${nextRelease.version}:`);
         if (context.changelog.notes)
@@ -815,7 +788,7 @@ async function runRelease(context: IContext, plugins: any)
  *
  * @param context The run context object.
  */
-async function processTasks1(context: IContext): Promise<boolean>
+async function processTasksStdOut1(context: IContext): Promise<boolean>
 {
     const options = context.options;
 
@@ -847,44 +820,11 @@ async function processTasks1(context: IContext): Promise<boolean>
 
 
 /**
- * Tasks that can be processed without retrieving commits, but last release info is required
- *
- * @param context The run context object.
- */
-async function processTasks2(context: IContext): Promise<boolean>
-{
-    if (context.options.taskEmail)
-    {
-        await sendNotificationEmail(context, context.lastRelease.version);
-        return true;
-    }
-    return false;
-}
-
-
-/**
- * Tasks that can be processed without retrieving commits, but last and next release info
- * is required
- *
- * @param context The run context object.
- */
-async function processTasks3(context: IContext): Promise<boolean>
-{
-    if (context.options.taskTouchVersions)
-    {
-        await setVersions(context);
-        return true;
-    }
-    return false;
-}
-
-
-/**
  * Tasks that need to be processed "after" retrieving commits and other tag related info
  *
  * @param context The run context object.
  */
-async function processTasks4(context: IContext): Promise<boolean>
+async function processTasksStdOut2(context: IContext): Promise<boolean>
 {
     const options = context.options,
           logger = context.logger,
@@ -930,31 +870,13 @@ async function processTasks4(context: IContext): Promise<boolean>
         return true;
     }
 
-    // if (szOutputFile) {
-    //     writeFileSync(szOutputFile, szFinalContents);
-    //     logger.log("   Saved release history output to $szOutputFile");
-    // }
-
     return false;
 }
 
 
-function getTasks3()
-{
-    return [ "taskTouchVersions" ];
-}
-
-
-function getTasks4()
+function getTasks2()
 {
     return [ "taskCiEnvInfo", "taskCiEnvSet", "taskVersionInfo", "taskVersionNext" ];
-}
-
-
-function getTasks5()
-{
-    return [ "taskCommit", "taskDistRelease", "taskGithubRelease", "taskMantisbtRelease",
-             "taskNpmRelease", "taskNugetRelease", "taskTag" ];
 }
 
 

@@ -8,20 +8,23 @@ import { npmLocation } from "./releases/npm";
 // async..await is not allowed in global scope, must use a wrapper
 export async function sendNotificationEmail(context: IContext, version: string): Promise<boolean>
 {
-    const {options, nextRelease, logger} = context;
+    const {options, logger} = context;
+
+    logger.log("Send release notification email");
+
     //
     // Check to make sure all necessary parameters are set
     //
     if (!options.emailServer) {
-        logger.error("   Notification could not be sent, invalid email server specified");
+        logger.error("Notification could not be sent, invalid email server specified");
         return false;
     }
     if (!options.emailRecip) {
-        logger.error("   Notification could not be sent, invalid recipient address specified");
+        logger.error("Notification could not be sent, invalid recipient address specified");
         return false;
     }
     if (!options.emailSender) {
-        logger.error("   Notification could not be sent, invalid sender address specified");
+        logger.error("Notification could not be sent, invalid sender address specified");
         return false;
     }
 
@@ -30,7 +33,7 @@ export async function sendNotificationEmail(context: IContext, version: string):
     emailBody += (context.changelog.fileNotes || context.changelog.fileNotesLast);
 
     if (!emailBody) {
-        logger.error("   Notification could not be sent, history file not specified");
+        logger.error("Notification could not be sent, history file not specified");
         return false;
     }
 
@@ -44,7 +47,6 @@ export async function sendNotificationEmail(context: IContext, version: string):
     emailBody += "<i>app-publisher</i></font></td></tr><tr><td valign=\"middle\" colspan=\"3\">";
     emailBody += "<font style=\"font-size:10px;font-weight:bold\">Do not respond to this email message</font></td></tr></table>";
 
-    logger.log("Sending release notification email");
     try
     {
         //

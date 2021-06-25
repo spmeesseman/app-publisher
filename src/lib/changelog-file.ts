@@ -1238,7 +1238,7 @@ async function getChangelogFileSections({ options, logger }, version: string, nu
     contents = await execa.stdout("marked", ["--breaks", "--gfm", "--file", clFile]);
     await deleteFile(clFile);
 
-    logger.success("Successful");
+    logger.log("Successfully retrieved changelog file content");
 
     return contents;
 }
@@ -1726,7 +1726,7 @@ async function getHistoryFileSections({ options, logger }, version: string, nums
         }
     }
 
-    logger.success("   Successful");
+    logger.log("Successfully retrieved history file content");
 
     return finalContents;
 }

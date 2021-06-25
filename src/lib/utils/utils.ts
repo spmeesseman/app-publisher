@@ -255,10 +255,17 @@ export function timeout(ms: number)
 const scriptTypesProcessed = [];
 
 
-export async function runScripts({options, logger, cwd, env}, scriptType: string, scripts: string | string[], throwOnError = false, runInTestMode = false)
+export async function runScripts(context: IContext, scriptType: string, scripts: string | string[], forceRun = false, throwOnError = false, runInTestMode = false)
 {
-    if (options.taskMode) {
+    const {options, logger, cwd, env} = context;
+
+    if (!forceRun && options.taskMode) {
         logger.log(`Running custom ${scriptType} script(s) skipped in task mode`);
+        return;
+    }
+
+    if (options.versionForceCurrent) {
+        logger.log(`Running custom ${scriptType} script(s) skipped in current version forced task mode`);
         return;
     }
 

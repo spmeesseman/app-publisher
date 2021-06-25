@@ -24,15 +24,10 @@ async function getCurrentVersion(context: any): Promise<IVersionInfo>
         versionInfo: undefined
     };
 
-    if (options.versionForceCurrent && isString(options.versionForceCurrent))
-    {
-        versionInfo.version = options.versionForceCurrent;
-    }
-
     //
     // If node_modules dir exists, use package.json to obtain cur version
     //
-    else if (await pathExists("package.json"))
+    if (await pathExists("package.json"))
     {
         versionInfo.version = require(path.join(cwd, "package.json")).version;
     }

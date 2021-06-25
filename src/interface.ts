@@ -99,7 +99,7 @@ export interface INextRelease
 {
     edits: IEdit[];
     head: string;
-    level: string;
+    level: "major" | "premajor" | "minor" | "preminor" | "patch" | "prepatch" | "prerelease";
     tag: string;
     version: string;
     versionInfo: IVersionInfo;
@@ -680,11 +680,12 @@ export interface IOptions
      */
     versionFiles: string | string[];
     /**
-     * A version number to use as the 'current version'.
+     * Force current version, for use with post release tasks such as re-sending an email notification
+     * or performing a GitHub release if for whever reason it failed on the publish run
      * Example usage:
-     *     app-publisher --version-force-current 300, * app-publisher --version-force-current 3.0.0
+     *     app-publisher --task-github-release --version-force-current
      */
-    versionForceCurrent: string;
+    versionForceCurrent: boolean;
     /**
      * A version number to use as the 'next version'.  Version calculation will not be performed
      * other than for reading in the current version, skipping an SCM step.

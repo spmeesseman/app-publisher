@@ -123,6 +123,17 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     }
 
     //
+    // Email configuratin
+    //
+    if (options.emailNotification === "Y") {
+        if (!options.emailRecip || !options.emailSender || !options.emailServer || (!options.emailRecip && !options.testEmailRecip)) {
+            logger.error("Email step is specified Y, but email is not configured in .publishrc");
+            logger.error("Configure related email properties in .publishrc");
+            return false;
+        }
+    }
+
+    //
     // Set up log file
     //
     if (options.writeLog === "Y")
@@ -146,27 +157,24 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     //
     // Set repository and repository type
     //
-    if (await pathExists(path.join(cwd, "package.json")))
+    if (!options.repo || !options.repoType)
     {
-        if (!options.repo)
+        if (await pathExists(path.join(cwd, "package.json")))
         {
-            logger.log("Reading repository in package.json");
-            options.repo = require(path.join(cwd, "package.json")).repository.url;
-            logger.log("Repository: " + options.repo);
-        }
-        if (!options.repoType)
-        {
-            logger.log("Reading repository type from package.json");
-            options.repo = require(path.join(cwd, "package.json")).repository.type;
-            logger.log("Repository Type: options.repoType");
+            const packageJson = require(path.join(process.cwd(), "package.json"));
+
+            if (!options.repo && packageJson.repository && packageJson.repository.url)
+            {
+                options.repo = packageJson.repository.url;
+            }
+            if (!options.repoType && packageJson.repository && packageJson.repository.type)
+            {
+                options.repo = packageJson.repository.type;
+            }
         }
     }
 
-    if (!options.repo) {
-        logger.error("Repository must be specified on cmd line, package.json or publishrc");
-        return false;
-    }
-    else if (!options.repoType) {
+    if (!options.repoType) {
         logger.error("Repository type must be specified on cmd line, package.json or publishrc");
         return false;
     }
@@ -541,7 +549,8 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
         (options.taskChangelogView && options.taskChangelogPrint) || (options.taskChangelogPrint && options.taskChangelogHtmlView) ||
         (options.taskChangelogFile && options.taskChangelogHtmlFile) ||
         (options.taskChangelog && (options.taskChangelogFile || options.taskChangelogHtmlFile)) ||
-        (options.taskChangelog && (options.taskChangelogView || options.taskChangelogHtmlView || options.taskChangelogPrint)))
+        (options.taskChangelog && (options.taskChangelogView || options.taskChangelogHtmlView || options.taskChangelogPrint)) ||
+        (options.taskTouchVersions && options.versionForceCurrent))
     {
         logger.error("Invalid options specified:");
         logger.error("  Two or more of the specified tasks cannot be used together");
@@ -558,9 +567,58 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
         return false;
     }
 
-    if (options.taskModeStdOut) {
-        for (const o in options) {
-            if (o.startsWith("task")) {
+    //
+    // Only certain tasks are allowed with --version-force-current.  e.g. re-send a notification
+    // email, or redo a Mantis or GitHub or NPM or other release
+    //
+    if (options.versionForceCurrent)
+    {
+        if (!options.taskMode)
+        {
+            logger.error("Invalid options specified:");
+            logger.error("  The --version-force-current switch can only be usedin task mode");
+            return false;
+        }
+        let taskSet = false;
+        for (const o in options)
+        {
+            if (o.startsWith("task") && options[o] === true)
+            {
+                if (!o.endsWith("Release") && o !== "taskEmail" && o !== "taskMode" && o !== "taskModeStdOut")
+                {
+                    logger.error("Invalid options specified:");
+                    logger.error(`  The versionForceCurrent switch cannot be used with '${o}'`);
+                    return false;
+                }
+                taskSet = true;
+            }
+        }
+        if (!taskSet) {
+            logger.error("Invalid options specified:");
+            logger.error("The versionForceCurrent switch can only be used with the following tasks:");
+            logger.error("  task*XYZ*Release, taskEmail");
+            return false;
+        }
+    }
+
+    //
+    // Task email must have email configured
+    //
+    if (options.taskEmail && options.emailNotification !== "Y") {
+        logger.error("Email task specified, but email is not configured in .publishrc");
+        logger.error("Configure email with 'emailNotification' flag and related properties");
+        return false;
+    }
+
+    //
+    // Only one stdout mode task can be used at a time
+    //
+    if (options.taskModeStdOut)
+    {
+        for (const o in options)
+        {
+            if (o.startsWith("task"))
+            {
                 if (options[o] === true) {
                     if (o !== "taskVersionCurrent" && o !== "taskVersionNext" && o !== "taskVersionInfo" && o !== "taskChangelogPrint" &&
                         o !== "taskCiEvInfo" && o !== "taskVersionPreReleaseId" && o !== "taskMode" && o !== "taskModeStdOut")

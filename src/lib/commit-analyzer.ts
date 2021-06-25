@@ -5,7 +5,7 @@ export = getReleaseLevel;
 
 async function getReleaseLevel({ options, commits, logger })
 {
-    let level: string;
+    let level: "major" | "premajor" | "minor" | "preminor" | "patch" | "prepatch" | "prerelease";
 
     logger.log(`Analyze ${commits.length} commit messages for release level`);
 

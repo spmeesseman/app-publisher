@@ -4,18 +4,13 @@ pipeline {
 
   options {
     skipDefaultCheckout()
+    // skipStagesAfterUnstable()
     //
     // Keep only last 100 builds
     //
     buildDiscarder(logRotator(numToKeepStr: '100'))
     // Timeout job after 60 minutes
     timeout(time: 10, unit: 'MINUTES')
-  }
- 
-  parameters {
-    string(defaultValue: "smeesseman@pjats.com", // "$emailRecipients",
-            description: 'List of email recipients',
-            name: 'EMAIL_RECIPIENTS')
   }
 
   stages {
@@ -156,20 +151,20 @@ pipeline {
             env.CURRENTVERSION = bat(returnStdout: true,
                                      script: """
                                        @echo off
-                                       app-publisher --node --rc-file .publishrc.pja.json --task-version-current
+                                       app-publisher --rc-file .publishrc.pja.json --task-version-current
                                      """)
             if (env.TAG_NAME == null) {
               echo "No tag found, trunk/branch build set version"
               env.NEXTVERSION = bat(returnStdout: true,
                                     script: """
                                       @echo off
-                                      app-publisher --node --rc-file .publishrc.pja.json --task-version-next
+                                      app-publisher --rc-file .publishrc.pja.json --task-version-next
                                     """)
               //
               // Update version files
               //
               echo "Update version files"
-              bat "app-publisher --node --rc-file .publishrc.pja.json --task-touch-versions"
+              bat "app-publisher --rc-file .publishrc.pja.json --task-touch-versions"
             }
             else {
               echo "Tag found: ${env.TAG_NAME}, set next version to current"
@@ -232,14 +227,12 @@ pipeline {
               // If we don't use --version-force-next option then ap will bump the version again
               // since we ran the --task-touch-versions command already
               //
-              bat "app-publisher --node --rc-file .publishrc.pja.json --task-changelog --version-force-next ${env.NEXTVERSION}" 
-              bat "app-publisher --node --rc-file .publishrc.pja.json --task-changelog-file doc\\tmp_history.txt --version-force-next ${env.NEXTVERSION}" 
+              bat "app-publisher --rc-file .publishrc.pja.json --task-changelog --version-force-next ${env.NEXTVERSION}" 
               historyEntry = bat(returnStdout: true,
                                  script: """
                                    @echo off
-                                   powershell Get-Content -path .\\doc\\tmp_history.txt -Raw
+                                   app-publisher --rc-file .publishrc.pja.json --task-changelog-print --version-force-next ${env.NEXTVERSION}
                                  """)
-              bat "del /F .\\doc\\tmp_history.txt"
             }
           }
           //
@@ -250,7 +243,7 @@ pipeline {
                 attachLog: false,
                 mimeType: 'text/html',
                 subject: "User Input Required for Build ${BUILD_NUMBER}: ${env.JOB_NAME} v${env.NEXTVERSION}",
-                to: "smeesseman@pjats.com" // "${params.EMAIL_RECIPIENTS}"
+                to: "smeesseman@pjats.com" // "${env.EMAIL_RECIPIENTS}"
                 //body: '''${SCRIPT, template="groovy-html.template"}''', 
                 //body: '${SCRIPT,template="managed:EmailTemplate"}',
                 //attachLog: true,
@@ -319,8 +312,7 @@ pipeline {
               // NPM and MantisBT Release
               //
               echo "Perform NPM and MantisBT Releases"
-              bat "app-publisher --node --rc-file .publishrc.pja.json --task-mantisbt-release --task-npm-release"
-              // bat "npm publish"
+              bat "app-publisher --rc-file .publishrc.pja.json --task-mantisbt-release --task-npm-release --task-email --version-force-next ${env.NEXTVERSION}"
             }
           }
         }
@@ -346,7 +338,7 @@ pipeline {
                   compressLog: true,
                   mimeType: 'text/html',
                   subject: "Build ${BUILD_NUMBER} : " + currentBuild.currentResult + " : " + env.JOB_NAME,
-                  to: "smeesseman@pjats.com" // "${params.EMAIL_RECIPIENTS}"
+                  to: "smeesseman@pjats.com"
         }
       }
     }
@@ -361,9 +353,10 @@ pipeline {
           //
           if (env.PRODUCTIONRELEASE == "1") {
             echo "Successful build"
-            echo "    1. Tag version in SVN."
-            echo "    2. Send release email."
-            bat "app-publisher --node --rc-file .publishrc.pja.json --task-commit --task-email"
+            echo "    1. Commit modified files to SVN."
+            echo "    2. Tag version in SVN."
+            echo "    3. Send release email."
+            bat "app-publisher --rc-file .publishrc.pja.json --task-commit --task-tag --task-email --version-force-next ${env.NEXTVERSION}"
           }
         }
       }
