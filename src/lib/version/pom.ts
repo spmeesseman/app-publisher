@@ -1,4 +1,6 @@
 
+import { IContext } from "../../interface";
+import { addEdit } from "../repo";
 import { pathExists, replaceInFile, readFile } from "../utils/fs";
 import { editFile } from "../utils/utils";
 
@@ -58,10 +60,22 @@ export async function getPomVersion({logger}): Promise<{ version: string, versio
 }
 
 
-export async function setPomVersion({options, logger, nextRelease, cwd, env})
+export async function setPomVersion(context: IContext)
 {
+    const {options, logger, nextRelease, cwd, env} = context;
+
     if (nextRelease.versionInfo.versionInfo.length === 2 && await pathExists("pom.xml"))
-    {
+    {   //
+        // If this is '--task-revert', all we're doing here is collecting the paths of the
+        // files that would be updated in a run, don't actually do the update
+        //
+        if (options.taskRevert) {
+            await addEdit(context, options.cProjectRcFile);
+            return;
+        }
+        //
+        // Pom file could have dynamic version construction using props (mavenTag)
+        //
         const mavenTag = nextRelease.versionInfo.versionInfo;
         await replaceInFile("pom.xml", `<${mavenTag}>[0-9a-z.\-]+</${mavenTag}>`, `<${mavenTag}>${nextRelease.version}</${mavenTag}`);
         //

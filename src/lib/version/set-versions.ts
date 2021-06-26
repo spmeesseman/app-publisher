@@ -10,6 +10,7 @@ import { setPomVersion } from "./pom";
 import { setNpmVersion } from "./npm";
 import { IContext } from "../../interface";
 import { EOL } from "os";
+import { addEdit } from "../repo";
 
 export = setVersions;
 
@@ -69,9 +70,7 @@ async function setVersions(context: IContext): Promise<void>
     // $AssemblyInfoLoc = Get-ChildItem -Name -Recurse -Depth 1 -Filter "assemblyinfo.cs" -File -Path . -ErrorAction SilentlyContinue
     // if ($AssemblyInfoLoc -is [system.string] && ![string]::IsNullOrEmpty($AssemblyInfoLoc))
     // {
-    if ((await getDotNetFiles(logger)).length > 0) {
-        await setDotNetVersion(context);
-    }
+    await setDotNetVersion(context);
     // }
     // else if ($AssemblyInfoLoc -is [System.Array] && $AssemblyInfoLoc.Length -gt 0) {
     //    foreach ($AssemblyInfoLocFile in $AssemblyInfoLoc) {
@@ -91,50 +90,57 @@ async function setVersionFiles(context: IContext): Promise<void>
           logger = context.logger,
           nextRelease = context.nextRelease,
           lastRelease = context.lastRelease;
-    let incremental = false;
+    let incremental = false,
+        semVersion = "", semVersionCUR = "";
 
     if (!options.versionFiles || options.versionFiles.length === 0) {
         return;
     }
 
-    logger.log("Update 'versionFiles' specified files");
-    logger.log("   # of files : " + options.versionFiles.length);
-    if (options.verbose) {
-        if (!isString(options.versionFiles)) {
-            context.stdout.write(options.versionFiles.join(EOL) + EOL);
+    //
+    // If this is '--task-revert', all we're doing here is collecting the paths of the files
+    // that would be updated in a run, don't actually do the update.  So we don't need to
+    // look at any version stuff.
+    //
+    if (!options.taskRevert)
+    {
+        logger.log("Update 'versionFiles' specified files");
+        logger.log("   # of files : " + options.versionFiles.length);
+        if (options.verbose) {
+            if (!isString(options.versionFiles)) {
+                context.stdout.write(options.versionFiles.join(EOL) + EOL);
+            }
+            else {
+                context.stdout.write(options.versionFiles + EOL);
+            }
+        }
+
+        //
+        // Below is set to handle an assemblyinfo.cs file or other version file in semver format, but the
+        // build version type is incremental
+        //
+        if (!nextRelease.version.includes("."))
+        {
+            incremental = true;
+            for (const c of nextRelease.version) {
+                semVersion = `${semVersion}${c}.`;
+            }
+            semVersion = semVersion.substring(0, semVersion.length - 1);
         }
         else {
-            context.stdout.write(options.versionFiles + EOL);
+            semVersion = nextRelease.version;
         }
-    }
 
-    //
-    // Below is set to handle an assemblyinfo.cs file or other version file in semver format, but the
-    // build version type is incremental
-    //
-    let semVersion = "";
-    if (!nextRelease.version.includes("."))
-    {
-        incremental = true;
-        for (const c of nextRelease.version) {
-            semVersion = `${semVersion}${c}.`;
+        if (!lastRelease.version.includes("."))
+        {
+            for (const c of lastRelease.version) {
+                semVersionCUR = `${semVersionCUR}${c}.`;
+            }
+            semVersionCUR = semVersionCUR.substring(0, semVersionCUR.length - 1);
         }
-        semVersion = semVersion.substring(0, semVersion.length - 1);
-    }
-    else {
-        semVersion = nextRelease.version;
-    }
-
-    let semVersionCUR = "";
-    if (!lastRelease.version.includes("."))
-    {
-        for (const c of lastRelease.version) {
-            semVersionCUR = `${semVersionCUR}${c}.`;
+        else {
+            semVersionCUR = lastRelease.version;
         }
-        semVersionCUR = semVersionCUR.substring(0, semVersionCUR.length - 1);
-    }
-    else {
-        semVersionCUR = lastRelease.version;
     }
 
     //
@@ -154,6 +160,14 @@ async function setVersionFiles(context: IContext): Promise<void>
 
         if (await pathExists(vFile))
         {   //
+            // If this is '--task-revert', all we're doing here is collecting the paths of the
+            // files that would be updated in a run, don't actually do the update
+            //
+            if (options.taskRevert) {
+                await addEdit(context, vFile);
+                continue;
+            }
+            //
             // Replace version in file
             //
             let rc = false;

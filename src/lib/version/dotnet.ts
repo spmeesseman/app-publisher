@@ -1,5 +1,7 @@
 
 import glob = require("glob");
+import { IContext } from "../../interface";
+import { addEdit } from "../repo";
 import { replaceInFile, readFile } from "../utils/fs";
 import { editFile } from "../utils/utils";
 
@@ -53,15 +55,23 @@ export async function getDotNetVersion({logger}): Promise<{ version: string, ver
 }
 
 
-export async function setDotNetVersion({lastRelease, nextRelease, options, logger, cwd, env})
+export async function setDotNetVersion(context: IContext)
 {
     let semVersion = "";
-    const fileNames = await getDotNetFiles(logger);
+    const {lastRelease, nextRelease, options, logger, cwd, env} = context,
+          fileNames = await getDotNetFiles(logger);
 
     if (fileNames)
     {
         if (fileNames.length >= 1)
-        {
+        {   //
+            // If this is '--task-revert', all we're doing here is collecting the paths of the
+            // files that would be updated in a run, don't actually do the update
+            //
+            if (options.taskRevert) {
+                await addEdit(context, fileNames[0]);
+                return;
+            }
             if (lastRelease.versionInfo.versionSystem === "incremental" || !nextRelease.version.includes("."))
             {
                 for (const c of nextRelease.version) {

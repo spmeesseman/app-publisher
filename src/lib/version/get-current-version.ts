@@ -40,9 +40,9 @@ async function getCurrentVersion(context: any): Promise<IVersionInfo>
     }
     //
     // MantisBT Plugin
-    // mantisBtPlugin specifies the main class file, containing version #
+    // The 'mantisbtPlugin' option specifies the main class file, containing version #
     //
-    else if (options.mantisBtPlugin && await pathExists(options.mantisBtPlugin))
+    else if (options.mantisbtPlugin && await pathExists(options.mantisbtPlugin))
     {
         versionInfo = await getMantisBtVersion(context);
     }

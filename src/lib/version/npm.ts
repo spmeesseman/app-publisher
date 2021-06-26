@@ -1,19 +1,30 @@
 
 import * as path from "path";
+import { IContext } from "../../interface";
 import { addEdit } from "../repo";
 import { pathExists, writeFile } from "../utils/fs";
 import { editFile } from "../utils/utils";
 
 
-export async function setNpmVersion({options, lastRelease, nextRelease, logger, cwd, env})
+export async function setNpmVersion(context: IContext)
 {
     let modified = false;
-    const packageJsonExists = await pathExists("package.json"),
+    const {options, nextRelease, logger, cwd, env} = context,
+          packageJsonExists = await pathExists("package.json"),
           packageJson = packageJsonExists ? require(path.join(process.cwd(), "package.json")) : undefined,
           packageLockFileExists = packageJsonExists ? await pathExists("package-lock.json") : undefined,
           packageLockJson = packageLockFileExists ? require(path.join(process.cwd(), "package-lock.json")) : undefined;
 
     if (!packageJsonExists) {
+        return;
+    }
+
+    //
+    // If this is '--task-revert', all we're doing here is collecting the paths of the
+    // files that would be updated in a run
+    //
+    if (options.taskRevert) {
+        await addEdit({options, logger, nextRelease, cwd, env} as IContext, "package.json");
         return;
     }
 

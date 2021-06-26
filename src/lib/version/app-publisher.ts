@@ -2,7 +2,7 @@
 import glob = require("glob");
 import { relative } from "path";
 import { IContext } from "../../interface";
-import { isIgnored } from "../repo";
+import { addEdit, isIgnored } from "../repo";
 import { replaceInFile, pathExists } from "../utils/fs";
 import { editFile } from "../utils/utils";
 
@@ -25,9 +25,11 @@ async function getFiles(logger: any)
 }
 
 
-export async function setAppPublisherVersion({nextRelease, options, logger, cwd, env}: IContext)
+export async function setAppPublisherVersion(context: IContext)
 {
     let files: string[] = [];
+    const {nextRelease, options, logger, cwd, env} = context;
+
     if (options.version)
     {
         files = await getFiles(logger);
@@ -38,12 +40,22 @@ export async function setAppPublisherVersion({nextRelease, options, logger, cwd,
         {
             if (await pathExists(file) && !(await isIgnored({options, logger, cwd, env} as IContext, file)))
             {
-                logger.log(`Setting version ${nextRelease.version} in ` + relative(cwd, file));
+                const rFile = relative(cwd, file);
+                //
+                // If this is '--task-revert', all we're doing here is collecting the paths of the
+                // files that would be updated in a run, don't actually do the update
+                //
+                if (options.taskRevert) {
+                    await addEdit({options, logger, nextRelease, cwd, env} as IContext, rFile);
+                    return;
+                }
+
+                logger.log(`Setting version ${nextRelease.version} in ` + rFile);
                 // const publishrcJson = require(path.join(process.cwd(), file));
                 // if (publishrcJson.version)
                 // {
                     // publishrcJson.version = nextRelease.version;
-                    // await writeFile("package.json", JSON.stringify(publishrcJson, undefined, 4));
+                    // await writeFile(file, JSON.stringify(publishrcJson, undefined, 4));
                     await replaceInFile(file, "\"version\"[ ]*:[ ]*[\"][0-9a-z.\-]+", `"version": "${nextRelease.version}`);
                     //
                     // Allow manual modifications to mantisbt main plugin file and commit to modified list
