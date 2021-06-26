@@ -24,7 +24,10 @@ export async function setNpmVersion(context: IContext)
     // files that would be updated in a run
     //
     if (options.taskRevert) {
-        await addEdit({options, logger, nextRelease, cwd, env} as IContext, "package.json");
+        await addEdit(context, "package.json");
+        if (packageLockFileExists) {
+            await editFile(context, "package-lock.json");
+        }
         return;
     }
 
@@ -62,8 +65,8 @@ export async function setNpmVersion(context: IContext)
     //
     // Allow manual modifications to package.json and package-lock.json
     //
-    await editFile({nextRelease, options, logger, cwd, env}, "package.json");
+    await editFile(context, "package.json");
     if (packageLockFileExists) {
-        await editFile({nextRelease, options, logger, cwd, env}, "package-lock.json");
+        await editFile(context, "package-lock.json");
     }
 }

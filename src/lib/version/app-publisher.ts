@@ -47,7 +47,7 @@ export async function setAppPublisherVersion(context: IContext)
                 //
                 if (options.taskRevert) {
                     await addEdit({options, logger, nextRelease, cwd, env} as IContext, rFile);
-                    return;
+                    continue;
                 }
 
                 logger.log(`Setting version ${nextRelease.version} in ` + rFile);
