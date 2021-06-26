@@ -1,22 +1,11 @@
 
 import semver from "semver";
-import { getVersion } from "../changelog-file";
+import { getVersion, getProjectChangelogFile } from "../changelog-file";
 import { replaceInFile, pathExists } from "../utils/fs";
 import { editFile } from "../utils/utils";
 
 
-async function getChangelogFile(options: any)
-{
-    if (options.historyFile && await pathExists(options.historyFile)) {
-        return options.historyFile;
-    }
-    else if (options.changelogFile && await pathExists(options.changelogFile)) {
-        return options.changelogFile;
-    }
-}
-
-
-export async function getIncrementalVersion({logger, options}): Promise<{ version: string, versionSystem: string, versionInfo: any }>
+export async function getIncrementalVersion({logger, options}): Promise<{ version: string; versionSystem: string; versionInfo: any }>
 {
     let versionSystem: string;
     const version = await getVersion({logger, options});
@@ -41,7 +30,7 @@ export async function setIncrementalersion({options, logger, nextRelease, cwd, e
 {
     if (nextRelease.versionInfo.length === 2 && await pathExists("pom.xml"))
     {
-        const clFile = await getChangelogFile(options);
+        const clFile = getProjectChangelogFile(options);
         await replaceInFile(clFile, `${options.versionText}[ ]+[0-9a-z.\-]+[ ]*$`, `${options.versionText} ${nextRelease.version}`);
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list

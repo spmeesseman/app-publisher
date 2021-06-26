@@ -1,12 +1,11 @@
 
-import * as path from "path";
-import { getDotNetVersion, getDotNetFiles } from "./dotnet";
+import { getDotNetVersion } from "./dotnet";
 import { getIncrementalVersion } from "./incremental";
 import { getMantisBtVersion } from "./mantisbt";
 import { getPomVersion } from "./pom";
-import { isString } from "../utils/utils";
-import { pathExists } from "../utils/fs";
 import { IVersionInfo } from "../../interface";
+import { getNpmVersion } from "./npm";
+import { getMakefileVersion } from "./makefile";
 
 
 export = getCurrentVersion;
@@ -27,14 +26,25 @@ async function getCurrentVersion(context: any): Promise<IVersionInfo>
     //
     // If node_modules dir exists, use package.json to obtain cur version
     //
-    if (await pathExists("package.json"))
+    versionInfo = await getNpmVersion(context);
+    //
+    // .NET with AssemblyInfo.cs file
+    //
+    if (!versionInfo || !versionInfo.version)
     {
-        versionInfo.version = require(path.join(cwd, "package.json")).version;
+        versionInfo = await getDotNetVersion(context);
+    }
+    //
+    // Makefile/RC Project
+    //
+    if (!versionInfo || !versionInfo.version)
+    {
+        versionInfo = await getMakefileVersion(context);
     }
     //
     // Maven pom.xml based Plugin
     //
-    else if (await pathExists("pom.xml"))
+    if (!versionInfo || !versionInfo.version)
     {
         versionInfo = await getPomVersion(context);
     }
@@ -42,21 +52,14 @@ async function getCurrentVersion(context: any): Promise<IVersionInfo>
     // MantisBT Plugin
     // The 'mantisbtPlugin' option specifies the main class file, containing version #
     //
-    else if (options.mantisbtPlugin && await pathExists(options.mantisbtPlugin))
+    if (!versionInfo || !versionInfo.version)
     {
         versionInfo = await getMantisBtVersion(context);
     }
     //
-    // .NET with AssemblyInfo.cs file
+    // Extract from changelog/history file
     //
-    else if ((await getDotNetFiles(logger)).length > 0)
-    {
-        versionInfo = await getDotNetVersion(context);
-    }
-    //
-    // Test style History file
-    //
-    else if (options.historyFile && await pathExists(options.historyFile))
+    if (!versionInfo || !versionInfo.version)
     {
         versionInfo = await getIncrementalVersion(context);
     }

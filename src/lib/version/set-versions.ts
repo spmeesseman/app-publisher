@@ -2,7 +2,7 @@
 import { pathExists, replaceInFile } from "../utils/fs";
 import { editFile, isString } from "../utils/utils";
 import { setAppPublisherVersion } from "./app-publisher";
-import { setDotNetVersion, getDotNetFiles } from "./dotnet";
+import { setDotNetVersion } from "./dotnet";
 import { setExtJsVersion } from "./extjs";
 import { setMakefileVersion } from "./makefile";
 import { setMantisBtVersion } from "./mantisbt";
@@ -24,44 +24,30 @@ export = setVersions;
  */
 async function setVersions(context: IContext): Promise<void>
 {
-    const options = context.options,
-          logger = context.logger;
     //
     // NPM managed project, update package.json if required
     //
-    if (await pathExists("package.json")) {
-        await setNpmVersion(context);
-    }
+    await setNpmVersion(context);
     //
     // AppPublisher publishrc version
     //
-    if (options.version) {
-        await setAppPublisherVersion(context);
-    }
+    await setAppPublisherVersion(context);
     //
     // ExtJs build
     //
-    if (await pathExists("app.json") && (await pathExists("workspace.json") || await pathExists("build.xml"))) {
-        await setExtJsVersion(context);
-    }
+    await setExtJsVersion(context);
     //
     // Maven managed project, update pom.xml if required
     //
-    if (await pathExists("pom.xml")) {
-        setPomVersion(context);
-    }
+    await setPomVersion(context);
     //
     // Mantisbt plugin project, update main plugin file if required
     //
-    if (options.mantisbtPlugin) {
-        await setMantisBtVersion(context);
-    }
+    await setMantisBtVersion(context);
     //
     // C project, update main rc file if required
     //
-    if (options.cProjectRcFile) {
-        await setMakefileVersion(context);
-    }
+    await setMakefileVersion(context);
     //
     // If this is a .NET build, update assemblyinfo file
     // Search root dir and one level deep.  If the assembly file is located deeper than 1 dir

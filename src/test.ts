@@ -1,12 +1,16 @@
 // import { properCase } from "./lib/utils/utils";
 
+import { IContext } from "./interface";
+// import { setNpmVersion } from "./lib/version/npm";
+
 export = runDevCodeTests;
 
 //
 // Run with --task-dev-test
 //
-function runDevCodeTests()
+function runDevCodeTests(context: IContext)
 {
+    // setNpmVersion(context);
     // console.log(properCase("fixes"));
     // let msg = "ApiExtend is an Api[skip ci] that [skip ci] ApiUser [prod-release] the with [sandbox release] Api ExtendApi. [nightly-release]";
     // msg = msg.replace(/(?<!\w)(?:Api|Npm|Sso|Svn|Html?)(?= |$|\.)/gm, (m, args): string =>

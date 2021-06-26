@@ -874,7 +874,7 @@ async function processTasksStdOut1(context: IContext): Promise<boolean>
 
     if (options.taskDevTest)
     {
-        runDevCodeTests();
+        runDevCodeTests(context);
         return true;
     }
     else if (options.taskVersionCurrent)

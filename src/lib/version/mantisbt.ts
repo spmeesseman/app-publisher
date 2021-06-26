@@ -5,21 +5,25 @@ import { replaceInFile, readFile, pathExists } from "../utils/fs";
 import { editFile } from "../utils/utils";
 
 
-export async function getMantisBtVersion({logger, options}: IContext): Promise<{ version: string, versionSystem: string, versionInfo: any }>
+export async function getMantisBtVersion({logger, options}: IContext): Promise<{ version: string; versionSystem: string; versionInfo: any }>
 {
     let version = "";
-    logger.log("Retrieving MantisBT plugin version from $MANTISBTPLUGIN");
 
-    const fileContent = await readFile(options.mantisbtPlugin),
-            regexp = new RegExp("this->version[ ]*=[ ]*(\"|')[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+", "gm"),
-            found = fileContent.match(regexp);
-    if (found)
+    if (options.mantisbtPlugin && await pathExists(options.mantisbtPlugin))
     {
-            version = found[0].replace("this->version", "");
-            version = version.replace(" ", "");
-            version = version.replace("=", "");
-            version = version.replace("\"", "");
-            version = version.replace("'", "");
+        logger.log(`Retrieving MantisBT plugin version from ${options.mantisbtPlugin}`);
+
+        const fileContent = await readFile(options.mantisbtPlugin),
+                regexp = new RegExp("this->version[ ]*=[ ]*(\"|')[0-9]+[.]{1}[0-9]+[.]{1}[0-9]+", "gm"),
+                found = fileContent.match(regexp);
+        if (found)
+        {
+                version = found[0].replace("this->version", "");
+                version = version.replace(" ", "");
+                version = version.replace("=", "");
+                version = version.replace("\"", "");
+                version = version.replace("'", "");
+        }
     }
 
     return { version, versionSystem: "semver", versionInfo: undefined };
@@ -29,6 +33,10 @@ export async function getMantisBtVersion({logger, options}: IContext): Promise<{
 export async function setMantisBtVersion(context: IContext)
 {
     const {options, logger, nextRelease, cwd, env} = context;
+
+    if (!options.mantisbtPlugin) {
+        return;
+    }
 
     if (options.mantisbtPlugin && await pathExists(options.mantisbtPlugin))
     {   //

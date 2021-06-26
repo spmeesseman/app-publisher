@@ -11,7 +11,7 @@ async function getFiles(logger: any)
 {
     return new Promise<string[]>((resolve, reject) =>
     {
-        glob("**/.publishrc*", { nocase: true }, (err, files) =>
+        glob("**/.publishrc*", { nocase: true, ignore: "node_modules/**" }, (err, files) =>
         {
             if (err) {
                 logger.error("Error tring to find publishrc files");
@@ -29,6 +29,10 @@ export async function setAppPublisherVersion(context: IContext)
 {
     let files: string[] = [];
     const {nextRelease, options, logger, cwd, env} = context;
+
+    if (!options.version) {
+        return;
+    }
 
     if (options.version)
     {

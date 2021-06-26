@@ -5,8 +5,10 @@ import { pathExists, replaceInFile, readFile } from "../utils/fs";
 import { editFile } from "../utils/utils";
 
 
-export async function getPomVersion({logger}): Promise<{ version: string, versionSystem: string, versionInfo: any }>
+export async function getPomVersion({logger}): Promise<{ version: string; versionSystem: string; versionInfo: any }>
 {
+    let version = "";
+    const mavenVersionInfo: string[] = [];
     //
     // POM can be a preporty replacement version within the file itself:
     //
@@ -18,42 +20,41 @@ export async function getPomVersion({logger}): Promise<{ version: string, versio
     //     ...
     // </properties>
     //
-
-    let version = "";
-    const mavenVersionInfo: string[] = [];
-
-    logger.log("Retrieving Maven plugin version from $AssemblyInfoLocation");
-
-    const fileContent = await readFile("pom.xml"),
-          regexp = new RegExp("\\$\\{(.+?)\\}(?=\<\\/version|\\$\\{\\w+\\})", "gm");
-
-    let match: RegExpExecArray;
-    while ((match = regexp.exec(fileContent)) !== null)
+    if (await pathExists("pom.xml"))
     {
-        const prop = match[1],
-                regexp2 = new RegExp(`<${prop}>(.+)<\/${prop}>`, "g");
-        if (mavenVersionInfo.length === 0) {
-            mavenVersionInfo.push(prop);
-        }
-        if ((match = regexp2.exec(fileContent)) !== null)
+        logger.log("Retrieving Maven plugin version from $AssemblyInfoLocation");
+
+        const fileContent = await readFile("pom.xml"),
+            regexp = new RegExp("\\$\\{(.+?)\\}(?=\<\\/version|\\$\\{\\w+\\})", "gm");
+
+        let match: RegExpExecArray;
+        while ((match = regexp.exec(fileContent)) !== null)
         {
-            if (version === "0.0.0") {
-                version = "";
+            const prop = match[1],
+                    regexp2 = new RegExp(`<${prop}>(.+)<\/${prop}>`, "g");
+            if (mavenVersionInfo.length === 0) {
+                mavenVersionInfo.push(prop);
             }
-            version += match[1];
+            if ((match = regexp2.exec(fileContent)) !== null)
+            {
+                if (version === "0.0.0") {
+                    version = "";
+                }
+                version += match[1];
+            }
         }
-    }
 
-    if (version === "")
-    {
-        if ((match = /<version>([0-9]+[.]{1}[0-9]+[.]{1}[0-9]+)<\/version>/m.exec(fileContent)) !== null)
+        if (version === "")
         {
-            mavenVersionInfo.push("version");
-            mavenVersionInfo.push(match[1]);
+            if ((match = /<version>([0-9]+[.]{1}[0-9]+[.]{1}[0-9]+)<\/version>/m.exec(fileContent)) !== null)
+            {
+                mavenVersionInfo.push("version");
+                mavenVersionInfo.push(match[1]);
+            }
         }
-    }
-    else {
-        mavenVersionInfo.push(version);
+        else {
+            mavenVersionInfo.push(version);
+        }
     }
 
     return { version, versionSystem: "semver", versionInfo: mavenVersionInfo };

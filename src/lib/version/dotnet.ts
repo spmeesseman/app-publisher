@@ -6,15 +6,16 @@ import { replaceInFile, readFile } from "../utils/fs";
 import { editFile } from "../utils/utils";
 
 
-export async function getDotNetFiles(logger)
+async function getDotNetFiles(logger)
 {
     return new Promise<string[]>((resolve, reject) => {
-        glob("**/assemblyinfo.cs", { nocase: true }, (err, files) =>
+        glob("**/assemblyinfo.cs", { nocase: true, ignore: "node_modules/**" }, (err, files) =>
         {
             if (err) {
                 logger.error("Error tring to find assemblyinfo.cs files");
                 reject(err);
-            } else {
+            }
+            else {
                 resolve(files);
             }
         });
@@ -61,45 +62,44 @@ export async function setDotNetVersion(context: IContext)
     const {lastRelease, nextRelease, options, logger, cwd, env} = context,
           fileNames = await getDotNetFiles(logger);
 
-    if (fileNames)
-    {
-        if (fileNames.length >= 1)
-        {   //
-            // If this is '--task-revert', all we're doing here is collecting the paths of the
-            // files that would be updated in a run, don't actually do the update
-            //
-            if (options.taskRevert) {
-                await addEdit(context, fileNames[0]);
-                return;
-            }
-            if (lastRelease.versionInfo.versionSystem === "incremental" || !nextRelease.version.includes("."))
-            {
-                for (const c of nextRelease.version) {
-                    semVersion = `${semVersion}${c}.`;
-                }
-                semVersion = semVersion.substring(0, semVersion.length - 1);
-            }
-            else {
-                semVersion = nextRelease.version;
-            }
-            //
-            // Replace version in assemblyinfo file
-            //
-            await replaceInFile(fileNames[0], "AssemblyVersion[ ]*[\\(][ ]*[\"][0-9a-z.]+", `AssemblyVersion("${semVersion}.0`);
-            await replaceInFile(fileNames[0], "AssemblyFileVersion[ ]*[\\(][ ]*[\"][0-9a-z.]+", `AssemblyFileVersion("${semVersion}.0`);
-            //
-            // Allow manual modifications to mantisbt main plugin file and commit to modified list
-            //
-            await editFile({options, logger, nextRelease, cwd, env}, fileNames[0]);
-            //
-            // Return the filename
-            //
-            return fileNames[0];
+    if (fileNames && fileNames.length >= 1)
+    {   //
+        // If this is '--task-revert', all we're doing here is collecting the paths of the
+        // files that would be updated in a run, don't actually do the update
+        //
+        if (options.taskRevert) {
+            await addEdit(context, fileNames[0]);
+            return;
         }
 
-        if (fileNames.length > 0) {
-            logger.warning("Multiple assemblyinfo files found");
-            logger.warning("Using: " + fileNames[0]);
+        if (fileNames.length > 1) {
+            logger.warning("Multiple assemblyinfo files were found");
+            logger.warning("You can set the specific file via the 'dotnetProjectFile' .publishrc property");
+            logger.warning("Using : " + fileNames[0]);
         }
+
+        if (lastRelease.versionInfo.versionSystem === "incremental" || !nextRelease.version.includes("."))
+        {
+            for (const c of nextRelease.version) {
+                semVersion = `${semVersion}${c}.`;
+            }
+            semVersion = semVersion.substring(0, semVersion.length - 1);
+        }
+        else {
+            semVersion = nextRelease.version;
+        }
+        //
+        // Replace version in assemblyinfo file
+        //
+        await replaceInFile(fileNames[0], "AssemblyVersion[ ]*[\\(][ ]*[\"][0-9a-z.]+", `AssemblyVersion("${semVersion}.0`);
+        await replaceInFile(fileNames[0], "AssemblyFileVersion[ ]*[\\(][ ]*[\"][0-9a-z.]+", `AssemblyFileVersion("${semVersion}.0`);
+        //
+        // Allow manual modifications to mantisbt main plugin file and commit to modified list
+        //
+        await editFile({options, logger, nextRelease, cwd, env}, fileNames[0]);
+        //
+        // Return the filename
+        //
+        // return fileNames[0];
     }
 }

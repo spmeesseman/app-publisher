@@ -3,11 +3,12 @@ import { IContext } from "../../interface";
 import { addEdit } from "../repo";
 import { replaceInFile, pathExists } from "../utils/fs";
 import { editFile } from "../utils/utils";
+import { getIncrementalVersion } from "./incremental";
 
 
-export async function getMakefileVersion({logger, options}): Promise<{ version: string; versionSystem: string; versionInfo: any }>
+export async function getMakefileVersion(context: IContext): Promise<{ version: string; versionSystem: string; versionInfo: any }>
 {
-    throw new Error("Method not implemented");
+    return getIncrementalVersion(context);
 }
 
 
