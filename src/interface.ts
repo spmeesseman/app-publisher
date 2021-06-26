@@ -608,7 +608,7 @@ export interface IOptions
     taskNugetRelease: boolean;
     /**
      * Creates a tag using the 'vX.X.X' format for the tag name.
-     * The 'taskTouchVersions' and 'taskTouchVersionsCommit' tasks should always precede this task.
+     * The 'taskVersionUpdate' and 'taskVersionUpdateCommit' tasks should always precede this task.
      * If 'auto' is specified as the positional argument, the version # used will be the current
      * version as calculated using the current state of  the workspace 'version' files (as defined
      * in .publishrc).
@@ -621,7 +621,7 @@ export interface IOptions
      * Additional versioned files are specified in the .publishrc file using the 'versionFiles'
      * and cProjectRcFile' properties.
      */
-    taskTouchVersions: boolean;
+    taskVersionUpdate: boolean;
     /**
      * Finds the current/latest version released and outputs that version string to stdout.
      * Ignored if the --task-version-info switch is used.

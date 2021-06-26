@@ -74,7 +74,7 @@ export async function editFile({ options, nextRelease, logger, cwd, env }, editF
 {
     if (editFile && await pathExists(editFile))
     {
-        const skipEdit = (options.skipVersionEdits === " Y" || options.taskTouchVersions || options.taskChangelogFile) &&
+        const skipEdit = (options.skipVersionEdits === " Y" || options.taskVersionUpdate || options.taskChangelogFile) &&
                          !options.taskChangelogView && !options.taskChangelogHtmlView && !options.taskChangelogPrint &&
                          ((options.versionFilesEditAlways && options.versionFilesEditAlways.includes(editFile)) || options.taskMode);
 

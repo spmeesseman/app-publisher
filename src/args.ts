@@ -824,7 +824,7 @@ export const publishRcOpts =
         [ "-tt", "--task-tag" ],
         {
             help: "Creates a tag using the 'vX.X.X' format for the tag name.\n" +
-                  "The 'taskTouchVersions' and 'taskTouchVersionsCommit' tasks should\n" +
+                  "The 'taskVersionUpdate' and 'taskVersionUpdateCommit' tasks should\n" +
                   "always precede this task.\n" +
                   "If 'auto' is specified as the positional argument, the version # used\n" +
                   "will be the current version as calculated using the current state of\n" +
@@ -834,20 +834,6 @@ export const publishRcOpts =
                 "app-publisher --task-tag auto",
                 "app-publisher --task-tag v2.0.1"
             ]
-        }
-    ],
-
-    taskTouchVersions: [
-        true,
-        "boolean",
-        false,
-        [ "-ttv", "--task-touch-versions" ],
-        {
-            help: "Update version numbers either semantically or incrementally.\n" +
-                  "Versioned files are by default AssemblyInfo.cs, package.json, and\n" +
-                  "app.json.\n" +
-                  "Additional versioned files are specified in the .publishrc file\n" +
-                  "using the 'versionFiles' and cProjectRcFile' properties."
         }
     ],
 
@@ -892,7 +878,7 @@ export const publishRcOpts =
         true,
         "string",
         "",
-        [ "-tvpri", "--task-version-pre-release-id" ],
+        [ "-tvprid", "--task-version-pre-release-id" ],
         {
             help: "Gets the identifier denoting a pre-release from a version string.\n" +
                   "For example, the version string 2.20.11-alpha.3 has a pre-release\n" +
@@ -901,6 +887,20 @@ export const publishRcOpts =
                 "app-publisher --task-version-pre-release-id 2.0.1-alpha.1",
                 "app-publisher --task-version-pre-release-id 2.0.1-beta.3"
             ]
+        }
+    ],
+
+    taskVersionUpdate: [
+        true,
+        "boolean",
+        false,
+        [ "-tvu", "--task-version-update" ],
+        {
+            help: "Update version numbers either semantically or incrementally.\n" +
+                  "Versioned files are by default AssemblyInfo.cs, package.json, and\n" +
+                  "app.json.\n" +
+                  "Additional versioned files are specified in the .publishrc file\n" +
+                  "using the 'versionFiles' and cProjectRcFile' properties."
         }
     ],
 
