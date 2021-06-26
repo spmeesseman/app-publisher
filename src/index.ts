@@ -238,7 +238,16 @@ function logTaskResult(result: boolean | string, taskName: string, logger: any)
 
 async function runRelease(context: IContext, plugins: any)
 {
-    const { cwd, env, options, logger } = context;
+    const { options, logger } = context;
+
+    const nextRelease: INextRelease = {
+        level: undefined,
+        head: undefined,
+        version: undefined,
+        tag: undefined,
+        edits: [],
+        versionInfo: undefined
+    };
 
     //
     // Validate options / cmd line arguments
@@ -256,6 +265,19 @@ async function runRelease(context: IContext, plugins: any)
 `;
         context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
         logger.log(JSON.stringify(options, undefined, 3));
+    }
+
+    //
+    // If 'revert tak', we can just revertand exit.  setVersions() will recognize the
+    // task and only populate a list of files that 'would be' or 'have been' edited by
+    // a run.  Files that the run doesnt touch that have been edited by the user wont get
+    // reverted (or someone be in trouble)
+    //
+    if (options.taskRevert)
+    {
+        await setVersions(context);
+        await revert(context);
+        return true;
     }
 
     //
@@ -312,6 +334,7 @@ async function runRelease(context: IContext, plugins: any)
     // Populate context with last release info, populates version number
     //
     const lastRelease = await getLastRelease(context); // calls getTags()
+
     //
     // Populate context with last release version info
     //
@@ -320,6 +343,7 @@ async function runRelease(context: IContext, plugins: any)
     //    versionInfo (for mavn builds and auto constructing version #)
     //
     lastRelease.versionInfo = await getCurrentVersion(context);
+
     //
     // Check to see if last version found with the latestversion tag matches what was
     // found by examining the local files for version info.  Give a warning if so.
@@ -351,18 +375,6 @@ async function runRelease(context: IContext, plugins: any)
     if (!options.versionForceCurrent) {
         context.commits = await getCommits(context);
     }
-
-    //
-    // Populate next release info
-    //
-    const nextRelease: INextRelease = {
-        level: undefined,
-        head: undefined,
-        version: undefined,
-        tag: undefined,
-        edits: [],
-        versionInfo: undefined
-    };
 
     if (!options.versionForceCurrent)
     {
@@ -873,12 +885,6 @@ async function processTasksStdOut1(context: IContext): Promise<boolean>
             preRelId = match[1];
         }
         context.stdout.write(preRelId);
-        return true;
-    }
-    else if (options.taskRevert)
-    {
-        await setVersions(context);
-        await revert(context);
         return true;
     }
 
