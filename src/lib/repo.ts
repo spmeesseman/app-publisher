@@ -715,7 +715,7 @@ export async function revert(context: IContext, files?: IEdit[])
 {
     const {options, nextRelease, logger, cwd, env} = context;
 
-    if (!nextRelease || !nextRelease.edits) {
+    if (!files && (!nextRelease || !nextRelease.edits)) {
         return;
     }
 
