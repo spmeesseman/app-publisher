@@ -36,7 +36,7 @@ async function doGithubRelease(context: IContext): Promise<IReturnStatus>
     //
     if (options.dryRun === true)
     {
-        logger.log("   Dry run has generated an html changelog to test functionality:");
+        logger.log("Dry run has generated an html changelog to test functionality:");
         context.stdout.write(githubChangelog);
     }
 
@@ -80,18 +80,19 @@ async function doGithubRelease(context: IContext): Promise<IReturnStatus>
     //
     if (options.taskGithubRelease)
     {
-        logger.log("   This will be a published release (task mode)");
+        logger.log("This will be a published release (task mode)");
         //
         // We need to tag the repository with the version tag if it doesnt exist already
         //
         if (!(await doesTagExist(context, nextRelease.tag)))
         {
+            logger.log(`Version tag '${nextRelease.tag}' does not exist, create new tag`);
             await tag(context);
             await push(context);
         }
     }
     else {
-        logger.log("   This will be a non-published release, to be published after commit/tag");
+        logger.log("This will be a non-published release, to be published after commit/tag");
     }
 
     //
