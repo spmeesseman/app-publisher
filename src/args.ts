@@ -742,6 +742,16 @@ export const publishRcOpts =
         }
     ],
 
+    taskDeploy: [
+        true,
+        "boolean",
+        false,
+        [ "-td", "--task-deploy" ],
+        {
+            help: "Runs the deployment scripts defined in the .publishrc configuration."
+        }
+    ],
+
     taskDevTest: [
         true,
         "boolean",
@@ -846,6 +856,16 @@ export const publishRcOpts =
         [ "-tngr", "--task-nuget-release" ],
         {
             help: "Perform a 'Nuget' release (not implemented yet)."
+        }
+    ],
+
+    taskRevert: [
+        true,
+        "boolean",
+        false,
+        [ "-tr", "--task-revert" ],
+        {
+            help: "Reverts all local changes."
         }
     ],
 

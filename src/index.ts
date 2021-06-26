@@ -544,8 +544,15 @@ async function runRelease(context: IContext, plugins: any)
         // if (options.taskVersionUpdate) { // for taskVersionUpdate, we don't restore
         //     packageJsonModified = false;
         // }
-        if (packageJsonModified) {
-            if (options.taskNpmRelease) {
+        if (packageJsonModified)
+        {   //
+            // If this is task mode, we're done maybe
+            //
+            if (options.taskNpmJsonUpdate) {
+                logTaskResult(true, "npm json update", logger);
+                return true;
+            }
+            else if (options.taskNpmRelease) {
                 logger.log("The package.json file has been updated for 'NPM release' task");
             }
             else if (options.taskVersionUpdate) {
@@ -557,15 +564,20 @@ async function runRelease(context: IContext, plugins: any)
     //
     // Update relevant local files with the new version #
     //
-    if (!options.versionForceCurrent && (!options.taskMode || options.taskVersionUpdate))
-    {
+    if (!options.versionForceCurrent && (!options.taskMode || options.taskVersionUpdate || options.taskNpmJsonUpdate))
+    {   //
+        // Sets next version in all version files.  Includes files spcified in .publishrc
+        // by the 'versionFiles' property
+        //
         await setVersions(context);
         //
         // If this is task mode, we're done maybe
         //
-        if (options.taskVersionUpdate) {
+        if (options.taskVersionUpdate || options.taskNpmJsonUpdate) {
             logTaskResult(true, "version update", logger);
-            return true;
+            // if (!options.taskBuild) {
+                return true;
+            // }
         }
     }
 
@@ -639,6 +651,7 @@ async function runRelease(context: IContext, plugins: any)
 
     //
     // Github release
+    //
     // At this point, we make an "un-published/draft" release if this is a full publish run.
     // After the repository is tagged with the version tag and everything else has succeeded,
     // the release is updated/patched to a 'released/non-draft' state.
@@ -675,11 +688,13 @@ async function runRelease(context: IContext, plugins: any)
 
     //
     // MantisBT release
-    // Mantis 'Releases' plugin required.
+    //
+    // The Mantis 'Releases' plugin required
+    //    @ https://github.com/mantisbt-plugins/Releases
     //
     if (options.mantisbtRelease === "Y" && (!options.taskMode || options.taskMantisbtRelease))
     {   //
-        // Pre-mantis release (.publishrc).
+        // Pre-mantis release scripts (.publishrc).
         //
         await util.runScripts(context, "preMantisRelease", options.mantisbtReleasePreCommand, options.taskMantisbtRelease);
         //
@@ -700,13 +715,16 @@ async function runRelease(context: IContext, plugins: any)
     }
 
     //
-    // Deployment scripts
+    // Deployment scripts (.publishrc)
     //
-    if (!options.taskMode)
+    if (options.taskDeploy || !options.taskMode)
     {
-        if (!options.dryRun)
+        if (!options.dryRun || options.taskDeploy)
         {
-            await util.runScripts(context, "deploy", options.deployCommand); // (.publishrc)
+            if (options.taskDeploy) {
+                logger.log("Run deployment in dry-run mode to 'deployment task' options");
+            }
+            await util.runScripts(context, "deploy", options.deployCommand, options.taskDeploy);
         }
         else {
             logger.log("Skipped running custom deploy script");
@@ -856,6 +874,12 @@ async function processTasksStdOut1(context: IContext): Promise<boolean>
             preRelId = match[1];
         }
         context.stdout.write(preRelId);
+        return true;
+    }
+    else if (options.taskRevert)
+    {
+        await setVersions(context);
+        await revert(context);
         return true;
     }
 

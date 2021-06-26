@@ -566,6 +566,10 @@ export interface IOptions
      */
     taskCommit: boolean;
     /**
+     * Runs the deployment scripts defined in the .publishrc configuration
+     */
+    taskDeploy: boolean;
+    /**
      * Run temporary tests in the local dev environment.  Note that this does nothing when ran
      * in a production build
      */
@@ -625,6 +629,10 @@ export interface IOptions
      * Perform a 'Nuget' release (not implemented yet).
      */
     taskNugetRelease: boolean;
+    /**
+     * Reverts all local changes.
+     */
+    taskRevert: boolean;
     /**
      * Creates a tag using the 'vX.X.X' format for the tag name.
      * The 'taskVersionUpdate' and 'taskVersionUpdateCommit' tasks should always precede this task.
