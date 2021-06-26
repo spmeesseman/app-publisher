@@ -603,6 +603,25 @@ export interface IOptions
      */
     taskNpmRelease: boolean;
     /**
+     * Restores changes made to the package.json file as a result of using the --task-npm-json-update
+     * task.
+     * Properties include:
+     *     bugs, homepage, repo, repoType
+     * Note that this task should in most cases always be ran following the use of the
+     * --task-npm-json-update task.
+     */
+    taskNpmJsonRestore: boolean;
+    /**
+     * Updates package.json with .publishrc defined properties.
+     * Properties include:
+     *     bugs, homepage, repo, repoType
+     * Can be used for publishing to multiple npm repositories.
+     * Note that this task will automatically be included in a run when the --task-version-update task
+     * is used.
+     * Note that this task should in most cases always be followed up with a --task-npm-json-restore task.
+     */
+    taskNpmJsonUpdate: boolean;
+    /**
      * Perform a 'Nuget' release (not implemented yet).
      */
     taskNugetRelease: boolean;

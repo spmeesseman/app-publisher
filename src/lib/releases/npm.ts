@@ -2,9 +2,10 @@
 import { pick } from "lodash";
 import * as path from "path";
 import { IContext } from "../../interface";
-import { addEdit } from "../repo";
+import { addEdit, revert } from "../repo";
 import { createDir, pathExists, writeFile } from "../utils/fs";
 import { timeout, checkExitCode } from "../utils/utils";
+import { setNpmVersion } from "../version/npm";
 const execa = require("execa");
 
 
@@ -121,11 +122,11 @@ export async function doNpmRelease(context: IContext)
 }
 
 
-export async function setPackageJson({options, logger})
+export async function setPackageJson({options, logger}: IContext)
 {
     let modified = false;
 
-    if (options.taskMode && !options.taskNpmRelease && !options.taskVersionUpdate) {
+    if (options.taskMode && !options.taskNpmRelease && !options.taskNpmJsonUpdate && !options.taskVersionUpdate) {
         return modified;
     }
 
@@ -222,22 +223,43 @@ export async function setPackageJson({options, logger})
 }
 
 
-export async function restorePackageJson({options, logger})
+export async function restorePackageJson(context: IContext)
 {
-    if (options.taskMode && !options.taskNpmRelease) {
+    const {options, logger} = context;
+
+    if (options.taskMode && !options.taskNpmRelease && !options.taskNpmJsonRestore && !options.taskVersionUpdate) {
         return;
     }
 
     let modified = false;
     const packageJsonExists = await pathExists("package.json"),
-          packageJson = packageJsonExists ? require(path.join(process.cwd(), "package.json")) : undefined,
-          packageLockFileExists = packageJsonExists ? await pathExists("package-lock.json") : undefined,
-          packageLockJson = packageLockFileExists ? require(path.join(process.cwd(), "package-lock.json")) : undefined;
+          packageLockFileExists = packageJsonExists ? await pathExists("package-lock.json") : undefined;
 
     if (!packageJsonExists) {
         return;
     }
 
+    //
+    // If 'restore' task, we probably need to use vcs revert and then re-update the version
+    // number since the property values that were replaced won't exist in memory whe
+    // update/restore isnt donein the same run.
+    //
+    if (options.taskNpmJsonRestore)
+    {
+        if (!defaultName)
+        {
+            logger.log("Reset default props in package.json with vcs reversion, reset version number");
+            await revert(context, [{
+                type: "M",
+                path: "package.json"
+            }]);
+            await setNpmVersion(context);
+            return;
+        }
+    }
+
+    const packageJson = packageJsonExists ? require(path.join(process.cwd(), "package.json")) : undefined,
+          packageLockJson = packageLockFileExists ? require(path.join(process.cwd(), "package-lock.json")) : undefined;
     //
     // Set repo
     //

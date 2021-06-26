@@ -538,9 +538,9 @@ async function runRelease(context: IContext, plugins: any)
     // any build scripts are ran.
     //
     let packageJsonModified = false;
-    if (options.npmRelease === "Y" && (!options.taskMode || options.taskNpmRelease || options.taskVersionUpdate))
+    if (options.npmRelease === "Y" && (!options.taskMode || options.taskNpmRelease || options.taskVersionUpdate || options.taskNpmJsonUpdate))
     {
-        packageJsonModified = await npm.setPackageJson({options, logger});
+        packageJsonModified = await npm.setPackageJson(context);
         // if (options.taskVersionUpdate) { // for taskVersionUpdate, we don't restore
         //     packageJsonModified = false;
         // }
@@ -725,11 +725,9 @@ async function runRelease(context: IContext, plugins: any)
 
     //
     // Post NPM release - restore package.json properties if necessary
+    // Restore any configured package.json values to the original values
     //
-    if (packageJsonModified)
-    {   //
-        // Restore any configured package.json values to the original values
-        //
+    if (packageJsonModified || options.taskNpmJsonRestore) {
         await npm.restorePackageJson(context);
     }
 

@@ -797,6 +797,38 @@ export const publishRcOpts =
         }
     ],
 
+    taskNpmJsonRestore: [
+        true,
+        "boolean",
+        false,
+        [ "-tnjr", "--task-npm-json-restore" ],
+        {
+            help: "Restores changes made to the package.json file as a result of using the\n" +
+                  "--task-npm-json-update task." +
+                  "Properties include:\n" +
+                  "    bugs, homepage, repo, repoType" +
+                  "Note that this task should in most cases always be ran following the use\n" +
+                  "of the --task-npm-json-update task."
+        }
+    ],
+
+    taskNpmJsonUpdate: [
+        true,
+        "boolean",
+        false,
+        [ "-tnju", "--task-npm-json-update" ],
+        {
+            help: "Updates package.json with .publishrc defined properties.\n" +
+                  "Properties include:\n" +
+                  "    bugs, homepage, repo, repoType\n" +
+                  "Can be used for publishing to multiple npm repositories.\n" +
+                  "Note that this task will automatically be included in a run when the\n" +
+                  "--task-version-update task is used." +
+                  "Note that this task should in most cases always be followed up with a\n" +
+                  " --task-npm-json-restore task."
+        }
+    ],
+
     taskNpmRelease: [
         true,
         "boolean",

@@ -2,7 +2,7 @@
 import * as path from "path";
 import { isString } from "./utils/utils";
 import { deleteFile, pathExists } from "./utils/fs";
-import { IContext } from "../interface";
+import { IContext, IEdit } from "../interface";
 const execa = require("execa");
 const xml2js = require("xml2js");
 
@@ -704,18 +704,26 @@ export async function repoUrl({options, logger, cwd, env}: IContext)
 
 
 /**
+ * Revert in vcs.  If 'files' is not specified, reverts all changes made by the publish run.
+ *
  * @since 2.8.0
  * @param context The run context object.
+ * @param files The filesto revert.  If not specified, all changes made by the publish run are reverted.
+ * @throws {Error} if the vcs command failed or the repository type is invalid.
  */
-export async function revert({options, nextRelease, logger, cwd, env}: IContext)
+export async function revert(context: IContext, files?: IEdit[])
 {
+    const {options, nextRelease, logger, cwd, env} = context;
+
     if (!nextRelease || !nextRelease.edits) {
         return;
     }
 
     const execaOpts = { cwd, env },
-          changeListAdd = nextRelease.edits.filter((e: any) => e.type === "A"),
-          changeListModify = nextRelease.edits.filter((e: any) => e.type === "M");
+          changeListAdd = !files ? nextRelease.edits.filter((e: any) => e.type === "A") :
+                                   files.filter((e: any) => e.type === "A"),
+          changeListModify = !files ? nextRelease.edits.filter((e: any) => e.type === "M") :
+                                      files.filter((e: any) => e.type === "M");
 
     // const changeListAdd: string = edits.filter((e: any) => e.type === "A").map((e: any) => e.path).join(" ").trim(),
     //       changeListModify: string = edits.filter((e: any) => e.type === "M").map((e: any) => e.path).join(" ").trim();
