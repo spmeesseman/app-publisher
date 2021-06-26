@@ -772,7 +772,9 @@ async function doChangelogFileEdit(context: IContext)
 {
     let newChangelog = false;
     const { options, logger, lastRelease, nextRelease, env, cwd } = context,
-          originalFile = options.changelogFile;
+          originalFile = options.changelogFile,
+          taskSpecVersion = options.taskChangelogPrintVersion || options.taskChangelogViewVersion,
+          version = !taskSpecVersion ? nextRelease.version : taskSpecVersion;
 
     logger.log("Start changelog file edit");
 
@@ -788,7 +790,7 @@ async function doChangelogFileEdit(context: IContext)
         }
         else if (options.taskMode && !options.taskChangelog)
         {
-            options.changelogFile = path.join(os.tmpdir(), `changelog.${nextRelease.version}.md`);
+            options.changelogFile = path.join(os.tmpdir(), `changelog.${version}.md`);
             if (await pathExists(options.changelogFile))
             {
                 await deleteFile(options.changelogFile);
@@ -813,14 +815,15 @@ async function doChangelogFileEdit(context: IContext)
     if (lastRelease.version !== nextRelease.version || newChangelog || options.taskMode)
     {
         const changelogTitle = `# ${options.projectName} Change Log`.toUpperCase(),
-              fmtDate = getFormattedDate(),
-              taskSpecVersion = options.taskChangelogPrintVersion || options.taskChangelogViewVersion;
+              fmtDate = getFormattedDate();
 
-        let tmpCommits,
+        let tmpCommits: string,
             changeLogFinal = "";
 
         if (taskSpecVersion) {
-            tmpCommits = await getChangelogFileSections({ options, logger }, taskSpecVersion, 1, null, originalFile) as string;
+            tmpCommits = await getChangelogFileSections(context, version, 1, "raw", originalFile) as string;
+            context.stdout.write(tmpCommits.trim());
+            return;
         }
         else if (!options.taskChangelogHtmlView && !options.taskChangelogHtmlFile) {
             tmpCommits = context.changelog.notes || createChangelogSectionFromCommits(context);
@@ -855,7 +858,7 @@ async function doChangelogFileEdit(context: IContext)
             changeLogFinal += tmpCommits;
         }
         changeLogFinal = changeLogFinal.trim() + EOL;
-        if (!options.taskChangelogPrint || options.taskChangelogPrintVersion)
+        if (!options.taskChangelogPrint && !options.taskChangelogPrintVersion)
         {   //
             // Write content to file
             //
@@ -873,7 +876,7 @@ async function doChangelogFileEdit(context: IContext)
     //
     // Allow manual modifications to history file
     //
-    await editFile({nextRelease, options, logger, cwd, env}, options.changelogFile);
+    await editFile(context, options.changelogFile);
 
     //
     // Reset
@@ -896,7 +899,7 @@ async function doHistoryFileEdit(context: IContext)
     let isNewHistoryFile = false,
         isNewHistoryFileHasContent = false;
     const fmtDate = getFormattedDate(),
-          { options, logger, lastRelease, nextRelease, env, cwd} = context,
+          { options, logger, lastRelease, nextRelease} = context,
           originalFile = options.historyFile,
           taskSpecVersion = options.taskChangelogPrintVersion || options.taskChangelogViewVersion,
           version = !taskSpecVersion ? nextRelease.version : taskSpecVersion;
@@ -973,7 +976,7 @@ async function doHistoryFileEdit(context: IContext)
         let tmpCommits: string;
 
         if (taskSpecVersion) {
-            tmpCommits = await getHistoryFileSections({ options, logger }, version, 1, "raw", originalFile) as string;
+            tmpCommits = await getHistoryFileSections(context, version, 1, "raw", originalFile) as string;
         }
         else if (!options.taskChangelogHtmlView && !options.taskChangelogHtmlFile) {
             tmpCommits = context.changelog.notes || createHistorySectionFromCommits(context);
@@ -1030,7 +1033,7 @@ async function doHistoryFileEdit(context: IContext)
     //
     // Allow manual modifications to history file
     //
-    await editFile({nextRelease, options, logger, cwd, env}, options.historyFile, true);
+    await editFile(context, options.historyFile, true);
 
     //
     // Reset
@@ -1067,10 +1070,6 @@ async function getChangelogFileSections({ options, logger }, version?: string, n
         return "";
     }
 
-    if (!options.versionText) {
-        options.versionText = "Version";
-    }
-
     logger.log("Extract section from changelog file");
     logger.log(`   Num sections       : '${numSections}'`);
     logger.log(`   Version start      : '${version ? version : "n/a"}'`);
@@ -1085,7 +1084,7 @@ async function getChangelogFileSections({ options, logger }, version?: string, n
     //
     // Find the following string structure for the last entry:
     //
-    //    //// Version 1.5.14 (June 27th, 2019)
+    //    ## Version 1.5.14 (June 27th, 2019)
     //
     //    ### Subject line....
     //
@@ -1112,11 +1111,11 @@ async function getChangelogFileSections({ options, logger }, version?: string, n
     //
     if (!version)
     {
-        const idx1 = fileContents.lastIndexOf(`>${options.versionText}&nbsp;`, 0) + options.versionText.Length + 7,
+        const idx1 = fileContents.indexOf(`## ${options.versionText} `, 0) + options.versionText.Length + 4,
                 idx2 = idx1 !== -1 ? contents.indexOf("\\n", idx1) : -1,
                 curVersion = idx1 !== -1 && idx2 !== -1 ? contents.substring(idx1, idx2 - idx1).trim() : "";
-        logger.log(`   Found version ${curVersion}`);
-        return curVersion;
+        logger.log(`   Version request - found latest version ${curVersion}`);
+        return curVersion.trim();
     }
 
     //
@@ -1127,14 +1126,20 @@ async function getChangelogFileSections({ options, logger }, version?: string, n
     index1 = contents.indexOf(`## ${options.versionText} ${version}`);
     if (index1 === -1) {
         logger.log("Section could not be found, exit");
-        throw new Error("165");
+        throw new Error("161");
     }
+
+    //
+    // TODO - support extracting more than one section, specified by 'numSections'
+    //
     index2 = contents.indexOf(`## ${options.versionText} `, index1 + 1);
     if (index2 === -1) {
         index2 = contents.length;
     }
+
     logger.log("Found version section(s)");
-    contents = contents.substring(index1, index2 - index1);
+
+    contents = contents.substring(index1, index2);
 
     //
     // TODO
@@ -1148,7 +1153,12 @@ async function getChangelogFileSections({ options, logger }, version?: string, n
     // Ex: ([ce9c8f0](https://github.com/spmeesseman/vscode-taskexplorer/commit/ce9c8f0))
     //
 
-    if (isString(format) && format === "parts")
+    if (format === "raw")
+    {
+        logger.log("Successfully retrieved raw changelog file content");
+        return contents;
+    }
+    else if (format === "parts")
     {
         const typeParts = [],
               msgParts = [],
@@ -1249,6 +1259,7 @@ async function getChangelogFileSections({ options, logger }, version?: string, n
             contents2.push({ subject, scope, message, tickets });
         }
 
+        logger.log("Successfully retrieved changelog file section parts");
         return contents2;
     }
 
@@ -1539,10 +1550,10 @@ async function getHistoryFileSections({ options, logger }, version?: string, num
     //
     if (!version)
     {
-        const idx1 = fileContents.lastIndexOf(`>${options.versionText}&nbsp;`, 0) + options.versionText.Length + 7,
+        const idx1 = fileContents.lastIndexOf(`\n${options.versionText} `, 0) + options.versionText.Length + 2,
                 idx2 = idx1 !== -1 ? contents.indexOf("\\n", idx1) : -1,
                 curVersion = idx1 !== -1 && idx2 !== -1 ? contents.substring(idx1, idx2 - idx1).trim() : "";
-        logger.log(`   Found version ${curVersion}`);
+        logger.log(`   Version request - found latest version ${curVersion}`);
         return curVersion;
     }
 
@@ -1561,7 +1572,10 @@ async function getHistoryFileSections({ options, logger }, version?: string, num
     //
     let match: RegExpExecArray,
         bFound = 0;
-
+    //
+    // Note that [\s\S]*? isnt working here, had to use [^]*? for a non-greedy grab, which isnt
+    // supported in anything other than a JS regex
+    //
     let regex = new RegExp(`(?:^${options.versionText} ([0-9a-zA-Z\-\.]{3,})[\r\n]+.+[\r\n]+[\-]{20,}[\r\n]+[\*]{20,}[^]+?(?=[\*]{20,})[\*]{20,}[\r\n]+)([^]*?)(?=${options.versionText}|\z)`, "gm");
     while ((match = regex.exec(fileContents)) !== null)
     {
@@ -1571,19 +1585,20 @@ async function getHistoryFileSections({ options, logger }, version?: string, num
         if (match[1] === version)
         {
             if (format !== "raw") {
-                contents += match[0];
+                contents += match[0];       // add the whole match
             }
             else {
-                contents += match[2];
+                contents += match[2];       // add just the changelog content 1....n
             }
-            if (++bFound >= numSections) {
+            contents += (EOL + EOL);        // add a few newlines
+            if (++bFound >= numSections) {  // check # of sections requested and if we found them all yet
                 break;
             }
         }
     }
 
     //
-    // Make sure we found our starting point
+    // Make sure we found our starting point / first section
     //
     if (!bFound)
     {
@@ -1679,7 +1694,7 @@ async function getHistoryFileSections({ options, logger }, version?: string, num
     contents = tContents;
 
     if (format === "parts") {
-        logger.log("Successfully retrieved fmt history file content for parsing");
+        logger.log("Successfully retrieved history file section parts");
         return getPartsFromHistorySection({options, logger}, contents);
     }
 
