@@ -240,7 +240,7 @@ async function runRelease(context: IContext, plugins: any)
 {
     const { options, logger } = context;
 
-    const nextRelease: INextRelease = {
+    const nextRelease: INextRelease = context.nextRelease = {
         level: undefined,
         head: undefined,
         version: undefined,
@@ -402,11 +402,6 @@ async function runRelease(context: IContext, plugins: any)
             return false;
         }
     }
-
-    //
-    // Populate context with next release info
-    //
-    context.nextRelease = nextRelease;
 
     //
     // Next version
