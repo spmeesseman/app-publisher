@@ -538,7 +538,7 @@ async function runRelease(context: IContext, plugins: any)
     // any build scripts are ran.
     //
     let packageJsonModified = false;
-    if (options.npmRelease === "Y" && (!options.taskMode || options.taskNpmRelease || options.taskVersionUpdate || options.taskNpmJsonUpdate))
+    if (options.npmRelease === "Y" && (!options.taskMode || options.taskNpmRelease || options.taskNpmJsonUpdate))
     {
         packageJsonModified = await npm.setPackageJson(context);
         // if (options.taskVersionUpdate) { // for taskVersionUpdate, we don't restore
@@ -550,13 +550,12 @@ async function runRelease(context: IContext, plugins: any)
             //
             if (options.taskNpmJsonUpdate) {
                 logTaskResult(true, "npm json update", logger);
-                return true;
+                if (!options.taskVersionUpdate) { // && !options.taskBuild) {
+                    return true;
+                }
             }
             else if (options.taskNpmRelease) {
                 logger.log("The package.json file has been updated for 'NPM release' task");
-            }
-            else if (options.taskVersionUpdate) {
-                logger.log("The package.json file has been updated for 'version update' task");
             }
         }
     }
@@ -564,7 +563,7 @@ async function runRelease(context: IContext, plugins: any)
     //
     // Update relevant local files with the new version #
     //
-    if (!options.versionForceCurrent && (!options.taskMode || options.taskVersionUpdate || options.taskNpmJsonUpdate))
+    if (!options.versionForceCurrent && (!options.taskMode || options.taskVersionUpdate))
     {   //
         // Sets next version in all version files.  Includes files spcified in .publishrc
         // by the 'versionFiles' property
@@ -573,7 +572,7 @@ async function runRelease(context: IContext, plugins: any)
         //
         // If this is task mode, we're done maybe
         //
-        if (options.taskVersionUpdate || options.taskNpmJsonUpdate) {
+        if (options.taskVersionUpdate) {
             logTaskResult(true, "version update", logger);
             // if (!options.taskBuild) {
                 return true;

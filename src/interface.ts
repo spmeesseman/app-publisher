@@ -620,8 +620,6 @@ export interface IOptions
      * Properties include:
      *     bugs, homepage, repo, repoType
      * Can be used for publishing to multiple npm repositories.
-     * Note that this task will automatically be included in a run when the --task-version-update task
-     * is used.
      * Note that this task should in most cases always be followed up with a --task-npm-json-restore task.
      */
     taskNpmJsonUpdate: boolean;

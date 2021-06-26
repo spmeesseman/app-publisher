@@ -832,8 +832,6 @@ export const publishRcOpts =
                   "Properties include:\n" +
                   "    bugs, homepage, repo, repoType\n" +
                   "Can be used for publishing to multiple npm repositories.\n" +
-                  "Note that this task will automatically be included in a run when the\n" +
-                  "--task-version-update task is used." +
                   "Note that this task should in most cases always be followed up with a\n" +
                   " --task-npm-json-restore task."
         }
