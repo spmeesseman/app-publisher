@@ -27,6 +27,7 @@
     - [Usage - Configuration File](#usage---configuration-file)
   - [How the Next Version is Determined](#how-the-next-version-is-determined)
   - [Commit Messages](#commit-messages)
+  - [VSCode Integration](#vscode-integration)
   - [Development Notes](#development-notes)
     - [MantisBT Token](#mantisbt-token)
     - [NPM Token](#npm-token)
@@ -281,6 +282,10 @@ References:
 - [Commit Message Standards](https://app1.development.pjats.com/doc/developernotes.md#Commit-Messages)
 - [GitHub Commit Message Standards](https://gist.github.com/stephenparish/9941e89d80e2bc58a153)
 - [Angular Commenting Standards Updated](https://github.com/angular/angular/blob/master/CONTRIBUTING.md#type)
+
+## VSCode Integration
+
+Integrates with the [vscode-taskexplorer](https://github.com/spmeesseman/task-explorer) VSCode extension.
 
 ## Development Notes
 
