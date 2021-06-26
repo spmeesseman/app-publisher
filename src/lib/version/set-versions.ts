@@ -93,12 +93,11 @@ async function setVersionFiles(context: IContext): Promise<void>
           lastRelease = context.lastRelease;
     let incremental = false;
 
-    logger.log("Preparing version files");
-    if (!options.versionFiles || options.versionFiles.length === 0)
-    {
-        logger.log("   # of files : 0");
+    if (!options.versionFiles || options.versionFiles.length === 0) {
         return;
     }
+
+    logger.log("Update 'versionFiles' specified files");
     logger.log("   # of files : " + options.versionFiles.length);
     if (options.verbose) {
         if (!isString(options.versionFiles)) {
@@ -108,6 +107,7 @@ async function setVersionFiles(context: IContext): Promise<void>
             context.stdout.write(options.versionFiles + EOL);
         }
     }
+
     //
     // Below is set to handle an assemblyinfo.cs file or other version file in semver format, but the
     // build version type is incremental

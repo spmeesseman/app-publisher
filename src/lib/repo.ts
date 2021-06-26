@@ -496,10 +496,11 @@ export async function isGitRepo(context: IContext)
 
 export async function isIgnored({options, logger, cwd, env}: IContext, objectPath: string)
 {
-    const execaOpts = { cwd, env };
+    const execaOpts = { cwd, env },
+          nPath = path.normalize(objectPath);
 
     // const excapedRegex = escapeRegExp(objectPath);
-    logger.info(`Check ignored property for '${objectPath}'`);
+    logger.info(`Check ignored property for '${nPath}'`);
 
     if (options.repoType === "svn")
     {
