@@ -125,7 +125,7 @@ export async function setPackageJson({options, logger})
 {
     let modified = false;
 
-    if (options.taskMode && !options.taskNpmRelease) {
+    if (options.taskMode && !options.taskNpmRelease && !options.taskVersionUpdate) {
         return modified;
     }
 
