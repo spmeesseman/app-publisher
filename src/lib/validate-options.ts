@@ -534,23 +534,23 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     if (options.taskChangelogFile) {
         options.taskChangelog = true;
     }
-    if (options.taskEmail || options.taskTouchVersions || options.taskMantisbtRelease) {
+    if (options.taskEmail || options.taskVersionUpdate || options.taskMantisbtRelease) {
         options.skipChangelogEdits = "Y";
     }
 
     //
     // Certain 'single-task mode' options can't be used together...
     //
-    if ((options.taskChangelog && options.taskEmail) || (options.taskChangelog && options.taskTouchVersions) ||
-        (options.taskTouchVersions && options.taskEmail) || (options.taskMantisbtRelease && options.taskEmail) ||
-        (options.taskMantisbtRelease && options.taskTouchVersions) || (options.taskMantisbtRelease && options.taskChangelog) ||
-        (options.taskGithubRelease && options.taskEmail) || (options.taskGithubRelease && options.taskTouchVersions) ||
+    if ((options.taskChangelog && options.taskEmail) || (options.taskChangelog && options.taskVersionUpdate) ||
+        (options.taskVersionUpdate && options.taskEmail) || (options.taskMantisbtRelease && options.taskEmail) ||
+        (options.taskMantisbtRelease && options.taskVersionUpdate) || (options.taskMantisbtRelease && options.taskChangelog) ||
+        (options.taskGithubRelease && options.taskEmail) || (options.taskGithubRelease && options.taskVersionUpdate) ||
         (options.taskGithubRelease && options.taskChangelog) || (options.taskChangelogView && options.taskChangelogHtmlView) ||
         (options.taskChangelogView && options.taskChangelogPrint) || (options.taskChangelogPrint && options.taskChangelogHtmlView) ||
         (options.taskChangelogFile && options.taskChangelogHtmlFile) ||
         (options.taskChangelog && (options.taskChangelogFile || options.taskChangelogHtmlFile)) ||
         (options.taskChangelog && (options.taskChangelogView || options.taskChangelogHtmlView || options.taskChangelogPrint)) ||
-        (options.taskTouchVersions && options.versionForceCurrent))
+        (options.taskVersionUpdate && options.versionForceCurrent))
     {
         logger.error("Invalid options specified:");
         logger.error("  Two or more of the specified tasks cannot be used together");
@@ -563,7 +563,7 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
         logger.error("    githubRelease       : " + options.taskGithubRelease);
         logger.error("    mantisRelease       : " + options.taskMantisbtRelease);
         logger.error("    republish           : " + options.republish);
-        logger.error("    touchVersions       : " + options.taskTouchVersions);
+        logger.error("    touchVersions       : " + options.taskVersionUpdate);
         return false;
     }
 
