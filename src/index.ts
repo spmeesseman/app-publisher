@@ -205,7 +205,7 @@ async function run(context: IContext, plugins: any)
     try {
         success = await runRelease(context, plugins);
         if (!success) {
-            revertChanges(context);
+            await revertChanges(context);
             logger.error("Release run returned failure status");
         }
     }
@@ -225,13 +225,13 @@ async function run(context: IContext, plugins: any)
 }
 
 
-function logTaskResult(result: boolean | string, logger: any)
+function logTaskResult(result: boolean | string, taskName: string, logger: any)
 {
     if (util.isString(result)) {
         logger.error(result);
     }
     else if (result === true) {
-        logger.success("Successfully completed task");
+        logger.success(`Successfully completed task ${taskName}`);
     }
 }
 
@@ -263,7 +263,7 @@ async function runRelease(context: IContext, plugins: any)
     //
     let taskDone = await processTasksStdOut1(context);
     if (taskDone) {
-        logTaskResult(taskDone, logger);
+        logTaskResult(taskDone, "stdout level 1", logger);
         return taskDone;
     }
 
@@ -326,11 +326,18 @@ async function runRelease(context: IContext, plugins: any)
     //
     if (lastRelease.version !== lastRelease.versionInfo.version)
     {
-        logger.error("Version mismatch found between latest tag and local files");
-        logger.error("   Tagged : " + lastRelease.version);
-        logger.error("   Local  : " + lastRelease.versionInfo.version);
-        logger.error("Need to correct versioning difference, exiting");
-        throw new Error("101");
+        if (!options.taskMode)
+        {
+            logger.error("Version mismatch found between latest tag and local files");
+            logger.error("   Tagged : " + lastRelease.version);
+            logger.error("   Local  : " + lastRelease.versionInfo.version);
+            logger.error("Need to correct versioning difference, exiting");
+            throw new Error("101");
+        }
+        else {
+            logger.warn("Version mismatch found between latest tag and local files");
+            logger.warn("Continuing in task mode");
+        }
     }
 
     //
@@ -409,7 +416,7 @@ async function runRelease(context: IContext, plugins: any)
             nextRelease.version = nextRelease.versionInfo.version;
             if (options.promptVersion === "Y")
             {
-                const schema = {
+                const promptSchema = {
                     properties: {
                         version: {
                             description: "Enter version number",
@@ -422,9 +429,14 @@ async function runRelease(context: IContext, plugins: any)
                 };
                 const prompt = require("prompt");
                 prompt.start();
-                const { version } = await prompt.get(schema);
+                const { version } = await prompt.get(promptSchema);
                 if (version) {
                     nextRelease.version = version;
+                    if (!validateNextVersion(context))
+                    {
+                        logger.error("Invalid 'next version' specified");
+                        return false;
+                    }
                 }
             }
         }
@@ -440,7 +452,7 @@ async function runRelease(context: IContext, plugins: any)
     //
     taskDone = await processTasksStdOut2(context);
     if (taskDone) {
-        logTaskResult(taskDone, logger);
+        logTaskResult(taskDone, "stdout level 2", logger);
         return taskDone;
     }
 
@@ -493,7 +505,7 @@ async function runRelease(context: IContext, plugins: any)
         // If this is task mode, we're done maybe
         //
         if (options.taskMode) {
-            logTaskResult(true, logger);
+            logTaskResult(true, "changelog*", logger);
             if (options.taskChangelogHtmlFile || options.taskChangelogHtmlView || options.taskChangelogPrint) {
                 return true;
             }
@@ -505,6 +517,10 @@ async function runRelease(context: IContext, plugins: any)
     // TODO - Plugins maybe?
     //
     // context.changelog.notes = await plugins.generateNotes(context);
+    //
+    // TODO - can probably do some more options checking in populateChangelog so that they
+    // arent built under certin task mode conditions
+    //
     await populateChangelogs(context);
 
     //
@@ -522,28 +538,33 @@ async function runRelease(context: IContext, plugins: any)
     // any build scripts are ran.
     //
     let packageJsonModified = false;
-    if (options.npmRelease === "Y" && (!options.taskMode || options.taskNpmRelease || options.taskTouchVersions))
-    {   //
-        // User can specify values in publishrc that override what;s in the package.json
-        // file.  Manipulate the package.json file if needed
-        //
+    if (options.npmRelease === "Y" && (!options.taskMode || options.taskNpmRelease || options.taskVersionUpdate))
+    {
         packageJsonModified = await npm.setPackageJson({options, logger});
-        // if (options.taskTouchVersions) {
-        //     packageJsonModified = false; // for taskTouchVersions, we don't restore
+        // if (options.taskVersionUpdate) { // for taskVersionUpdate, we don't restore
+        //     packageJsonModified = false;
         // }
+        if (packageJsonModified) {
+            if (options.taskNpmRelease) {
+                logger.log("The package.json file has been updated for 'NPM release' task");
+            }
+            else if (options.taskVersionUpdate) {
+                logger.log("The package.json file has been updated for 'version update' task");
+            }
+        }
     }
 
     //
     // Update relevant local files with the new version #
     //
-    if (!options.versionForceCurrent && (!options.taskMode || options.taskTouchVersions))
+    if (!options.versionForceCurrent && (!options.taskMode || options.taskVersionUpdate))
     {
         await setVersions(context);
         //
         // If this is task mode, we're done maybe
         //
-        if (options.taskTouchVersions) {
-            logTaskResult(true, logger);
+        if (options.taskVersionUpdate) {
+            logTaskResult(true, "version update", logger);
             return true;
         }
     }
@@ -556,7 +577,7 @@ async function runRelease(context: IContext, plugins: any)
     // If this is task mode, lof this task's result
     //
     if (options.taskBuild) {
-        logTaskResult(true, logger);
+        logTaskResult(true, "build", logger);
     }
 
     //
@@ -576,6 +597,13 @@ async function runRelease(context: IContext, plugins: any)
         // Perform dist / network folder release
         //
         await npm.doNpmRelease(context);
+        //
+        // If this is task mode, we're done maybe
+        //
+        if (options.taskNpmRelease) {
+            logTaskResult(true, "npm release", logger);
+            return true;
+        }
         //
         //  Run pre npm-release scripts if specified.
         //
@@ -597,6 +625,13 @@ async function runRelease(context: IContext, plugins: any)
         //
         await doDistRelease(context);
         //
+        // If this is task mode, we're done maybe
+        //
+        if (options.taskDistRelease) {
+            logTaskResult(true, "dist release", logger);
+            return true;
+        }
+        //
         // Run pre distribution-release scripts if specified.
         //
         await util.runScripts(context, "postDistRelease", options.distReleasePostCommand, options.taskDistRelease);
@@ -604,6 +639,12 @@ async function runRelease(context: IContext, plugins: any)
 
     //
     // Github release
+    // At this point, we make an "un-published/draft" release if this is a full publish run.
+    // After the repository is tagged with the version tag and everything else has succeeded,
+    // the release is updated/patched to a 'released/non-draft' state.
+    // If this is a 'taskGithubRelease' task, then we immediately make a 'published/non-draft'
+    // release.  In this mode, the repository will be tagged with the version tag vX.Y.Z if it
+    // didnt exist already.
     //
     let githubReleaseId;
     if (options.repoType === "git" && options.githubRelease === "Y" && (!options.taskMode || options.taskGithubRelease))
@@ -616,11 +657,11 @@ async function runRelease(context: IContext, plugins: any)
         //
         const ghRc = await doGithubRelease(context);
         if (options.taskMode && ghRc.error) {
-            logTaskResult(ghRc.error, logger);
+            logTaskResult(ghRc.error, "github release", logger);
             return false;
         }
         else if (options.taskGithubRelease) {
-            logTaskResult(true, logger);
+            logTaskResult(true, "github release", logger);
         }
         //
         // Post-github release (.publishrc).
@@ -634,6 +675,7 @@ async function runRelease(context: IContext, plugins: any)
 
     //
     // MantisBT release
+    // Mantis 'Releases' plugin required.
     //
     if (options.mantisbtRelease === "Y" && (!options.taskMode || options.taskMantisbtRelease))
     {   //
@@ -645,11 +687,11 @@ async function runRelease(context: IContext, plugins: any)
         //
         const mantisRc = await doMantisbtRelease(context);
         if (options.taskMode && mantisRc.error) {
-            logTaskResult(mantisRc.error, logger);
+            logTaskResult(mantisRc.error, "mantisbt release", logger);
             return false;
         }
         if (options.taskMantisbtRelease) {
-            logTaskResult(true, logger);
+            logTaskResult(true, "mantisbt release", logger);
         }
         //
         // Post-mantis release scripts (.publishrc).
@@ -672,14 +714,17 @@ async function runRelease(context: IContext, plugins: any)
     }
 
     //
-    // Notifiation email
+    // Notification email
     //
     if (options.emailNotification === "Y" && (!options.taskMode || options.taskEmail)) {
         await sendNotificationEmail(context, nextRelease.version);
+        if (options.taskEmail) {
+            logTaskResult(true, "email notification", logger);
+        }
     }
 
     //
-    // Post - NPM release
+    // Post NPM release - restore package.json properties if necessary
     //
     if (packageJsonModified)
     {   //
@@ -689,11 +734,6 @@ async function runRelease(context: IContext, plugins: any)
     }
 
     //
-    // Pre-commit scripts
-    //
-    await util.runScripts(context, "preCommit", options.preCommitCommand); // (.publishrc)
-
-    //
     // Commit / Tag
     //
     if (!options.taskMode || options.taskCommit || options.taskTag)
@@ -701,7 +741,13 @@ async function runRelease(context: IContext, plugins: any)
         // Commit
         //
         if (!options.taskTag || options.taskCommit || !options.taskMode)
-        {
+        {   //
+            // Pre-commit scripts
+            //
+            await util.runScripts(context, "preCommit", options.preCommitCommand); // (.publishrc)
+            //
+            // Commit changes to vcs
+            //
             try {
                 await commit(context);
             }
@@ -743,7 +789,7 @@ async function runRelease(context: IContext, plugins: any)
         //
         // Revert all changes if dry run, and configured to do so
         //
-        revertChanges(context);
+        await revertChanges(context);
     }
 
     //
@@ -776,7 +822,7 @@ async function runRelease(context: IContext, plugins: any)
         logger.success((options.dryRun ? "Dry Run: " : "") + `Published release ${nextRelease.version}`);
     }
     else {
-        logger.success((options.dryRun ? "Dry Run: " : "") + "Successfully completed task(s)");
+        logger.success((options.dryRun ? "Dry Run: " : "") + "Successfully completed all task(s)");
     }
 
     return true; // pick(context, [ "lastRelease", "commits", "nextRelease", "releases" ]);
@@ -913,7 +959,7 @@ async function revertChanges(context: IContext)
 
 async function callFail(context: IContext, plugins, err)
 {
-    revertChanges(context);
+    await revertChanges(context);
     const errors = util.extractErrors(err).filter(err => err.semanticRelease);
     if (errors.length > 0)
     {

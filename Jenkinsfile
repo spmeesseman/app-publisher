@@ -13,6 +13,12 @@ pipeline {
     timeout(time: 10, unit: 'MINUTES')
   }
 
+  parameters {
+    string(defaultValue: "0", // "$emailRecipients",
+            description: 'Production Release',
+            name: 'PRODUCTION_RELEASE')
+  }
+
   stages {
     //
     // CHECK OUT FROM SVN
@@ -62,7 +68,6 @@ pipeline {
         script {
           env.SKIPCI = "0"
           env.PRODUCTIONRELEASE = "0"
-          echo "Log changesets and commit messages:"
           def changeLogSets = currentBuild.changeSets
           for (int i = 0; i < changeLogSets.size(); i++) {
             def entries = changeLogSets[i].items
@@ -81,6 +86,7 @@ pipeline {
             //
             // Set environment control flags and log commit messages
             //
+            echo "Log changesets and commit messages:"
             for (int j = 0; j < entries.length; j++) {
                 def entry = entries[j]
                 echo "${entry.commitId} by ${entry.author} on ${new Date(entry.timestamp)}: ${entry.msg}"
@@ -112,6 +118,7 @@ pipeline {
           }
         }
         echo "Production release  : ${env.PRODUCTIONRELEASE}"
+        echo "Production release  : ${params.PRODUCTION_RELEASE}"
       } 
     }
 
@@ -137,7 +144,7 @@ pipeline {
             //
             def apRcExists = fileExists '.publishrc.pja.json'
             if (apRcExists == false) {
-              error(".publishrc.json not found, cannot run app-publisher")
+              error(".publishrc.pja.json not found, cannot run app-publisher")
             }
             //
             // Display AppPublisher version
@@ -164,7 +171,7 @@ pipeline {
               // Update version files
               //
               echo "Update version files"
-              bat "app-publisher --rc-file .publishrc.pja.json --task-touch-versions"
+              bat "app-publisher --rc-file .publishrc.pja.json --task-version-update"
             }
             else {
               echo "Tag found: ${env.TAG_NAME}, set next version to current"
@@ -225,7 +232,7 @@ pipeline {
             nodejs("Node 12") {
               //
               // If we don't use --version-force-next option then ap will bump the version again
-              // since we ran the --task-touch-versions command already
+              // since we ran the --task-version-update command already
               //
               bat "app-publisher --rc-file .publishrc.pja.json --task-changelog --version-force-next ${env.NEXTVERSION}" 
               historyEntry = bat(returnStdout: true,
