@@ -44,7 +44,7 @@ export async function setAppPublisherVersion({nextRelease, options, logger, cwd,
                 // {
                     // publishrcJson.version = nextRelease.version;
                     // await writeFile("package.json", JSON.stringify(publishrcJson, undefined, 4));
-                    await replaceInFile(file, "version\"[ ]*:[ ]*[\"][0-9a-z.\-]+", `version": "${nextRelease.version}`);
+                    await replaceInFile(file, "\"version\"[ ]*:[ ]*[\"][0-9a-z.\-]+", `"version": "${nextRelease.version}`);
                     //
                     // Allow manual modifications to mantisbt main plugin file and commit to modified list
                     //
