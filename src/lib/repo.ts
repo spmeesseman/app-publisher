@@ -729,7 +729,7 @@ export async function revert(context: IContext, files?: IEdit[])
     //       changeListModify: string = edits.filter((e: any) => e.type === "M").map((e: any) => e.path).join(" ").trim();
 
     logger.info("Revert changes");
-    logger.info(`   Total Edits   : ${nextRelease.edits.length}`);
+    logger.info(`   Total Edits   : ${!files ? nextRelease.edits.length : files.length}`);
     logger.info(`   Additions     : ${changeListAdd.length}`);
     logger.info(`   Modifications : ${changeListModify.length}`);
 
