@@ -539,12 +539,20 @@ export interface IOptions
      */
     taskChangelogPrint: boolean;
     /**
+     * Export the specified release's current changelog and output to stdout.
+     */
+    taskChangelogPrintVersion: string;
+    /**
      * Export the next release's current changelog and view using the editor specified in the
      * .publishrc file. The created file is a copy stored in a temporary directory specified by
      * the OS.
      */
     taskChangelogView: boolean;
-
+    /**
+     * Export the specified release's current changelog and view using the editor specified in the
+     * .publishrc file. The created file is a copy stored in a temporary directory specified by the OS.
+     */
+    taskChangelogViewVersion: string;
     /**
      * Output the CI environment name to stdout.
      */

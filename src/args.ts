@@ -687,6 +687,20 @@ export const publishRcOpts =
         }
     ],
 
+    taskChangelogPrintVersion: [
+        true,
+        "string",
+        "",
+        [ "-tcpv", "--task-changelog-print-version" ],
+        {
+            help: "Export the specified release's current changelog and output to stdout.",
+            usage: [
+                "app-publisher --no-ci -tcpv 1.2.4",
+                "app-publisher --task-changelog-print-version 3.0.1"
+            ]
+        }
+    ],
+
     taskChangelogView: [
         true,
         "boolean",
@@ -694,6 +708,18 @@ export const publishRcOpts =
         [ "-tcv", "--task-changelog-view" ],
         {
             help: "Export the next release's current changelog and view using the editor\n" +
+                  "specified in the .publishrc file. The created file is a copy stored in\n" +
+                  "a temporary directory specified by the OS."
+        }
+    ],
+
+    taskChangelogViewVersion: [
+        true,
+        "string",
+        "",
+        [ "-tcvv", "--task-changelog-view-version" ],
+        {
+            help: "Export the specified release's current changelog and view using the editor\n" +
                   "specified in the .publishrc file. The created file is a copy stored in\n" +
                   "a temporary directory specified by the OS."
         }

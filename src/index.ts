@@ -12,7 +12,7 @@ import getReleaseLevel = require("./lib/commit-analyzer");
 import verify = require("./lib/verify");
 import getCommits = require("./lib/get-commits");
 import getCurrentVersion = require("./lib/version/get-current-version");
-import { getNextVersion, validateNextVersion } from "./lib/version/get-next-version";
+import { getNextVersion } from "./lib/version/get-next-version";
 import getLastRelease = require("./lib/get-last-release");
 import getGitAuthUrl = require("./lib/get-git-auth-url");
 import getLogger = require("./lib/get-logger");
@@ -107,7 +107,7 @@ async function run(context: IContext, plugins: any)
     for (const o in options)
     {
         if (o.startsWith("task")) {
-            if (options[o] === true) {
+            if (options[o] === true || (o === "taskChangelogPrintVersion" && options[o]) || (o === "taskChangelogViewVersion" && options[o])) {
                 options.taskMode = true;
                 break;
             }
@@ -370,10 +370,18 @@ async function runRelease(context: IContext, plugins: any)
     context.lastRelease = lastRelease;
 
     //
+    // needNoCommits
+    //
+    const needNoCommits = options.taskChangelogPrintVersion || options.taskChangelogViewVersion;
+
+    //
     // Populate context with commits
     //
-    if (!options.versionForceCurrent) {
+    if (!options.versionForceCurrent && !needNoCommits) {
         context.commits = await getCommits(context);
+    }
+    else {
+        context.commits = [];
     }
 
     if (!options.versionForceCurrent)
@@ -389,7 +397,7 @@ async function runRelease(context: IContext, plugins: any)
     // If there were no commits that set the release level to 'patch', 'minor', or 'major',
     // then we're done
     //
-    if (!nextRelease.level)
+    if (!nextRelease.level && !needNoCommits)
     {   //
         // There are certain tasks a user may want to run after a release is made.  e.g. re-send
         // a notification email, or redo a Mantis or GitHub release. In these cases, user must
@@ -406,14 +414,14 @@ async function runRelease(context: IContext, plugins: any)
     //
     // Next version
     //
-    if (!options.versionForceCurrent)
+    if (!options.versionForceCurrent && !needNoCommits)
     {
         nextRelease.versionInfo = getNextVersion(context);
         if (options.versionForceNext)
         {
             logger.log("Forcing next version to " + options.versionForceNext);
             nextRelease.version = options.versionForceNext;
-            if (!validateNextVersion(context))
+            if (!util.validateVersion(nextRelease.version, lastRelease.version, logger))
             {
                 logger.error("Invalid 'next version' specified");
                 return false;
@@ -439,7 +447,7 @@ async function runRelease(context: IContext, plugins: any)
                 const { version } = await prompt.get(promptSchema);
                 if (version) {
                     nextRelease.version = version;
-                    if (!validateNextVersion(context))
+                    if (!util.validateVersion(nextRelease.version, lastRelease.version, logger))
                     {
                         logger.error("Invalid 'next version' specified");
                         return false;
@@ -498,12 +506,16 @@ async function runRelease(context: IContext, plugins: any)
     // Can be a history style TXT or a changeloge type MD
     //
     const doChangelog = !options.versionForceCurrent && (options.taskChangelog || options.taskChangelogView ||
-                        options.taskChangelogPrint || options.taskChangelogHtmlView || options.taskChangelogFile || !options.taskMode);
+                        options.taskChangelogPrint || options.taskChangelogHtmlView || options.taskChangelogFile ||
+                        options.taskChangelogPrintVersion || options.taskChangelogViewVersion || !options.taskMode);
     if (doChangelog)
     {   //
         // We need to populate 'notes' right now for the changelog/history file edit.
+        // populateChangelogs() does the rest of the work below after the changelog file edit
         //
-        context.changelog.notes = createSectionFromCommits(context);
+        if (!options.taskChangelogPrintVersion && !options.taskChangelogViewVersion) {
+            context.changelog.notes = createSectionFromCommits(context);
+        }
         //
         // Do edit/view
         //
@@ -513,9 +525,9 @@ async function runRelease(context: IContext, plugins: any)
         //
         if (options.taskMode) {
             logTaskResult(true, "changelog*", logger);
-            if (options.taskChangelogHtmlFile || options.taskChangelogHtmlView || options.taskChangelogPrint) {
+            // if (!options.taskChangelog) {
                 return true;
-            }
+            // }
         }
     }
 

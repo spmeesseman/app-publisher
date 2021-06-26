@@ -14,7 +14,7 @@
     ],
     "compilerOptions": {
         "module": "commonjs",
-        // 	"target": "es2019",
+        // "target": "es2019",
         "target": "es6",
         // 	"moduleResolution": "node",
         "outDir": "build",
@@ -24,10 +24,10 @@
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
         //"esModuleInterop": true,
-        // 	"lib": ["ES2019"],
-        "lib": [
-            "dom",
-            "es6"
-        ]
+        "lib": ["ES2019"]
+        // "lib": [
+        //     "dom",
+        //     "es6"
+        // ]
     }
 }

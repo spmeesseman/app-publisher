@@ -776,7 +776,7 @@ async function doChangelogFileEdit(context: IContext)
 
     logger.log("Start changelog file edit");
 
-    if (!options.taskChangelogPrint)
+    if (!options.taskChangelogPrint && !options.taskChangelogPrintVersion)
     {
         if (options.taskChangelogFile || options.taskChangelogHtmlFile)
         {
@@ -810,15 +810,19 @@ async function doChangelogFileEdit(context: IContext)
         }
     }
 
-    if ((lastRelease.version !== nextRelease.version || newChangelog || options.taskMode))
+    if (lastRelease.version !== nextRelease.version || newChangelog || options.taskMode)
     {
         const changelogTitle = `# ${options.projectName} Change Log`.toUpperCase(),
-              fmtDate = getFormattedDate();
+              fmtDate = getFormattedDate(),
+              taskSpecVersion = options.taskChangelogPrintVersion || options.taskChangelogViewVersion;
 
         let tmpCommits,
             changeLogFinal = "";
 
-        if (!options.taskChangelogHtmlView && !options.taskChangelogHtmlFile) {
+        if (taskSpecVersion) {
+            tmpCommits = await getChangelogFileSections({ options, logger }, taskSpecVersion, 1, null, originalFile) as string;
+        }
+        else if (!options.taskChangelogHtmlView && !options.taskChangelogHtmlFile) {
             tmpCommits = context.changelog.notes || createChangelogSectionFromCommits(context);
         }
         else {
@@ -846,12 +850,12 @@ async function doChangelogFileEdit(context: IContext)
         }
         else {
             if (!options.taskChangelogFile && !options.taskChangelogHtmlFile && !options.taskChangelogHtmlView) {
-                changeLogFinal += `${EOL}Pending ${options.versionText} ${nextRelease.version} Changelog:${EOL}${EOL}${EOL}`;
+                changeLogFinal += `${EOL}${!taskSpecVersion ? "Pending " : ""}${options.versionText} ${nextRelease.version} Changelog:${EOL}${EOL}${EOL}`;
             }
             changeLogFinal += tmpCommits;
         }
         changeLogFinal = changeLogFinal.trim() + EOL;
-        if (!options.taskChangelogPrint)
+        if (!options.taskChangelogPrint || options.taskChangelogPrintVersion)
         {   //
             // Write content to file
             //
@@ -893,11 +897,13 @@ async function doHistoryFileEdit(context: IContext)
         isNewHistoryFileHasContent = false;
     const fmtDate = getFormattedDate(),
           { options, logger, lastRelease, nextRelease, env, cwd} = context,
-          originalFile = options.historyFile;
+          originalFile = options.historyFile,
+          taskSpecVersion = options.taskChangelogPrintVersion || options.taskChangelogViewVersion,
+          version = !taskSpecVersion ? nextRelease.version : taskSpecVersion;
 
     logger.log("Start history file edit");
 
-    if (!options.taskChangelogPrint)
+    if (!options.taskChangelogPrint && !options.taskChangelogPrintVersion)
     {
         if (options.taskChangelogFile || options.taskChangelogHtmlFile)
         {
@@ -909,7 +915,7 @@ async function doHistoryFileEdit(context: IContext)
         }
         else if (options.taskMode && !options.taskChangelog)
         {
-            options.historyFile = path.join(os.tmpdir(), `history.${nextRelease.version}.txt`);
+            options.historyFile = path.join(os.tmpdir(), `history.${version}.txt`);
             if (await pathExists(options.historyFile))
             {
                 await deleteFile(options.historyFile);
@@ -962,14 +968,18 @@ async function doHistoryFileEdit(context: IContext)
     //
     // Add the 'Version X' line, date, and commit content
     //
-    if (lastRelease.version !== nextRelease.version || isNewHistoryFile || options.taskMode)
+    if (lastRelease.version !== version || isNewHistoryFile || options.taskMode)
     {
         let tmpCommits: string;
-        if (!options.taskChangelogHtmlView && !options.taskChangelogHtmlFile) {
+
+        if (taskSpecVersion) {
+            tmpCommits = await getHistoryFileSections({ options, logger }, version, 1, "raw", originalFile) as string;
+        }
+        else if (!options.taskChangelogHtmlView && !options.taskChangelogHtmlFile) {
             tmpCommits = context.changelog.notes || createHistorySectionFromCommits(context);
         }
         else {
-            tmpCommits = context.changelog.htmlNotes || await createHtmlChangelog(context, nextRelease.version, true, false, originalFile);
+            tmpCommits = context.changelog.htmlNotes || await createHtmlChangelog(context, version, true, false, originalFile);
         }
 
         //
@@ -994,19 +1004,19 @@ async function doHistoryFileEdit(context: IContext)
         if ((options.taskChangelog || !options.taskMode) && await pathExists(options.historyHdrFile))
         {
             const historyHeader = await readFile(options.historyHdrFile);
-            await appendFile(options.historyFile, `${EOL}${options.versionText} ${nextRelease.version}${EOL}${fmtDate}${EOL}${historyHeader}${EOL}${tmpCommits}`);
+            await appendFile(options.historyFile, `${EOL}${options.versionText} ${version}${EOL}${fmtDate}${EOL}${historyHeader}${EOL}${tmpCommits}`);
         }
-        else if (options.taskChangelogPrint) {
+        else if (options.taskChangelogPrint || options.taskChangelogPrintVersion) {
             context.stdout.write(tmpCommits.trim());
             return;
         }
         else {
             if (options.taskChangelog || !options.taskMode) {
                 logger.warn("History header template not found");
-                await appendFile(options.historyFile, `${EOL}${options.versionText} ${nextRelease.version}${EOL}${fmtDate}${EOL}${EOL}${EOL}${tmpCommits}`);
+                await appendFile(options.historyFile, `${EOL}${options.versionText} ${version}${EOL}${fmtDate}${EOL}${EOL}${EOL}${tmpCommits}`);
             }
             else if (!options.taskChangelogFile && !options.taskChangelogHtmlFile && !options.taskChangelogHtmlView) {
-                await appendFile(options.historyFile, `${EOL}Pending ${options.versionText} ${nextRelease.version} Changelog:${EOL}${EOL}${EOL}${tmpCommits}`);
+                await appendFile(options.historyFile, `${EOL}${!taskSpecVersion ? "Pending " : ""}${options.versionText} ${version} Changelog:${EOL}${EOL}${EOL}${tmpCommits}`);
             }
             else {
                 await appendFile(options.historyFile, tmpCommits.trim());
@@ -1039,7 +1049,7 @@ async function doHistoryFileEdit(context: IContext)
  * @param listOnly retrieve an array of strings only, not a formatted string
  * @returns HTML version of the requested cahngelog section(s)
  */
-async function getChangelogFileSections({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false, inputFile?: string): Promise<IChangelogEntry[] | string>
+async function getChangelogFileSections({ options, logger }, version?: string, numSections = 1, format?: "raw" | "parts", inputFile?: string): Promise<IChangelogEntry[] | string>
 {
     if (!inputFile) {
         inputFile = options.changelogFile;
@@ -1062,11 +1072,11 @@ async function getChangelogFileSections({ options, logger }, version: string, nu
     }
 
     logger.log("Extract section from changelog file");
-    logger.log(`   Version            : '${version}'`);
-    logger.log(`   Num Sections       : '${numsections}'`);
-    logger.log(`   List only          : '${listOnly}'`);
-    logger.log(`   Input File         : '${inputFile}'`);
+    logger.log(`   Num sections       : '${numSections}'`);
+    logger.log(`   Version start      : '${version ? version : "n/a"}'`);
     logger.log(`   Version string     : '${options.versionText}'`);
+    logger.log(`   Format             : '${format ? format : "n/a"}'`);
+    logger.log(`   Input File         : '${inputFile}'`);
 
     //
     // Code operation:
@@ -1094,7 +1104,20 @@ async function getChangelogFileSections({ options, logger }, version: string, nu
     //
     // Read in contents of file
     //
-    let contents = await readFile(inputFile);
+    const fileContents = await readFile(inputFile);
+    let contents = fileContents;
+
+    //
+    // If 'version' is empty, then this is a request for the latest version #.  Return version and exit
+    //
+    if (!version)
+    {
+        const idx1 = fileContents.lastIndexOf(`>${options.versionText}&nbsp;`, 0) + options.versionText.Length + 7,
+                idx2 = idx1 !== -1 ? contents.indexOf("\\n", idx1) : -1,
+                curVersion = idx1 !== -1 && idx2 !== -1 ? contents.substring(idx1, idx2 - idx1).trim() : "";
+        logger.log(`   Found version ${curVersion}`);
+        return curVersion;
+    }
 
     //
     // Initialize parsing variables
@@ -1125,7 +1148,7 @@ async function getChangelogFileSections({ options, logger }, version: string, nu
     // Ex: ([ce9c8f0](https://github.com/spmeesseman/vscode-taskexplorer/commit/ce9c8f0))
     //
 
-    if (isString(listOnly) && listOnly === "parts")
+    if (isString(format) && format === "parts")
     {
         const typeParts = [],
               msgParts = [],
@@ -1300,11 +1323,11 @@ async function getFileNotes(context: IContext, version: string)
     let fileNotes: string;
     if (options.historyFile) {
         logger.log("Get txt type file notes");
-        fileNotes = await getHistoryFileSections(context, version || nextRelease.version, 1) as string;
+        fileNotes = await getHistoryFileSections(context, version || nextRelease.version) as string;
     }
     else if (options.changelogFile) {
         logger.log("Get md type file notes");
-        fileNotes = await getChangelogFileSections(context, version || nextRelease.version, 1) as string;
+        fileNotes = await getChangelogFileSections(context, version || nextRelease.version) as string;
     }
     return fileNotes;
 }
@@ -1342,6 +1365,119 @@ function getFormattedDate()
 }
 
 
+function getPartsFromHistorySection({options, logger}, contents: string)
+{
+    let match: RegExpExecArray;
+    const typeParts = [];
+    const msgParts = [];
+
+    logger.log("   Extracting parts");
+
+    //
+    // Process entries with a subject (sorrounded by <b></b>)
+    //
+    let regex = new RegExp(/<b>\w*(?<=^|>)[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>|<\/font>)/g);
+    while ((match = regex.exec(contents)) !== null)
+    {
+        let value = match[0].replace("&nbsp;", "").replace(".", "").replace("<b>", "").replace("</b>", "");
+        for (let i = 0; i < 10; i++) {
+            value = value.replace(i.toString(), "").trim();
+        }
+        typeParts.push(value);
+    }
+
+    contents = contents.replace(/<br>&nbsp;&nbsp;&nbsp;&nbsp;<br>/g, "<br><br>");
+    contents = contents.replace(/<br>&nbsp;&nbsp;&nbsp;<br>/g, "<br><br>");
+
+    regex = new RegExp(/(<\/b>){1}(<br>){0,1}(<br>){1}(&nbsp;){2,}[ ]{1}.+?(?=<br>(&nbsp;| ){0,}<br>(<b>|[1-9][0-9]{0,1}\.(&nbsp;| ))|$)/g);
+    while ((match = regex.exec(contents)) !== null)
+    {
+        let value = match[0].replace(/<\/b>/, "");
+        value = value.replace(/<br>&nbsp;&nbsp;&nbsp;&nbsp;\[/, "<br>["); // ticket tags
+        value = value.replace(/<br>&nbsp;&nbsp;&nbsp; /, "<br>");
+
+        if (containsValidSubject(options, value))
+        {
+            while (value.startsWith("<br>")) {
+                value = value.substring(4);
+            }
+            while (value.endsWith("<br>")) {
+                value = value.substring(0, value.length - 4);
+            }
+        }
+
+        msgParts.push(value.trim());
+    }
+    //
+    // Non-subject entries (no <b></b> wrap)
+    //
+    regex = new RegExp(/\w*(?<!<b>)(\b[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>[1-9]|$|<br><b>))/g);
+    while ((match = regex.exec(contents)) !== null) {
+        typeParts.push("");
+    }
+
+    regex = new RegExp(/\w*(?<!<b>)(\b[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>[1-9]|$|<br><b>))/g);
+    while ((match = regex.exec(contents)) !== null)
+    {
+        let value = match[0].replace("&nbsp;", "").replace(".", "").replace("<b>", "").replace("</b>", "");
+        for (let i = 0; i < 10; i++) {
+            value = value.replace(i.toString(), "").trim();
+        }
+        while (value.startsWith("<br>")) {
+            value = value.substring(4);
+        }
+        while (value.endsWith("<br>")) {
+            value = value.substring(0, value.length - 4);
+        }
+        msgParts.push(value.trim());
+    }
+
+    const contents2: IChangelogEntry[] = [];
+    for (let i = 0; i < typeParts.length; i++)
+    {
+        let scope = "", message = "", tickets = "", subject = typeParts[i];
+
+        message = msgParts[i];
+        if (containsValidSubject(options, subject)) {
+            if (typeParts[i].includes(":")) {
+                subject = typeParts[i].substring(0, typeParts[i].indexOf(":")).trim();
+                scope = typeParts[i].substring(typeParts[i].indexOf(":") + 1).trim();
+            }
+        }
+        else {
+            subject = "Miscellaneous";
+            if (typeParts[i].includes(":")) {
+                scope = typeParts[i].substring(0, typeParts[i].indexOf(":")).trim();
+                message = typeParts[i].substring(typeParts[i].indexOf(":") + 1) + msgParts[i];
+            }
+            else if (!typeParts[i]) {
+                message = msgParts[i];
+            }
+            else {
+                message = typeParts[i] + msgParts[i];
+            }
+        }
+
+        regex = new RegExp(/\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/gi);
+        while ((match = regex.exec(msgParts[i])) !== null) {
+            tickets = match[0];
+            tickets = match[0].replace("[", "").replace("]", "").trim();
+            tickets = properCase(tickets.replace("&nbsp;", " "));
+            message = message.replace("<br><br>" + match[0], "");
+            message = message.replace("<br>" + match[0], "").trim();
+            message = message.replace("&nbsp;&nbsp;" + match[0], "").trim();
+            message = message.replace("&nbsp;" + match[0], "").trim();
+            message = message.replace(" " + match[0], "").trim();
+            message = message.replace(match[0], "").trim();
+        }
+        contents2.push({ subject, scope, message, tickets });
+    }
+
+    logger.log("Successfully retrieved history file parts");
+    return contents2;
+}
+
+
 /**
  * Gets history file section using the hostory/changelog file by parsing the sepcified
  * versions section.
@@ -1352,11 +1488,8 @@ function getFormattedDate()
  * @param listOnly retrieve an array of strings only, not a formatted string
  * @returns HTML version of the requested cahngelog section(s)
  */
-async function getHistoryFileSections({ options, logger }, version: string, numsections: number, listOnly: boolean | string = false, inputFile?: string): Promise<IChangelogEntry[] | string>
+async function getHistoryFileSections({ options, logger }, version?: string, numSections = 1, format?: "raw" | "parts", inputFile?: string): Promise<IChangelogEntry[] | string>
 {
-    const iNumberOfDashesInVersionLine = 20;
-    let finalContents = "";
-
     if (!inputFile) {
         inputFile = options.historyFile;
     }
@@ -1370,14 +1503,15 @@ async function getHistoryFileSections({ options, logger }, version: string, nums
 
     if (!(await pathExists(inputFile))) {
         logger.warn("History file does not exist");
-        return finalContents;
+        return "";
     }
 
     logger.log("Extract from history.txt file");
-    logger.log(`   Input File         : '${inputFile}'`);
-    logger.log(`   Num Sections       : '${numsections}'`);
+    logger.log(`   Num sections       : '${numSections}'`);
+    logger.log(`   Version start      : '${version ? version : "n/a"}'`);
     logger.log(`   Version string     : '${options.versionText}'`);
-    logger.log(`   List only          : '${listOnly}'`);
+    logger.log(`   Format             : '${format ? format : "n/a"}'`);
+    logger.log(`   Input file         : '${inputFile}'`);
 
     //
     // Code operation:
@@ -1393,101 +1527,82 @@ async function getHistoryFileSections({ options, logger }, version: string, nums
     // Extract the latest entry
     //
 
-    let contents = "";
     //
-    // Read in contents of file
+    // Read in contents of file, and break it down to at least the first version requested
     //
-    contents = await readFile(inputFile);
-    //
-    // Initialize parsing variables
-    //
-    let index1 = contents.length;
-    let index2 = 0;
-    let bFoundStart = 0;
-    let iSectionsFound = 0;
-    //
-    // Loop to find our search text
-    //
-    while (index1 >= 0)
-    {   //
-        // Get index of field name
-        //
-        index1 = contents.lastIndexOf(`${options.versionText} `, index1);
-        //
-        // make sure the field name was found
-        //
-        if (index1 === -1)
-        {
-            logger.error("   Last section could not be found (0), exit");
-            throw new Error("170");
-        }
+    let contents = "",
+        finalContents = "",
+        fileContents = await readFile(inputFile);
 
-        if (contents[index1 - 1] !== "\n")
-        {
-            index1--;
-            continue;
-        }
-        //
-        // Check to make sure this is the beginning line, if it is then 2 lines underneath
-        // will be a dashed line consisting of $NumberOfDashesInVersionLine dash characters
-        //
-        index2 = contents.indexOf("\n", index1);
-        // make sure the newline was found
-        if (index2 === -1)
-        {
-            logger.error("   Last section could not be found (1), exit");
-            throw new Error("171");
-        }
-
-        index2 = contents.indexOf("\n", index2 + 1);
-        //
-        // Make sure the newline was found
-        //
-        if (index2 === -1)
-        {
-            logger.error("   Last section could not be found (2), exit");
-            throw new Error("172");
-        }
-
-        //
-        // Increment index2 past new line and on to 1st ch in next line
-        //
-        index2++;
-        // Now index2 should be the index to the start of a dashed line
-
-        let numdashes = 0;
-        for (numdashes = 0; numdashes < iNumberOfDashesInVersionLine; numdashes++) {
-            if (contents[index2 + numdashes] !== "-") {
-                break;
-            }
-        }
-        //
-        // Make sure we found our dashed line
-        //
-        if (numdashes === iNumberOfDashesInVersionLine) {
-            bFoundStart = 1;
-            iSectionsFound++;
-            if (iSectionsFound >= numsections) {
-                break;
-            }
-        }
-        //
-        // Decrement index1, which is the index to the start of the string "Build ", but
-        // this could have occurred in the body of the text, keep searching
-        //
-        index1--;
+    //
+    // If 'version' is empty, then this is a request for the latest version #.  Return version and exit
+    //
+    if (!version)
+    {
+        const idx1 = fileContents.lastIndexOf(`>${options.versionText}&nbsp;`, 0) + options.versionText.Length + 7,
+                idx2 = idx1 !== -1 ? contents.indexOf("\\n", idx1) : -1,
+                curVersion = idx1 !== -1 && idx2 !== -1 ? contents.substring(idx1, idx2 - idx1).trim() : "";
+        logger.log(`   Found version ${curVersion}`);
+        return curVersion;
     }
+
+    //
+    // Break content down to at least the first version requested
+    //
+    const idx = fileContents.indexOf(`${options.versionText} ${version}`);
+    if (idx === -1) {
+        logger.error("   History section could not be found, exit");
+        throw new Error("161");
+    }
+    fileContents = fileContents.substring(idx);
+
+    //
+    // Pull out the requested sections
+    //
+    let match: RegExpExecArray,
+        bFound = 0;
+
+    let regex = new RegExp(`(?:^${options.versionText} ([0-9a-zA-Z\-\.]{3,})[\r\n]+.+[\r\n]+[\-]{20,}[\r\n]+[\*]{20,}[^]+?(?=[\*]{20,})[\*]{20,}[\r\n]+)([^]*?)(?=${options.versionText}|\z)`, "gm");
+    while ((match = regex.exec(fileContents)) !== null)
+    {
+        if (options.verbose) {
+            logger.log(`   Parsing file - found ${options.versionText} ${match[1]}`);
+        }
+        if (match[1] === version)
+        {
+            if (format !== "raw") {
+                contents += match[0];
+            }
+            else {
+                contents += match[2];
+            }
+            if (++bFound >= numSections) {
+                break;
+            }
+        }
+    }
+
     //
     // Make sure we found our starting point
     //
-    if (bFoundStart === 0)
+    if (!bFound)
     {
-        logger.error("   Last section could not be found, exit");
-        throw new Error("173");
+        logger.error("History file section could not be found");
+        throw new Error("162");
+    }
+    logger.log("   Found history file section(s)");
+
+    //
+    // If request is for just the raw content, we're done.  Proceeding past here converts to HTML
+    //
+    if (format === "raw") {
+        logger.log("Successfully retrieved raw history file content");
+        return contents;
     }
 
-    logger.log("   Found version section");
-    contents = contents.substring(index1);
+    //
+    // CONVERT TO HTML
+    //
 
     //
     // Replace special chars
@@ -1505,229 +1620,102 @@ async function getHistoryFileSections({ options, logger }, version: string, nums
     //
     contents = "<font face=\"Courier New\">" + contents + "</font>";
 
-    //
-    // If version is empty, then this is a request for the latest version #.  Return version and exit
-    //
-    if (!version)
+    let index1 = contents.length;
+    let index2 = 0;
+
+    logger.log("   Write header text to message");
+    logger.log(`   Write ${numSections} history section(s) to message`);
+
+    let hDelimiter = "**********";
+    index1 = contents.indexOf("**********");
+    if (index1 === -1)
     {
-        const idx1 = contents.indexOf(`>${options.versionText}&nbsp;`, 0) + options.versionText.Length + 7,
-              idx2 = idx1 !== -1 ? contents.indexOf("<br>", idx1) : -1,
-              curVersion = idx1 !== -1 && idx2 !== -1 ? contents.substring(idx1, idx2 - idx1) : "";
-        logger.log(`Found version ${curVersion}`);
-        return curVersion;
+        hDelimiter = "----------";
+    }
+    index1 = contents.indexOf(hDelimiter);
+    while (index1 !== -1)
+    {
+        index2 = contents.indexOf("<br>", index1);
+        index1 = contents.indexOf(hDelimiter, index2);
+    }
+    contents = contents.substring(index2 + 4);
+    while (contents.startsWith("<br>")) {
+        contents = contents.substring(4);
+    }
+    if (contents.endsWith("</font>")) {
+        contents = contents.substring(0, contents.length - 7);
+    }
+    while (contents.endsWith("<br>")) {
+        contents = contents.substring(0, contents.length - 4);
     }
 
-    // index1 is our start index
-    if (version)
+    let tContents = contents;
+    regex = new RegExp(/[a-zA-z0-9_\/|\"'][,.:]*(&nbsp;){0,1}<br>(&nbsp;){4}[a-zA-z0-9_\/|\"']/g);
+    while ((match = regex.exec(contents)) !== null)
     {
-        logger.log("   Write header text to message");
-        logger.log(`   Write ${numsections} history section(s) to message`);
+        tContents = tContents.replace(match[0], match[0].replace("<br>&nbsp;&nbsp;&nbsp;", "")); // leave a space
+    }
+    contents = tContents;
 
-        if (listOnly === false) {
-            finalContents += contents;
+    // break up &nbsp;s
+    tContents = contents;
+    regex = new RegExp(/(&nbsp;)(\w|'|\")/g);
+    while ((match = regex.exec(contents)) !== null)
+    {
+        tContents = tContents.replace(match[0], match[0].replace("&nbsp;", " "));
+    }
+    contents = tContents;
+
+    // Bold all numbered lines with a subject
+    tContents = contents;
+    regex = new RegExp(/\w*(?<=^|>)[1-9][0-9]{0,1}(&nbsp;| ){0,1}\.(&nbsp;| ).+?(?=<br>)/g);
+    while ((match = regex.exec(contents)) !== null) {
+        const value = match[0];
+        if (containsValidSubject(options, value)) {
+            tContents = tContents.replace(value, `<b>${value}</b>`);
         }
-        else
+    }
+
+    contents = tContents;
+
+    if (format === "parts") {
+        logger.log("Successfully retrieved fmt history file content for parsing");
+        return getPartsFromHistorySection({options, logger}, contents);
+    }
+
+    //
+    // Reverse versions, display newest at top if more than 1 section
+    //
+    if (numSections > 1)
+    {
+        logger.log("   Re-ordering " + numSections + " sections newest to oldest");
+
+        const sections = [];
+
+        index2 = contents.indexOf(`>${options.versionText}&nbsp;`, 0) + 1;
+        for (let i = 0; i < numSections; i++)
         {
-            let hDelimiter = "**********";
-            index1 = contents.indexOf("**********");
-            if (index1 === -1)
+            index1 = index2;
+            index2 = contents.indexOf(`>${options.versionText}&nbsp;`, index1 + 1) + 1;
+            if (index2 === 0)
             {
-                hDelimiter = "----------";
+                index2  = contents.indexOf("</font>");
             }
-            index1 = contents.indexOf(hDelimiter);
-            while (index1 !== -1)
-            {
-                index2 = contents.indexOf("<br>", index1);
-                index1 = contents.indexOf(hDelimiter, index2);
-            }
-            contents = contents.substring(index2 + 4);
-            while (contents.startsWith("<br>")) {
-                contents = contents.substring(4);
-            }
-            if (contents.endsWith("</font>")) {
-                contents = contents.substring(0, contents.length - 7);
-            }
-            while (contents.endsWith("<br>")) {
-                contents = contents.substring(0, contents.length - 4);
-            }
-
-            let tContents = contents,
-                match: RegExpExecArray,
-                regex = new RegExp(/[a-zA-z0-9_\/|\"'][,.:]*(&nbsp;){0,1}<br>(&nbsp;){4}[a-zA-z0-9_\/|\"']/g);
-            while ((match = regex.exec(contents)) !== null)
-            {
-                tContents = tContents.replace(match[0], match[0].replace("<br>&nbsp;&nbsp;&nbsp;", "")); // leave a space
-            }
-            contents = tContents;
-
-            // break up &nbsp;s
-            tContents = contents;
-            regex = new RegExp(/(&nbsp;)(\w|'|\")/g);
-            while ((match = regex.exec(contents)) !== null)
-            {
-                tContents = tContents.replace(match[0], match[0].replace("&nbsp;", " "));
-            }
-            contents = tContents;
-
-            // Bold all numbered lines with a subject
-            tContents = contents;
-            regex = new RegExp(/\w*(?<=^|>)[1-9][0-9]{0,1}(&nbsp;| ){0,1}\.(&nbsp;| ).+?(?=<br>)/g);
-            while ((match = regex.exec(contents)) !== null) {
-                const value = match[0];
-                if (containsValidSubject(options, value)) {
-                    tContents = tContents.replace(value, `<b>${value}</b>`);
-                }
-            }
-
-            contents = tContents;
-
-            if (listOnly !== "parts") {
-                return contents ;
-            }
-            else {
-                const typeParts = [];
-                const msgParts = [];
-
-                logger.log("   Extracting parts");
-
-                //
-                // Process entries with a subject (sorrounded by <b></b>)
-                //
-                regex = new RegExp(/<b>\w*(?<=^|>)[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>|<\/font>)/g);
-                while ((match = regex.exec(contents)) !== null)
-                {
-                    let value = match[0].replace("&nbsp;", "").replace(".", "").replace("<b>", "").replace("</b>", "");
-                    for (let i = 0; i < 10; i++) {
-                        value = value.replace(i.toString(), "").trim();
-                    }
-                    typeParts.push(value);
-                }
-
-                contents = contents.replace(/<br>&nbsp;&nbsp;&nbsp;&nbsp;<br>/g, "<br><br>");
-                contents = contents.replace(/<br>&nbsp;&nbsp;&nbsp;<br>/g, "<br><br>");
-
-                regex = new RegExp(/(<\/b>){1}(<br>){0,1}(<br>){1}(&nbsp;){2,}[ ]{1}.+?(?=<br>(&nbsp;| ){0,}<br>(<b>|[1-9][0-9]{0,1}\.(&nbsp;| ))|$)/g);
-                while ((match = regex.exec(contents)) !== null)
-                {
-                    let value = match[0].replace(/<\/b>/, "");
-                    value = value.replace(/<br>&nbsp;&nbsp;&nbsp;&nbsp;\[/, "<br>["); // ticket tags
-                    value = value.replace(/<br>&nbsp;&nbsp;&nbsp; /, "<br>");
-
-                    if (containsValidSubject(options, value))
-                    {
-                        while (value.startsWith("<br>")) {
-                            value = value.substring(4);
-                        }
-                        while (value.endsWith("<br>")) {
-                            value = value.substring(0, value.length - 4);
-                        }
-                    }
-
-                    msgParts.push(value.trim());
-                }
-                //
-                // Non-subject entries (no <b></b> wrap)
-                //
-                regex = new RegExp(/\w*(?<!<b>)(\b[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>[1-9]|$|<br><b>))/g);
-                while ((match = regex.exec(contents)) !== null) {
-                    typeParts.push("");
-                }
-
-                regex = new RegExp(/\w*(?<!<b>)(\b[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>[1-9]|$|<br><b>))/g);
-                while ((match = regex.exec(contents)) !== null)
-                {
-                    let value = match[0].replace("&nbsp;", "").replace(".", "").replace("<b>", "").replace("</b>", "");
-                    for (let i = 0; i < 10; i++) {
-                        value = value.replace(i.toString(), "").trim();
-                    }
-                    while (value.startsWith("<br>")) {
-                        value = value.substring(4);
-                    }
-                    while (value.endsWith("<br>")) {
-                        value = value.substring(0, value.length - 4);
-                    }
-                    msgParts.push(value.trim());
-                }
-
-                const contents2: IChangelogEntry[] = [];
-                for (let i = 0; i < typeParts.length; i++)
-                {
-                    let scope = "", message = "", tickets = "", subject = typeParts[i];
-
-                    message = msgParts[i];
-                    if (containsValidSubject(options, subject)) {
-                        if (typeParts[i].includes(":")) {
-                            subject = typeParts[i].substring(0, typeParts[i].indexOf(":")).trim();
-                            scope = typeParts[i].substring(typeParts[i].indexOf(":") + 1).trim();
-                        }
-                    }
-                    else {
-                        subject = "Miscellaneous";
-                        if (typeParts[i].includes(":")) {
-                            scope = typeParts[i].substring(0, typeParts[i].indexOf(":")).trim();
-                            message = typeParts[i].substring(typeParts[i].indexOf(":") + 1) + msgParts[i];
-                        }
-                        else if (!typeParts[i]) {
-                            message = msgParts[i];
-                        }
-                        else {
-                            message = typeParts[i] + msgParts[i];
-                        }
-                    }
-
-                    regex = new RegExp(/\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/gi);
-                    while ((match = regex.exec(msgParts[i])) !== null) {
-                        tickets = match[0];
-                        tickets = match[0].replace("[", "").replace("]", "").trim();
-                        tickets = properCase(tickets.replace("&nbsp;", " "));
-                        message = message.replace("<br><br>" + match[0], "");
-                        message = message.replace("<br>" + match[0], "").trim();
-                        message = message.replace("&nbsp;&nbsp;" + match[0], "").trim();
-                        message = message.replace("&nbsp;" + match[0], "").trim();
-                        message = message.replace(" " + match[0], "").trim();
-                        message = message.replace(match[0], "").trim();
-                    }
-                    contents2.push({ subject, scope, message, tickets });
-                }
-                return contents2;
-            }
+            sections.push(contents.substring(index1, index2 - index1));
         }
-
-        //
-        // Reverse versions, display newest at top if more than 1 section
-        //
-        if (numsections > 1)
+        contents = "";
+        for (let i = numSections - 1; i >= 0; i--)
         {
-            logger.log("   Re-ordering " + numsections + " sections newest to oldest");
-
-            const sections = [];
-
-            index2 = contents.indexOf(`>${options.versionText}&nbsp;`, 0) + 1;
-            for (let i = 0; i < numsections; i++)
+            contents += sections[i];
+            if (contents.substring(contents.length - 12) !== "<br><br><br>")
             {
-                index1 = index2;
-                index2 = contents.indexOf(`>${options.versionText}&nbsp;`, index1 + 1) + 1;
-                if (index2 === 0)
-                {
-                    index2  = contents.indexOf("</font>");
-                }
-                sections.push(contents.substring(index1, index2 - index1));
+                contents += "<br>";
             }
-            contents = "";
-            for (let i = numsections - 1; i >= 0; i--)
-            {
-                contents += sections[i];
-                if (contents.substring(contents.length - 12) !== "<br><br><br>")
-                {
-                    contents += "<br>";
-                }
-            }
-            finalContents = "<font face=\"Courier New\" style=\"font-size:12px\">" + contents + "</font>";
         }
+        finalContents = "<font face=\"Courier New\" style=\"font-size:12px\">" + contents + "</font>";
     }
 
     logger.log("Successfully retrieved history file content");
-
     return finalContents;
 }
 
@@ -1849,8 +1837,8 @@ export function isSkippedCommitMessage(msg: string)
 export async function getVersion({ options, logger })
 {
     const contents = options.historyFile ?
-                        await getHistoryFileSections({ options, logger }, undefined, 1) as string :
-                        await getChangelogFileSections({ options, logger }, undefined, 1) as string;
+                        await getHistoryFileSections({ options, logger }) as string :
+                        await getChangelogFileSections({ options, logger }) as string;
     const index1 = contents.indexOf(`>${options.versionText}&nbsp;`, 0) + options.versionText.length + 7;
     const index2 = contents.indexOf("<br>", index1);
     const curversion = contents.substring(index1, index2 - index1);

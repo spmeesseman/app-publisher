@@ -1,4 +1,5 @@
 
+import * as semver from "semver";
 import { join } from "path";
 import hideSensitive = require("../hide-sensitive");
 import { isFunction } from "lodash";
@@ -327,4 +328,13 @@ export async function runScripts(context: IContext, scriptType: string, scripts:
             logger.log("   Dry run, skipping script run");
         }
     }
+}
+
+
+export function validateVersion(version: string, nextVersion?: string, logger?: any)
+{
+    if (logger) {
+        logger.log("Validate version : " + version);
+    }
+    return semver.valid(version) && (!nextVersion || semver.gt(version, version));
 }

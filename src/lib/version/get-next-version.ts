@@ -1,18 +1,7 @@
 
-import { options } from "marked";
 import * as semver from "semver";
 import { IContext, IVersionInfo } from "../../interface";
 import { FIRST_RELEASE, FIRST_RELEASE_INC } from "../definitions/constants";
-
-
-export function validateNextVersion(context: IContext)
-{
-    const {lastRelease, nextRelease, logger} = context;
-    logger.log("Validate proposed version");
-    logger.log(`   Current version  : ${lastRelease.version}`);
-    logger.log(`   Proposed version : ${nextRelease.version}`);
-    return semver.valid(nextRelease.version) && semver.gt(nextRelease.version, lastRelease.version);
-}
 
 
 export function getNextVersion(context: IContext)

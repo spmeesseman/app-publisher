@@ -2,7 +2,7 @@ import { escapeRegExp, template } from "lodash";
 import semver from "semver";
 import pLocate from "p-locate";
 import { getTags, isRefInHistory, getTagHead } from "./repo";
-import { IContext } from "../interface";
+import { IContext, ILastRelease } from "../interface";
 import { EOL } from "os";
 
 export = getLastRelease;
@@ -27,7 +27,7 @@ export = getLastRelease;
  *
  * @return {Promise<LastRelease>} The last tagged release or `undefined` if none is found.
  */
-async function getLastRelease(context: IContext)
+async function getLastRelease(context: IContext): Promise<ILastRelease>
 {
     const { cwd, env, options, logger } = context;
     //
@@ -59,5 +59,10 @@ async function getLastRelease(context: IContext)
     }
 
     logger.info(`No ${options.repoType} tag version found`);
-    return {};
+    return {
+        head: undefined,
+        tag: undefined,
+        version: undefined,
+        versionInfo: undefined
+    };
 }

@@ -1,6 +1,6 @@
 
 import * as path from "path";
-import { isString } from "./utils/utils";
+import { isString, validateVersion } from "./utils/utils";
 import { createDir, pathExists } from "./utils/fs";
 import { IContext } from "../interface";
 
@@ -629,6 +629,21 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
                     }
                 }
             }
+        }
+    }
+
+    //
+    // Valudate version specified by taskChangelogPrintVersion or taskChangelogViewVersion
+    // Only allow one of theseocmmands at a time.  TODO - allow running both at same time
+    //
+    if (options.taskChangelogPrintVersion && options.taskChangelogViewVersion) {
+        logger.error("Tasks changelogPrintVersion and changelogViewVersion cannot be used in the same run");
+        return false;
+    }
+    if (options.taskChangelogPrintVersion || options.taskChangelogViewVersion) {
+        if (!validateVersion(options.taskChangelogPrintVersion || options.taskChangelogViewVersion)) {
+            logger.error(`Invalid version ${options.taskChangelogPrintVersion} specified for taskChangelogPrintVersion`);
+            return false;
         }
     }
 
