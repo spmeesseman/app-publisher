@@ -8,14 +8,13 @@
     ],
     "changelogFile":     "CHANGELOG.md",
     "cProjectRcFile":    "",
-    "commitMsgMap": {
-        "internal": {
-            "versionBump": "patch",
-            "formatText": "Internal Change",
-            "include": false,
-            "iconCls": "fa-building"
-        }
-    },
+    "commitMsgMap": [{
+        "type": "internal",
+        "versionBump": "patch",
+        "formatText": "Internal Change",
+        "include": false,
+        "iconCls": "fa-building"
+    }],
     "deployCommand":     "",
     "distRelease":       "N",
     "distReleasePath":   "",

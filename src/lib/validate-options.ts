@@ -97,7 +97,7 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     {
         options.npmReleasePostCommand = [ options.npmReleasePostCommand ]; // convert to array
     }
-    if (options.versionFiles && isString(options.versionFiles))
+    if (options.versionFiles && !(options.versionFiles instanceof Array))
     {
         options.versionFiles = [ options.versionFiles ]; // convert to array
     }
@@ -120,6 +120,10 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     if (options.testEmailRecip && isString(options.testEmailRecip))
     {
         options.testEmailRecip = [ options.testEmailRecip ]; // convert to array
+    }
+    if (options.commitMsgMap && !(options.commitMsgMap instanceof Array))
+    {
+        options.commitMsgMap = [ options.commitMsgMap ]; // convert to array
     }
 
     //

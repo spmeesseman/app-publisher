@@ -8,6 +8,7 @@ import { getNpmVersion } from "./npm";
 // import { getMakefileVersion } from "./makefile";
 import { getAppPublisherVersion } from "./app-publisher";
 import { getExtJsVersion } from "./extjs";
+import { pathExists } from "../utils/fs";
 
 
 export = getCurrentVersion;
@@ -15,7 +16,8 @@ export = getCurrentVersion;
 
 async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
 {
-    const logger = context.logger;
+    let warn = false;
+    const {logger, options} = context;
 
     let versionInfo: IVersionInfo = {
         version: undefined,
@@ -23,15 +25,24 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
         versionInfo: undefined
     };
 
-    function doCheck(v: IVersionInfo, type: string)
+    function doCheck(v: IVersionInfo, type: string, throwError = true)
     {
         if (v && v.version) {
             if (versionInfo.version) {
-                if (v.version !== versionInfo.version) {
-                    logger.warn("There is a version mismatch in one or more of the version files:");
-                    logger.warn("   Type             : " + type);
-                    logger.warn("   Parsed version   : " + v.version);
-                    logger.warn("   Recorded version : " + versionInfo.version);
+                if (v.version !== versionInfo.version)
+                {
+                    let logFn = logger.warn;
+                    if (throwError) {
+                        logFn = logger.error;
+                    }
+                    logFn("There is a version mismatch in one or more of the version files:");
+                    logFn("   Type             : " + type);
+                    logFn("   Parsed version   : " + v.version);
+                    logFn("   Recorded version : " + versionInfo.version);
+                    if (throwError) {
+                        throw new Error("Local version file validation failed");
+                    }
+                    warn = true;
                 }
                 if (!versionInfo.versionInfo) {
                     versionInfo.versionInfo = v.versionInfo;
@@ -75,19 +86,21 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
     //
     // Extract from changelog/history file
     //
-    doCheck(await getChangelogVersion(context), "changelog");
+    doCheck(await getChangelogVersion(context), "changelog", false);
 
     //
-    // Check .publishrc if no version was found
+    // Loop through all specified files and replace version number
     //
-    // if ((!versionInfo || !versionInfo.version) && options.version)
-    // {
-    //     versionInfo = {
-    //         version: options.version,
-    //         versionSystem: "semver",
-    //         versionInfo: undefined
-    //     };
-    // }
+    if (options.versionFiles)
+    {
+        for (const versionFileDef of options.versionFiles)
+        {
+            const vFile = versionFileDef.path;
+            if (await pathExists(vFile))
+            {   
+            }
+        }
+    }
 
     if (!versionInfo || !versionInfo.version)
     {
@@ -98,6 +111,12 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
         logger.log(`   Version   : ${versionInfo.version}`);
         logger.log(`   System    : ${versionInfo.versionSystem}`);
         logger.log(`   Xtra info : ${versionInfo.versionInfo}`);
+        if (!warn) {
+            logger.success("All local version files have been validated");
+        }
+        else {
+            logger.warn("Local version files could not be validated - See above warnings");
+        }
     }
 
     return versionInfo;

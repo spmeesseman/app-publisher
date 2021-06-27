@@ -67,7 +67,7 @@ export async function getDotNetVersion(context: IContext): Promise<IVersionInfo>
         logger.log(`Retrieving version from ${file}`);
 
         const regexp = new RegExp("AssemblyVersion[ ]*[(][ ]*[\"][0-9]+[.]{1}[0-9]+[.]{1}[0-9]+", "gm"),
-              content = await readFile(options.projectFileDotNet),
+              content = await readFile(file),
               found = content.match(regexp);
 
         if (found)

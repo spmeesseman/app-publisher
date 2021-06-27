@@ -132,9 +132,9 @@ async function setVersionFiles(context: IContext): Promise<void>
     //
     // Loop through all specified files and replace version number
     //
-    for (const versionFile of options.versionFiles)
+    for (const versionFileDef of options.versionFiles)
     {
-        let vFile = versionFile;
+        let vFile = versionFileDef.path;
 
         //
         // Don't remember why these replacements are here, seems unnecessary

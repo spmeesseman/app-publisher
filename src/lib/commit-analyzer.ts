@@ -1,9 +1,9 @@
-
+import { IContext } from "../interface";
 
 export = getReleaseLevel;
 
 
-async function getReleaseLevel({ options, commits, logger })
+async function getReleaseLevel({ options, commits, logger }: IContext)
 {
     let level: "major" | "premajor" | "minor" | "preminor" | "patch" | "prepatch" | "prerelease";
 
@@ -56,39 +56,37 @@ async function getReleaseLevel({ options, commits, logger })
         }
         else if (options.commitMsgMap)
         {
-            Object.entries(options.commitMsgMap).forEach((keys) =>
+            for (const map of options.commitMsgMap)
             {
-                const property = keys[0],
-                      value: any = keys[1];
-                if (msg.startsWith(property + ":") || msg.startsWith(property + "("))
+                if (msg.startsWith(map.type + ":") || msg.startsWith(map.type + "("))
                 {
-                    if (value.versionBump !== "none")
+                    if (map.versionBump !== "none")
                     {
-                        if (value.include !== false)
+                        if (map.include !== false)
                         {
-                            if (value.versionBump === "patch" || value.versionBump === "minor" || value.versionBump === "major")
+                            if (map.versionBump === "patch" || map.versionBump === "minor" || map.versionBump === "major")
                             {
-                                logger.log(`   ${value.versionBump} (${value.formatText})(custom map)`);
-                                if (value.versionBump === "patch") {
+                                logger.log(`   ${map.versionBump} (${map.formatText})(custom map)`);
+                                if (map.versionBump === "patch") {
                                     if (level !== "minor" && level !== "major") {
                                         level = "patch";
                                     }
                                 }
                                 else {
-                                    level = value.versionBump;
+                                    level = map.versionBump;
                                 }
                             }
                             else {
-                                logger.warn(`   ${value.versionBump} (Invalid)(custom map) IGNORED`);
+                                logger.warn(`   ${map.versionBump} (Invalid)(custom map) IGNORED`);
                                 logger.warn("      Must be one of 'patch', 'minor', or 'major'");
                             }
                         }
                         else {
-                            logger.warn(`      ${value.versionBump} (custom map) IGNORED`);
+                            logger.warn(`      ${map.versionBump} (custom map) IGNORED`);
                         }
                     }
                 }
-            });
+            }
         }
 
         if (level === "major") {

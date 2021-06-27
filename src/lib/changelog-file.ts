@@ -66,14 +66,13 @@ function containsValidSubject(options, line: string): boolean
 
     if (!valid && options.commitMsgMap)
     {
-        Object.entries(options.commitMsgMap).forEach((keys) =>
+        for (const map of options.commitMsgMap)
         {
-            const value: any = keys[1];
-            if (line.includes(value.formatText))
+            if (line.includes(map.formatText))
             {
                 valid = true;
             }
-        });
+        }
     }
 
     return valid;
@@ -90,7 +89,7 @@ function containsValidSubject(options, line: string): boolean
  * @param useFaIcons Use font aweome icons
  * @param includeStyling include css styling
  */
-async function createHtmlChangelog({ options, logger }, version: string, useFaIcons = false, includeStyling = false, inputFile?: string)
+async function createHtmlChangelog({ options, logger }: IContext, version: string, useFaIcons = false, includeStyling = false, inputFile?: string)
 {
     let changeLog = "",
         changeLogParts: string | any[];
@@ -163,18 +162,16 @@ async function createHtmlChangelog({ options, logger }, version: string, useFaIc
                 let iconSet = false;
                 if (options.commitMsgMap)
                 {
-                    Object.entries(options.commitMsgMap).forEach((keys) =>
+                    for (const map of options.commitMsgMap)
                     {
-                        const property = keys[0],
-                                value: any = keys[1];
-                        if (!iconSet && commit.subject.includes(value.formatText) && value.iconCls)
+                        if (!iconSet && commit.subject.includes(map.formatText) && map.iconCls)
                         {
                             changeLog += "<i class=\"fa ";
-                            changeLog += value.iconCls;
+                            changeLog += map.iconCls;
                             changeLog += "\"></i> ";
                             iconSet = true;
                         }
-                    });
+                    }
                 }
                 if (!iconSet) {
                     changeLog += "<i class=\"fa fa-asterisk\"></i> ";
@@ -251,13 +248,12 @@ function createHistorySectionFromCommits({ options, commits, logger }: IContext)
 
         if (options.commitMsgMap)
         {
-            Object.entries(options.commitMsgMap).forEach((keys) =>
+            for (const map of options.commitMsgMap)
             {
-                const value: any = keys[1];
-                if (msgLwr.startsWith(value.name) && !value.include) {
+                if (msgLwr.startsWith(map.type) && !map.include) {
                     customIgnoreFound = true;
                 }
-            });
+            }
         }
 
         if (customIgnoreFound) {
@@ -334,12 +330,11 @@ function createHistorySectionFromCommits({ options, commits, logger }: IContext)
 
             if (options.commitMsgMap)
             {
-                Object.entries(options.commitMsgMap).forEach((keys) =>
+                for (const map of options.commitMsgMap)
                 {
-                    const value: any = keys[1];
-                    msg = msg.replace(value.name + ": ", value.formatText + EOL + EOL);
-                    msg = msg.replace(value.name + "(", value.formatText + "(");
-                });
+                    msg = msg.replace(map.type + ": ", map.formatText + EOL + EOL);
+                    msg = msg.replace(map.type + "(", map.formatText + "(");
+                }
             }
 
             //
@@ -587,11 +582,12 @@ function createHistorySectionFromCommits({ options, commits, logger }: IContext)
 }
 
 
-function createChangelogSectionFromCommits({ options, commits, logger }: IContext)
+function createChangelogSectionFromCommits(context: IContext)
 {
     let tmpCommits = "",
         lastSection = "";
-    const sectionless: string[] = [];
+    const sectionless: string[] = [],
+          { options, commits, logger } = context;
 
     if (!commits || commits.length === 0) {
         logger.warn("Cannot build changelog section, there are no commits");
@@ -621,12 +617,12 @@ function createChangelogSectionFromCommits({ options, commits, logger }: IContex
         let doContinue = false;
         if (options.commitMsgMap)
         {
-            Object.entries(options.commitMsgMap).forEach((keys) =>
+            for (const map of options.commitMsgMap)
             {
-                if (section.toLowerCase() === keys[0] && !(keys[1] as any).include) {
+                if (section.toLowerCase() === map.type && !map.include) {
                     doContinue = true;
                 }
-            });
+            }
         }
         if (doContinue) {
             return "";
@@ -671,7 +667,7 @@ function createChangelogSectionFromCommits({ options, commits, logger }: IContex
         // title.  Comments are alphabetized.
         //
         if (section !== lastSection) {
-            const tmpSection = getFormattedSubject({options}, section);
+            const tmpSection = getFormattedSubject(context, section);
             fmtCommitMsg = `${EOL}### ${tmpSection}${EOL}${EOL}${fmtCommitMsg}`;
         }
         lastSection = section;
@@ -1752,7 +1748,7 @@ async function getHistoryFileSections({ options, logger }, version?: string, num
 }
 
 
-function getFormattedSubject({options}, subject: string)
+function getFormattedSubject({options}: IContext, subject: string)
 {
     let formattedSubject = subject.toLowerCase();
 
@@ -1786,13 +1782,13 @@ function getFormattedSubject({options}, subject: string)
 
     if (options.commitMsgMap)
     {
-        Object.entries(options.commitMsgMap).forEach((keys) =>
+        for (const map of options.commitMsgMap)
         {
-            if (subject === keys[0])
+            if (subject === map.type)
             {
-                formattedSubject = (keys[1] as any).formatText;
+                formattedSubject = map.formatText;
             }
-        });
+        }
     }
 
     return formattedSubject;

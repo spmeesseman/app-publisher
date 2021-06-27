@@ -44,16 +44,11 @@ export interface ICommit
 
 export interface ICommitMessageMap
 {
-    definition: ICommitMessageMapEntry;
-}
-
-
-export interface ICommitMessageMapEntry
-{
-    versionBump: string;
     formatText: string;
-    include: boolean;
     iconCls: string;
+    include: boolean;
+    type: string;
+    versionBump: string;
 }
 
 
@@ -106,6 +101,15 @@ export interface INextRelease
 }
 
 
+export interface IVersionFile
+{
+    path: string;
+    regex?: string;
+    simplePattern?: string;
+    setFiles?: IVersionFile[];
+}
+
+
 export interface IVersionInfo
 {
     version: string;
@@ -141,16 +145,15 @@ export interface IOptions
      * A map of additional subject tags used in commits that will be used to, increment the
      * version and be included in the changelog, for example:,
      *
-     *     commitMsgMap: {,
-     *         internal: {,
-     *             versionBump: "patch",
-     *             formatText: "Internal Change",
-     *             include: false,,
-     *             iconCls: "fa-building",
-     *         },
-     *     }
+     *     commitMsgMap: [{
+     *         type: "internal",
+     *         versionBump: "patch",
+     *         formatText: "Internal Change",
+     *         include: false,,
+     *         iconCls: "fa-building",
+     *     }]
      */
-    commitMsgMap: any;
+    commitMsgMap: ICommitMessageMap[];
     /**
      * Displays config and exits.
      * Note that the default publishrc file is '.publishrc.*'.  A config file can be one of three
@@ -717,7 +720,7 @@ export interface IOptions
     /**
      * A file path or list of file paths to perform version string replacement in.
      */
-    versionFiles: string | string[];
+    versionFiles: IVersionFile[];
     /**
      * Force current version, for use with post release tasks such as re-sending an email notification
      * or performing a GitHub release if for whever reason it failed on the publish run
