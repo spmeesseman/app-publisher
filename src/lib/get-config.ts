@@ -92,7 +92,7 @@ async function getConfig(context: any, opts: any)
     // Set default options values if not defined yet
     options = {
         branch: (await defBranch({ normalize: false, cwd })),
-        repo: (await pkgRepoUrl({ normalize: false, cwd })) || (await repoUrl({ cwd, env })),
+        repo: (await pkgRepoUrl({ normalize: false, cwd })), // || (await repoUrl(context)),
         repoType: (await pkgRepoType({ normalize: false, cwd })),
         // tagFormat: `${options.vcTagPrefix}\${version}`,
         tagFormat: `v\${version}`,

@@ -822,14 +822,18 @@ async function doChangelogFileEdit(context: IContext)
 
         if (taskSpecVersion) {
             tmpCommits = await getChangelogFileSections(context, version, 1, "raw", originalFile) as string;
-            context.stdout.write(tmpCommits.trim());
-            return;
         }
         else if (!options.taskChangelogHtmlView && !options.taskChangelogHtmlFile) {
             tmpCommits = context.changelog.notes || createChangelogSectionFromCommits(context);
         }
         else {
             tmpCommits = context.changelog.htmlNotesLast || await createHtmlChangelog(context, lastRelease.version);
+        }
+
+        if (options.taskChangelogPrint || options.taskChangelogPrintVersion)
+        {
+            context.stdout.write(tmpCommits);
+            return;
         }
 
         if (options.taskChangelog || !options.taskMode)
@@ -857,17 +861,9 @@ async function doChangelogFileEdit(context: IContext)
             }
             changeLogFinal += tmpCommits;
         }
+
         changeLogFinal = changeLogFinal.trim() + EOL;
-        if (!options.taskChangelogPrint && !options.taskChangelogPrintVersion)
-        {   //
-            // Write content to file
-            //
-            await writeFile(options.changelogFile, changeLogFinal);
-        }
-        else {
-            context.stdout.write(changeLogFinal);
-            return;
-        }
+        await writeFile(options.changelogFile, changeLogFinal);
     }
     else {
         logger.warn("Version match, not touching changelog file");
