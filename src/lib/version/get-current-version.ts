@@ -97,7 +97,8 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
         {
             const vFile = versionFileDef.path;
             if (await pathExists(vFile))
-            {   
+            {
+                
             }
         }
     }
