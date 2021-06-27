@@ -1,5 +1,72 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.1.0 (June 27th, 2021)
+
+### Documentation
+
+- **Readme:** add section link on vscode-taskexplorer intergation
+- **Readme:** fix img src for cmd line banner
+- **Readme:** remove semantic-release badge
+- **Readme:** update banner img
+- **Readme:** update with v3 changes
+
+### Features
+
+- **Versioning:** complete version validation across all local version files
+- **Versioning:** cross-file version handling eith 'versionFiles' property
+- **Tasks:** Add new 'task mode' command line switch:
+	
+		-tcp ,  --task-changelog-print
+	
+	Using this option instructs the process to output the the pending version's current changelog to stdout.
+- **Tasks:** Add new 'task mode' command line switch:
+	
+		-tcp ,  --task-changelog-print
+	
+	Using this option instructs the process to output the the pending version's current changelog to stdout.
+- **Tasks:** Add new 'task mode' command line switches:
+	
+		--task-changelog-print-version
+		--task-changelog-view-version
+	
+	Using these options instructs the process to view, or output to stdout, the changelog for the specified version.
+- **Tasks:** Add new 'task mode' command line switches:
+	
+		--task-deploy
+	
+	Using these options instructs the process to run the deployment scripts defined in the 'deployCommand' publishrc property.
+- **Tasks:** Add new 'task mode' command line switches:
+	
+		--task-npm-json-restore
+		--task-npm-json-update
+	
+	Using these options instructs the process to dynamically update/restore the package.json file with the NPM related .publishrc defined properties.
+- **Tasks:** Add new 'task mode' command line switches:
+	
+		--task-revert
+	
+	Using these options instructs the process to revert all changes made from task usage.
+
+### Bug Fixes
+
+- **Versioning:** on win32, the edit-file script for file edits  is not found and casues an exception
+- **Versioning:** version replacement is only replacing first match found it more than one match exists
+- **Versioning:** version replacement is throwing an exception in publishrc.versionFiles defined files
+- **Changelog:** multi-line commit messages are double printed in md type cahngelogs.
+- **Changelog:** when a new md type changelog file is auto-created on a first ap release, the project name is inserted at the bottom of the created section.
+- **Commit:** log output incorrectly reads 'Pushing touched files to svn...' if repo type is git.
+- **Dotnet:** assemblyinfo file version replacement is removing the 4th part of the .NET version number (build number)
+- **Dry Run:** files that are 'added' are causing the dry commit to fail.
+- **Tasks:** the --task-version-update task should perform package.json manipulation and dynamic scoping.
+- **Versioning:** the .publishrc file's 'promptVersion' property value is being overwritten with the new version number when performing the version file updates.
+- **Versioning:** the versionPreReleaseId option is not figuring into thecalculation of the next version.
+
+### Refactoring
+
+- **Dry Run:** revert dry run changes in vcs on controlled fail as well as exception
+- **Changelog:** Add 'crud' text to list of commit message formatters that get uppercased when formatting commit messages for a changelog section.
+- **Changelog:** capitalize and pluralize ticket tags. i.e. "fix" should become "Fixes".
+
 ## Version 3.0.3 (June 24th, 2021)
 
 ### Bug Fixes
