@@ -24,7 +24,7 @@ export async function getMantisBtVersion({logger, options}: IContext): Promise<I
                 version = version.replace("\"", "");
                 version = version.replace("'", "");
         }
-        if (version) { logger.log("   Found version     : " + version); }
+        if (version) { logger.log("   Found version      : " + version); }
         else { logger.warn("   Not found"); }
     }
 

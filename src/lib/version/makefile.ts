@@ -9,7 +9,7 @@ import { getChangelogVersion } from "./changelog";
 // export async function getMakefileVersion(context: IContext): Promise<{ version: string; versionSystem: string; versionInfo: any }>
 // {
 //     // const v = await getChangelogVersion(context); // blah
-//     // if (v.version) { context.logger.log("   Found version     :" + v.version); }
+//     // if (v.version) { context.logger.log("   Found version      :" + v.version); }
 //     // else { context.logger.warn("   Not found"); }
 //     // return v;
 // }

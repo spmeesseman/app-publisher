@@ -56,7 +56,7 @@ export async function getPomVersion({logger}): Promise<IVersionInfo>
             mavenVersionInfo.push(version);
         }
 
-        if (version) { logger.log("   Found version     : " + version); }
+        if (version) { logger.log("   Found version      : " + version); }
         else { logger.warn("   Not found"); }
     }
 

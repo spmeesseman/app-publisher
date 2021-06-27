@@ -62,7 +62,7 @@ export async function getExtJsVersion(context: IContext): Promise<IVersionInfo>
     {
         logger.log(`Retrieving version from ${file}`);
         version = json5.parse(await readFile(path.join(cwd, file))).version;
-        if (version) { logger.log("   Found version     : " + version); }
+        if (version) { logger.log("   Found version      : " + version); }
         else { logger.warn("   Not found"); }
     }
 

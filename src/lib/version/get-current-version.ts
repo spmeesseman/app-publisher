@@ -120,7 +120,7 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
                 while ((match = regex.exec(content)) !== null)
                 {
                     if (match[1]) {
-                        logger.log("   Found version     : " + match[1]);
+                        logger.log("   Found version      : " + match[1]);
                         matched = true;
                     }
                 }
