@@ -194,7 +194,7 @@ async function setVersionFiles(context: IContext): Promise<void>
                 if (version)
                 {
                     logger.log(`   Read custom version ${version} from ${tvFile}`);
-                    logger.log("      Process 'setFiles'");
+                    logger.log("   Process 'setFiles'");
 
                     for (const sf of versionFileDef.setFiles) {
                         if (await pathExists(sf.path))
@@ -210,14 +210,15 @@ async function setVersionFiles(context: IContext): Promise<void>
                             {
                                 const jso = json5.parse(await readFile(path.join(cwd, versionFileDef.path)));
                                 jso.version = version;
-                                logger.log(`      Writing version to '${sf.path}'`);
+                                logger.log(`   Writing version to '${sf.path}'`);
                                 await writeFile(sf.path, JSON.stringify(jso, undefined, 4));
                             }
                             else
                             {
                                 const regexWrite = sf.regexWrite.replace("VERSION", version);
                                 regexPattern = sf.regex.replace("VERSION", sf.regexVersion).replace("((VERSION))", "(VERSION)");
-                                logger.log(`      Writing custom version string '${regexWrite}' to '${sf.path}'`);
+                                logger.log(`   Writing custom version string to '${sf.path}':`);
+                                logger.log(`      ${regexWrite}`);
                                 await replaceInFile(sf.path, regexPattern, regexWrite);
                             }
                             await editFile(context, sf.path);
