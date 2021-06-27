@@ -1,14 +1,15 @@
 
 module.exports = {
+    "root": true,
     "env": {
-        "browser": false,
-        "es2019": true,
+        "es6": true,
         "node": true
     },
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
         "project": "tsconfig.json",
-        "sourceType": "module"
+        "sourceType": "module",
+        "ecmaVersion": 2019
     },
     "plugins": [
         "eslint-plugin-jsdoc",
@@ -245,21 +246,6 @@ module.exports = {
                         "setInterval",
                         "setTimeout"
                     ],
-                    "boolean-trivia": true,
-                    "debug-assert": true,
-                    "import-spacing": true,
-                    "next-line": [
-                        true,
-                        "check-catch",
-                        "check-else"
-                    ],
-                    "no-bom": true,
-                    "no-double-space": true,
-                    "no-in-operator": true,
-                    "no-increment-decrement": true,
-                    "no-type-assertion-whitespace": true,
-                    "object-literal-surrounding-space": true,
-                    "type-operator-spacing": true,
                     "whitespace": [
                         true,
                         "check-branch",

@@ -160,58 +160,45 @@ async function setVersionFiles(context: IContext): Promise<void>
     //
     for (const versionFileDef of options.versionFiles)
     {
-        let tvFile = versionFileDef.path;
+        const tvFile = versionFileDef.path;
 
         if (await pathExists(tvFile))
-        {   //
-            // If this is '--task-revert', all we're doing here is collecting the paths of the
-            // files that would be updated in a run, don't actually do the update
-            //
-            if (options.taskRevert) {
-                await addEdit(context, tvFile);
-                continue;
-            }
-
+        {
             logger.log(`Processing .publishrc version file '${tvFile}'`);
 
             let match: RegExpExecArray,
                 matched = false;
-            
+
             if (versionFileDef.setFiles && versionFileDef.setFiles.length > 0)
             {
                 for (const sf of versionFileDef.setFiles)
                 {
-                    const content = await readFile(sf.path),
-                          regexWrite = versionFileDef.regexWrite.replace("VERSION", semVersion),
-                          regexPattern = versionFileDef.regex.replace("(VERSION)", "VERSION").replace("VERSION", versionFileDef.regexVersion),
-                          regex = new RegExp(regexPattern, "gm");
-
-                    if ((match = regex.exec(content)) !== null)
+                    if (await pathExists(sf.path))
                     {
-                        matched = true;
-                        //
-                        // If the definitioan has defined setFiles, then this file is part of another build's
-                        // version.  The function here is to extract the version # from the specified file, then
-                        // update the files specified by setFiels with that version.
-                        //
-                        if (versionFileDef.setFiles)
-                        {
-                            if (match[1]) {
-                                logger.log("   Found version      : " + match[1]);
+                        const content = await readFile(sf.path),
+                            regexPattern = versionFileDef.regex.replace("(VERSION)", "VERSION").replace("VERSION", versionFileDef.regexVersion),
+                            regex = new RegExp(regexPattern, "gm");
+
+                        if ((match = regex.exec(content)) !== null)
+                        {   //
+                            // If this is '--task-revert', all we're doing here is collecting the paths of
+                            // the files that would be updated in a run, don't actually do the update
+                            //
+                            if (options.taskRevert) {
+                                await addEdit(context, sf.path);
+                                continue;
                             }
-                            for (const sf of versionFileDef.setFiles) {
-                                await replaceInFile(sf.path, regexPattern, regexWrite);
-                                await editFile(context, sf.path);
-                            }
-                            // content.replace(/(?<!\w)(?:Api|Npm|Sso|Svn|Html?|Crud)(?= |$|\.)/gm, (m): string =>
-                            // {
-                            //     return m.toUpperCase();
-                            // });
-                        }
-                        else {
-                            logger.log(`Writing new version ${semVersion} to ${tvFile}`);
-                            await replaceInFile(tvFile, regexPattern, regexWrite);
-                            await editFile(context, tvFile);
+                            matched = true;
+                            //
+                            // If the definitioan has defined setFiles, then this file is part of another build's
+                            // version.  The function here is to extract the version # from the specified file,
+                            // then update the files specified by setFiels with that version.
+                            //
+                            logger.log(`   Read custom version ${match[1]}`);
+                            const regexWrite = versionFileDef.regexWrite.replace("VERSION", match[1]);
+                            logger.log(`   Writing custom version '${regexWrite}' to '${sf.path}'`);
+                            await replaceInFile(sf.path, regexPattern, regexWrite);
+                            await editFile(context, sf.path);
                         }
                     }
                 }
@@ -221,17 +208,24 @@ async function setVersionFiles(context: IContext): Promise<void>
                       regexWrite = versionFileDef.regexWrite.replace("VERSION", semVersion),
                       regexPattern = versionFileDef.regex.replace("(VERSION)", "VERSION").replace("VERSION", versionFileDef.regexVersion),
                       regex = new RegExp(regexPattern, "gm");
-            
+
                 if ((match = regex.exec(content)) !== null)
-                {
+                {   //
+                    // If this is '--task-revert', all we're doing here is collecting the paths of the files that
+                    // would be updated in a run, don't actually do the update
+                    //
+                    if (options.taskRevert) {
+                        await addEdit(context, tvFile);
+                        continue;
+                    }
                     matched = true;
-                    logger.log(`Writing new version ${semVersion} to ${tvFile}`);
+                    logger.log(`   Writing new version ${semVersion} to '${tvFile}'`);
                     await replaceInFile(tvFile, regexPattern, regexWrite);
                     await editFile(context, tvFile);
                 }
             }
 
-            if (!matched) {
+            if (!matched && !options.taskRevert) {
                 logger.error("   Not found (no match)");
                 throw new Error("Local version file validation failed");
             }
