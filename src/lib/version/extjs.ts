@@ -1,6 +1,6 @@
 
 import * as path from "path";
-import { jsonc } from "jsonc";
+import * as json5 from "json5";
 import glob from "glob";
 import { IContext, IVersionInfo } from "../../interface";
 import { addEdit } from "../repo";
@@ -61,7 +61,7 @@ export async function getExtJsVersion(context: IContext): Promise<IVersionInfo>
     if (file)
     {
         logger.log(`Retrieving version from ${file}`);
-        version = (await jsonc.read(path.join(cwd, file))).version;
+        version = (await json5.parse(path.join(cwd, file))).version;
         if (version) { logger.log("   Found version :" + version); }
         else { logger.log("   Not found"); }
     }
@@ -100,7 +100,7 @@ export async function setExtJsVersion(context: IContext)
                 logger.log(`Setting version ${nextRelease.version} in ${file}`);
                 appJson.version = nextRelease.version;
                 appJson.appVersion = nextRelease.version;
-                await writeFile(file, jsonc.stringify(appJson, undefined, 4));
+                await writeFile(file, json5.stringify(appJson, undefined, 4));
             }
             else {
                 logger.warn(`Version ${nextRelease.version} already set in ${file}`);
