@@ -7,11 +7,13 @@ const execa = require("execa");
 const xml2js = require("xml2js");
 
 
-export async function addEdit({options, nextRelease, logger, env, cwd}: IContext, pathToAdd: string | string[])
+export async function addEdit(context: IContext, pathToAdd: string | string[])
 {
     if (!pathToAdd || pathToAdd.length === 0) {
         return;
     }
+
+    const {options, nextRelease, logger, env, cwd} = context;
 
     async function doAdd(p: string) // , isDir = false)
     {

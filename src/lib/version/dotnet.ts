@@ -82,7 +82,7 @@ export async function getDotNetVersion(context: IContext): Promise<IVersionInfo>
         else { logger.warn("   Not found"); }
     }
 
-    return { version, versionSystem: ".net", versionInfo: undefined };
+    return { version, system: "semver", info: undefined };
 }
 
 
@@ -102,7 +102,7 @@ export async function setDotNetVersion(context: IContext)
             return;
         }
 
-        if (lastRelease.versionInfo.versionSystem === "incremental" || !nextRelease.version.includes("."))
+        if (lastRelease.versionInfo.system === "incremental" || !nextRelease.version.includes("."))
         {
             for (const c of nextRelease.version) {
                 semVersion = `${semVersion}${c}.`;
@@ -120,7 +120,7 @@ export async function setDotNetVersion(context: IContext)
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
-        await editFile({options, logger, nextRelease, cwd, env}, file);
+        await editFile(context, file);
         //
         // Return the filename
         //

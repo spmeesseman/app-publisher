@@ -21,5 +21,5 @@ export async function getChangelogVersion({logger, options}: IContext): Promise<
         versionSystem = "incremental";
     }
 
-    return { version, versionSystem, versionInfo: undefined };
+    return { version, system: versionSystem, info: undefined };
 }

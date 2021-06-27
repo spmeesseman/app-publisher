@@ -10,6 +10,7 @@ import { getNpmVersion } from "./npm";
 import { getAppPublisherVersion } from "./app-publisher";
 import { getExtJsVersion } from "./extjs";
 import { pathExists, readFile } from "../utils/fs";
+import { FIRST_RELEASE } from "../definitions/constants";
 
 
 export = getCurrentVersion;
@@ -22,8 +23,8 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
 
     let versionInfo: IVersionInfo = {
         version: undefined,
-        versionSystem: "semver",
-        versionInfo: undefined
+        system: "semver",
+        info: undefined
     };
 
     function doCheck(v: IVersionInfo, type: string, throwError = true)
@@ -45,8 +46,8 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
                     }
                     warn = true;
                 }
-                if (!versionInfo.versionInfo) {
-                    versionInfo.versionInfo = v.versionInfo;
+                if (!versionInfo.info) {
+                    versionInfo.info = v.info;
                 }
             }
             else {
@@ -94,14 +95,26 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
     //
     //     "versionFiles": [{
     //         "path": "..\\..\\install\\GEMS2_64bit.nsi",
-    //         "regex": "!define +BUILD_LEVEL +([0-9a-zA-Z\\.\\-]{5,})"
+    //         "regex": "!define +BUILD_LEVEL +VERSION",
+    //         "regexVersion": "[0-9a-zA-Z\\.\\-]{5,}",
+    //         "regexWrite": "!define BUILD_LEVEL      \"VERSION\"",
     //     },
     //     {
     //         "path": "..\\svr\\assemblyinfo.cs",
-    //         "regex": "AssemblyVersion *\\( *\"([0-9]+\\.[0-9]+\\.[0-9]+)",
+    //         "regex": "AssemblyVersion *\\VERSION",
+    //         "regexVersion": " *\"([0-9]+\\.[0-9]+\\.[0-9]+",
+    //         "regexWrite": "AssemblyVersion\\(VERSION)",
+    //         "versionInfo": {
+    //             "system": "semver"
+    //         },
     //         "setFiles": [{
     //             "path": "app.json",
-    //             "regex": "\"svrVersion\" *: *\"([0-9a-zA-Z\\.\\-]{5,})\""
+    //             "regex": "\"svrVersion\" *: *\"VERSION\"",
+    //             "regexVersion": "[0-9a-zA-Z\\.\\-]{5,}",
+    //             "regexWrite": "\"svrVersion\": \"VERSION\"",
+    //             "versionInfo": {
+    //                 "system": "semver"
+    //             }
     //         }]
     //     }]
     //
@@ -110,13 +123,14 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
         for (const versionFileDef of options.versionFiles)
         {
             const tvFile = versionFileDef.path;
-            if (versionFileDef.regex && !versionFileDef.setFiles && await pathExists(tvFile))
+            if (!versionFileDef.setFiles && await pathExists(tvFile))
             {
                 logger.log("Retrieving version from " + tvFile);
                 let match: RegExpExecArray,
                     matched = false;
                 const content = await readFile(tvFile),
-                      regex = new RegExp(versionFileDef.regex, "gm");
+                      rgxStr = versionFileDef.regex.replace("(VERSION)", "VERSION").replace("VERSION", `(${versionFileDef.regexVersion})`),
+                      regex = new RegExp(rgxStr, "gm");
                 while ((match = regex.exec(content)) !== null)
                 {
                     if (match[1]) {
@@ -126,21 +140,24 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
                 }
                 if (!matched) {
                     logger.error("   Not found (no match)");
+                    logger.error("   Possible invalid regex?");
                     throw new Error("Local version file validation failed");
                 }
             }
         }
     }
 
-    if (!versionInfo || !versionInfo.version)
+    if (!versionInfo.version)
     {
         logger.warn("The current version cannot be determined from the local files");
+        logger.warn(`   Setting to initial version ${FIRST_RELEASE}`);
+        versionInfo.version = FIRST_RELEASE;
     }
     else {
         logger.log("Retrieved local file version info");
         logger.log(`   Version   : ${versionInfo.version}`);
-        logger.log(`   System    : ${versionInfo.versionSystem}`);
-        logger.log(`   Xtra info : ${versionInfo.versionInfo}`);
+        logger.log(`   System    : ${versionInfo.system}`);
+        logger.log(`   Xtra info : ${versionInfo.info}`);
         if (!warn) {
             logger.success("All local version files have been validated");
         }

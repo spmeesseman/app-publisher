@@ -28,7 +28,7 @@ export async function getMantisBtVersion({logger, options}: IContext): Promise<I
         else { logger.warn("   Not found"); }
     }
 
-    return { version, versionSystem: "semver", versionInfo: undefined };
+    return { version, system: "semver", info: undefined };
 }
 
 

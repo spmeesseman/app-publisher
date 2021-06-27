@@ -60,7 +60,7 @@ export async function getPomVersion({logger}): Promise<IVersionInfo>
         else { logger.warn("   Not found"); }
     }
 
-    return { version, versionSystem: "semver", versionInfo: mavenVersionInfo };
+    return { version, system: "semver", info: mavenVersionInfo };
 }
 
 
@@ -68,7 +68,7 @@ export async function setPomVersion(context: IContext)
 {
     const {options, logger, nextRelease, cwd, env} = context;
 
-    if (nextRelease.versionInfo.versionInfo.length === 2 && await pathExists("pom.xml"))
+    if (nextRelease.versionInfo.info.length === 2 && await pathExists("pom.xml"))
     {   //
         // If this is '--task-revert', all we're doing here is collecting the paths of the
         // files that would be updated in a run, don't actually do the update
@@ -80,7 +80,7 @@ export async function setPomVersion(context: IContext)
         //
         // Pom file could have dynamic version construction using props (mavenTag)
         //
-        const mavenTag = nextRelease.versionInfo.versionInfo;
+        const mavenTag = nextRelease.versionInfo.info;
         await replaceInFile("pom.xml", `<${mavenTag}>[0-9a-z.\-]+</${mavenTag}>`, `<${mavenTag}>${nextRelease.version}</${mavenTag}`);
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list

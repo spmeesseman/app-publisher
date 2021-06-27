@@ -14,7 +14,7 @@ export function getNextVersion(context: IContext)
 
     if (lastRelease.version)
     {
-        if (lastRelease.versionInfo.versionSystem === "incremental")
+        if (lastRelease.versionInfo.system === "incremental")
         {
             version = (parseInt(lastRelease.version) + 1).toString();
         }
@@ -37,7 +37,7 @@ export function getNextVersion(context: IContext)
         }
     }
     else {
-        if (lastRelease.versionInfo.versionSystem === "incremental") {
+        if (lastRelease.versionInfo.system === "incremental") {
             version = FIRST_RELEASE_INC;
         }
         else {
@@ -46,11 +46,11 @@ export function getNextVersion(context: IContext)
         logger.log(`There is no previous release, the next version is ${version}`);
     }
 
-    const lrVersionInfo = lastRelease.versionInfo.versionInfo ? [ ...lastRelease.versionInfo.versionInfo ] : undefined;
+    const lrVersionInfo = lastRelease.versionInfo.info ? [ ...lastRelease.versionInfo.info ] : undefined;
 
     return {
         version,
-        versionInfo: lrVersionInfo,
-        versionSystem: lastRelease.versionInfo.versionSystem
+        info: lrVersionInfo,
+        system: lastRelease.versionInfo.system
      } as IVersionInfo;
 }

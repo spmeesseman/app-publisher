@@ -127,6 +127,45 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     }
 
     //
+    //
+    //
+    if (options.versionFiles)
+    {
+        for (const vf of options.versionFiles)
+        {
+            if (!vf.regex)
+            {
+                if (!vf.versionInfo || !vf.versionInfo.system) {
+                    vf.regex = "[0-9a-zA-Z\\.\\-]{5,}";
+                }
+                else {
+                    if (vf.versionInfo.system === "semver") {
+                        vf.regex = "[0-9a-zA-Z\\.\\-]{5,}";
+                    }
+                    else {
+                        vf.regex = "[0-9]+";
+                    }
+                }
+            }
+            if (!vf.regexVersion || !vf.regexWrite)
+            {
+                logger.error("Invalid versionFile regex patterns found");
+                logger.error("   Path           : " + vf.path);
+                logger.error("   Regex          : " + vf.regex ?? "not set");
+                logger.error("   Version Regex  : " + vf.regexVersion ?? "not set");
+                return false;
+            }
+            if (!vf.regex.includes("VERSION") || !vf.regexWrite.includes("VERSION"))
+            {
+                logger.error("Invalid versionFile regex patterns found");
+                logger.error("   Path           : " + vf.path);
+                logger.error("   Regex          : invalid - missing '(VERSION)' capture text");
+                return false;
+            }
+        }
+    }
+
+    //
     // Email configuratin
     //
     if (options.emailNotification === "Y") {
@@ -519,7 +558,7 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     {
         options.skipChangelogEdits = "Y";
         options.skipVersionEdits = "Y";
-        options.versionFilesEditAlways = "";
+        options.versionFilesEditAlways = [];
         options.promptVersion = "N";
         logger.warn("CI environment detected, the following flags/properties have been cleared:");
         logger.warn("   skipChangelogEdits");

@@ -52,7 +52,7 @@ export function getAppPublisherVersion({options, logger}: IContext): IVersionInf
         else { logger.warn("   Not found"); }
     }
 
-    return { version, versionSystem, versionInfo: undefined };
+    return { version, system: versionSystem, info: undefined };
 }
 
 

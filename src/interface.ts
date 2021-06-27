@@ -104,8 +104,25 @@ export interface INextRelease
 export interface IVersionFile
 {
     path: string;
+    /**
+     * If empty, the following is used:
+     *     semver       - [0-9a-zA-Z\\.\\-]{5,}
+     *     incremental  - [0-9]+
+     */
     regex?: string;
-    simplePattern?: string;
+    /**
+     * Should match the capturing part of 'regex' (w/o the capture group)
+     */
+    regexVersion: string;
+    /**
+     * Used to write the new version.  Should not contain any regex pattern.
+     */
+    regexWrite: string;
+    /**
+     * A 'version file' can be an indirect reference.  If 'setFiles' is set, then the
+     * version is read from the file spcified by 'path', and written to the file(s) specified
+     * by setFiles.
+     */
     setFiles?: IVersionFile[];
     versionInfo?: IVersionInfo;
 }
@@ -114,8 +131,8 @@ export interface IVersionFile
 export interface IVersionInfo
 {
     version: string;
-    versionInfo: string[];
-    versionSystem: string;
+    info: string[];
+    system: string;
 }
 
 
@@ -723,14 +740,26 @@ export interface IOptions
      * 
      *     "versionFiles": [{
      *         "path": "..\\..\\install\\GEMS2_64bit.nsi",
-     *         "regex": "!define +BUILD_LEVEL +([0-9a-zA-Z\\.\\-]{5,})"
+     *         "regex": "!define +BUILD_LEVEL +VERSION",
+     *         "regexVersion": "[0-9a-zA-Z\\.\\-]{5,}",
+     *         "regexWrite": "!define BUILD_LEVEL      \"VERSION\"",
      *     },
      *     {
      *         "path": "..\\svr\\assemblyinfo.cs",
-     *         "regex": "AssemblyVersion *\\( *\"([0-9]+\\.[0-9]+\\.[0-9]+)",
+     *         "regex": "AssemblyVersion *\\VERSION",
+     *         "regexVersion": " *\"([0-9]+\\.[0-9]+\\.[0-9]+",
+     *         "regexWrite": "AssemblyVersion\\(VERSION)",
+     *         "versionInfo": {
+     *             "system": "semver"
+     *         },
      *         "setFiles": [{
      *             "path": "app.json",
-     *             "regex": "\"svrVersion\" *: *\"([0-9a-zA-Z\\.\\-]{5,})\""
+     *             "regex": "\"svrVersion\" *: *\"VERSION\"",
+     *             "regexVersion": "[0-9a-zA-Z\\.\\-]{5,}",
+     *             "regexWrite": "\"svrVersion\": \"VERSION\"",
+     *             "versionInfo": {
+     *                 "system": "semver"
+     *             }
      *         }]
      *     }]
      */

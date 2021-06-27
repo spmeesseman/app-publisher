@@ -1,5 +1,5 @@
 
-import { pathExists, replaceInFile } from "../utils/fs";
+import { pathExists, readFile, replaceInFile } from "../utils/fs";
 import { editFile, isString } from "../utils/utils";
 import { setAppPublisherVersion } from "./app-publisher";
 import { setDotNetVersion } from "./dotnet";
@@ -90,8 +90,9 @@ async function setVersionFiles(context: IContext): Promise<void>
     //
     if (!options.taskRevert)
     {
-        logger.log("Update 'versionFiles' specified files");
-        logger.log("   # of files : " + options.versionFiles.length);
+        logger.log("Update 'versionFiles' specified version files");
+        logger.log("   # of definitions : " + options.versionFiles.length);
+
         if (options.verbose) {
             if (!isString(options.versionFiles)) {
                 context.stdout.write(options.versionFiles.join(EOL) + EOL);
@@ -134,99 +135,106 @@ async function setVersionFiles(context: IContext): Promise<void>
     //
     //     "versionFiles": [{
     //         "path": "..\\..\\install\\GEMS2_64bit.nsi",
-    //         "regex": "!define +BUILD_LEVEL +([0-9a-zA-Z\\.\\-]{5,})"
+    //         "regex": "!define +BUILD_LEVEL +VERSION",
+    //         "regexVersion": "[0-9a-zA-Z\\.\\-]{5,}",
+    //         "regexWrite": "!define BUILD_LEVEL      \"VERSION\"",
     //     },
     //     {
     //         "path": "..\\svr\\assemblyinfo.cs",
-    //         "regex": "AssemblyVersion *\\( *\"([0-9]+\\.[0-9]+\\.[0-9]+)",
+    //         "regex": "AssemblyVersion *\\VERSION",
+    //         "regexVersion": " *\"([0-9]+\\.[0-9]+\\.[0-9]+",
+    //         "regexWrite": "AssemblyVersion\\(VERSION)",
+    //         "versionInfo": {
+    //             "system": "semver"
+    //         },
     //         "setFiles": [{
     //             "path": "app.json",
-    //             "regex": "\"svrVersion\" *: *\"([0-9a-zA-Z\\.\\-]{5,})\""
+    //             "regex": "\"svrVersion\" *: *\"VERSION\"",
+    //             "regexVersion": "[0-9a-zA-Z\\.\\-]{5,}",
+    //             "regexWrite": "\"svrVersion\": \"VERSION\"",
+    //             "versionInfo": {
+    //                 "system": "semver"
+    //             }
     //         }]
     //     }]
     //
-    //
     for (const versionFileDef of options.versionFiles)
     {
-        let vFile = versionFileDef.path;
+        let tvFile = versionFileDef.path;
 
-        //
-        // Don't remember why these replacements are here, seems unnecessary
-        //
-        vFile = vFile.replace(/\$\{NEWVERSION\}/gi, nextRelease.version);
-        vFile = vFile.replace(/\${VERSION\}/gi, nextRelease.version);
-        vFile = vFile.replace(/\${CURRENTVERSION\}/gi, lastRelease.version);
-        vFile = vFile.replace(/\$\{LASTVERSION\}/gi, lastRelease.version);
-
-        if (await pathExists(vFile))
+        if (await pathExists(tvFile))
         {   //
             // If this is '--task-revert', all we're doing here is collecting the paths of the
             // files that would be updated in a run, don't actually do the update
             //
             if (options.taskRevert) {
-                await addEdit(context, vFile);
+                await addEdit(context, tvFile);
                 continue;
             }
-            //
-            // Replace version in file
-            //
-            let rc = false;
-            logger.log(`Writing new version ${semVersion} to ${vFile}`);
 
-            // return msg.replace(/(?<!\w)(?:Api|Npm|Sso|Svn|Html?|Crud)(?= |$|\.)/gm, (m): string =>
-            // {
-            //     return m.toUpperCase();
-            // })
+            logger.log(`Processing .publishrc version file '${tvFile}'`);
 
-            //
-            // versionReplaceTags
-            //
-            if (options.versionReplaceTags && options.versionReplaceTags.length > 0)
+            let match: RegExpExecArray,
+                matched = false;
+            
+            if (versionFileDef.setFiles && versionFileDef.setFiles.length > 0)
             {
-                for (const replaceTag of options.versionReplaceTags)
+                for (const sf of versionFileDef.setFiles)
                 {
-                    rc = await replaceInFile(vFile, replaceTag + semVersionCUR, replaceTag + semVersion);
-                    if (rc === true) {
-                        break;
-                    }
-                }
-            }
-            //
-            // Replace
-            //
-            if (rc !== true)
-            {
-                rc = await replaceInFile(vFile, `"${lastRelease.version}"`, `"${semVersion}"`);
-                if (rc !== true)
-                {
-                    rc = await replaceInFile(vFile, `'${lastRelease.version}'`, `'${semVersion}'`);
-                    if (rc !== true)
+                    const content = await readFile(sf.path),
+                          regexWrite = versionFileDef.regexWrite.replace("VERSION", semVersion),
+                          regexPattern = versionFileDef.regex.replace("(VERSION)", "VERSION").replace("VERSION", versionFileDef.regexVersion),
+                          regex = new RegExp(regexPattern, "gm");
+
+                    if ((match = regex.exec(content)) !== null)
                     {
-                        rc = await replaceInFile(vFile, lastRelease.version, semVersion);
-                        if (rc !== true)
+                        matched = true;
+                        //
+                        // If the definitioan has defined setFiles, then this file is part of another build's
+                        // version.  The function here is to extract the version # from the specified file, then
+                        // update the files specified by setFiels with that version.
+                        //
+                        if (versionFileDef.setFiles)
                         {
-                            throw new Error("Can't write version");
+                            if (match[1]) {
+                                logger.log("   Found version      : " + match[1]);
+                            }
+                            for (const sf of versionFileDef.setFiles) {
+                                await replaceInFile(sf.path, regexPattern, regexWrite);
+                                await editFile(context, sf.path);
+                            }
+                            // content.replace(/(?<!\w)(?:Api|Npm|Sso|Svn|Html?|Crud)(?= |$|\.)/gm, (m): string =>
+                            // {
+                            //     return m.toUpperCase();
+                            // });
+                        }
+                        else {
+                            logger.log(`Writing new version ${semVersion} to ${tvFile}`);
+                            await replaceInFile(tvFile, regexPattern, regexWrite);
+                            await editFile(context, tvFile);
                         }
                     }
                 }
             }
-            //
-            // Below handles an assemblyinfo.cs file or other version file in semver format, but the
-            // build version type is incremental
-            //
-            if (incremental === true)
-            {
-                rc = await replaceInFile(vFile, `"${semVersionCUR}"`, `"${semVersion}"`);
-                if (rc !== true)
+            else {
+                const content = await readFile(tvFile),
+                      regexWrite = versionFileDef.regexWrite.replace("VERSION", semVersion),
+                      regexPattern = versionFileDef.regex.replace("(VERSION)", "VERSION").replace("VERSION", versionFileDef.regexVersion),
+                      regex = new RegExp(regexPattern, "gm");
+            
+                if ((match = regex.exec(content)) !== null)
                 {
-                    rc = await replaceInFile(vFile, `'${semVersionCUR}'`, `'${semVersion}'`);
-                    if (rc !== true)
-                    {
-                        rc = await replaceInFile(vFile, semVersionCUR, semVersion);
-                    }
+                    matched = true;
+                    logger.log(`Writing new version ${semVersion} to ${tvFile}`);
+                    await replaceInFile(tvFile, regexPattern, regexWrite);
+                    await editFile(context, tvFile);
                 }
             }
-            await editFile(context, vFile);
+
+            if (!matched) {
+                logger.error("   Not found (no match)");
+                throw new Error("Local version file validation failed");
+            }
         }
     }
 }

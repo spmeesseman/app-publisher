@@ -65,7 +65,7 @@ export async function getNpmVersion(context: IContext): Promise<IVersionInfo>
         else { logger.warn("   Not found"); }
     }
 
-    return { version, versionSystem: "semver", versionInfo: undefined };
+    return { version, system: "semver", info: undefined };
 }
 
 
