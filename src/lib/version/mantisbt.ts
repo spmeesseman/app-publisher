@@ -1,11 +1,11 @@
 
-import { IContext } from "../../interface";
+import { IContext, IVersionInfo } from "../../interface";
 import { addEdit } from "../repo";
 import { replaceInFile, readFile, pathExists } from "../utils/fs";
 import { editFile } from "../utils/utils";
 
 
-export async function getMantisBtVersion({logger, options}: IContext): Promise<{ version: string; versionSystem: string; versionInfo: any }>
+export async function getMantisBtVersion({logger, options}: IContext): Promise<IVersionInfo>
 {
     let version = "";
 

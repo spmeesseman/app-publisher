@@ -3,7 +3,7 @@ import glob = require("glob");
 import semver from "semver";
 import { options } from "marked";
 import { relative } from "path";
-import { IContext } from "../../interface";
+import { IContext, IVersionInfo } from "../../interface";
 import { addEdit, isIgnored } from "../repo";
 import { replaceInFile, pathExists } from "../utils/fs";
 import { editFile } from "../utils/utils";
@@ -27,7 +27,7 @@ async function getFiles(logger: any)
 }
 
 
-export function getAppPublisherVersion({options, logger}: IContext)
+export function getAppPublisherVersion({options, logger}: IContext): IVersionInfo
 {
     let versionSystem: string;
     const version = options.version;

@@ -14,9 +14,7 @@ export = getCurrentVersion;
 
 async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
 {
-    const options = context.options,
-          logger = context.logger,
-          cwd = context.cwd;
+    const logger = context.logger;
 
     let versionInfo: IVersionInfo = {
         version: undefined,
@@ -29,12 +27,10 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
         if (v && v.version) {
             if (versionInfo.version) {
                 if (v.version !== versionInfo.version) {
-                    logger.error("There is a version mismatch in one or more of the version files:");
-                    logger.error("   Type             : " + type);
-                    logger.error("   Parsed version   : " + v.version);
-                    logger.error("   Recorded version : " + versionInfo.version);
-                    logger.error("Manually correct version files before proceeding");
-                    throw new Error("200");
+                    logger.warn("There is a version mismatch in one or more of the version files:");
+                    logger.warn("   Type             : " + type);
+                    logger.warn("   Parsed version   : " + v.version);
+                    logger.warn("   Recorded version : " + versionInfo.version);
                 }
                 if (!versionInfo.versionInfo) {
                     versionInfo.versionInfo = v.versionInfo;
@@ -49,11 +45,11 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
     //
     // If node_modules dir exists, use package.json to obtain cur version
     //
-    doCheck(getAppPublisherVersion(context), "app-publisher");
+    doCheck(await getNpmVersion(context), "npm");
     //
     // If node_modules dir exists, use package.json to obtain cur version
     //
-    doCheck(await getNpmVersion(context), "npm");
+    doCheck(getAppPublisherVersion(context), "app-publisher");
     //
     // .NET with AssemblyInfo.cs file
     //

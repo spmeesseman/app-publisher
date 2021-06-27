@@ -1,10 +1,10 @@
 
 import semver from "semver";
-import { IContext } from "../../interface";
+import { IContext, IVersionInfo } from "../../interface";
 import { getVersion } from "../changelog-file";
 
 
-export async function getChangelogVersion({logger, options}: IContext): Promise<{ version: string; versionSystem: string; versionInfo: any }>
+export async function getChangelogVersion({logger, options}: IContext): Promise<IVersionInfo>
 {
     let versionSystem: string;
     const version = await getVersion({logger, options});

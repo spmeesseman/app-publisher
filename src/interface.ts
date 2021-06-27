@@ -417,7 +417,6 @@ export interface IOptions
      * A script or list of scripts to run for the build stage, before the build process is started.
      */
     preBuildCommand: string | string[];
-
     /**
      * A script or list of scripts to run for the commit stage, after the commit,
      * process is started.
@@ -437,7 +436,14 @@ export interface IOptions
      */
     promptVersion: string;  // flag
     /**
+     *
+     */
+    projectFileDotNet: string;
+    projectFileExtJs: string;
+    projectFileNpm: string;
+    /**
      * Name of the project.  This must match throughout the build files and the SVN project name.
+     * Must be set !!
      */
     projectName: string;
     /**

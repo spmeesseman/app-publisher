@@ -1,7 +1,7 @@
 
 import * as path from "path";
 import glob from "glob";
-import { IContext } from "../../interface";
+import { IContext, IVersionInfo } from "../../interface";
 import { addEdit } from "../repo";
 import { replaceInFile, pathExists } from "../utils/fs";
 import { editFile } from "../utils/utils";
@@ -24,7 +24,7 @@ export async function getExtJsFiles(logger)
 }
 
 
-export async function getExtJsVersion({logger, options}): Promise<{ version: string, versionSystem: string, versionInfo: any }>
+export async function getExtJsVersion(): Promise<IVersionInfo>
 {
     throw new Error("Method not implemented");
 }

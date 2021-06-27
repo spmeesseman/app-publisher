@@ -511,6 +511,34 @@ export const publishRcOpts =
         "Prompt for version.  The recommended version will be displayed at the prompt.",
     ],
 
+    projectFileDotNet: [
+        true,
+        "string",
+        "",
+        "Relative path to the .NET project version file (AssemblyInfo.cs).",
+        "Any .NET assemblyinfo.cs files are attempted to be loaded and matched to a",
+        "project, but in the case where it cannot, this property can be set"
+    ],
+
+    projectFileExtJs: [
+        true,
+        "string",
+        "",
+        "Relative path to the ExtJs project version file (app.json).",
+        "Any ExtJs app.json files are attempted to be loaded and matched to a",
+        "project, but in the case where it cannot, this property can be set"
+    ],
+
+    projectFileNpm: [
+        true,
+        "string",
+        "",
+        "Relative path to the NPM project version file (package.json).",
+        "Any NPM package.json files are attempted to be loaded and matched to a",
+        "project, but in the case where it cannot, this property can be set"
+    ],
+
+
     projectName: [
         true,
         "string",

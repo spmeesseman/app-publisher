@@ -1,11 +1,11 @@
 
-import { IContext } from "../../interface";
+import { IContext, IVersionInfo } from "../../interface";
 import { addEdit } from "../repo";
 import { pathExists, replaceInFile, readFile } from "../utils/fs";
 import { editFile } from "../utils/utils";
 
 
-export async function getPomVersion({logger}): Promise<{ version: string; versionSystem: string; versionInfo: any }>
+export async function getPomVersion({logger}): Promise<IVersionInfo>
 {
     let version = "";
     const mavenVersionInfo: string[] = [];

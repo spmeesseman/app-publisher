@@ -1,7 +1,7 @@
 
 import glob from "glob";
 import * as path from "path";
-import { IContext } from "../../interface";
+import { IContext, IVersionInfo } from "../../interface";
 import { addEdit } from "../repo";
 import { pathExists, readFile, writeFile } from "../utils/fs";
 import { editFile } from "../utils/utils";
@@ -24,7 +24,7 @@ async function getNpmFiles(logger: any)
 }
 
 
-export async function getNpmVersion({cwd, logger}: IContext)
+export async function getNpmVersion({cwd, logger}: IContext): Promise<IVersionInfo>
 {
     let version = "";
     const fileNames = await getNpmFiles(logger);
