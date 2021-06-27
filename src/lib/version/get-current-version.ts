@@ -42,7 +42,12 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
                     logFn("   Parsed version   : " + v.version);
                     logFn("   Recorded version : " + versionInfo.version);
                     if (throwError) {
-                        throw new Error("Local version file validation failed");
+                        if (!options.republish) {
+                            throw new Error("Local version file validation failed");
+                        }
+                        else {
+                            logger.warn("   Continuing in republish mode");
+                        }
                     }
                     warn = true;
                 }
