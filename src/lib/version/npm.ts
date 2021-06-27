@@ -7,37 +7,60 @@ import { pathExists, readFile, writeFile } from "../utils/fs";
 import { editFile } from "../utils/utils";
 
 
-async function getNpmFiles(logger: any)
+async function getNpmFile({logger, options, cwd}: IContext)
 {
-    return new Promise<string[]>((resolve, reject) => {
-        glob("**/package.json", { nocase: true, ignore: "node_modules/**" }, (err, files) =>
+    return new Promise<string>(async (resolve, reject) =>
+    {
+        if (options.projectFileNpm && await pathExists(options.projectFileNpm)) {
+            resolve(options.projectFileNpm);
+            return;
+        }
+
+        if (await pathExists("package.json")) {
+            resolve("package.json");
+            return;
+        }
+
+        glob("**/package.json", { nocase: true, ignore: "node_modules/**" }, async (err, files) =>
         {
             if (err) {
                 logger.error("package.json");
                 reject(err);
             }
             else {
-                resolve(files);
+                if (files.length > 1) {
+                    logger.warn("Multiple package.json files were found");
+                    logger.warn("You can set the specific file via the 'projectFileNpm' .publishrc property");
+                }
+                for (const f of files)
+                {
+                    const name = require(path.join(cwd, f)).name;
+                    if (name !== options.projectName)
+                    {
+                        if (files.length > 1) {
+                            logger.warn("Using : " + f);
+                        }
+                        resolve(f);
+                        return;
+                    }
+                }
+                resolve(undefined);
             }
         });
     });
 }
 
 
-export async function getNpmVersion({cwd, logger}: IContext): Promise<IVersionInfo>
+export async function getNpmVersion(context: IContext): Promise<IVersionInfo>
 {
     let version = "";
-    const fileNames = await getNpmFiles(logger);
+    const {logger, cwd} = context,
+          file = await getNpmFile(context);
 
-    if (fileNames && fileNames.length >= 1)
+    if (file)
     {
-        logger.log("Retrieving version from package.json");
-        version = require(path.join(cwd, fileNames[0])).version;
-        if (fileNames.length > 1) {
-            logger.warn("Multiple package.json files were found");
-            logger.warn("You can set the specific file via the 'npmProjectFile' .publishrc property");
-            logger.warn("Using : " + fileNames[0]);
-        }
+        logger.log(`Retrieving version from ${file}`);
+        version = require(path.join(cwd, file)).version;
         if (version) { logger.log("   Found version :" + version); }
         else { logger.log("   Not found"); }
     }
@@ -50,12 +73,12 @@ export async function setNpmVersion(context: IContext)
 {
     let modified = false;
     const {options, nextRelease, logger} = context,
-          fileNames = await getNpmFiles(logger);
+          file = await getNpmFile(context);
 
-    if (fileNames && fileNames.length >= 1)
+    if (file)
     {
-        const packageJson = require(path.join(process.cwd(), fileNames[0])),
-              packageJsonDir = path.dirname(fileNames[0]),
+        const packageJson = require(path.join(process.cwd(), file)),
+              packageJsonDir = path.dirname(file),
               packageLockFile = path.join(packageJsonDir, "package-lock.json"),
               packageLockFileExists = await pathExists(packageLockFile),
               packageLockJson = packageLockFileExists ? require(path.join(process.cwd(), packageLockFile)) : undefined;
@@ -64,21 +87,16 @@ export async function setNpmVersion(context: IContext)
         // files that would be updated in a run
         //
         if (options.taskRevert) {
-            await addEdit(context, fileNames[0]);
+            await addEdit(context, file);
             if (packageLockFileExists) {
                 await addEdit(context, packageLockFile);
             }
             return;
         }
 
-        if (fileNames.length > 1) {
-            logger.warn("Multiple app.json files were found");
-            logger.warn("Using : " + fileNames[0]);
-        }
-
         if (nextRelease.version !== packageJson.version)
         {
-            logger.log(`Setting version ${nextRelease.version} in ${fileNames[0]}`);
+            logger.log(`Setting version ${nextRelease.version} in ${file}`);
             packageJson.version = nextRelease.version;
             if (packageLockJson) {
                 packageLockJson.version = nextRelease.version;
@@ -86,7 +104,7 @@ export async function setNpmVersion(context: IContext)
             modified = true;
         }
         else {
-            logger.warn(`Version ${nextRelease.version} already set in ${fileNames[0]}`);
+            logger.warn(`Version ${nextRelease.version} already set in ${file}`);
         }
 
         //
@@ -100,7 +118,7 @@ export async function setNpmVersion(context: IContext)
         }
 
         if (modified) {
-            await writeFile(fileNames[0], JSON.stringify(packageJson, undefined, 4));
+            await writeFile(file, JSON.stringify(packageJson, undefined, 4));
             if (packageLockFileExists)
             {
                 await writeFile(packageLockFile, JSON.stringify(packageLockJson, undefined, 4));
@@ -110,7 +128,7 @@ export async function setNpmVersion(context: IContext)
         //
         // Allow manual modifications to package.json and package-lock.json
         //
-        await editFile(context, fileNames[0]);
+        await editFile(context, file);
         if (packageLockFileExists) {
             await editFile(context, packageLockFile);
         }

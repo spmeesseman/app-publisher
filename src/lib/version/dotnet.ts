@@ -1,14 +1,31 @@
 
+import { join } from "path";
 import glob = require("glob");
 import { IContext, IVersionInfo } from "../../interface";
 import { addEdit } from "../repo";
-import { replaceInFile, readFile } from "../utils/fs";
+import { replaceInFile, readFile, pathExists } from "../utils/fs";
 import { editFile } from "../utils/utils";
 
 
-async function getDotNetFile(projectName: string, logger)
+async function getDotNetFile({options, logger}: IContext)
 {
-    return new Promise<any>((resolve, reject) => {
+    return new Promise<string>(async (resolve, reject) =>
+    {
+        if (options.projectFileDotNet && await pathExists(options.projectFileDotNet)) {
+            resolve(options.projectFileDotNet);
+            return;
+        }
+
+        if (await pathExists("assemblyinfo.cs")) {
+            resolve("assemblyinfo.cs");
+            return;
+        }
+
+        if (await pathExists(join("properties", "assemblyinfo.cs"))) {
+            resolve(join("properties", "assemblyinfo.cs"));
+            return;
+        }
+
         glob("**/assemblyinfo.cs", { nocase: true, ignore: "node_modules/**" }, async (err, files) =>
         {
             if (err) {
@@ -16,20 +33,19 @@ async function getDotNetFile(projectName: string, logger)
                 reject(err);
             }
             else {
+                if (files.length > 1) {
+                    logger.warn("Multiple assemblyinfo.cs files were found");
+                    logger.warn("You can set the specific file via the 'projectFileDotNet' .publishrc property");
+                }
                 for (const f of files)
                 {
                     const fileContent = await readFile(f);
-                    if (fileContent.indexOf(projectName) !== -1)
+                    if (fileContent.indexOf(options.projectName) !== -1)
                     {
                         if (files.length > 1) {
-                            logger.warn("Multiple assemblyinfo.cs files were found");
-                            logger.warn("You can set the specific file via the 'npmProjectFile' .publishrc property");
                             logger.warn("Using : " + f);
                         }
-                        resolve({
-                            path: f,
-                            content: fileContent
-                        });
+                        resolve(f);
                         return;
                     }
                 }
@@ -40,17 +56,19 @@ async function getDotNetFile(projectName: string, logger)
 }
 
 
-export async function getDotNetVersion({logger, options}: IContext): Promise<IVersionInfo>
+export async function getDotNetVersion(context: IContext): Promise<IVersionInfo>
 {
     let version = "";
-    const fileInfo = await getDotNetFile(options.projectName, logger);
+    const file = await getDotNetFile(context);
+    const {logger, options} = context;
 
-    if (fileInfo && fileInfo.path)
+    if (file)
     {
-        logger.log(`Retrieving version from ${fileInfo.path}`);
+        logger.log(`Retrieving version from ${file}`);
 
         const regexp = new RegExp("AssemblyVersion[ ]*[(][ ]*[\"][0-9]+[.]{1}[0-9]+[.]{1}[0-9]+", "gm"),
-            found = fileInfo.content.match(regexp);
+              content = await readFile(options.projectFileDotNet),
+              found = content.match(regexp);
 
         if (found)
         {
@@ -72,15 +90,15 @@ export async function setDotNetVersion(context: IContext)
 {
     let semVersion = "";
     const {lastRelease, nextRelease, options, logger, cwd, env} = context,
-          fileInfo = await getDotNetFile(options.projectName, logger);
+          file = await getDotNetFile(context);
 
-    if (fileInfo && fileInfo.path)
+    if (file)
     {   //
         // If this is '--task-revert', all we're doing here is collecting the paths of the
         // files that would be updated in a run, don't actually do the update
         //
         if (options.taskRevert) {
-            await addEdit(context, fileInfo.path);
+            await addEdit(context, file);
             return;
         }
 
@@ -97,15 +115,15 @@ export async function setDotNetVersion(context: IContext)
         //
         // Replace version in assemblyinfo file
         //
-        await replaceInFile(fileInfo.path, "AssemblyVersion[ ]*[\\(][ ]*[\"][0-9a-z.]+", `AssemblyVersion("${semVersion}.0`);
-        await replaceInFile(fileInfo.path, "AssemblyFileVersion[ ]*[\\(][ ]*[\"][0-9a-z.]+", `AssemblyFileVersion("${semVersion}.0`);
+        await replaceInFile(file, "AssemblyVersion[ ]*[\\(][ ]*[\"][0-9a-z.]+", `AssemblyVersion("${semVersion}.0`);
+        await replaceInFile(file, "AssemblyFileVersion[ ]*[\\(][ ]*[\"][0-9a-z.]+", `AssemblyFileVersion("${semVersion}.0`);
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
-        await editFile({options, logger, nextRelease, cwd, env}, fileInfo.path);
+        await editFile({options, logger, nextRelease, cwd, env}, file);
         //
         // Return the filename
         //
-        // return fileInfo.path;
+        // return file;
     }
 }

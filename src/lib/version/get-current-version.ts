@@ -7,6 +7,7 @@ import { IContext, IVersionInfo } from "../../interface";
 import { getNpmVersion } from "./npm";
 // import { getMakefileVersion } from "./makefile";
 import { getAppPublisherVersion } from "./app-publisher";
+import { getExtJsVersion } from "./extjs";
 
 
 export = getCurrentVersion;
@@ -54,6 +55,10 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
     // .NET with AssemblyInfo.cs file
     //
     doCheck(await getDotNetVersion(context), "dotnet");
+    //
+    // .NET with AssemblyInfo.cs file
+    //
+    doCheck(await getExtJsVersion(context), "extjs");
     //
     // Makefile/RC Project
     //

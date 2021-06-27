@@ -20,7 +20,7 @@ async function getCommits(context: IContext): Promise<ICommit[]>
     const { cwd, env, options, lastRelease: { head }, logger } = context;
 
     if (head) {
-        logger.info("Use head " + head);
+        logger.info("Use head revision " + head);
     }
     else {
         logger.info("No previous release found, retrieving all commits");

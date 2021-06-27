@@ -143,6 +143,10 @@ export function pathExists(file: string, resolve = true): Promise<boolean>
 {
     return new Promise<boolean>((resolve, reject) => {
         try {
+            if (!file) {
+                resolve(false);
+                return;
+            }
             fs.access(resolve ? path.resolve(file) : file, (e) => {
                 if (e) {
                     resolve(false);
