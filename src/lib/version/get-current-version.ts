@@ -116,11 +116,11 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
                 let match: RegExpExecArray,
                     matched = false;
                 const content = await readFile(tvFile),
-                      regex = new RegExp(versionFileDef.regex);
+                      regex = new RegExp(versionFileDef.regex, "gm");
                 while ((match = regex.exec(content)) !== null)
                 {
                     if (match[1]) {
-                        logger.log("   Found version    : " + match[1]);
+                        logger.log("   Found version     : " + match[1]);
                         matched = true;
                     }
                 }
