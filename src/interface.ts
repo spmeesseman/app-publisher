@@ -707,7 +707,7 @@ export interface IOptions
     /**
      * @readonly
      */
-    version: boolean;
+    version: string;
     /**
      * A file path or list of file paths to perform version string replacement in.
      */

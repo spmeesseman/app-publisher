@@ -26,23 +26,20 @@ async function getNpmFiles(logger: any)
 
 export async function getNpmVersion({cwd, logger}: IContext)
 {
-    logger.log("Retrieving npm version package.json");
-
     let version = "";
     const fileNames = await getNpmFiles(logger);
 
     if (fileNames && fileNames.length >= 1)
     {
+        logger.log("Retrieving version from package.json");
         version = require(path.join(cwd, fileNames[0])).version;
-
         if (fileNames.length > 1) {
-            logger.warning("Multiple package.json files were found");
-            logger.warning("You can set the specific file via the 'npmProjectFile' .publishrc property");
-            logger.warning("Using : " + fileNames[0]);
+            logger.warn("Multiple package.json files were found");
+            logger.warn("You can set the specific file via the 'npmProjectFile' .publishrc property");
+            logger.warn("Using : " + fileNames[0]);
         }
-    }
-    else {
-        logger.error("The current version cannot be determined");
+        if (version) { logger.log("   Found version :" + version); }
+        else { logger.log("   Not found"); }
     }
 
     return { version, versionSystem: "semver", versionInfo: undefined };
@@ -75,8 +72,8 @@ export async function setNpmVersion(context: IContext)
         }
 
         if (fileNames.length > 1) {
-            logger.warning("Multiple app.json files were found");
-            logger.warning("Using : " + fileNames[0]);
+            logger.warn("Multiple app.json files were found");
+            logger.warn("Using : " + fileNames[0]);
         }
 
         if (nextRelease.version !== packageJson.version)

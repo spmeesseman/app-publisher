@@ -1,5 +1,7 @@
 
 import glob = require("glob");
+import semver from "semver";
+import { options } from "marked";
 import { relative } from "path";
 import { IContext } from "../../interface";
 import { addEdit, isIgnored } from "../repo";
@@ -22,6 +24,35 @@ async function getFiles(logger: any)
             }
         });
     });
+}
+
+
+export function getAppPublisherVersion({options, logger}: IContext)
+{
+    let versionSystem: string;
+    const version = options.version;
+
+    if (version)
+    {
+        logger.log("Retrieving version from .publishrc");
+
+        if (!version)
+        {
+            versionSystem = "manual";
+        }
+        else if (semver.valid(semver.clean(version)))
+        {
+            versionSystem = "semver";
+        }
+        else {
+            versionSystem = "incremental";
+        }
+
+        if (version) { logger.log("   Found version :" + version); }
+        else { logger.log("   Not found"); }
+    }
+
+    return { version, versionSystem, versionInfo: undefined };
 }
 
 

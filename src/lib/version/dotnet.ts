@@ -23,15 +23,15 @@ async function getDotNetFiles(logger)
 }
 
 
-export async function getDotNetVersion({logger}): Promise<{ version: string, versionSystem: string, versionInfo: any }>
+export async function getDotNetVersion({logger}: IContext): Promise<{ version: string, versionSystem: string, versionInfo: any }>
 {
-    logger.log("Retrieving assemblyinfo version AssemblyInfo.cs");
-
     let version = "";
     const fileNames = await getDotNetFiles(logger);
 
-    if (fileNames && fileNames.length === 1)
+    if (fileNames && fileNames.length >= 1)
     {
+        logger.log(`Retrieving version from ${fileNames[0]}`);
+
         const fileContent = await readFile(fileNames[0]),
             regexp = new RegExp("AssemblyVersion[ ]*[(][ ]*[\"][0-9]+[.]{1}[0-9]+[.]{1}[0-9]+", "gm"),
             found = fileContent.match(regexp);
@@ -41,15 +41,15 @@ export async function getDotNetVersion({logger}): Promise<{ version: string, ver
             version = version.replace(" ", "");
             version = version.replace("(", "");
             version = version.replace("\"", "");
-            // Rid build number
-            version = version.substring(0, version.lastIndexOf("."));
+            // version = version.substring(0, version.lastIndexOf(".")); // Rid build number
+            if (fileNames.length > 1) {
+                logger.warn("Multiple assemblyinfo.cs files were found");
+                logger.warn("You can set the specific file via the 'npmProjectFile' .publishrc property");
+                logger.warn("Using : " + fileNames[0]);
+            }
         }
-    }
-    else if (fileNames && fileNames.length > 0) {
-        logger.error("The current version cannot be determined, multiple assemblyinfo files found");
-    }
-    else {
-        logger.error("The current version cannot be determined");
+        if (version) { logger.log("   Found version :" + version); }
+        else { logger.log("   Not found"); }
     }
 
     return { version, versionSystem: ".net", versionInfo: undefined };
@@ -73,9 +73,9 @@ export async function setDotNetVersion(context: IContext)
         }
 
         if (fileNames.length > 1) {
-            logger.warning("Multiple assemblyinfo files were found");
-            logger.warning("You can set the specific file via the 'dotnetProjectFile' .publishrc property");
-            logger.warning("Using : " + fileNames[0]);
+            logger.warn("Multiple assemblyinfo files were found");
+            logger.warn("You can set the specific file via the 'dotnetProjectFile' .publishrc property");
+            logger.warn("Using : " + fileNames[0]);
         }
 
         if (lastRelease.versionInfo.versionSystem === "incremental" || !nextRelease.version.includes("."))

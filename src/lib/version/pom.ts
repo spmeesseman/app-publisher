@@ -22,7 +22,7 @@ export async function getPomVersion({logger}): Promise<{ version: string; versio
     //
     if (await pathExists("pom.xml"))
     {
-        logger.log("Retrieving Maven plugin version from $AssemblyInfoLocation");
+        logger.log("Retrieving version from pom.xml");
 
         const fileContent = await readFile("pom.xml"),
             regexp = new RegExp("\\$\\{(.+?)\\}(?=\<\\/version|\\$\\{\\w+\\})", "gm");
@@ -55,6 +55,9 @@ export async function getPomVersion({logger}): Promise<{ version: string; versio
         else {
             mavenVersionInfo.push(version);
         }
+
+        if (version) { logger.log("   Found version :" + version); }
+        else { logger.log("   Not found"); }
     }
 
     return { version, versionSystem: "semver", versionInfo: mavenVersionInfo };

@@ -53,10 +53,12 @@ export async function setExtJsVersion(context: IContext)
 
         if (buildFileExists && wsFileExists)
         {
+            logger.log(`Retrieving version from ${fileNames[0]}`);
+
             if (fileNames.length > 1) {
-                logger.warning("Multiple app.json files were found");
-                logger.warning("You can set the specific file via the 'extjsProjectFile' .publishrc property");
-                logger.warning("Using : " + fileNames[0]);
+                logger.warn("Multiple app.json files were found");
+                logger.warn("You can set the specific file via the 'extjsProjectFile' .publishrc property");
+                logger.warn("Using : " + fileNames[0]);
             }
             //
             // Replace version in defined main mantisbt plugin file

@@ -89,7 +89,7 @@ export async function commit({options, nextRelease, logger, cwd, env}: IContext)
                 proc = await execa("git", [ "add", "--dry-run", "--", ...chgListPathsAdded ], execaOpts);
             }
             if (proc.code !== 0) {
-                logger.warning("Add file(s) to VCS failed");
+                logger.warn("Add file(s) to VCS failed");
             }
             //
             // Remove 'added' files from thr main changelist if this is a dry run
@@ -124,7 +124,7 @@ export async function commit({options, nextRelease, logger, cwd, env}: IContext)
                 }
             }
             else {
-                logger.warning("Add file(s) to VCS failed");
+                logger.warn("Add file(s) to VCS failed");
             }
         }
     }

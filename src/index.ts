@@ -21,7 +21,7 @@ import doDistRelease = require("./lib/releases/dist");
 import { doGithubRelease, publishGithubRelease } from "./lib/releases/github";
 import doMantisbtRelease = require("./lib/releases/mantisbt");
 import setVersions = require("./lib/version/set-versions");
-import { template } from "lodash";
+import { last, template } from "lodash";
 import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
 import { sendNotificationEmail } from "./lib/email";
 import { writeFile } from "./lib/utils/fs";
@@ -406,6 +406,10 @@ async function runRelease(context: IContext, plugins: any)
         //
         if (!options.versionForceCurrent)
         {
+            if (options.taskVersionCurrent || options.taskVersionNext) {
+                context.stdout.write(lastRelease.version);
+                return true;
+            }
             logger.log("There are no relevant commits, no new version is released.");
             return false;
         }

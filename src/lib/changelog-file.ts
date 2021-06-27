@@ -1103,19 +1103,29 @@ async function getChangelogFileSections({ options, logger }, version?: string, n
     //
     // Read in contents of file
     //
-    const fileContents = await readFile(inputFile);
-    let contents = fileContents;
+    let contents = await readFile(inputFile);
 
     //
     // If 'version' is empty, then this is a request for the latest version #.  Return version and exit
     //
     if (!version)
     {
-        const idx1 = fileContents.indexOf(`## ${options.versionText} `, 0) + options.versionText.Length + 4,
-                idx2 = idx1 !== -1 ? contents.indexOf("\\n", idx1) : -1,
-                curVersion = idx1 !== -1 && idx2 !== -1 ? contents.substring(idx1, idx2 - idx1).trim() : "";
-        logger.log(`   Version request - found latest version ${curVersion}`);
-        return curVersion.trim();
+        let idx1 = contents.indexOf(`## ${options.versionText} `),
+            curVersion: string;
+        if (idx1 !== -1) {
+            idx1 += (options.versionText.length + 4);
+            const idx2 = contents.indexOf("\n", idx1);
+            if (idx2 !== -1) {
+                curVersion = contents.substring(idx1, idx2).trim().replace(/ \(.+\)/, (s) => { return ""; });
+            }
+        }
+        if (curVersion) {
+            logger.log(`   Version request - found latest version ${curVersion}`);
+        }
+        else {
+            logger.log("   Version request - not found");
+        }
+        return curVersion;
     }
 
     //
@@ -1550,10 +1560,21 @@ async function getHistoryFileSections({ options, logger }, version?: string, num
     //
     if (!version)
     {
-        const idx1 = fileContents.lastIndexOf(`\n${options.versionText} `, 0) + options.versionText.Length + 2,
-                idx2 = idx1 !== -1 ? contents.indexOf("\\n", idx1) : -1,
-                curVersion = idx1 !== -1 && idx2 !== -1 ? contents.substring(idx1, idx2 - idx1).trim() : "";
-        logger.log(`   Version request - found latest version ${curVersion}`);
+        let idx1 = fileContents.lastIndexOf(`\n${options.versionText} `),
+            curVersion: string;
+        if (idx1 !== -1) {
+            idx1 += (options.versionText.length + 2);
+            const idx2 = fileContents.indexOf("\n", idx1);
+            if (idx2 !== -1) {
+                curVersion = fileContents.substring(idx1, idx2).trim();
+            }
+        }
+        if (curVersion) {
+            logger.log(`   Version request - found latest version ${curVersion}`);
+        }
+        else {
+            logger.log("   Version request - not found");
+        }
         return curVersion;
     }
 
@@ -1576,8 +1597,8 @@ async function getHistoryFileSections({ options, logger }, version?: string, num
     // Note that [\s\S]*? isnt working here, had to use [^]*? for a non-greedy grab, which isnt
     // supported in anything other than a JS regex
     //
-    let regex = new RegExp(`(?:^${options.versionText} ([0-9a-zA-Z\-\.]{3,})[\r\n]+.+[\r\n]+[\-]{20,}[\r\n]+[\*]{20,}[^]+?(?=[\*]{20,})[\*]{20,}[\r\n]+)([^]*?)(?=${options.versionText}|\z)`, "gm");
-    while ((match = regex.exec(fileContents)) !== null)
+    let regex = new RegExp(`(?:^${options.versionText} ([0-9a-zA-Z\-\.]{3,})[\r\n]+.+[\r\n]+[\-]{20,}[\r\n]+[\*]{20,}[^]+?(?=[\*]{20,})[\*]{20,}[\r\n]+)([^]*?)(?=${options.versionText}|###END###)`, "gm");
+    while ((match = regex.exec(fileContents + "###END###")) !== null)
     {
         if (options.verbose) {
             logger.log(`   Parsing file - found ${options.versionText} ${match[1]}`);
@@ -1590,7 +1611,7 @@ async function getHistoryFileSections({ options, logger }, version?: string, num
             else {
                 contents += match[2];       // add just the changelog content 1....n
             }
-            contents += (EOL + EOL);        // add a few newlines
+            contents = contents.trim() + EOL + EOL;
             if (++bFound >= numSections) {  // check # of sections requested and if we found them all yet
                 break;
             }
@@ -1851,12 +1872,14 @@ export function isSkippedCommitMessage(msg: string)
  */
 export async function getVersion({ options, logger })
 {
-    const contents = options.historyFile ?
-                        await getHistoryFileSections({ options, logger }) as string :
-                        await getChangelogFileSections({ options, logger }) as string;
-    const index1 = contents.indexOf(`>${options.versionText}&nbsp;`, 0) + options.versionText.length + 7;
-    const index2 = contents.indexOf("<br>", index1);
-    const curversion = contents.substring(index1, index2 - index1);
-    logger.log(`   Found version ${curversion}`);
-    return curversion;
+    if (options.historyFile) {
+        logger.log("Retrieve last version number from history file");
+    }
+    else {
+        logger.log("Retrieve last version number from changelog file");
+    }
+    const v = options.historyFile ?
+              await getHistoryFileSections({ options, logger }) as string :
+              await getChangelogFileSections({ options, logger }) as string;
+    return v;
 }
