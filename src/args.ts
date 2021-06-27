@@ -1039,9 +1039,26 @@ export const publishRcOpts =
 
     versionFiles: [
         false,
-        "string|string[]",
+        "object[]",
+        [],
+        "A file path or list of file paths to perform version string replacement in.",
+        "Example:",
         "",
-        "A file path or list of file paths to perform version string replacement in."
+        "     \"versionFiles\": [{",
+        "         \"path\": \"..\\..\\install\\GEMS2_64bit.nsi\",",
+        "         \"regex\": \"!define +BUILD_LEVEL +([0-9a-zA-Z\\.\\-]{5,})\"",
+        "     },",
+        "     {",
+        "         \"path\": \"..\\svr\\assemblyinfo.cs\",",
+        "         \"regex\": \"AssemblyVersion *\\( *\"([0-9]+\\.[0-9]+\\.[0-9]+)\",",
+        "         \"setFiles\": [{",
+        "             \"path\": \"app.json\",",
+        "             \"regex\": \"svrVersion\" *: *\"([0-9a-zA-Z\\.\\-]{5,})\"",
+        "         }]",
+        "     }]",
+        "",
+        "The regex must contain a 'capturing group' to obtain the version, and it must",
+        "be the first group if it contains more than one."
     ],
 
     versionForceCurrent: [

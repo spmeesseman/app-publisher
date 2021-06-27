@@ -1,4 +1,5 @@
 
+import * as path from "path";
 import { getDotNetVersion } from "./dotnet";
 import { getChangelogVersion } from "./changelog";
 import { getMantisBtVersion } from "./mantisbt";
@@ -8,7 +9,7 @@ import { getNpmVersion } from "./npm";
 // import { getMakefileVersion } from "./makefile";
 import { getAppPublisherVersion } from "./app-publisher";
 import { getExtJsVersion } from "./extjs";
-import { pathExists } from "../utils/fs";
+import { pathExists, readFile } from "../utils/fs";
 
 
 export = getCurrentVersion;
@@ -89,15 +90,44 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
     doCheck(await getChangelogVersion(context), "changelog", false);
 
     //
-    // Loop through all specified files and replace version number
+    // Loop through all specified files and validate version number
+    //
+    //     "versionFiles": [{
+    //         "path": "..\\..\\install\\GEMS2_64bit.nsi",
+    //         "regex": "!define +BUILD_LEVEL +([0-9a-zA-Z\\.\\-]{5,})"
+    //     },
+    //     {
+    //         "path": "..\\svr\\assemblyinfo.cs",
+    //         "regex": "AssemblyVersion *\\( *\"([0-9]+\\.[0-9]+\\.[0-9]+)",
+    //         "setFiles": [{
+    //             "path": "app.json",
+    //             "regex": "\"svrVersion\" *: *\"([0-9a-zA-Z\\.\\-]{5,})\""
+    //         }]
+    //     }]
     //
     if (options.versionFiles)
     {
         for (const versionFileDef of options.versionFiles)
         {
-            const vFile = versionFileDef.path;
-            if (await pathExists(vFile))
-            {   
+            const tvFile = versionFileDef.path;
+            if (versionFileDef.regex && !versionFileDef.setFiles && await pathExists(tvFile))
+            {
+                logger.log("Retrieving version from " + tvFile);
+                let match: RegExpExecArray,
+                    matched = false;
+                const content = await readFile(tvFile),
+                      regex = new RegExp(versionFileDef.regex);
+                while ((match = regex.exec(content)) !== null)
+                {
+                    if (match[1]) {
+                        logger.log("   Found version    : " + match[1]);
+                        matched = true;
+                    }
+                }
+                if (!matched) {
+                    logger.error("   Not found (no match)");
+                    throw new Error("Local version file validation failed");
+                }
             }
         }
     }

@@ -107,6 +107,7 @@ export interface IVersionFile
     regex?: string;
     simplePattern?: string;
     setFiles?: IVersionFile[];
+    versionInfo?: IVersionInfo;
 }
 
 
@@ -718,7 +719,20 @@ export interface IOptions
      */
     version: string;
     /**
-     * A file path or list of file paths to perform version string replacement in.
+     * A file path or list of file paths to perform version string replacement in.  Example:
+     * 
+     *     "versionFiles": [{
+     *         "path": "..\\..\\install\\GEMS2_64bit.nsi",
+     *         "regex": "!define +BUILD_LEVEL +([0-9a-zA-Z\\.\\-]{5,})"
+     *     },
+     *     {
+     *         "path": "..\\svr\\assemblyinfo.cs",
+     *         "regex": "AssemblyVersion *\\( *\"([0-9]+\\.[0-9]+\\.[0-9]+)",
+     *         "setFiles": [{
+     *             "path": "app.json",
+     *             "regex": "\"svrVersion\" *: *\"([0-9a-zA-Z\\.\\-]{5,})\""
+     *         }]
+     *     }]
      */
     versionFiles: IVersionFile[];
     /**

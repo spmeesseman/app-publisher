@@ -78,8 +78,8 @@ export async function getDotNetVersion(context: IContext): Promise<IVersionInfo>
             version = version.replace("\"", "");
             // version = version.substring(0, version.lastIndexOf(".")); // Rid build number
         }
-        if (version) { logger.log("   Found version :" + version); }
-        else { logger.log("   Not found"); }
+        if (version) { logger.log("   Found version    : " + version); }
+        else { logger.warn("   Not found"); }
     }
 
     return { version, versionSystem: ".net", versionInfo: undefined };

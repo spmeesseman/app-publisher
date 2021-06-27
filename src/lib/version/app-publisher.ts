@@ -48,8 +48,8 @@ export function getAppPublisherVersion({options, logger}: IContext): IVersionInf
             versionSystem = "incremental";
         }
 
-        if (version) { logger.log("   Found version :" + version); }
-        else { logger.log("   Not found"); }
+        if (version) { logger.log("   Found version    : " + version); }
+        else { logger.warn("   Not found"); }
     }
 
     return { version, versionSystem, versionInfo: undefined };

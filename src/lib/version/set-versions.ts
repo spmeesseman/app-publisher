@@ -132,6 +132,20 @@ async function setVersionFiles(context: IContext): Promise<void>
     //
     // Loop through all specified files and replace version number
     //
+    //     "versionFiles": [{
+    //         "path": "..\\..\\install\\GEMS2_64bit.nsi",
+    //         "regex": "!define +BUILD_LEVEL +([0-9a-zA-Z\\.\\-]{5,})"
+    //     },
+    //     {
+    //         "path": "..\\svr\\assemblyinfo.cs",
+    //         "regex": "AssemblyVersion *\\( *\"([0-9]+\\.[0-9]+\\.[0-9]+)",
+    //         "setFiles": [{
+    //             "path": "app.json",
+    //             "regex": "\"svrVersion\" *: *\"([0-9a-zA-Z\\.\\-]{5,})\""
+    //         }]
+    //     }]
+    //
+    //
     for (const versionFileDef of options.versionFiles)
     {
         let vFile = versionFileDef.path;
@@ -158,6 +172,12 @@ async function setVersionFiles(context: IContext): Promise<void>
             //
             let rc = false;
             logger.log(`Writing new version ${semVersion} to ${vFile}`);
+
+            // return msg.replace(/(?<!\w)(?:Api|Npm|Sso|Svn|Html?|Crud)(?= |$|\.)/gm, (m): string =>
+            // {
+            //     return m.toUpperCase();
+            // })
+
             //
             // versionReplaceTags
             //

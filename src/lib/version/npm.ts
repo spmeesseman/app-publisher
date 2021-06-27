@@ -61,8 +61,8 @@ export async function getNpmVersion(context: IContext): Promise<IVersionInfo>
     {
         logger.log(`Retrieving version from ${file}`);
         version = require(path.join(cwd, file)).version;
-        if (version) { logger.log("   Found version :" + version); }
-        else { logger.log("   Not found"); }
+        if (version) { logger.log("   Found version    : " + version); }
+        else { logger.warn("   Not found"); }
     }
 
     return { version, versionSystem: "semver", versionInfo: undefined };
