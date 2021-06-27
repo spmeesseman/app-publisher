@@ -35,7 +35,13 @@ export async function getExtJsFiles({logger, options}: IContext)
                 }
                 for (const f of files)
                 {
-                    const fileContent = await readFile(f);
+                    const fileContent = await readFile(f); // ,
+                    // appJsonDir = path.dirname(file),
+                    // wsFile = path.join(appJsonDir, "workspace.json"),
+                    // buildFile = path.join(appJsonDir, "build.xml"),
+                    // wsFileExists = await pathExists(wsFile),
+                    // buildFileExists = await pathExists(buildFile);
+                    // if (buildFileExists && wsFileExists) {
                     if (fileContent.indexOf(options.projectName) !== -1)
                     {
                         if (files.length > 1) {
@@ -72,8 +78,8 @@ export async function getExtJsVersion(context: IContext): Promise<IVersionInfo>
 
 export async function setExtJsVersion(context: IContext)
 {
-    const {nextRelease, options, logger} = context,
-          file = await getExtJsFiles(logger);
+    const {nextRelease, options, logger, cwd} = context,
+          file = await getExtJsFiles(context);
 
     if (file)
     {   //
@@ -85,40 +91,25 @@ export async function setExtJsVersion(context: IContext)
             return;
         }
 
-        const appJson = require(path.join(process.cwd(), file)); // ,
-              // appJsonDir = path.dirname(file),
-              // wsFile = path.join(appJsonDir, "workspace.json"),
-              // buildFile = path.join(appJsonDir, "build.xml"),
-              // wsFileExists = await pathExists(wsFile),
-              // buildFileExists = await pathExists(buildFile);
+        const appJson = json5.parse(await readFile(path.join(cwd, file)));
+        if (nextRelease.version !== appJson.version || nextRelease.version !== appJson.appVersion)
+        {
+            logger.log(`Setting version ${nextRelease.version} in ${file}`);
+            // appJson.version = nextRelease.version;
+            // appJson.appVersion = nextRelease.version;
+            // await writeFile(file, json5.stringify(appJson, { quote: "\"", space: 4 }));
+            await replaceInFile(file, "appVersion\"[ ]*:[ ]*[\"][0-9a-z.\-]+", `appVersion": "${nextRelease.version}`, true);
+            logger.log(`   Set version        : ${nextRelease.version}`);
+            await replaceInFile(file, "version\"[ ]*:[ ]*[\"][0-9a-z.\-]+", `version": "${nextRelease.version}`, true);
+            logger.log(`   Set app version    : ${nextRelease.version}`);
+        }
+        else {
+            logger.warn(`Version ${nextRelease.version} already set in ${file}`);
+        }
 
-        // if (buildFileExists && wsFileExists)
-        // {
-
-            if (nextRelease.version !== appJson.version)
-            {
-                logger.log(`Setting version ${nextRelease.version} in ${file}`);
-                appJson.version = nextRelease.version;
-                appJson.appVersion = nextRelease.version;
-                await writeFile(file, json5.stringify(appJson, undefined, 4));
-            }
-            else {
-                logger.warn(`Version ${nextRelease.version} already set in ${file}`);
-            }
-
-            //
-            // Replace version in defined main mantisbt plugin file
-            //
-            // await replaceInFile(file, "appVersion\"[ ]*:[ ]*[\"][0-9a-z.\-]+", `appVersion": "${nextRelease.version}`, true);
-            // await replaceInFile(file, "version\"[ ]*:[ ]*[\"][0-9a-z.\-]+", `version": "${nextRelease.version}`, true);
-
-            //
-            // Allow manual modifications to mantisbt main plugin file and commit to modified list
-            //
-            await editFile(context, file);
-        // }
-        // else {
-        //     console.warn("Found ExtJs app.json, but no matching workspace or build file found");
-        // }
+        //
+        // Allow manual modifications to mantisbt main plugin file and commit to modified list
+        //
+        await editFile(context, file);
     }
 }

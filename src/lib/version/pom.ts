@@ -68,7 +68,7 @@ export async function setPomVersion(context: IContext)
 {
     const {options, logger, nextRelease, cwd, env} = context;
 
-    if (nextRelease.versionInfo.info.length === 2 && await pathExists("pom.xml"))
+    if (nextRelease.versionInfo.info && nextRelease.versionInfo.info.length === 2 && await pathExists("pom.xml"))
     {   //
         // If this is '--task-revert', all we're doing here is collecting the paths of the
         // files that would be updated in a run, don't actually do the update

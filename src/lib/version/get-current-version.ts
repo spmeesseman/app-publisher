@@ -101,8 +101,8 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
     //     },
     //     {
     //         "path": "..\\svr\\assemblyinfo.cs",
-    //         "regex": "AssemblyVersion *\\VERSION",
-    //         "regexVersion": " *\"([0-9]+\\.[0-9]+\\.[0-9]+",
+    //         "regex": "AssemblyVersion *\\(VERSION",
+    //         "regexVersion": "[0-9]+\\.[0-9]+\\.[0-9]+",
     //         "regexWrite": "AssemblyVersion\\(VERSION)",
     //         "versionInfo": {
     //             "system": "semver"
@@ -129,7 +129,7 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
                 let match: RegExpExecArray,
                     matched = false;
                 const content = await readFile(tvFile),
-                      rgxStr = versionFileDef.regex.replace("(VERSION)", "VERSION").replace("VERSION", `(${versionFileDef.regexVersion})`),
+                      rgxStr = versionFileDef.regex.replace("VERSION", `(${versionFileDef.regexVersion})`).replace("((VERSION))", "(VERSION)"),
                       regex = new RegExp(rgxStr, "gm");
                 while ((match = regex.exec(content)) !== null)
                 {

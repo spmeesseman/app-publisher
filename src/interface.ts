@@ -737,7 +737,7 @@ export interface IOptions
     version: string;
     /**
      * A file path or list of file paths to perform version string replacement in.  Example:
-     * 
+     *
      *     "versionFiles": [{
      *         "path": "..\\..\\install\\GEMS2_64bit.nsi",
      *         "regex": "!define +BUILD_LEVEL +VERSION",
@@ -745,23 +745,31 @@ export interface IOptions
      *         "regexWrite": "!define BUILD_LEVEL      \"VERSION\"",
      *     },
      *     {
-     *         "path": "..\\svr\\assemblyinfo.cs",
-     *         "regex": "AssemblyVersion *\\VERSION",
-     *         "regexVersion": " *\"([0-9]+\\.[0-9]+\\.[0-9]+",
-     *         "regexWrite": "AssemblyVersion\\(VERSION)",
-     *         "versionInfo": {
-     *             "system": "semver"
-     *         },
+     *         "path": "node_modules\\@pja\\extjs-pkg-server\\package.json",
      *         "setFiles": [{
      *             "path": "app.json",
      *             "regex": "\"svrVersion\" *: *\"VERSION\"",
      *             "regexVersion": "[0-9a-zA-Z\\.\\-]{5,}",
      *             "regexWrite": "\"svrVersion\": \"VERSION\"",
      *             "versionInfo": {
-     *                 "system": "semver"
+     *                 "system": "semver" // or "incremental"
      *             }
-     *         }]
+     *         },
+     *         {
+     "             "path": "..\\svr\\assemblyinfo.cs",
+     "             "regex": "AssemblyVersion *\\(VERSION",
+     "             "regexVersion": "[0-9]+\\.[0-9]+\\.[0-9]+\",
+     "             "regexWrite": "AssemblyVersion\\(VERSION",
+     "         }]
      *     }]
+     *
+     * The regex must contain the text 'VERSION' which translates to the capturing
+     * group used to obtain the actual version number, and it must be the first group
+     * if more than one capturing groups exist in the regex.   The 'regexVersion'
+     * property is the regex that will match the version, and defaults to the regex
+     * [0-9a-zA-Z\\.\\-]{5,} if not specified.
+     *
+     * The 'versionInfo' property is optional and defualts to system:semver.
      */
     versionFiles: IVersionFile[];
     /**

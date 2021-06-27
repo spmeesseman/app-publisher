@@ -119,10 +119,15 @@ export async function setNpmVersion(context: IContext)
 
         if (modified) {
             await writeFile(file, JSON.stringify(packageJson, undefined, 4));
+            logger.log(`   Set version        : ${nextRelease.version} (package.json)`);
             if (packageLockFileExists)
             {
                 await writeFile(packageLockFile, JSON.stringify(packageLockJson, undefined, 4));
+                logger.log(`   Set version        : ${nextRelease.version} (package-lock.json)`);
             }
+        }
+        else {
+            logger.warn("   Version was not set");
         }
 
         //

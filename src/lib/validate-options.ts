@@ -2,7 +2,7 @@
 import * as path from "path";
 import { isString, validateVersion } from "./utils/utils";
 import { createDir, pathExists } from "./utils/fs";
-import { IContext } from "../interface";
+import { IContext, IVersionFile } from "../interface";
 
 export = validateOptions;
 
@@ -127,27 +127,26 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     }
 
     //
+    // Version files
     //
-    //
-    if (options.versionFiles)
+    function validateVersionFileDef(vf: IVersionFile)
     {
-        for (const vf of options.versionFiles)
+        if (path.basename(vf.path) !== "package.json")
         {
+            if (!vf.versionInfo)
+            {
+                vf.versionInfo = { version: undefined, system: "semver", info: undefined };
+            }
             if (!vf.regex)
             {
-                if (!vf.versionInfo || !vf.versionInfo.system) {
+                if (vf.versionInfo.system === "semver") {
                     vf.regex = "[0-9a-zA-Z\\.\\-]{5,}";
                 }
                 else {
-                    if (vf.versionInfo.system === "semver") {
-                        vf.regex = "[0-9a-zA-Z\\.\\-]{5,}";
-                    }
-                    else {
-                        vf.regex = "[0-9]+";
-                    }
+                    vf.regex = "[0-9]+";
                 }
             }
-            if (!vf.regexVersion || !vf.regexWrite)
+            if ((!vf.regexVersion || !vf.regexWrite))
             {
                 logger.error("Invalid versionFile regex patterns found");
                 logger.error("   Path           : " + vf.path);
@@ -161,6 +160,24 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
                 logger.error("   Path           : " + vf.path);
                 logger.error("   Regex          : invalid - missing '(VERSION)' capture text");
                 return false;
+            }
+        }
+    }
+    if (options.versionFiles)
+    {
+        for (const vf of options.versionFiles)
+        {
+            validateVersionFileDef(vf);
+            if (vf.setFiles) {
+                if (vf.setFiles.length === 0)
+                {
+                    logger.error("Invalid versionFile 'setFiles' found, cannot be zero length");
+                    logger.error("   Path           : " + vf.path);
+                    return false;
+                }
+                for (const sf of options.versionFiles) {
+                    validateVersionFileDef(sf);
+                }
             }
         }
     }
