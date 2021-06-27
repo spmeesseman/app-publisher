@@ -331,12 +331,13 @@ async function runRelease(context: IContext, plugins: any)
     await fetch(context);
 
     //
-    // Populate context with last release info, populates version number
+    // Populate context with last release info, populates version number, uses
+    // remote method with getTags()
     //
-    const lastRelease = await getLastRelease(context); // calls getTags()
+    const lastRelease = await getLastRelease(context);
 
     //
-    // Populate context with last release version info
+    // Populate context with last release version info, parsed from local version files
     //
     //    version (should be same as context.lastRelease.version)
     //    versionSystem (semver or incremental)
@@ -350,7 +351,7 @@ async function runRelease(context: IContext, plugins: any)
     //
     if (lastRelease.version !== lastRelease.versionInfo.version)
     {
-        if (!options.taskMode)
+        if (!options.taskMode && !options.republish)
         {
             logger.error("Version mismatch found between latest tag and local files");
             logger.error("   Tagged : " + lastRelease.version);
@@ -360,7 +361,8 @@ async function runRelease(context: IContext, plugins: any)
         }
         else {
             logger.warn("Version mismatch found between latest tag and local files");
-            logger.warn("Continuing in task mode");
+            logger.warn(`   Continuing in ${options.taskMode ? "task" : "republish"} mode`);
+            lastRelease.versionInfo.version = lastRelease.version;
         }
     }
 
