@@ -195,8 +195,8 @@ async function setVersionFiles(context: IContext): Promise<void>
                             // then update the files specified by setFiels with that version.
                             //
                             logger.log(`   Read custom version ${match[1]}`);
-                            const regexWrite = versionFileDef.regexWrite.replace("VERSION", match[1]);
-                            logger.log(`   Writing custom version '${regexWrite}' to '${sf.path}'`);
+                            const regexWrite = sf.regexWrite.replace("VERSION", match[1]);
+                            logger.log(`   Writing custom version string '${regexWrite}' to '${sf.path}'`);
                             await replaceInFile(sf.path, regexPattern, regexWrite);
                             await editFile(context, sf.path);
                         }

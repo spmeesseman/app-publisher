@@ -277,7 +277,7 @@ export function readFileSync(file: string)
  * @param nu Text to insert in place of 'old'
  * @param caseSensitive `true` to make the replacement case sensitive
  */
-export async function replaceInFile(file: string, old: string, nu: string, caseSensitive = false)
+export async function replaceInFile(file: string, old: string, nu: string, caseSensitive = true)
 {
     const content = await readFile(file),
           regex = new RegExp(old, caseSensitive ? undefined : "gmi");
