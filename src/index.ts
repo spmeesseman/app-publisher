@@ -367,6 +367,16 @@ async function runRelease(context: IContext, plugins: any)
     }
 
     //
+    // Task '--task-version-current'
+    //
+    if (options.taskVersionCurrent)
+    {
+        context.stdout.write(lastRelease.version);
+        // logTaskResult(true, "task version current", logger);
+        return true;
+    }
+
+    //
     // Populate context with last release info
     //
     context.lastRelease = lastRelease;
@@ -408,7 +418,7 @@ async function runRelease(context: IContext, plugins: any)
         //
         if (!options.versionForceCurrent)
         {
-            if (options.taskVersionCurrent || options.taskVersionNext) {
+            if (options.taskVersionNext) {
                 context.stdout.write(lastRelease.version);
                 return true;
             }
@@ -881,12 +891,6 @@ async function processTasksStdOut1(context: IContext): Promise<boolean>
     if (options.taskDevTest)
     {
         runDevCodeTests(context);
-        return true;
-    }
-    else if (options.taskVersionCurrent)
-    {
-        const versionInfo = await getCurrentVersion(context);
-        context.stdout.write(versionInfo.version);
         return true;
     }
     else if (options.taskVersionPreReleaseId && util.isString(options.taskVersionPreReleaseId))

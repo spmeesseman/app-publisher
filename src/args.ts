@@ -635,7 +635,7 @@ export const publishRcOpts =
     skipVersionEdits: [
         true,
         "flag",
-        "N",
+        "Y",
         "Skip all version edits in version files."
     ],
 

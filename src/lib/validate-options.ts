@@ -367,6 +367,9 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
             options.npmRegistry = "https://registry.npmjs.org";
         }
     }
+    else {
+        options.npmRelease = "N";
+    }
 
     //
     // Convert any Y/N vars to upper case and check validity
@@ -379,6 +382,9 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
             logger.error("Invalid value specified for distRelease, accepted values are Y/N");
             return false;
         }
+    }
+    else {
+        options.distRelease = "N";
     }
 
     //
@@ -404,6 +410,9 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
                 return false;
             }
         }
+    }
+    else {
+        options.githubRelease = "N";
     }
 
     //
@@ -450,6 +459,13 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
             }
         }
     }
+    else {
+        options.mantisbtRelease = "N";
+    }
+
+    //
+    // Other flag types (Y/N)
+    //
 
     if (options.cProjectRcFile) {
         if (!options.cProjectRcFile.toLowerCase().includes((".rc"))) {
@@ -478,12 +494,18 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
             return false;
         }
     }
+    else {
+        options.writeLog = "N";
+    }
 
     if (options.promptVersion) {
         if (options.promptVersion !== "Y" && options.promptVersion !== "N") {
             logger.error("Invalid value specified for promptVersion, accepted values are Y/N");
             return false;
         }
+    }
+    else {
+        options.promptVersion = "N";
     }
 
     if (options.skipChangelogEdits) {
@@ -496,6 +518,9 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
             logger.warn("Overriding skipChangelogEdits on dry run, auto set to 'N'");
         }
     }
+    else {
+        options.skipChangelogEdits = "N";
+    }
 
     if (options.skipVersionEdits) {
         if (options.skipVersionEdits !== "Y" && options.skipVersionEdits !== "N") {
@@ -507,6 +532,10 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
             logger.warn("Overriding skipVersionEdits on dry run, auto set to 'N'");
         }
     }
+    else {
+        options.skipVersionEdits = "Y";
+    }
+
     //
     // Check dist release path for dist release
     //
@@ -578,6 +607,16 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     //
     // *** TASKS ***
     //
+
+    //
+    // --repubish  = no tasks
+    //
+    if (options.republish && options.taskMode)
+    {
+        logger.error("Invalid options specified:");
+        logger.error("  The --republish switch cannot be used in task mode");
+        return false;
+    }
 
     //
     // Set transitive task flags
