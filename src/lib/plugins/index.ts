@@ -92,8 +92,8 @@ module.exports = (context, pluginsPath) =>
 
             pluginsConf[type] = async input =>
                 postprocess(
-                    await pipeline(steps, pipelineConfig && pipelineConfig(pluginsConf, logger))(await preprocess(input)),
-                    input
+                    await pipeline(steps, pipelineConfig && pipelineConfig(pluginsConf, logger))(await preprocess(input)) // ,
+                    // input
                 );
 
             return pluginsConf;
