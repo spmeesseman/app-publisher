@@ -349,9 +349,8 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     }
     if (options.npmRelease)
     {
-        options.npmRelease = options.npmRelease.toUpperCase();
         if (options.npmRelease !== "Y" && options.npmRelease !== "N") {
-            logger.error("Invalid value specified for npmRelease, accepted values are y/n/Y/N");
+            logger.error("Invalid value specified for npmRelease, accepted values are Y/N");
             return false;
         }
         if (options.npmPackDist === "Y")
@@ -376,9 +375,8 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
         options.distRelease = "Y";
     }
     if (options.distRelease) {
-        options.distRelease = options.distRelease.toUpperCase();
         if (options.distRelease !== "Y" && options.distRelease !== "N") {
-            logger.error("Invalid value specified for distRelease, accepted values are y/n/Y/N");
+            logger.error("Invalid value specified for distRelease, accepted values are Y/N");
             return false;
         }
     }
@@ -390,9 +388,8 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
         options.githubRelease = "Y";
     }
     if (options.githubRelease) {
-        options.githubRelease = options.githubRelease.toUpperCase();
         if (options.githubRelease !== "Y" && options.githubRelease !== "N") {
-            logger.error("Invalid value specified for githubRelease, accepted values are y/n/Y/N");
+            logger.error("Invalid value specified for githubRelease, accepted values are Y/N");
             return false;
         }
         if (options.githubRelease === "Y")
@@ -430,9 +427,8 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     }
     if (options.mantisbtRelease)
     {
-        options.mantisbtRelease = options.mantisbtRelease.toUpperCase();
         if (options.mantisbtRelease !== "Y" && options.mantisbtRelease !== "N") {
-            logger.error("Invalid value specified for mantisbtRelease, accepted values are y/n/Y/N");
+            logger.error("Invalid value specified for mantisbtRelease, accepted values are Y/N");
             return false;
         }
         if (options.mantisbtRelease === "Y")
@@ -467,9 +463,8 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     }
 
     if (options.dryRunVcRevert) {
-        options.dryRunVcRevert = options.dryRunVcRevert.toUpperCase();
         if (options.dryRunVcRevert !== "Y" && options.dryRunVcRevert !== "N") {
-            logger.error("Invalid value specified for testModeSvnRevert, accepted values are y/n/Y/N");
+            logger.error("Invalid value specified for testModeSvnRevert, accepted values are Y/N");
             return false;
         }
     }
@@ -478,25 +473,22 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     }
 
     if (options.writeLog) {
-        options.writeLog = options.writeLog.toUpperCase();
         if (options.writeLog !== "Y" && options.writeLog !== "N") {
-            logger.error("Invalid value specified for writeLog, accepted values are y/n/Y/N");
+            logger.error("Invalid value specified for writeLog, accepted values are Y/N");
             return false;
         }
     }
 
     if (options.promptVersion) {
-        options.promptVersion = options.promptVersion.toUpperCase();
         if (options.promptVersion !== "Y" && options.promptVersion !== "N") {
-            logger.error("Invalid value specified for promptVersion, accepted values are y/n/Y/N");
+            logger.error("Invalid value specified for promptVersion, accepted values are Y/N");
             return false;
         }
     }
 
     if (options.skipChangelogEdits) {
-        options.skipChangelogEdits = options.skipChangelogEdits.toUpperCase();
         if (options.skipChangelogEdits !== "Y" && options.skipChangelogEdits !== "N") {
-            logger.error("Invalid value specified for skipChangelogEdits, accepted values are y/n/Y/N");
+            logger.error("Invalid value specified for skipChangelogEdits, accepted values are Y/N");
             return false;
         }
         if (options.dryRun === true && !options.taskMode) {
@@ -506,9 +498,8 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     }
 
     if (options.skipVersionEdits) {
-        options.skipVersionEdits = options.skipVersionEdits.toUpperCase();
         if (options.skipVersionEdits !== "Y" && options.skipVersionEdits !== "N") {
-            logger.error("Invalid value specified for skipVersionEdits, accepted values are y/n/Y/N");
+            logger.error("Invalid value specified for skipVersionEdits, accepted values are Y/N");
             return false;
         }
         if (options.dryRun === true) {

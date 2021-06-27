@@ -58,7 +58,7 @@ export interface IContext
     commits: ICommit[];
     cwd: string;
     env: any;
-    lastRelease: ILastRelease;
+    lastRelease: IRelease;
     logger: any;
     nextRelease: INextRelease;
     options: IOptions;
@@ -81,7 +81,7 @@ export interface IReturnStatus
 }
 
 
-export interface ILastRelease
+export interface IRelease
 {
     head: string;
     tag: string;
@@ -90,14 +90,10 @@ export interface ILastRelease
 }
 
 
-export interface INextRelease
+export interface INextRelease extends IRelease
 {
     edits: IEdit[];
-    head: string;
     level: "major" | "premajor" | "minor" | "preminor" | "patch" | "prepatch" | "prerelease";
-    tag: string;
-    version: string;
-    versionInfo: IVersionInfo;
 }
 
 
@@ -198,7 +194,7 @@ export interface IOptions
      * Add the contents of the directory specified by the 'dist' property to
      * version control, if not already.  Ignored if distRelease = N.
      */
-    distAddAllToVC: string; // flag
+    distAddAllToVC: "Y" | "N";
     /**
      * The network path to use as the destination directory for a standard,
      * 'dist' release's documentation directory.  All PDF files found within,
@@ -218,7 +214,7 @@ export interface IOptions
     /**
      * Build a standard release to be uploaded to a network share.
      */
-    distRelease: string; // flag
+    distRelease: "Y" | "N";
     /**
      * The network path to use as the destination directory for a standard 'dist', directory release.
      * Will be renamed to 'distDestPath' in a future release.
@@ -252,7 +248,7 @@ export interface IOptions
     /**
      * Reverts all file modification made during a 'dry run' using version control.
      */
-    dryRunVcRevert: string; // flag
+    dryRunVcRevert: "Y" | "N";
     /**
      * A link or list of links to insert into an email notification in the form 'link|name'.
      */
@@ -270,7 +266,7 @@ export interface IOptions
     /**
      * Send a release email notification.
      */
-    emailNotification: string;  // flag
+    emailNotification: "Y" | "N";
     /**
      * The email address to use as the 'To' address when sending an email notification.
      */
@@ -292,11 +288,11 @@ export interface IOptions
      * Edit the manipulated changelog before creating the Github release.,
      * Ignored if githubRelease = N.
      */
-    githubChglogEdit: string;  // flag
+    githubChglogEdit: "Y" | "N";
     /**
      * Perform a Github release.
      */
-    githubRelease: string;  // flag
+    githubRelease: "Y" | "N";
     /**
      * A script or list of scripts to run for the release stage, after creating a Github release.,
      * Ignored if githubRelease = N.
@@ -355,11 +351,11 @@ export interface IOptions
      * Edit the manipulated changelog before creating the MantisBT release.,
      * Ignored if mantisbtRelease = N.
      */
-    mantisbtChglogEdit: string;  // flag
+    mantisbtChglogEdit: "Y" | "N";
     /**
      * Specifies this project is a MantisBT plugin.
      */
-    mantisbtPlugin: string;  // flag
+    mantisbtPlugin: string;
     /**
      * The MantisBT project name, if different than the main project name specified by 'projectName'.
      */
@@ -367,7 +363,7 @@ export interface IOptions
     /**
      * Perform a MantisBT release.
      */
-    mantisbtRelease: string;  // flag
+    mantisbtRelease: "Y" | "N";
     /**
      * A script or list of scripts to run for the release stage, after creating a MantisBT release.
      * Ignored if mantisbtRelease = N.
@@ -392,7 +388,7 @@ export interface IOptions
      * Copy the NPM package to the directory specified by 'pathToDist'.,
      * Ignored if npmRelease = N.
      */
-    npmPackDist: string;  // flag
+    npmPackDist: "Y" | "N";
     /**
      * The URL of the NPM registry to use for making an NPM release.
      * Ignored if npmRelease = N.
@@ -402,7 +398,7 @@ export interface IOptions
     /**
      * Perform an NPM release.
      */
-    npmRelease: string;  // flag
+    npmRelease: "Y" | "N";
     /**
      * A script or list of scripts to run for the release stage, after creating an NPM release.
      * Ignored if npmRelease = N.
@@ -421,7 +417,7 @@ export interface IOptions
     /**
      * Perform a Nuget release.  Not supported as of this version.
      */
-    nugetRelease: string;  // flag
+    nugetRelease: "Y" | "N";
     /**
      * The local path to use as the source directory for a standard 'dist' release.
      * Will be renamed to 'distSrcPath' in a future release.,
@@ -455,7 +451,7 @@ export interface IOptions
     /**
      * Prompt for version.  The recommended version will be displayed at the prompt.
      */
-    promptVersion: string;  // flag
+    promptVersion: "Y" | "N";
     /**
      *
      */
@@ -500,9 +496,10 @@ export interface IOptions
      *     2. svn
      * Defaults to 'git'.
      */
-    repoType: string; // enum(git|svn)
+    repoType: "git" | "svn";
     /**
-     * Re-publish the current/latest release.
+     * Re-publish the current/latest release.  Can be used for multi-publish / multi-publishrc
+     * configs to bypass local version file validation.
      */
     republish: boolean;
     /**
@@ -511,17 +508,17 @@ export interface IOptions
      * internal commit parser.
      * Defaults to N
      */
-    skipChangelogEdits: string;  // flag,
+    skipChangelogEdits: "Y" | "N";
     /**
      * Skip committing changes to version control when the final release stage is finished.
      * Defaults to N
      */
-    skipCommit: string;  // flag,
+    skipCommit: "Y" | "N";
     /**
      * Skip all version edits in version files.
      * Defaults to N
      */
-    skipVersionEdits: string;  // flag
+    skipVersionEdits: "Y" | "N";
     /**
      * @readonly
      */
@@ -827,5 +824,5 @@ export interface IOptions
     /**
      * In addition to stdout, writes a log to LOCALAPPDATA\\app-publisher\\log
      */
-    writeLog: string; // flag
+    writeLog: "Y" | "N";
 }

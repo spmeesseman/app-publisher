@@ -610,7 +610,8 @@ export const publishRcOpts =
         false,
         [ "-r", "--republish" ],
         {
-            help: "Re-publish the current/latest release."
+            help: "Re-publish the current/latest release.  Can be used for multi-publish\n" +
+                  "/ multi-publishrc configs to bypass local version file validation."
         }
     ],
 
