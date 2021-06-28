@@ -8,3 +8,5 @@ README.pdf
 history.txt
 install/disthistory.txt
 install/dist/app-publisher.tgz
+.nyc_output
+.coverage

@@ -207,6 +207,9 @@ pipeline {
       }
       steps {
         echo "Run tests"
+        nodejs("Node 12") {
+          bat "npm run test"
+        }
       }
     }
 
