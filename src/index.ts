@@ -361,6 +361,9 @@ async function runRelease(context: IContext)
         else {
             logger.warn("Version mismatch found between latest tag and local files");
             logger.warn(`   Continuing in ${options.taskMode ? "task" : "republish"} mode`);
+            //
+            // Replace locally extracted version with tag version
+            //
             lastRelease.versionInfo.version = lastRelease.version;
         }
     }
@@ -435,6 +438,7 @@ async function runRelease(context: IContext)
         if (options.versionForceNext)
         {
             logger.log("Forcing next version to " + options.versionForceNext);
+            logger.log("   From version : " + nextRelease.version);
             nextRelease.version = options.versionForceNext;
             if (!util.validateVersion(nextRelease.version, lastRelease.version, logger))
             {

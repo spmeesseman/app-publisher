@@ -2,7 +2,7 @@
 
 [![authors](https://img.shields.io/badge/authors-scott%20meesseman-6F02B5.svg?logo=visual%20studio%20code)](https://www.littlesm.com)
 [![app-category](https://img.shields.io/badge/category-releases%20automation%20npm-blue.svg)](https://www.spmeesseman.com)
-[![app-lang](https://img.shields.io/badge/language-typescript%20powershell5-blue.svg)](https://www.spmeesseman.com)
+[![app-lang](https://img.shields.io/badge/language-typescript%20powershell-blue.svg)](https://www.spmeesseman.com)
 [![app-publisher](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-app--publisher-e10000.svg)](https://www.spmeesseman.com)
 
 [![GitHub issues open](https://img.shields.io/github/issues-raw/spmeesseman/app%2dpublisher.svg?logo=github)](https://github.com/spmeesseman/app-publisher/issues)
@@ -10,6 +10,8 @@
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/spmeesseman/app%2dpublisher.svg?logo=github)](https://github.com/spmeesseman/app-publisher/pulls)
 [![GitHub last commit](https://img.shields.io/github/last-commit/spmeesseman/app%2dpublisher.svg?logo=github)](https://github.com/spmeesseman/app-publisher)
 [![PayPalDonate](https://img.shields.io/badge/paypal-donate-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=YWZXT3KE2L4BA&item_name=taskexplorer&currency_code=USD)
+[![codecov](https://codecov.io/gh/spmeesseman/app-publisher/branch/master/graph/badge.svg)](https://codecov.io/gh/spmeesseman/app-publisher)
+[![CodeFactor](https://www.codefactor.io/repository/github/spmeesseman/app-publisher/badge)](https://www.codefactor.io/repository/github/spmeesseman/app-publisher)
 
 ![app-publisher-cmdline-banner](../res/readme/cmdline-banner.png?raw=true)
 
