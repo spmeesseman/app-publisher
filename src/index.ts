@@ -36,7 +36,7 @@ const pkg = require("../package.json");
 marked.setOptions({ renderer: new TerminalRenderer() });
 
 
-async function run(context: IContext)
+async function runStart(context: IContext)
 {
     const { cwd, env, options, logger } = context;
     const runTxt = !options.dryRun ? "run" : "test run";
@@ -1023,7 +1023,7 @@ export = async (opts = {}, { cwd = process.cwd(), env = process.env, stdout = un
 
     try {
         try {
-            const result = await run(context);
+            const result = await runStart(context);
             unhook();
             return result;
         }

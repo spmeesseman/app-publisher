@@ -3,20 +3,28 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 import { ICommitMessageMap, IContext, IOptions, IVersionFile } from "../interface";
 import { expect } from "chai";
+import getOptions = require("../lib/get-options");
+import { runApTest } from "./helper";
+
 
 describe("Options tests", () =>
 {
-    it("checking default options", () =>
+    it("checking default options", async () =>
     {
-        // const options = new Options();
+        const options = getOptions(false);
+
+        
 
         // console.log(options.taskBuild);
 
-        // expect(options.taskBuild).to.equal(false, "taskBuild");
-        // expect(options.historyFile).to.equal(80);
-        // expect(options.skipVersionEdits).to.equal("Y");
-        // expect(options.skipChangelogEdits).to.equal("N");
+        expect(options.taskBuild).to.equal(false, "taskBuild");
+        expect(options.historyFile).to.equal(80);
+        expect(options.skipVersionEdits).to.equal("Y");
+        expect(options.skipChangelogEdits).to.equal("N");
         // expect(options.interactivity.modes.emitters).to.be.empty;
-        // expect(options.particles.color).to.be.an("object").to.have.property("value").to.equal("#fff");
+        expect(options.versionFiles).to.be.an("array").to.have.property("path"); //.to.equal("#fff");
+
+        options.taskCiEnv = true;
+        runApTest(options);
     });
 });
