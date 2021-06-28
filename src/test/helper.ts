@@ -42,11 +42,22 @@ export async function getApOptions(cmdOpts?: string[])
 {
     const procArgv = [ ...process.argv ];
     process.argv = cmdOpts ? [ "", "", ...cmdOpts ] : [ "", "" ];
-    const argOptions = getOptions(false);
-    context = context ?? await getContext({} as IOptions, process.cwd(), process.env, process.stdout, process.stderr);
-    await validateOptions(context);
-    const { options } = await getConfig(context, argOptions);
+    if (!context) {
+        const argOptions = getOptions(process.env, process.cwd(), false);
+        context = await getContext(argOptions, process.cwd(), process.env, process.stdout, process.stderr);
+    }
+    else {
+        const argOptions = getOptions(context.env, context.cwd, false);
+        const { options, plugins } = await getConfig(context, argOptions);
+        context.options = options;
+        context.plugins = plugins;
+    }
     await validateOptions(context);
     process.argv = procArgv;
-    return options;
+    return context.options;
+}
+
+export async function getApContext()
+{
+    return context;
 }

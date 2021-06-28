@@ -2,11 +2,13 @@ import chalk from "chalk";
 import gradient from "gradient-string";
 import { publishRcOpts } from "../args";
 import { IOptions } from "../interface";
+const pkg = require("../../package.json");
+const envCi = require("@spmeesseman/env-ci");
 
 export = getOptions;
 
 
-function getOptions(useBanner = true): IOptions
+function getOptions(env: any, cwd: string, useBanner = true): IOptions
 {
     const version = require("../../package.json").version,
           banner = apBanner(version),
@@ -19,12 +21,40 @@ function getOptions(useBanner = true): IOptions
     });
     const opts = parser.parseArgs(publishRcOpts);
 
+    opts.ciInfo = envCi({ env, cwd });
+
+    //
+    // Set branch to CI branch if not already set
+    //
+    if (!opts.branch) {
+        opts.branch = opts.ciInfo.ciBranch;
+    }
+
     //
     // Set task mode stdout flag on the options object
     //
     opts.taskModeStdOut = !!(opts.taskVersionCurrent || opts.taskVersionNext || opts.taskVersionInfo ||
                              opts.taskCiEvInfo || opts.taskVersionPreReleaseId || opts.taskChangelogPrint ||
                              opts.taskChangelogPrintVersion);
+    //
+    // Set task mode flag on the options object
+    //
+    for (const o in opts)
+    {
+        if (o.startsWith("task")) {
+            if (opts[o] === true || (o === "taskChangelogPrintVersion" && opts[o]) || (o === "taskChangelogViewVersion" && opts[o])) {
+                opts.taskMode = true;
+                break;
+            }
+        }
+    }
+
+    //
+    // Set some additional options
+    //
+    opts.appPublisherVersion = pkg.version;
+    opts.isNodeJsEnv = typeof module !== "undefined" && module.exports;
+
     //
     // Display color banner
     // If opts.verbose s set, then the ArgumentParser will have diplayed the banner already

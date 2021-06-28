@@ -6,37 +6,22 @@ import { expect } from "chai";
 import getContext = require("../lib/get-context");
 import getOptions = require("../lib/get-options");
 import validateOptions = require("../lib/validate-options");
-import { runApTest } from "./helper";
+import { getApOptions, runApTest } from "./helper";
 
 
 suite("Options tests", () =>
 {
 
-    let procArgv;
-
-
-    suiteSetup(async () =>
-    {
-        procArgv = [ ...process.argv ];
-        process.argv = [ "", "" ];
-	});
-
-
-	suiteTeardown(async () =>
-    {
-		process.argv = procArgv;
-	});
-
-
     test("stdout tasks", async () =>
     {
-        const cmdOpts = getOptions(false),
-              context = await getContext(cmdOpts, process.cwd(), process.env, process.stdout, process.stderr),
-              options = context.options;
-
-        await validateOptions(context);
+        // const options = await getApOptions([ "--no-ci" ]);
+        const options = await getApOptions();
 
         options.taskCiEnv = true;
+        runApTest(options);
+
+        options.taskCiEnv = false;
+        options.taskDevTest = true;
         runApTest(options);
     });
 

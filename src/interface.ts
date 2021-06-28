@@ -67,6 +67,20 @@ export interface IContext
     stderr: any;
 }
 
+
+export interface ICiEnvironmentInfo
+{
+    branch: string;
+    build: string;
+    buildUrl: string;
+    commit: string;
+    isCi: boolean;
+    isPr: boolean;
+    name: string;
+    root: string;
+}
+
+
 export interface IEdit
 {
     path: string;
@@ -164,6 +178,10 @@ export interface IOptions
      * The location of this changelog file (markdown format), can be a relative or full path.
      */
     changelogFile: string;
+    /**
+     * Continous Integration Info
+     */
+    ciInfo: ICiEnvironmentInfo;
     /**
      * A map of additional subject tags used in commits that will be used to, increment the
      * version and be included in the changelog, for example:,

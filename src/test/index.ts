@@ -1,3 +1,5 @@
+/* eslint-disable no-empty-function */
+/* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable prefer-arrow/prefer-arrow-functions */
 "use strict";

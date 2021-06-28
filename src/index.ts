@@ -29,8 +29,6 @@ import { createSectionFromCommits, doEdit, getProjectChangelogFile, populateChan
 import { commit, fetch, verifyAuth, getHead, tag, push, revert } from "./lib/repo";
 import { EOL } from "os";
 import { IContext, INextRelease, IOptions } from "./interface";
-const envCi = require("@spmeesseman/env-ci");
-const pkg = require("../package.json");
 
 
 marked.setOptions({ renderer: new TerminalRenderer() });
@@ -38,8 +36,11 @@ marked.setOptions({ renderer: new TerminalRenderer() });
 
 async function runStart(context: IContext)
 {
-    const { cwd, env, options, logger } = context;
+    const { env, options, logger } = context;
     const runTxt = !options.dryRun ? "run" : "test run";
+    const {
+        isCi, branch: ciBranch, isPr, name: ciName, root: ciRoot, build: ciBuild, buildUrl: ciBuildUrl, commit: ciCommit
+    } = options.ciInfo;
 
     //
     // If user specified 'cfg' or '--config', then just display config and exit
@@ -54,17 +55,6 @@ async function runStart(context: IContext)
         context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
         context.stdout.write(JSON.stringify(options, undefined, 3));
         return true;
-    }
-
-    const {
-        isCi, branch: ciBranch, isPr, name: ciName, root: ciRoot, build: ciBuild, buildUrl: ciBuildUrl, commit: ciCommit
-    } = envCi({ env, cwd });
-
-    //
-    // Set branch to CI branch if not already set
-    //
-    if (!options.branch) {
-        options.branch = ciBranch;
     }
 
     //
@@ -95,25 +85,6 @@ async function runStart(context: IContext)
     }
 
     //
-    // Set some additional options
-    //
-    options.appPublisherVersion = pkg.version;
-    options.isNodeJsEnv = typeof module !== "undefined" && module.exports;
-
-    //
-    // Set task mode flag on the options object
-    //
-    for (const o in options)
-    {
-        if (o.startsWith("task")) {
-            if (options[o] === true || (o === "taskChangelogPrintVersion" && options[o]) || (o === "taskChangelogViewVersion" && options[o])) {
-                options.taskMode = true;
-                break;
-            }
-        }
-    }
-
-    //
     // Display mode - bin mode, or node env
     //
     if (!options.taskModeStdOut)
@@ -121,7 +92,7 @@ async function runStart(context: IContext)
         const mode = options.isNodeJsEnv ? "Node.js" : "bin mode";
         context.stdout.write(EOL);
         logger.log("Loaded config from " + options.configFilePath);
-        logger.log(`Running ${pkg.name} version ${pkg.version} in ${mode}`);
+        logger.log(`Running in ${mode}`);
     }
 
     //
@@ -210,14 +181,6 @@ async function runStart(context: IContext)
     }
     catch (e) {
         await callFail(context, e);
-        const eStr = e.toString();
-        logger.error("Release run threw failure exception");
-        if (eStr.endsWith("\n")) {
-            context.stdout.write(`Exception:  ${eStr}${EOL}`);
-        }
-        else {
-            logger.error(eStr);
-        }
     }
 
     return success;
@@ -1001,7 +964,16 @@ async function revertChanges(context: IContext)
 
 async function callFail(context: IContext, err: Error)
 {
+    const eStr = err.toString(),
+          { logger } = context;
     await revertChanges(context);
+    logger.error("Release run threw failure exception");
+    if (eStr.endsWith("\n")) {
+        context.stdout.write(`Exception:  ${eStr}${EOL}`);
+    }
+    else {
+        logger.error(eStr);
+    }
     // const errors = util.extractErrors(err).filter(err => err.appPublisher);
     // logErrors(context, error);
     // if (errors.length > 0)

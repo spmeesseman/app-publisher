@@ -13,9 +13,8 @@ function error(logger: any, err: string)
     return false;
 }
 
-async function validateOptions({cwd, env, logger, options}: IContext): Promise<boolean>
+async function validateOptions({cwd, env, logger, options}: any): Promise<boolean>
 {
-    const environ = { ...process.env, ...env };
     logger.log("Validating all options...");
 
     //
@@ -213,7 +212,7 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     {   //
         // Define log folder name
         //
-        const logFolder = path.join(environ.LOCALAPPDATA, "app-publisher", "log");
+        const logFolder = path.join(env.LOCALAPPDATA, "app-publisher", "log");
         //
         // Define log file name
         //
@@ -316,7 +315,7 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
         if (!options.textEditor.toLowerCase().startsWith("notepad") && !(await pathExists(options.textEditor, false)))
         {
             let found = false;
-            const paths = environ.Path.split(";");
+            const paths = process.platform === "win32" ? env.Path.split(";") : env.PATH.split(";");
             for (const p of paths)
             {
                 let fullPath = path.join(p, options.textEditor);
@@ -417,7 +416,7 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
                 logger.error("You must specify githubUser for a GitHub release type");
                 return false;
             }
-            if (!environ.GITHUB_TOKEN) {
+            if (!env.GITHUB_TOKEN) {
                 logger.error("You must have GITHUB_TOKEN defined in the environment for a GitHub release type");
                 logger.error("Set the environment variable GITHUB_TOKEN using the token value created on the GitHub website");
                 return false;
