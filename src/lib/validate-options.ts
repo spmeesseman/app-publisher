@@ -19,6 +19,19 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     logger.log("Validating all options...");
 
     //
+    // Set undefined options to defaults
+    //
+    // for (const o in options)
+    // {
+    //     if (o.startsWith("task"))
+    //     {
+    //         if (options[o] === undefined) {
+    //             options[o] = false;
+    //         }
+    //     }
+    // }
+
+    //
     // Convert array params to arrays, if specified as string on cmdline or publishrc
     //
     if (options.deployCommand && isString(options.deployCommand))

@@ -2,5 +2,6 @@
     "extension": ["ts"],
     "require": "ts-node/register",
     "spec": "src/**/*.test.ts",
-    "reporter": "dot"
+    "reporter": "dot",
+    "ui": "tdd"
 }
