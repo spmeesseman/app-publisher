@@ -49,7 +49,8 @@ export async function setMantisBtVersion(context: IContext)
         //
         // Replace version in defined main mantisbt plugin file
         //
-        await replaceInFile(options.mantisbtPlugin, "this->version[ ]*[=][ ]*['\"][0-9a-z.\-]+", `this->version = '${nextRelease.version}`);
+        await replaceInFile(options.mantisbtPlugin, "this->version *= *'[0-9a-z.\-]+'", `this->version = '${nextRelease.version}'`);
+        await replaceInFile(options.mantisbtPlugin, "this->version *= *\"[0-9a-z.\-]+\"", `this->version = "${nextRelease.version}"`);
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
