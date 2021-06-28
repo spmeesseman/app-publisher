@@ -8,8 +8,8 @@
         "install",
         "res",
         "script",
-        "**/*.spec.ts",
-        "src/test"
+        "**/*.spec.ts" // ,
+        // "src/test"
     ],
     "compilerOptions": {
         "module": "commonjs",
@@ -28,5 +28,8 @@
         //     "dom",
         //     "es6"
         // ]
-    }
+    } // ,
+	// "references": [ 
+	// 	{ "path": "./src/test" }
+	// ]
 }

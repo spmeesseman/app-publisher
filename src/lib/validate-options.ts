@@ -638,6 +638,8 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
         options.taskChangelog = true;
     }
     if (options.taskEmail || options.taskVersionUpdate || options.taskMantisbtRelease) {
+        logger.warn("Level 3 task detected, the following flags/properties have been cleared:");
+        logger.warn("   skipChangelogEdits");
         options.skipChangelogEdits = "Y";
     }
 

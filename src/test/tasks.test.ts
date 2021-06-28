@@ -11,6 +11,19 @@ import { runApTest } from "./helper";
 
 suite("Options tests", () =>
 {
+
+    suiteSetup(async () =>
+    {
+		
+	});
+
+
+	suiteTeardown(async () =>
+    {
+		
+	});
+
+
     test("checking default options", async () =>
     {
         const procArgv = [ ...process.argv ];
@@ -27,4 +40,5 @@ suite("Options tests", () =>
 
         process.argv = procArgv;
     });
+
 });

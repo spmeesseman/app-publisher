@@ -6,44 +6,57 @@ import { expect } from "chai";
 import getContext = require("../lib/get-context");
 import getOptions = require("../lib/get-options");
 import validateOptions = require("../lib/validate-options");
+import { AsyncResource } from "async_hooks";
+import getConfig = require("../lib/get-config");
 
 
 suite("Options tests", () =>
 {
+    let procArgv: any,
+        cmdOpts: any,
+        context: IContext,
+        options: IOptions;
+
     suiteSetup(async () =>
     {
-		
+		procArgv = [ ...process.argv ];
+        process.argv = [ "", "" ];
 	});
 
 
 	suiteTeardown(async () =>
     {
-		
+		process.argv = procArgv;
 	});
 
 
-    test("checking default options", async () =>
+    test("check default options", async () =>
     {
-        const procArgv = [ ...process.argv ];
-        process.argv = [ "", "" ];
-
-        const cmdOpts = getOptions(false),
-              context = await getContext(cmdOpts, process.cwd(), process.env, process.stdout, process.stderr),
-              options = context.options;
-
+        cmdOpts = getOptions(false),
+        context = await getContext(cmdOpts, process.cwd(), process.env, process.stdout, process.stderr),
+        options = context.options;
         await validateOptions(context);
 
         console.log(JSON.stringify(options, undefined, 2));
-        console.log(process.cwd());
+
         expect(options.taskBuild).to.equal(undefined, "taskBuild");
-        expect(options.historyLineLen).to.equal(80);
-        expect(options.skipVersionEdits).to.equal("Y");
-        expect(options.skipChangelogEdits).to.equal("N");
+        expect(options.historyLineLen).to.equal(80, "historyLineLen");
+        expect(options.skipVersionEdits).to.equal("Y", "skipVersionEdits");
+        expect(options.skipChangelogEdits).to.equal("Y", "skipChangelogEdits");
+
+        // options.noCi = true;
+        process.argv = [ "", "", "--no-ci" ];
+        cmdOpts = getOptions(false),
+        { options } = await getConfig(context, cmdOpts);
+        await validateOptions(context);
+
+        expect(options.skipVersionEdits).to.equal("Y", "skipVersionEdits (--no-ci)");
+        expect(options.skipChangelogEdits).to.equal("N", "skipChangelogEdits (--no-ci)");
+
         // expect(options.interactivity.modes.emitters).to.be.empty;
-        expect(options.versionFiles).to.be.an("array").to.be.empty; // .to.have.property("path"); //.to.equal("#fff");
+        // expect(options.versionFiles).to.be.an("array").to.be.empty; // .to.have.property("path"); //.to.equal("#fff");
 
         options.taskCiEnv = true;
-
-        process.argv = procArgv;
     });
+
 });
