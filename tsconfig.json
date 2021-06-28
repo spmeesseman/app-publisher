@@ -8,6 +8,8 @@
         "install",
         "res",
         "script",
+        // ".vscode",
+        // ".github",
         "**/*.spec.ts" // ,
         // "src/test"
     ],
@@ -21,6 +23,10 @@
         "sourceMap": true,
         // "strict": true,
         "esModuleInterop": true,
+        // "typeRoots": [
+        //     "./types",
+        //     "./node_modules/@types"
+        // ],
         "allowSyntheticDefaultImports": true,
         //"esModuleInterop": true,
         "lib": ["ES2019"]

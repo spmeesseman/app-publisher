@@ -12,23 +12,24 @@ import { runApTest } from "./helper";
 suite("Options tests", () =>
 {
 
+    let procArgv;
+
+
     suiteSetup(async () =>
     {
-		
+        procArgv = [ ...process.argv ];
+        process.argv = [ "", "" ];
 	});
 
 
 	suiteTeardown(async () =>
     {
-		
+		process.argv = procArgv;
 	});
 
 
-    test("checking default options", async () =>
+    test("stdout tasks", async () =>
     {
-        const procArgv = [ ...process.argv ];
-        process.argv = [ "", "" ];
-
         const cmdOpts = getOptions(false),
               context = await getContext(cmdOpts, process.cwd(), process.env, process.stdout, process.stderr),
               options = context.options;
@@ -37,8 +38,6 @@ suite("Options tests", () =>
 
         options.taskCiEnv = true;
         runApTest(options);
-
-        process.argv = procArgv;
     });
 
 });
