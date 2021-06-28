@@ -6,9 +6,26 @@ import hideSensitive = require("./lib/hide-sensitive");
 import gradient from "gradient-string";
 import chalk from "chalk";
 import { publishRcOpts } from "./args";
+import { IOptions } from "./interface";
 
 
 export = async () =>
+{
+    try {
+        await require(".")(getOptions());
+        return 0;
+    }
+    catch (error)
+    {
+        if (error.name !== "YError") {
+            stderr.write(hideSensitive(env)(util.inspect(error, {colors: true})));
+        }
+    }
+    return 1;
+};
+
+
+function getOptions(displayBanner = true): IOptions
 {
     const version = require("../package.json").version,
           banner = apBanner(version),
@@ -27,28 +44,18 @@ export = async () =>
     opts.taskModeStdOut = !!(opts.taskVersionCurrent || opts.taskVersionNext || opts.taskVersionInfo ||
                              opts.taskCiEvInfo || opts.taskVersionPreReleaseId || opts.taskChangelogPrint ||
                              opts.taskChangelogPrintVersion);
-
-    try {  //
-          // Display color banner
-         // If opts.verbose s set, then the ArgumentParser will have diplayed the banner already
-        // For stdout type tasks, then we dont display the banner or anything else for that matter.
-        //
-        if (!opts.taskModeStdOut && !opts.verbose) {
-            displayIntro(banner);
-        }
-
-        await require(".")(opts);
-        return 0;
-    }
-    catch (error)
-    {
-        if (error.name !== "YError") {
-            stderr.write(hideSensitive(env)(util.inspect(error, {colors: true})));
+    //
+    // Display color banner
+    // If opts.verbose s set, then the ArgumentParser will have diplayed the banner already
+    // For stdout type tasks, then we dont display the banner or anything else for that matter.
+    //
+    if (!opts.taskModeStdOut && !opts.verbose && displayBanner) {
+        displayIntro(banner);
     }
 
-    return 1;
-  }
-};
+    return opts;
+}
+
 
 function apBanner(version: string)
 {
@@ -60,7 +67,8 @@ function apBanner(version: string)
         |_|    |_|       |_|`;
 }
 
-function displayIntro(banner)
+
+function displayIntro(banner: string)
 {
     console.log(chalk.bold(gradient("cyan", "pink").multiline(banner, {interpolation: "hsv"})));
 }

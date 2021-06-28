@@ -66,13 +66,12 @@ export function parseConfig(plugin)
     if (isArray(plugin))
     {
         [path, config] = plugin;
-    } 
+    }
     else if (isPlainObject(plugin) && !isNil(plugin.path))
     {
         ({ path, ...config } = plugin);
-    } 
-    else
-    {
+    }
+    else {
         path = plugin;
     }
 

@@ -5,14 +5,15 @@ import PLUGINS_DEFINITIONS from "../definitions/plugins";
 const { validatePlugin, validateStep, loadPlugin, parseConfig } = require("./utils");
 import pipeline from "./pipeline";
 import normalize from "./normalize";
+import { IContext } from "../../interface";
 
-module.exports = (context, pluginsPath) =>
+module.exports = (context: IContext, pluginsPath) =>
 {
     let { options, logger } = context;
     const errors = [];
 
-    const plugins = options.plugins
-        ? castArray(options.plugins).reduce((plugins, plugin) =>
+    const plugins = context.plugins
+        ? castArray(context.plugins).reduce((plugins, plugin) =>
         {
             if (validatePlugin(plugin))
             {

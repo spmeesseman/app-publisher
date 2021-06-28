@@ -7,29 +7,28 @@ import marked from "marked";
 import TerminalRenderer from "marked-terminal";
 import hookStd from "hook-std";
 import hideSensitive = require("./lib/hide-sensitive");
-import getConfig = require("./lib/get-config");
 import getReleaseLevel = require("./lib/commit-analyzer");
 import verify = require("./lib/verify");
 import getCommits = require("./lib/get-commits");
+import getContext from "./lib/get-context";
 import getCurrentVersion = require("./lib/version/get-current-version");
-import { getNextVersion } from "./lib/version/get-next-version";
-import getLastRelease = require("./lib/get-last-release");
-import getGitAuthUrl = require("./lib/get-git-auth-url");
-import getLogger = require("./lib/get-logger");
-import validateOptions = require("./lib/validate-options");
-import doDistRelease = require("./lib/releases/dist");
-import { doGithubRelease, publishGithubRelease } from "./lib/releases/github";
 import doMantisbtRelease = require("./lib/releases/mantisbt");
 import setVersions = require("./lib/version/set-versions");
-import { last, template } from "lodash";
+import getLastRelease = require("./lib/get-last-release");
+import getGitAuthUrl = require("./lib/get-git-auth-url");
+import validateOptions = require("./lib/validate-options");
+import doDistRelease = require("./lib/releases/dist");
+import runDevCodeTests = require("./test");
+import { getNextVersion } from "./lib/version/get-next-version";
+import { doGithubRelease, publishGithubRelease } from "./lib/releases/github";
+import { template } from "lodash";
 import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
 import { sendNotificationEmail } from "./lib/email";
 import { writeFile } from "./lib/utils/fs";
 import { createSectionFromCommits, doEdit, getProjectChangelogFile, populateChangelogs } from "./lib/changelog-file";
 import { commit, fetch, verifyAuth, getHead, tag, push, revert } from "./lib/repo";
 import { EOL } from "os";
-import { IContext, INextRelease } from "./interface";
-import runDevCodeTests = require("./test");
+import { IContext, INextRelease, IOptions } from "./interface";
 const envCi = require("@spmeesseman/env-ci");
 const pkg = require("../package.json");
 
@@ -37,7 +36,7 @@ const pkg = require("../package.json");
 marked.setOptions({ renderer: new TerminalRenderer() });
 
 
-async function run(context: IContext, plugins: any)
+async function run(context: IContext)
 {
     const { cwd, env, options, logger } = context;
     const runTxt = !options.dryRun ? "run" : "test run";
@@ -203,14 +202,14 @@ async function run(context: IContext, plugins: any)
 
     let success = false;
     try {
-        success = await runRelease(context, plugins);
+        success = await runRelease(context);
         if (!success) {
             await revertChanges(context);
             logger.error("Release run returned failure status");
         }
     }
     catch (e) {
-        await callFail(context, plugins, e);
+        await callFail(context, e);
         const eStr = e.toString();
         logger.error("Release run threw failure exception");
         if (eStr.endsWith("\n")) {
@@ -236,7 +235,7 @@ function logTaskResult(result: boolean | string, taskName: string, logger: any)
 }
 
 
-async function runRelease(context: IContext, plugins: any)
+async function runRelease(context: IContext)
 {
     const { options, logger } = context;
 
@@ -964,11 +963,6 @@ async function processTasksStdOut2(context: IContext): Promise<boolean>
 }
 
 
-function getTasks2()
-{
-    return [ "taskCiEnvInfo", "taskCiEnvSet", "taskVersionInfo", "taskVersionNext" ];
-}
-
 
 function logErrors({ logger, stderr }, err)
 {
@@ -1001,20 +995,20 @@ async function revertChanges(context: IContext)
 }
 
 
-async function callFail(context: IContext, plugins, err)
+async function callFail(context: IContext, err: Error)
 {
     await revertChanges(context);
-    const errors = util.extractErrors(err).filter(err => err.semanticRelease);
-    if (errors.length > 0)
-    {
-        try
-        {
-            await plugins.fail({ ...context, errors });
-        } catch (error)
-        {
-            logErrors(context, error);
-        }
-    }
+    // const errors = util.extractErrors(err).filter(err => err.appPublisher);
+    // logErrors(context, error);
+    // if (errors.length > 0)
+    // {
+    //     try {
+    //         await context.plugins.fail({ ...context, errors });
+    //     }
+    //     catch (error) {
+    //         logErrors(context, error);
+    //     }
+    // }
 }
 
 
@@ -1025,32 +1019,17 @@ export = async (opts = {}, { cwd = process.cwd(), env = process.env, stdout = un
         hideSensitive(env)
     );
 
-    const context: IContext = {
-        cwd, env,
-        stdout: stdout || process.stdout,
-        stderr: stderr || process.stderr,
-        logger: undefined,
-        options: undefined,
-        lastRelease: undefined,
-        nextRelease: undefined,
-        commits: undefined,
-        changelog: undefined
-    };
-    context.logger = getLogger(context);
+    const context = await getContext(opts as IOptions, cwd, env, stdout, stderr);
 
-    try
-    {
-        const { plugins, options } = await getConfig(context, opts);
-        context.options = options;
-        try
-        {
-            const result = await run(context, plugins);
+    try {
+        try {
+            const result = await run(context);
             unhook();
             return result;
         }
         catch (error)
         {
-            await callFail(context, plugins, error);
+            await callFail(context, error);
             throw error;
         }
     }

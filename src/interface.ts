@@ -62,6 +62,7 @@ export interface IContext
     logger: any;
     nextRelease: INextRelease;
     options: IOptions;
+    plugins: IPlugin[];
     stdout: any;
     stderr: any;
 }
@@ -70,6 +71,14 @@ export interface IEdit
 {
     path: string;
     type: string;
+}
+
+
+export interface IPlugin
+{
+    path: string;
+    type: string;
+    fail: () => void;
 }
 
 

@@ -96,12 +96,7 @@ async function getConfig(context: any, opts: any)
         repoType: (await pkgRepoType({ normalize: false, cwd })),
         // tagFormat: `${options.vcTagPrefix}\${version}`,
         tagFormat: `v\${version}`,
-        plugins: [
-            // "@app-publisher/commit-analyzer",
-            // "@app-publisher/release-notes-generator",
-            // "@app-publisher/npm",
-            // "@app-publisher/github"
-        ],
+        plugins: [],
         // Remove `null` and `undefined` options so they can be replaced with default ones
         ...pickBy(options, option => !isNil(option)),
     };

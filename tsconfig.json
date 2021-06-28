@@ -9,8 +9,7 @@
         "res",
         "script",
         "**/*.spec.ts",
-        "testFixture",
-        "**/*.js"
+        "src/test"
     ],
     "compilerOptions": {
         "module": "commonjs",
