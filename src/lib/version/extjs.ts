@@ -102,7 +102,7 @@ export async function setExtJsVersion(context: IContext)
             //
             //     java.lang.NumberFormatException: For input string: "2-"
             //
-            if (version.indexOf("-")) {
+            if (version.indexOf("-") !== -1) {
                 version = version.replace(/\-/g, ".");
                 logger.log(`   Converted pre-release version to ${version})`);
             }

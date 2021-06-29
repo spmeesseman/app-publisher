@@ -14,9 +14,9 @@ pipeline {
   }
 
   parameters {
-    string(defaultValue: "0", // "$emailRecipients",
-            description: 'Production Release',
-            name: 'PRODUCTION_RELEASE')
+    booleanParam(defaultValue: false,
+                 description: 'Production Release',
+                 name: 'RELEASE_PRODUCTION')
   }
 
   stages {
@@ -65,10 +65,11 @@ pipeline {
         // Check for [skip ci] tag on last commit
         //
         script {
-          echo "Parameters:"
-          echo "    PRODUCTION_RELEASE"
-          env.SKIPCI = "0"
-          env.PRODUCTIONRELEASE = "0"
+          env.SKIP_CI = false
+          //
+          // Set variables to use throughout build process by examining the commit messages.
+          // Overrides build parameters.
+          //
           def changeLogSets = currentBuild.changeSets
           for (int i = 0; i < changeLogSets.size(); i++) {
             def entries = changeLogSets[i].items
@@ -81,7 +82,7 @@ pipeline {
                 echo "THE 'skip ci' TAG WAS FOUND IN COMMIT"
                 echo "Set build statis to NOT_BUILT"
                 currentBuild.result = 'NOT_BUILT'
-                env.SKIPCI = "1" 
+                env.SKIP_CI = true 
               }
             }
             //
@@ -98,7 +99,7 @@ pipeline {
                 }
                 if (entry.msg.indexOf("[production-release]") != -1) {
                   echo "THIS IS A PRODUCTION RELEASE"
-                  env.PRODUCTIONRELEASE = "1"
+                  params.RELEASE_PRODUCTION = true
                 }
             }
           }
@@ -107,12 +108,12 @@ pipeline {
           }
           if (env.TAG_NAME != null) {
             echo "Current tag         : ${env.TAG_NAME}"
-            env.PRODUCTIONRELEASE = "0"
+            params.RELEASE_PRODUCTION = false
           }
           //
           // If the [skip ci] tag is found in the last commit, then exit
           //
-          if (env.SKIPCI == "1") {
+          if (env.SKIP_CI == true) {
             currentBuild.result = 'NOT_BUILT'
             echo "The 'skip ci' tag was found in commit. Aborting."
             bat "exit 0"
@@ -121,9 +122,7 @@ pipeline {
         echo "Build parameters:"
         echo "   Production release  : ${params.PRODUCTION_RELEASE}"
         echo "Build environment:"
-        echo "   Production release  : ${env.PRODUCTIONRELEASE}"
-        echo "Other flags:"
-        echo "   Skip CI             : ${env.SKIPCI}" 
+        echo "   Skip CI             : ${env.SKIP_CI}" 
       } 
     }
 
@@ -132,7 +131,7 @@ pipeline {
     //
     stage("Pre-Build") {
       when {
-        expression { SKIPCI == "0" }
+        expression { SKIPCI == false }
       }
       steps {
         //
@@ -194,7 +193,7 @@ pipeline {
     //
     stage("Build") {
       when {
-        expression { SKIPCI == "0" }
+        expression { SKIPCI == false }
       }
       steps {
         nodejs("Node 12") {
@@ -208,7 +207,7 @@ pipeline {
     //
     stage("Tests") {
       when {
-        expression { SKIPCI == "0" }
+        expression { SKIPCI == false }
       }
       // environment {
       //   CODECOV_TOKEN = env.CODEDOV_TOKEN_AP
@@ -230,8 +229,8 @@ pipeline {
       // Only when we have a [production-release] commit
       //
       when {
-        expression { PRODUCTIONRELEASE == "1" && SKIPCI == "0" }
-        // expression { PRODUCTIONRELEASE == "0" }   // for testing
+        expression { PRODUCTIONRELEASE == true && SKIPCI == false }
+        // expression { PRODUCTIONRELEASE == false }   // for testing
       }
       steps {
         script {
@@ -312,7 +311,7 @@ pipeline {
     //
     stage("Publish") {
       when {
-        expression { PRODUCTIONRELEASE == "1" && SKIPCI == "0" }
+        expression { PRODUCTIONRELEASE == true && SKIPCI == false }
       }
       steps {
         echo "Store Jenkins Artifacts"
@@ -324,7 +323,7 @@ pipeline {
           //
           // Production or nightly release, or not
           //
-          if (env.PRODUCTIONRELEASE == "1") {
+          if (params.RELEASE_PRODUCTION == true) {
             nodejs("Node 12") {
               echo "Publish for production release"
               //
@@ -345,7 +344,7 @@ pipeline {
     //
     always { 
       script {
-        if (env.SKIPCI == "0") {
+        if (env.SKIP_CI == false) {
           mantisIssueAdd keepTicketPrivate: false, threshold: 'failureOrUnstable'
           mantisIssueUpdate keepNotePrivate: false, recordChangelog: true, setStatusResolved: true, threshold: 'failureOrUnstable'
           //
@@ -366,11 +365,11 @@ pipeline {
     //
     success {
       script {
-        if (env.SKIPCI == "0") {
+        if (env.SKIP_CI == false) {
           //
           // Production release only post success tasks
           //
-          if (env.PRODUCTIONRELEASE == "1") {
+          if (params.RELEASE_PRODUCTION == true) {
             echo "Successful build"
             echo "    1. Commit modified files to SVN."
             echo "    2. Tag version in SVN."
@@ -394,7 +393,7 @@ pipeline {
       //   }
       // }
       script {
-        if (env.SKIPCI == "0") {
+        if (env.SKIP_CI == false) {
           echo "Failed build"
           echo "    1. Notify."
         }

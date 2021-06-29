@@ -12,10 +12,10 @@
                 "POST",
                 "-L",
                 "-H",
-                "Authorization: basic ${env:JENKINS_API_TOKEN}",
+                "Authorization: basic ${env:JENKINS_API_TOKEN}", // base64 user:token
                 "-F",
                 "jenkinsfile=<Jenkinsfile",
-                "https://jenkins.development.pjats.com/pipeline-model-converter/validate"
+                "https://jenkins.tr.pjats.com/pipeline-model-converter/validate"
             ],
             "options": {
                 "shell": {
@@ -44,7 +44,7 @@
             "args": [
                 "tools/codecov.sh",
                 "-t",
-                "${CODECOV_TOKEN_AP}"
+                "${env:CODECOV_TOKEN_AP}"
             ],
             "group": "build",
             "presentation": {
