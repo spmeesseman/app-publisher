@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /* eslint-disable no-empty-function */
 /* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable import/no-extraneous-dependencies */

@@ -110,7 +110,7 @@
         "task-rt-version_next": "npx ./build/bin/app-publisher.js --no-ci --task-version-next",
         "test-run": "mocha 'src/test/**/*.test.ts'",
         "test-with-opts": "mocha -r ts-node\\register --ui tdd 'src/test/**/*.test.ts'",
-        "test": "npx ./build/test/index.js"
+        "test": "npx ./build/test/runTest.js"
     },
     "main": "./build/bin/app-publisher.js",
     "bin": {
