@@ -94,14 +94,22 @@ export async function setExtJsVersion(context: IContext)
         const appJson = json5.parse(await readFile(path.join(cwd, file)));
         if (nextRelease.version !== appJson.version || nextRelease.version !== appJson.appVersion)
         {
-            logger.log(`Setting version ${nextRelease.version} in ${file}`);
-            // appJson.version = nextRelease.version;
-            // appJson.appVersion = nextRelease.version;
-            // await writeFile(file, json5.stringify(appJson, { quote: "\"", space: 4 }));
-            await replaceInFile(file, "appVersion\"[ ]*:[ ]*[\"][0-9a-z.\-]+", `appVersion": "${nextRelease.version}`, true);
-            logger.log(`   Set version        : ${nextRelease.version}`);
-            await replaceInFile(file, "version\"[ ]*:[ ]*[\"][0-9a-z.\-]+", `version": "${nextRelease.version}`, true);
-            logger.log(`   Set app version    : ${nextRelease.version}`);
+            let version = nextRelease.version;
+            logger.log(`Setting version ${version} in ${file}`);
+            //
+            // Sencha Cmd doesnt support a dash in the filename, development builds succeed but production
+            // builds fail with the error in page-impl.xml (e.g. for a version named 2.0.2-pre.0):
+            //
+            //     java.lang.NumberFormatException: For input string: "2-"
+            //
+            if (version.indexOf("-")) {
+                version = version.replace(/\-/g, ".");
+                logger.log(`   Converted pre-release version to ${version})`);
+            }
+            await replaceInFile(file, "appVersion\"[ ]*:[ ]*[\"][0-9a-z.\-]+", `appVersion": "${version}`, true);
+            logger.log(`   Set version        : ${version}`);
+            await replaceInFile(file, "version\"[ ]*:[ ]*[\"][0-9a-z.\-]+", `version": "${version}`, true);
+            logger.log(`   Set app version    : ${version}`);
         }
         else {
             logger.warn(`Version ${nextRelease.version} already set in ${file}`);

@@ -49,7 +49,6 @@ pipeline {
             [
                 cancelProcessOnExternalsFail: true,
                 credentialsId: "6ff47a32-994c-4ac2-9016-edb075a98e5b", // jenkins.tr.pjats.com
-                // credentialsId: "7e4d2229-822b-401c-919b-2e492d6eae27", // Build Server
                 // credentialsId: "9168a4c0-47d2-423b-b676-3df3adc0d9df",    // Local Dev
                 depthOption: "infinity",
                 ignoreExternalsOption: true,
@@ -66,6 +65,8 @@ pipeline {
         // Check for [skip ci] tag on last commit
         //
         script {
+          echo "Parameters:"
+          echo "    PRODUCTION_RELEASE"
           env.SKIPCI = "0"
           env.PRODUCTIONRELEASE = "0"
           def changeLogSets = currentBuild.changeSets
@@ -117,8 +118,12 @@ pipeline {
             bat "exit 0"
           }
         }
-        echo "Production release  : ${env.PRODUCTIONRELEASE}"
-        echo "Production release  : ${params.PRODUCTION_RELEASE}"
+        echo "Build parameters:"
+        echo "   Production release  : ${params.PRODUCTION_RELEASE}"
+        echo "Build environment:"
+        echo "   Production release  : ${env.PRODUCTIONRELEASE}"
+        echo "Other flags:"
+        echo "   Skip CI             : ${env.SKIPCI}" 
       } 
     }
 
