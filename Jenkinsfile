@@ -131,7 +131,7 @@ pipeline {
     //
     stage("Pre-Build") {
       when {
-        expression { SKIPCI == false }
+        expression { env.SKIP_CI == false }
       }
       steps {
         //
@@ -193,7 +193,7 @@ pipeline {
     //
     stage("Build") {
       when {
-        expression { SKIPCI == false }
+        expression { env.SKIP_CI == false }
       }
       steps {
         nodejs("Node 12") {
@@ -207,7 +207,7 @@ pipeline {
     //
     stage("Tests") {
       when {
-        expression { SKIPCI == false }
+        expression { env.SKIP_CI == false }
       }
       // environment {
       //   CODECOV_TOKEN = env.CODEDOV_TOKEN_AP
@@ -229,8 +229,8 @@ pipeline {
       // Only when we have a [production-release] commit
       //
       when {
-        expression { PRODUCTIONRELEASE == true && SKIPCI == false }
-        // expression { PRODUCTIONRELEASE == false }   // for testing
+        expression { params.RELEASE_PRODUCTION == true && env.SKIP_CI == false }
+        // expression { params.RELEASE_PRODUCTION }   // for testing
       }
       steps {
         script {
@@ -311,7 +311,7 @@ pipeline {
     //
     stage("Publish") {
       when {
-        expression { PRODUCTIONRELEASE == true && SKIPCI == false }
+        expression { env.SKIP_CI == false }
       }
       steps {
         echo "Store Jenkins Artifacts"
