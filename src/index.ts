@@ -1,6 +1,7 @@
 
 import * as util from "./lib/utils/utils";
 import * as npm from "./lib/releases/npm";
+import semver from "semver";
 import gradient from "gradient-string";
 import chalk from "chalk";
 import marked from "marked";
@@ -22,7 +23,7 @@ import runDevCodeTests = require("./test");
 import { getNextVersion } from "./lib/version/get-next-version";
 import { doGithubRelease, publishGithubRelease } from "./lib/releases/github";
 import { template } from "lodash";
-import { COMMIT_NAME, COMMIT_EMAIL } from "./lib/definitions/constants";
+import { COMMIT_NAME, COMMIT_EMAIL, FIRST_RELEASE } from "./lib/definitions/constants";
 import { sendNotificationEmail } from "./lib/email";
 import { writeFile } from "./lib/utils/fs";
 import { createSectionFromCommits, doEdit, getProjectChangelogFile, populateChangelogs } from "./lib/changelog-file";
@@ -153,7 +154,7 @@ async function runStart(context: IContext)
             logger.error("A new version won’t be published");
             return false;
         }
-        else {
+        else if (!options.taskModeStdOut) {
             logger.warn(ciMsg);
             logger.warn("Continuing in non-ci environment");
         }
@@ -208,6 +209,7 @@ function logTaskResult(result: boolean | string, taskName: string, logger: any)
 
 async function runRelease(context: IContext)
 {
+    let firstRelease = false;
     const { options, logger } = context;
 
     const nextRelease: INextRelease = context.nextRelease = {
@@ -321,7 +323,13 @@ async function runRelease(context: IContext)
     //
     if (lastRelease.version !== lastRelease.versionInfo.version)
     {
-        if (!options.taskMode && !options.republish)
+        if (!lastRelease.version && !lastRelease.tag) // if both undefined, then getTags() found no remote tags
+        {
+            logger.warn("There was no remote version tag found, this is a first release");
+            logger.warn("   Continuing");
+            firstRelease = true;
+        }
+        else if (!options.taskMode && !options.republish)
         {
             logger.error("Version mismatch found between latest tag and local files");
             logger.error("   Tagged : " + lastRelease.version);
@@ -344,7 +352,7 @@ async function runRelease(context: IContext)
     //
     if (options.taskVersionCurrent)
     {
-        context.stdout.write(lastRelease.version);
+        context.stdout.write(lastRelease.version || FIRST_RELEASE);
         // logTaskResult(true, "task version current", logger);
         return true;
     }
@@ -404,8 +412,13 @@ async function runRelease(context: IContext)
     // Next version
     //
     if (!options.versionForceCurrent && !needNoCommits)
-    {
+    {   //
+        // Get version using release level bump.  Sets to FIRST_RELEASE if no previous release.
+        //
         nextRelease.versionInfo = getNextVersion(context);
+        //
+        // Check 'next version' manipulation flags
+        //
         if (options.versionForceNext)
         {
             logger.log("Forcing next version to " + options.versionForceNext);
@@ -419,34 +432,37 @@ async function runRelease(context: IContext)
         }
         else {
             nextRelease.version = nextRelease.versionInfo.version;
-            if (options.promptVersion === "Y")
+            //
+            // Note that in the case of firstRelease == true, nextRelease.version == FIRST_RELEASE,
+            // lastRelease.version == undefined, and lastRelease.versionInfo.version == current_file_version
+            //
+            const firstReleaseMismatch = firstRelease && semver.gt(lastRelease.versionInfo.version, nextRelease.version);
+            if (options.promptVersion === "Y" || (options.noCi && firstReleaseMismatch))
             {
-                const promptSchema = {
-                    properties: {
-                        version: {
-                            description: "Enter version number",
-                            pattern: /^(?:[0-9]+\.[0-9]+\.[0-9]+(?:[\-]{0,1}[a-zA-Z]+\.[0-9]+){0,1})$|^[0-9]+$/,
-                            default: nextRelease.version,
-                            message: "Version must only contain 0-9, '.', chars and '-' for pre-release",
-                            required: false
-                        }
-                    }
-                };
-                const prompt = require("prompt");
-                prompt.start();
-                const { version } = await prompt.get(promptSchema);
-                if (version) {
-                    nextRelease.version = version;
-                    if (!util.validateVersion(nextRelease.version, lastRelease.version, logger))
-                    {
-                        logger.error("Invalid 'next version' specified");
-                        return false;
-                    }
+                if (firstRelease && options.promptVersion !== "Y") {
+                    logger.log("Prompting for version due to:");
+                    logger.log("    1. The 'no-ci' and 'first-release' flags are set");
+                    logger.log(`    2. The version extracted from local files ${lastRelease.versionInfo.version} > ${FIRST_RELEASE}`);
                 }
+                nextRelease.version = await promptForVersion(lastRelease.version, nextRelease.version || FIRST_RELEASE, logger);
+                if (!nextRelease.version) {
+                    return false;
+                }
+            }
+            else if (firstReleaseMismatch)
+            {
+                logger.error("There is a conflict with the version extracted from the local version files");
+                logger.error(`   No remote tag was found, but local version > ${FIRST_RELEASE}`);
+                logger.error("   Either use the --force-version-next option, or, publish in a non-ci environment");
+                return false;
             }
         }
     }
     else {
+        if (firstRelease && options.versionForceCurrent) {
+            logger.error("Cannot use the --version-force-current switch for a first release");
+            return false;
+        }
         logger.log("Force next version to current version " + lastRelease.version);
         nextRelease.versionInfo = lastRelease.versionInfo;
         nextRelease.version = lastRelease.version;
@@ -946,6 +962,35 @@ async function processTasksStdOut2(context: IContext): Promise<boolean>
     return false;
 }
 
+
+
+async function promptForVersion(lastVersion: string, proposedNextVersion: string, logger: any)
+{
+    let version = proposedNextVersion;
+    const promptSchema = {
+        properties: {
+            inVersion: {
+                description: "Enter version number",
+                pattern: /^(?:[0-9]+\.[0-9]+\.[0-9]+(?:[\-]{0,1}[a-zA-Z]+\.[0-9]+){0,1})$|^[0-9]+$/,
+                default: proposedNextVersion,
+                message: "Version must only contain 0-9, '.', chars and '-' for pre-release",
+                required: false
+            }
+        }
+    };
+    const prompt = require("prompt");
+    prompt.start();
+    const { inVersion } = await prompt.get(promptSchema);
+    if (inVersion) {
+        version = inVersion;
+        if (!util.validateVersion(version, lastVersion, logger))
+        {
+            logger.error("Invalid 'next version' specified");
+            return "";
+        }
+    }
+    return version;
+}
 
 
 function logErrors({ logger, stderr }, err)

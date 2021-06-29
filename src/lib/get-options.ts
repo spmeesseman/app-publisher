@@ -3,7 +3,6 @@ import gradient from "gradient-string";
 import { publishRcOpts } from "../args";
 import { IOptions } from "../interface";
 const pkg = require("../../package.json");
-const envCi = require("@spmeesseman/env-ci");
 
 export = getOptions;
 
@@ -20,8 +19,6 @@ function getOptions(env: any, cwd: string, useBanner = true): IOptions
         ignorePositional: [ "-p", "--profile" ]
     });
     const opts = parser.parseArgs(publishRcOpts);
-
-    opts.ciInfo = envCi({ env, cwd });
 
     //
     // Set task mode stdout flag on the options object

@@ -1,13 +1,14 @@
 import { castArray, pickBy, isNil, isString, isPlainObject } from "lodash";
+const PLUGINS_DEFINITIONS = require("./definitions/plugins");
+const { validatePlugin, parseConfig } = require("./plugins/utils");
 const readPkgUp = require("read-pkg-up");
 const cosmiconfig = require("cosmiconfig");
 const resolveFrom = require("resolve-from");
-const { repoUrl } = require("./repo");
-const PLUGINS_DEFINITIONS = require("./definitions/plugins");
+const envCi = require("@spmeesseman/env-ci");
 const plugins = require("./plugins");
-const { validatePlugin, parseConfig } = require("./plugins/utils");
 
 export = getConfig;
+
 
 async function getConfig(context: any, opts: any)
 {
@@ -115,6 +116,8 @@ async function getConfig(context: any, opts: any)
         optStr = optStr.replace(new RegExp(envVar, "gmi"), process.env[key].replace(/\\/, "\\\\"));
     }
     options = JSON.parse(optStr);
+
+    options.ciInfo = envCi({ env, cwd, repoType: options.repoType });
 
     return { options, plugins: await plugins({ ...context, options }, pluginsPath) };
 }
