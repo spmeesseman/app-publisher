@@ -18,7 +18,7 @@
     },
     "dependencies": {
         "@spmeesseman/arg-parser": "^1.1.6",
-        "@spmeesseman/env-ci": "^1.0.3",
+        "@spmeesseman/env-ci": "^1.0.4",
         "aggregate-error": "^3.0.0",
         "chalk": "^2.4.2",
         "cosmiconfig": "^5.2.1",
