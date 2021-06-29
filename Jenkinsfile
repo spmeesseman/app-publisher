@@ -116,7 +116,7 @@ pipeline {
           }
           echo "Release Parameters:"
           echo "   Production release  : ${params.RELEASE_PRODUCTION}"
-          echo "Build environment:"
+          echo "Build Environment:"
           echo "   Skip CI             : ${env.SKIP_CI}" 
           if (env.BRANCH_NAME != null) {
             echo "   Branch              : ${env.BRANCH_NAME}"
