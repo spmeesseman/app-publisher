@@ -104,7 +104,8 @@ export async function setExtJsVersion(context: IContext)
             //
             if (version.indexOf("-") !== -1) {
                 version = version.replace(/\-/g, ".");
-                logger.log(`   Converted pre-release version to ${version})`);
+                logger.log("   Sencha Cmd does not support the '-' character in a version number");
+                logger.log(`   Converted pre-release version to ${version} for Cmd build`);
             }
             await replaceInFile(file, "appVersion\"[ ]*:[ ]*[\"][0-9a-z.\-]+", `appVersion": "${version}`, true);
             logger.log(`   Set version        : ${version}`);
