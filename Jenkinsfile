@@ -144,6 +144,7 @@ pipeline {
           // NPM Install
           //
           bat "npm install"
+          bat "npm run clean-build"
           script {
             //
             // app-publisher is used so check for .publishrc file
