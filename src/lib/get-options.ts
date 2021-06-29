@@ -28,14 +28,20 @@ function getOptions(env: any, cwd: string, useBanner = true): IOptions
     //
     opts.taskModeStdOut = !!(opts.taskVersionCurrent || opts.taskVersionNext || opts.taskVersionInfo ||
                              opts.taskCiEvInfo || opts.taskVersionPreReleaseId || opts.taskChangelogPrint ||
-                             opts.taskChangelogPrintVersion);
+                             opts.taskChangelogPrintVersion || opts.taskReleaseLevel);
     //
     // Set task mode flag on the options object
     //
     for (const o in opts)
     {
-        if (o.startsWith("task")) {
-            if (opts[o] === true || (o === "taskChangelogPrintVersion" && opts[o]) || (o === "taskChangelogViewVersion" && opts[o])) {
+        if (o.startsWith("task"))
+        {
+            const oDef = publishRcOpts[o],
+                  valueType = oDef ? oDef[1] : undefined, defaultValue = oDef ? oDef[2] : undefined;
+            //
+            // check 'string' and 'boolean' types differently
+            //
+            if (oDef && (valueType === "boolean" && opts[o] === true) || (valueType === "string"  && opts[o])) {
                 opts.taskMode = true;
                 break;
             }

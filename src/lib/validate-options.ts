@@ -739,8 +739,9 @@ async function validateOptions({cwd, env, logger, options}: any): Promise<boolea
             if (o.startsWith("task"))
             {
                 if (options[o] === true) {
-                    if (o !== "taskVersionCurrent" && o !== "taskVersionNext" && o !== "taskVersionInfo" && o !== "taskChangelogPrint" &&
-                        o !== "taskCiEvInfo" && o !== "taskVersionPreReleaseId" && o !== "taskMode" && o !== "taskModeStdOut")
+                    if (o !== "taskVersionCurrent" && o !== "taskVersionNext" && o !== "taskVersionInfo" &&
+                        o !== "taskChangelogPrint" && o !== "taskCiEvInfo" && o !== "taskVersionPreReleaseId" &&
+                        o !== "taskReleaseLevel" && o !== "taskMode" && o !== "taskModeStdOut")
                     {
                         logger.error("The specified task cannot be used with a 'stdout' type task:");
                         logger.error("   " + o);
