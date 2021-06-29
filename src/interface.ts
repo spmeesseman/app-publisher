@@ -687,6 +687,12 @@ export interface IOptions
      */
     taskNugetRelease: boolean;
     /**
+     * Gets the release level for the next release and outputs it to stdout.  Release level will be one of:
+     *
+     *     none, patch, minor, major
+     */
+    taskReleaseLevel: boolean;
+    /**
      * Reverts all local changes.
      */
     taskRevert: boolean;
@@ -713,7 +719,7 @@ export interface IOptions
     taskVersionCurrent: boolean;
     /**
      * Finds the current/latest and next version released, and outputs the info to stdout using
-     * a concatenated string in the form 'current|next'.
+     * a concatenated string in the form 'current_version|next_version|release_level'.
      * Note that this switch overrides both the --task-version-current and the
      * --task-version-current switches.
      */

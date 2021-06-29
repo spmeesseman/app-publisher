@@ -902,7 +902,7 @@ async function processTasksStdOut2(context: IContext): Promise<boolean>
     }
 
     if (options.taskVersionInfo) {
-        context.stdout.write(lastRelease.version + "|" + nextRelease.version);
+        context.stdout.write(lastRelease.version + "|" + nextRelease.version + "|" + nextRelease.level);
         return true;
     }
 
@@ -931,6 +931,15 @@ async function processTasksStdOut2(context: IContext): Promise<boolean>
         else {
             context.stdout.write(`${lastRelease.version}|${nextRelease.version}`);
         }
+        return true;
+    }
+
+    //
+    // Task '--task-version-current'
+    //
+    if (options.taskReleaseLevel)
+    {
+        context.stdout.write(nextRelease.level ?? "none");
         return true;
     }
 

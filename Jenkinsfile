@@ -65,7 +65,7 @@ pipeline {
         // Check for [skip ci] tag on last commit
         //
         script {
-          env.SKIP_CI = false
+          env.SKIP_CI = "false"
           //
           // Set variables to use throughout build process by examining the commit messages.
           // Overrides build parameters.
@@ -82,7 +82,7 @@ pipeline {
                 echo "THE 'skip ci' TAG WAS FOUND IN COMMIT"
                 echo "Set build statis to NOT_BUILT"
                 currentBuild.result = 'NOT_BUILT'
-                env.SKIP_CI = true 
+                env.SKIP_CI = "true"
               }
             }
             //
@@ -103,11 +103,7 @@ pipeline {
                 }
             }
           }
-          if (env.BRANCH_NAME != null) {
-            echo "Current branch      : ${env.BRANCH_NAME}"
-          }
-          if (env.TAG_NAME != null) {
-            echo "Current tag         : ${env.TAG_NAME}"
+          if (env.TAG_NAME != null || env.BRANCH_NAME != "trunk") {
             params.RELEASE_PRODUCTION = false
           }
           //
@@ -119,10 +115,16 @@ pipeline {
             bat "exit 0"
           }
         }
-        echo "Build parameters:"
+        echo "Release Parameters:"
         echo "   Production release  : ${params.RELEASE_PRODUCTION}"
         echo "Build environment:"
         echo "   Skip CI             : ${env.SKIP_CI}" 
+        if (env.BRANCH_NAME != null) {
+          echo "   Branch              : ${env.BRANCH_NAME}"
+        }
+        if (env.TAG_NAME != null ) {
+          echo "   Tag                 : ${env.TAG_NAME}"
+        }
       } 
     }
 

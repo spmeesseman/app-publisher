@@ -912,6 +912,17 @@ export const publishRcOpts =
         }
     ],
 
+    taskReleaseLevel: [
+        true,
+        "boolean",
+        false,
+        [ "-trl", "--task-release-level" ],
+        {
+            help: "Gets the release level for the next release and outputs it to stdout.\n" +
+                  "Release level will be one of 'none', 'patch', 'minor', or 'major'"
+        }
+    ],
+
     taskRevert: [
         true,
         "boolean",
@@ -961,7 +972,8 @@ export const publishRcOpts =
         [ "-tvi", "--task-version-info" ],
         {
             help: "Finds the current/latest and next version released, and outputs the\n" +
-                  "info to stdout using a concatenated string in the form 'current|next'.\n" +
+                  "info to stdout using a concatenated string in the form:\n" +
+                  "    current_version|next_version|release_level\n" +
                   "Note that this switch overrides both the --task-version-current and the\n" +
                   "--task-version-current switches."
         }
