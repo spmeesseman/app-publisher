@@ -3,6 +3,7 @@
         "src/**/*"
     ],
     "exclude": [
+        "bin",
         "node_modules",
         "doc",
         "install",
