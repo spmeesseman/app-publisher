@@ -306,6 +306,18 @@ async function validateOptions({cwd, env, logger, options}: any): Promise<boolea
         }
     }
 
+    function setDefaultEditor()
+    {
+        if (process.platform === "win32") {
+            logger.log("Text editor not found, falling back to 'notepad'");
+            options.textEditor = "notepad.exe";
+        }
+        else {
+            logger.log("Text editor not found, falling back to 'vi'");
+            options.textEditor = "vi";
+        }
+    }
+
     //
     // If specified editor doesnt exist, then switch to notepad or pico
     //
@@ -329,11 +341,14 @@ async function validateOptions({cwd, env, logger, options}: any): Promise<boolea
                     break;
                 }
             }
-            if (!found) {
-                logger.log("Text editor not found, falling back to 'notepad'");
-                options.textEditor = "notepad";
-            }
+            if (!found) { setDefaultEditor(); }
         }
+        else { setDefaultEditor(); }
+    }
+    else { setDefaultEditor(); }
+
+    if (process.platform === "win32" && !options.textEditor.endsWith(".exe")) {
+        options.textEditor += ".exe";
     }
 
     //
