@@ -64,14 +64,14 @@ suite("Options tests", () =>
         expect(options.taskModeStdOut).to.equal(false, "taskModeStdOut");
 
         expect(options.historyLineLen).to.equal(80, "historyLineLen");
-        expect(options.buildCommand).to.be.an("array").that.is.empty;
-        expect(options.appPublisherVersion).to.be.a("string").that.is.not.empty;
+        expect(options.buildCommand).to.be.an("array", "buildCommand").and.include("npm run build", "buildCommand");
+        expect(options.appPublisherVersion).to.be.a("string", "appPublisherVersion").that.is.not.empty;
         //
         // ci env should always clear these flags to default/empty
         //
         expect(options.skipVersionEdits).to.equal("Y", "skipVersionEdits");
         expect(options.skipChangelogEdits).to.equal("Y", "skipChangelogEdits");
-        expect(options.skipChangelogEdits).to.equal("N", "promptVersion (no ci)");
+        expect(options.promptVersion).to.equal("N", "promptVersion");
         expect(options.versionFilesEditAlways).to.be.an("array").and.is.empty;
     });
 
@@ -81,6 +81,8 @@ suite("Options tests", () =>
         const options = await getApOptions([ "--no-ci" ]);
         expect(options.skipVersionEdits).to.equal("Y", "skipVersionEdits (no ci)");
         expect(options.skipChangelogEdits).to.equal("N", "skipChangelogEdits (no ci)");
+        expect(options.buildCommand).to.be.an("array").and.include("npm run build");
+        expect(options.commitMsgMap).to.be.an("array");
     });
 
 

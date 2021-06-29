@@ -6,7 +6,7 @@ import { expect } from "chai";
 import getContext = require("../lib/get-context");
 import getOptions = require("../lib/get-options");
 import validateOptions = require("../lib/validate-options");
-import { getApOptions, runApTest } from "./helper";
+import { getApOptions, runApTest, sleep } from "./helper";
 
 
 suite("Options tests", () =>
@@ -17,12 +17,34 @@ suite("Options tests", () =>
         // const options = await getApOptions([ "--no-ci" ]);
         const options = await getApOptions();
 
+        options.noCi = !options.ciInfo.isCi;
+
         options.taskCiEnv = true;
-        runApTest(options);
+        await runApTest(options);
+
+        sleep(500);
 
         options.taskCiEnv = false;
         options.taskDevTest = true;
-        runApTest(options);
+        await runApTest(options);
+
+        sleep(500);
+
+        options.taskDevTest = false;
+        options.taskVersionCurrent = true;
+        await runApTest(options);
+    });
+
+
+    test("version tasks", async () =>
+    {
+        // const options = await getApOptions([ "--no-ci" ]);
+        const options = await getApOptions();
+
+        options.noCi = !options.ciInfo.isCi;
+
+        options.taskVersionCurrent = true;
+        await runApTest(options);
     });
 
 });

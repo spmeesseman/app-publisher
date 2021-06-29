@@ -205,10 +205,14 @@ pipeline {
       when {
         expression { SKIPCI == "0" }
       }
+      // environment {
+      //   CODECOV_TOKEN = env.CODEDOV_TOKEN_AP
+      // }
       steps {
         echo "Run tests"
         nodejs("Node 12") {
           bat "npm run test"
+          // sh "tools/codecov.sh"
         }
       }
     }

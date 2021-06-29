@@ -110,8 +110,7 @@
         "task-rt-version_next": "npx ./build/bin/app-publisher.js --no-ci --task-version-next",
         "test-run": "mocha 'src/test/**/*.test.ts'",
         "test-with-opts": "mocha -r ts-node\\register --ui tdd 'src/test/**/*.test.ts'",
-        "test-dev": "npm run clean-build && npm run build && npx ./build/test/index.js",
-        "test-dev_nobuild": "npx ./build/test/index.js"
+        "test": "npm run clean-build && npm run build && npx ./build/test/index.js"
     },
     "main": "./build/bin/app-publisher.js",
     "bin": {
