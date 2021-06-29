@@ -68,20 +68,26 @@ export async function setPomVersion(context: IContext)
 {
     const {options, logger, nextRelease, cwd, env} = context;
 
-    if (nextRelease.versionInfo.info && nextRelease.versionInfo.info.length === 2 && await pathExists("pom.xml"))
+    if (await pathExists("pom.xml"))
     {   //
         // If this is '--task-revert', all we're doing here is collecting the paths of the
         // files that would be updated in a run, don't actually do the update
         //
         if (options.taskRevert) {
-            await addEdit(context, options.cProjectRcFile);
+            await addEdit(context, "pom.xml");
             return;
         }
-        //
-        // Pom file could have dynamic version construction using props (mavenTag)
-        //
-        const mavenTag = nextRelease.versionInfo.info;
-        await replaceInFile("pom.xml", `<${mavenTag}>[0-9a-z.\-]+</${mavenTag}>`, `<${mavenTag}>${nextRelease.version}</${mavenTag}`);
+        if (nextRelease.versionInfo.info && nextRelease.versionInfo.info.length === 2)
+        {   //
+            // TODO - Maven tag in pom.xml
+            // Pom file could have dynamic version construction using props (mavenTag)
+            //
+            const mavenTag = nextRelease.versionInfo.info;
+            await replaceInFile("pom.xml", `<${mavenTag}>[0-9a-z.\-]+</${mavenTag}>`, `<${mavenTag}>${nextRelease.version}</${mavenTag}`);
+        }
+        else {
+            await replaceInFile("pom.xml", "<version>[0-9a-z.\-]+</version>", `<version>${nextRelease.version}</version`);
+        }
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
