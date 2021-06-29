@@ -219,6 +219,7 @@ pipeline {
         echo "Run tests"
         nodejs("Node 12") {
           bat "npm run test"
+          echo "Publish test results"
           // sh "tools/codecov.sh"
         }
       }
