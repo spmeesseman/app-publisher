@@ -36,7 +36,8 @@ function cleanMessage(msg: string)
         // if (/(?:s|ss|sh|x|z)$/.test(m)) { fm += "e"; }
         // fm += "s";
         return "[" + properCase(m.replace(/[\[\]]/g, "").trim()) + "]";
-    });
+    })
+    .replace("Mantisbt", "MantisBT").replace("Github", "GitHub");
 }
 
 
