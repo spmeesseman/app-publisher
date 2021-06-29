@@ -5,7 +5,14 @@ export const publishRcOpts =
         true,                     // Can specify on command line
         "string",                 // Value type
         "trunk",                  // Default value
-        "The branch to use."      // Help description (multi-line)
+        "The branch to use.",     // Help description (multi-line)
+        "For SVN, this shouldinclude the path to the branches directory, e.g.:",
+        "",
+        "   branches/branch-name",
+        "",
+        "SVN branch support can only work if there is a 'per project' branching",
+        "folder / structure.  It is assumed that the 'tags' folders is named by",
+        "convention, i.e. '/tags'"
     ],
 
     buildCommand: [

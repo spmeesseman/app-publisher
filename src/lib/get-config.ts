@@ -119,7 +119,11 @@ async function getConfig(context: any, opts: any)
 
     options.ciInfo = envCi({ env, cwd, repoType: options.repoType });
 
-    return { options, plugins: await plugins({ ...context, options }, pluginsPath) };
+    //
+    // TODO - plugins maybe?
+    //
+    return { options, plugins: [] };
+    // return { options, plugins: await plugins({ ...context, options }, pluginsPath) };
 }
 
 async function pkgRepoUrl(opts)

@@ -330,7 +330,7 @@ export async function getHead({options, logger, cwd, env}: IContext)
 
 function getSvnTagLocation({options, logger})
 {
-    const svnTagLoc = options.repo.replace("trunk", "tags").replace("branches/" + options.branch, "tags");
+    const svnTagLoc = options.repo.replace(options.branch, "tags");
     if (options.verbose) {
         logger.info("The svn tag location is " + svnTagLoc);
     }
@@ -356,7 +356,7 @@ export async function getTagHead({options, logger, cwd, env}: IContext, tagName:
         }
         else if (options.repoType === "svn")
         {
-            const tagLocation = options.repo.replace("trunk", "tags").replace("branches/" + options.branch, "tags"),
+            const tagLocation = options.repo.replace(options.branch, "tags"),
                   head = await execa.stdout("svn", ["log", tagLocation + "/" + tagName, "-v", "--stop-on-copy"], execaOpts);
             let match: RegExpExecArray;
             if ((match = /^r([0-9]+) \|/m.exec(head)) !== null)
@@ -564,7 +564,7 @@ export async function isRefInHistory(context: IContext, ref: any, isTags = false
             await execa("git", ["merge-base", "--is-ancestor", ref, "HEAD"], {cwd, env});
         }
         else if (repoType === "svn") {
-            const tagLoc = !isTags ? repo : repo.replace("trunk", "tags").replace("branches/" + branch, "tags");
+            const tagLoc = !isTags ? repo : repo.replace(branch, "tags");
             await execa("svn", ["ls", tagLoc + "/" + ref], {cwd, env});
         }
         else {

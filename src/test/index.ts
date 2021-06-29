@@ -45,12 +45,17 @@ export = async () =>
 
     async function run(): Promise<void>
     {
-        const testsRoot = path.resolve(__dirname, "..");
+        const testsRoot = path.resolve(__dirname, ".."),
+              nycDir = path.join(__dirname, "..", "..");
+
+        console.log("TEST: cwd      : " + __dirname);
+        console.log("TEST: testRoot : " + testsRoot);
+        console.log("TEST: nycDir   : " + nycDir);
 
         const nyc = new NYC(
         {
             extends: "@istanbuljs/nyc-config-typescript",
-            cwd: path.join(__dirname, "..", ".."),
+            cwd: nycDir,
             reporter: ["text-summary", "html", "lcov", "cobertura" ],
             all: true,
             silent: false,

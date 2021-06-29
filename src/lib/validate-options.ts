@@ -272,6 +272,9 @@ async function validateOptions({cwd, env, logger, options}: any): Promise<boolea
             options.branch = "trunk";
         }
     }
+    if (options.branch.startsWith("/")) {
+        options.branch = options.branch.substring(1);
+    }
 
     //
     // SVN repo path
@@ -280,14 +283,17 @@ async function validateOptions({cwd, env, logger, options}: any): Promise<boolea
     {
         if (options.branch === "trunk")
         {
-            if (!options.repo.includes("trunk"))
+            if (!options.repo.endsWith("trunk"))
             {
                 if (options.repo.includes("branches/"))
                 {
                     options.repo = options.repo.substring(0, options.repo.indexOf("branches/")) + "trunk";
                 }
                 else {
-                    options.repo = (options.repo + "/" + options.branch).replace("//", "/");
+                    if (!options.repo.endsWith("/")) {
+                        options.repo += "/";
+                    }
+                    options.repo = options.repo + options.branch;
                 }
             }
         }
@@ -295,12 +301,15 @@ async function validateOptions({cwd, env, logger, options}: any): Promise<boolea
         {
             if (options.repo.indexOf("branches/") === -1)
             {
-                if (options.repo.indexOf("trunk") !== -1)
+                if (options.repo.endsWith("trunk"))
                 {
-                    options.repo = options.repo.replace("trunk", "branches/" + options.branch);
+                    options.repo = options.repo.replace("trunk", options.branch);
                 }
                 else {
-                    options.repo = (options.repo + "/branches/" + options.branch).replace("//", "/");
+                    if (!options.repo.endsWith("/")) {
+                        options.repo += "/";
+                    }
+                    options.repo = options.repo + options.branch;
                 }
             }
         }
