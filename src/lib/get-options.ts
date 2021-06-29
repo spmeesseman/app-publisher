@@ -24,13 +24,6 @@ function getOptions(env: any, cwd: string, useBanner = true): IOptions
     opts.ciInfo = envCi({ env, cwd });
 
     //
-    // Set branch to CI branch if not already set
-    //
-    if (!opts.branch) {
-        opts.branch = opts.ciInfo.ciBranch;
-    }
-
-    //
     // Set task mode stdout flag on the options object
     //
     opts.taskModeStdOut = !!(opts.taskVersionCurrent || opts.taskVersionNext || opts.taskVersionInfo ||

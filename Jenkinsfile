@@ -120,7 +120,7 @@ pipeline {
           }
         }
         echo "Build parameters:"
-        echo "   Production release  : ${params.PRODUCTION_RELEASE}"
+        echo "   Production release  : ${params.RELEASE_PRODUCTION}"
         echo "Build environment:"
         echo "   Skip CI             : ${env.SKIP_CI}" 
       } 
@@ -131,7 +131,7 @@ pipeline {
     //
     stage("Pre-Build") {
       when {
-        expression { env.SKIP_CI == false }
+        expression { env.SKIP_CI == "false" }
       }
       steps {
         //
@@ -193,7 +193,7 @@ pipeline {
     //
     stage("Build") {
       when {
-        expression { env.SKIP_CI == false }
+        expression { env.SKIP_CI == "false" }
       }
       steps {
         nodejs("Node 12") {
@@ -207,7 +207,7 @@ pipeline {
     //
     stage("Tests") {
       when {
-        expression { env.SKIP_CI == false }
+        expression { env.SKIP_CI == "false" }
       }
       // environment {
       //   CODECOV_TOKEN = env.CODEDOV_TOKEN_AP
@@ -229,7 +229,7 @@ pipeline {
       // Only when we have a [production-release] commit
       //
       when {
-        expression { params.RELEASE_PRODUCTION == true && env.SKIP_CI == false }
+        expression { params.RELEASE_PRODUCTION == true && env.SKIP_CI == "false" }
         // expression { params.RELEASE_PRODUCTION }   // for testing
       }
       steps {
@@ -311,7 +311,7 @@ pipeline {
     //
     stage("Publish") {
       when {
-        expression { env.SKIP_CI == false }
+        expression { env.SKIP_CI == "false" }
       }
       steps {
         echo "Store Jenkins Artifacts"
@@ -344,7 +344,7 @@ pipeline {
     //
     always { 
       script {
-        if (env.SKIP_CI == false) {
+        if (env.SKIP_CI == "false") {
           mantisIssueAdd keepTicketPrivate: false, threshold: 'failureOrUnstable'
           mantisIssueUpdate keepNotePrivate: false, recordChangelog: true, setStatusResolved: true, threshold: 'failureOrUnstable'
           //
@@ -365,7 +365,7 @@ pipeline {
     //
     success {
       script {
-        if (env.SKIP_CI == false) {
+        if (env.SKIP_CI == "false") {
           //
           // Production release only post success tasks
           //
@@ -393,7 +393,7 @@ pipeline {
       //   }
       // }
       script {
-        if (env.SKIP_CI == false) {
+        if (env.SKIP_CI == "false") {
           echo "Failed build"
           echo "    1. Notify."
         }

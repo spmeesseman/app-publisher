@@ -96,6 +96,13 @@ async function runStart(context: IContext)
     }
 
     //
+    // Set branch to CI branch if not already set
+    //
+    if (!options.branch) {
+        options.branch = ciBranch;
+    }
+
+    //
     // Check CI environment
     //
     if (!isCi && !options.dryRun && !options.noCi)
@@ -137,18 +144,19 @@ async function runStart(context: IContext)
         return false;
     }
 
-    if (isCi && ciBranch !== options.branch)
+    if (ciBranch !== options.branch)
     {
-        logger.error(`This ${runTxt} was triggered on the branch '${ciBranch}', but is configured to ` +
-                     `publish from '${options.branch}'`);
-        logger.error("A new version won’t be published");
-        return false;
-    }
-    else if (ciBranch !== options.branch && !options.taskModeStdOut)
-    {
-        logger.warn(`This ${runTxt} was triggered on the branch '${ciBranch}', but is configured to ` +
-                    `publish from '${options.branch}'`);
-        logger.warn("Continuing in non-ci environment");
+        const ciMsg = `This ${runTxt} was triggered on the branch '${ciBranch}', but is configured to ` +
+                      `publish from '${options.branch}'`;
+        if (isCi) {
+            logger.error(ciMsg);
+            logger.error("A new version won’t be published");
+            return false;
+        }
+        else {
+            logger.warn(ciMsg);
+            logger.warn("Continuing in non-ci environment");
+        }
     }
 
     if (!options.taskModeStdOut) {
