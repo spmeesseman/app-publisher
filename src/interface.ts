@@ -204,6 +204,10 @@ export interface IOptions
      */
     config: boolean;
     /**
+     * Can be used like --rc-file.  but just theconfig part i.e. 'custom' yields .publishrc.custom.*
+     */
+    configName: string;
+    /**
      * Gets set by get-config
      *
      * @readonly

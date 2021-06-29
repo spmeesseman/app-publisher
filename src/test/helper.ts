@@ -44,6 +44,7 @@ export async function getApOptions(cmdOpts?: string[])
     process.argv = cmdOpts ? [ "", "", ...cmdOpts ] : [ "", "" ];
     if (!context) {
         const argOptions = getOptions(process.env, process.cwd(), false);
+console.log("1: " + process.cwd());
         context = await getContext(argOptions, process.cwd(), process.env, process.stdout, process.stderr);
     }
     else {

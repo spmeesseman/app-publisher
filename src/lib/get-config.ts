@@ -1,4 +1,5 @@
 import { castArray, pickBy, isNil, isString, isPlainObject } from "lodash";
+import { IOptions } from "../interface";
 const PLUGINS_DEFINITIONS = require("./definitions/plugins");
 const { validatePlugin, parseConfig } = require("./plugins/utils");
 const readPkgUp = require("read-pkg-up");
@@ -10,7 +11,7 @@ const plugins = require("./plugins");
 export = getConfig;
 
 
-async function getConfig(context: any, opts: any)
+async function getConfig(context: any, opts: IOptions)
 {
     let configName = "publishrc";
     if (opts.configName)
