@@ -114,16 +114,16 @@ pipeline {
             echo "The 'skip ci' tag was found in commit. Aborting."
             bat "exit 0"
           }
-        }
-        echo "Release Parameters:"
-        echo "   Production release  : ${params.RELEASE_PRODUCTION}"
-        echo "Build environment:"
-        echo "   Skip CI             : ${env.SKIP_CI}" 
-        if (env.BRANCH_NAME != null) {
-          echo "   Branch              : ${env.BRANCH_NAME}"
-        }
-        if (env.TAG_NAME != null ) {
-          echo "   Tag                 : ${env.TAG_NAME}"
+          echo "Release Parameters:"
+          echo "   Production release  : ${params.RELEASE_PRODUCTION}"
+          echo "Build environment:"
+          echo "   Skip CI             : ${env.SKIP_CI}" 
+          if (env.BRANCH_NAME != null) {
+            echo "   Branch              : ${env.BRANCH_NAME}"
+          }
+          if (env.TAG_NAME != null ) {
+            echo "   Tag                 : ${env.TAG_NAME}"
+          }
         }
       } 
     }
