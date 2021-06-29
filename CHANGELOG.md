@@ -1,5 +1,29 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.2.0 (June 29th, 2021)
+
+### Features
+
+- **Tasks:** Add new 'task mode' command line switches:
+	
+		--task-release-level
+	
+	Using these options instructs the process to output the next release's 'release level' to stdout.  Can be one of 'none', 'patch', 'minor', or 'major'.
+
+### Bug Fixes
+
+- **Releases:** first/initial release fails if locally extracted version number is not 1.0.0.
+- **Validation:** svn repo path is incorrect if publishrc specifes branch path with branch name in the 'branch' property.
+
+### Refactoring
+
+- dynamic type lookup on args to set stdout mode
+- **Changelog:** add text 'MantisBT' to 'GitHub' to subject formatting.
+
+### Continuous Integration
+
+- **Pre-build:** run clean in pre-build, eliminate double build for tests
+
 ## Version 3.1.1 (June 29th, 2021)
 
 ### Bug Fixes
