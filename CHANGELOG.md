@@ -1,5 +1,27 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.1.1 (June 29th, 2021)
+
+### Bug Fixes
+
+- **Mantisbt:** extracted version number contains a space character and fails version validation
+- **Versioning:** An extjs app.json version bump doesn't replace the Sencha Cmd un-supported '-' character with '.', and production builds fail
+- **Versioning:** the taskRevert task fails with 'TypeError: Cannot read property 'info' of undefined'.
+
+### Refactoring
+
+- **Versioning:** the --task-version-current switch now checks remote tag and runs local version file validation
+
+### tests
+
+- coverage progress
+- first successful run with nyc
+
+### Continuous Integration
+
+- **Jenkinsfile:** fix env mv to params err
+- progress
+
 ## Version 3.1.0 (June 27th, 2021)
 
 ### Documentation
