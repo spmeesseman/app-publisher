@@ -99,23 +99,22 @@ pipeline {
                 }
                 if (entry.msg.indexOf("[production-release]") != -1) {
                   echo "THIS IS A PRODUCTION RELEASE"
-                  params.RELEASE_PRODUCTION = true
+                  env.RELEASE_PRODUCTION = "true"
                 }
             }
           }
-          if (env.TAG_NAME != null || env.BRANCH_NAME != "trunk") {
-            params.RELEASE_PRODUCTION = false
+          //
+          // Params override the environment.  Note that boolean params will be converted to
+          // string when writing to the env object.
+          //
+          if (params.RELEASE_PRODUCTION == true) {
+            env.RELEASE_PRODUCTION = params.RELEASE_PRODUCTION
           }
-          //
-          // If the [skip ci] tag is found in the last commit, then exit
-          //
-          if (env.SKIP_CI == true) {
-            currentBuild.result = 'NOT_BUILT'
-            echo "The 'skip ci' tag was found in commit. Aborting."
-            bat "exit 0"
+          if (env.TAG_NAME != null || env.BRANCH_NAME != "trunk") {
+            env.RELEASE_PRODUCTION = "false"
           }
           echo "Release Parameters:"
-          echo "   Production release  : ${params.RELEASE_PRODUCTION}"
+          echo "   Production release  : ${env.RELEASE_PRODUCTION}"
           echo "Build Environment:"
           echo "   Skip CI             : ${env.SKIP_CI}" 
           if (env.BRANCH_NAME != null) {
@@ -233,8 +232,8 @@ pipeline {
       // Only when we have a [production-release] commit
       //
       when {
-        expression { params.RELEASE_PRODUCTION == true && env.SKIP_CI == "false" }
-        // expression { params.RELEASE_PRODUCTION }   // for testing
+        expression { env.RELEASE_PRODUCTION == "true" && env.SKIP_CI == "false" }
+        // expression { env.RELEASE_PRODUCTION }   // for testing
       }
       steps {
         script {
@@ -327,7 +326,7 @@ pipeline {
           //
           // Production or nightly release, or not
           //
-          if (params.RELEASE_PRODUCTION == true) {
+          if (env.RELEASE_PRODUCTION == "true") {
             nodejs("Node 12") {
               echo "Publish for production release"
               //
@@ -373,7 +372,7 @@ pipeline {
           //
           // Production release only post success tasks
           //
-          if (params.RELEASE_PRODUCTION == true) {
+          if (env.RELEASE_PRODUCTION == "true") {
             echo "Successful build"
             echo "    1. Commit modified files to SVN."
             echo "    2. Tag version in SVN."
