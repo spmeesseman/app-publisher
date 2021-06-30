@@ -90,7 +90,7 @@ function containsValidSubject(options, line: string): boolean
  * @param useFaIcons Use font aweome icons
  * @param includeStyling include css styling
  */
-async function createHtmlChangelog({ options, logger }: IContext, version: string, useFaIcons = false, includeStyling = false, inputFile?: string)
+export async function createHtmlChangelog({ options, logger }: IContext, version: string, useFaIcons = false, includeStyling = false, inputFile?: string)
 {
     let changeLog = "",
         changeLogParts: string | any[];
@@ -185,15 +185,12 @@ async function createHtmlChangelog({ options, logger }: IContext, version: strin
         }
 
         changeLog += commit.subject;
-        if (commit.scope) {
-            changeLog += "</b></td><td nowrap valign=\"top\" style=\"padding-left:10px\">";
-            changeLog += commit.scope;
-        }
-        else {
-            changeLog += "</td>General<td>";
-        }
+        changeLog += "</b></td><td nowrap valign=\"top\" style=\"padding-left:10px\">";
+        changeLog += (commit.scope || "General");
         changeLog += "</td><td width=\"100%\" style=\"padding-left:15px\">";
-        changeLog += commit.message;
+
+        changeLog += getHtmlFormattedMessage(commit.message);
+
         if (commit.tickets) {
             changeLog += "</td><td nowrap align=\"right\" valign=\"top\" style=\"padding-left:15px;padding-right:10px\">";
             changeLog += commit.tickets;
@@ -1067,9 +1064,9 @@ async function getChangelogFileSections({ options, logger }, version?: string, n
 
     logger.log("Extract section from changelog file");
     logger.log(`   Num sections       : '${numSections}'`);
-    logger.log(`   Version start      : '${version ? version : "n/a"}'`);
+    logger.log(`   Version start      : '${version ?? "n/a"}'`);
     logger.log(`   Version string     : '${options.versionText}'`);
-    logger.log(`   Format             : '${format ? format : "n/a"}'`);
+    logger.log(`   Format             : '${format ?? "n/a"}'`);
     logger.log(`   Input File         : '${inputFile}'`);
 
     //
@@ -1186,7 +1183,7 @@ async function getChangelogFileSections({ options, logger }, version?: string, n
         //     ### Features
         //
         //     - feature 1
-        //     - feature 2
+        //     - **scope1:** feature 2
         //
         //     ### Bug Fixes
         //
@@ -1256,12 +1253,12 @@ async function getChangelogFileSections({ options, logger }, version?: string, n
                                  .replace(new RegExp(match[0], "g"), "").trim();
             }
             if (scope) {
-                message = message.replace(scope, "");
+                message = message.replace(`**${scope}:**`, "");
                 while (message[0] === " ") {
                     message = message.substring(1);
                 }
             }
-            contents2.push({ subject, scope, message, tickets });
+            contents2.push({ subject, scope, message: getHtmlFormattedMessage(message, true), tickets });
         }
 
         logger.log("Successfully retrieved changelog file section parts");
@@ -1381,116 +1378,48 @@ function getFormattedDate()
 }
 
 
+
 function getPartsFromHistorySection({options, logger}, contents: string)
 {
     let match: RegExpExecArray;
-    const typeParts = [];
-    const msgParts = [];
+    const entries: IChangelogEntry[] = [];
 
-    logger.log("   Extracting parts");
-
+    logger.log("   Extracting parts from history file section");
     //
     // Process entries with a subject (sorrounded by <b></b>)
     //
-    let regex = new RegExp(/<b>\w*(?<=^|>)[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>|<\/font>)/g);
-    while ((match = regex.exec(contents)) !== null)
+    const regex = /(?:^[0-9]{1,2}\. +([\w+ ]+)+(?::  ([\w+ ]+))*([^]*?))(?=^[0-9]{1,2}\.|###END###)/gmi;
+    while ((match = regex.exec(contents + "###END###")) !== null)
     {
-        let value = match[0].replace("&nbsp;", "").replace(".", "").replace("<b>", "").replace("</b>", "");
-        for (let i = 0; i < 10; i++) {
-            value = value.replace(i.toString(), "").trim();
-        }
-        typeParts.push(value);
-    }
-
-    contents = contents.replace(/<br>&nbsp;&nbsp;&nbsp;&nbsp;<br>/g, "<br><br>");
-    contents = contents.replace(/<br>&nbsp;&nbsp;&nbsp;<br>/g, "<br><br>");
-
-    regex = new RegExp(/(<\/b>){1}(<br>){0,1}(<br>){1}(&nbsp;){2,}[ ]{1}.+?(?=<br>(&nbsp;| ){0,}<br>(<b>|[1-9][0-9]{0,1}\.(&nbsp;| ))|$)/g);
-    while ((match = regex.exec(contents)) !== null)
-    {
-        let value = match[0].replace(/<\/b>/, "");
-        value = value.replace(/<br>&nbsp;&nbsp;&nbsp;&nbsp;\[/, "<br>["); // ticket tags
-        value = value.replace(/<br>&nbsp;&nbsp;&nbsp; /, "<br>");
-
-        if (containsValidSubject(options, value))
+        let subject = match[1]?.trim(),
+            scope = match[2]?.trim(),
+            message = match[3]?.trim(),
+            tickets = "";
+        let match2: RegExpExecArray;
+        const regex2 = /( *(?:bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1} #[0-9]+(?: *, *#[0-9]+)* *$)+/gmi;
+        if ((match2 = regex2.exec(message)) !== null)
         {
-            while (value.startsWith("<br>")) {
-                value = value.substring(4);
-            }
-            while (value.endsWith("<br>")) {
-                value = value.substring(0, value.length - 4);
-            }
+            tickets = match2[1]?.trim();
+            message = message.replace(tickets, "");
         }
-
-        msgParts.push(value.trim());
-    }
-    //
-    // Non-subject entries (no <b></b> wrap)
-    //
-    regex = new RegExp(/\w*(?<!<b>)(\b[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>[1-9]|$|<br><b>))/g);
-    while ((match = regex.exec(contents)) !== null) {
-        typeParts.push("");
-    }
-
-    regex = new RegExp(/\w*(?<!<b>)(\b[1-9][0-9]{0,1}(&nbsp;){0,1}\.(&nbsp;| ).+?(?=<br>[1-9]|$|<br><b>))/g);
-    while ((match = regex.exec(contents)) !== null)
-    {
-        let value = match[0].replace("&nbsp;", "").replace(".", "").replace("<b>", "").replace("</b>", "");
-        for (let i = 0; i < 10; i++) {
-            value = value.replace(i.toString(), "").trim();
+        if (!scope && !containsValidSubject(options, subject)) {
+            message = subject + EOL + message;
+            subject = "General";
+            scope = "";
         }
-        while (value.startsWith("<br>")) {
-            value = value.substring(4);
-        }
-        while (value.endsWith("<br>")) {
-            value = value.substring(0, value.length - 4);
-        }
-        msgParts.push(value.trim());
-    }
-
-    const contents2: IChangelogEntry[] = [];
-    for (let i = 0; i < typeParts.length; i++)
-    {
-        let scope = "", message = "", tickets = "", subject = typeParts[i];
-
-        message = msgParts[i];
-        if (containsValidSubject(options, subject)) {
-            if (typeParts[i].includes(":")) {
-                subject = typeParts[i].substring(0, typeParts[i].indexOf(":")).trim();
-                scope = typeParts[i].substring(typeParts[i].indexOf(":") + 1).trim();
+        entries.push({ subject, scope, message, tickets });
+        if (options.verbose) {
+            logger.log("   Push parsed entry to changelog list");
+            logger.log(`      Subject : '${subject}'`);
+            logger.log(`      Scope : '${scope ?? "n/a"}'`);
+            if (tickets) {
+                logger.log(`      Tickets : ${tickets}`);
             }
         }
-        else {
-            subject = "Miscellaneous";
-            if (typeParts[i].includes(":")) {
-                scope = typeParts[i].substring(0, typeParts[i].indexOf(":")).trim();
-                message = typeParts[i].substring(typeParts[i].indexOf(":") + 1) + msgParts[i];
-            }
-            else if (!typeParts[i]) {
-                message = msgParts[i];
-            }
-            else {
-                message = typeParts[i] + msgParts[i];
-            }
-        }
-
-        regex = new RegExp(/\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/gi);
-        while ((match = regex.exec(msgParts[i])) !== null) {
-            tickets = match[0];
-            tickets = match[0].replace("[", "").replace("]", "").trim();
-            tickets = properCase(tickets.replace("&nbsp;", " "));
-            message = message.replace("<br><br>" + match[0], "");
-            message = message.replace("<br>" + match[0], "").trim();
-            message = message.replace("&nbsp;&nbsp;" + match[0], "").trim();
-            message = message.replace("&nbsp;" + match[0], "").trim();
-            message = message.replace(" " + match[0], "").trim();
-            message = message.replace(match[0], "").trim();
-        }
-        contents2.push({ subject, scope, message, tickets });
     }
 
     logger.log("Successfully retrieved history file parts");
-    return contents2;
+    return entries;
 }
 
 
@@ -1524,9 +1453,9 @@ async function getHistoryFileSections({ options, logger }, version?: string, num
 
     logger.log("Extract from history.txt file");
     logger.log(`   Num sections       : '${numSections}'`);
-    logger.log(`   Version start      : '${version ? version : "n/a"}'`);
+    logger.log(`   Version start      : '${version ?? "n/a"}'`);
     logger.log(`   Version string     : '${options.versionText}'`);
-    logger.log(`   Format             : '${format ? format : "n/a"}'`);
+    logger.log(`   Format             : '${format ?? "n/a"}'`);
     logger.log(`   Input file         : '${inputFile}'`);
 
     //
@@ -1606,9 +1535,11 @@ async function getHistoryFileSections({ options, logger }, version?: string, num
                 contents += match[2];       // add just the changelog content 1....n
             }
             contents = contents.trim() + EOL + EOL;
-            if (++bFound >= numSections) {  // check # of sections requested and if we found them all yet
-                break;
-            }
+            // if (++bFound >= numSections) {  // check # of sections requested and if we found them all yet
+            //     break;
+            // }
+            ++bFound;
+            break;
         }
     }
 
@@ -1628,6 +1559,9 @@ async function getHistoryFileSections({ options, logger }, version?: string, num
     if (format === "raw") {
         logger.log("Successfully retrieved raw history file content");
         return contents;
+    }
+    else if (format === "parts") {
+        return getPartsFromHistorySection({options, logger}, contents);
     }
 
     //
@@ -1650,75 +1584,8 @@ async function getHistoryFileSections({ options, logger }, version?: string, num
     //
     contents = "<font face=\"Courier New\">" + contents + "</font>";
 
-    if (format !== "parts") {
+    // if (format !== "parts") {
         return contents;
-    }
-
-    //
-    // Requested "parts"
-    //
-
-    let index1 = contents.length;
-    let index2 = 0;
-
-    logger.log("   Write header text to message");
-    logger.log(`   Write ${numSections} history section(s) to message`);
-
-    let hDelimiter = "**********";
-    index1 = contents.indexOf("**********");
-    if (index1 === -1)
-    {
-        hDelimiter = "----------";
-    }
-    index1 = contents.indexOf(hDelimiter);
-    while (index1 !== -1)
-    {
-        index2 = contents.indexOf("<br>", index1);
-        index1 = contents.indexOf(hDelimiter, index2);
-    }
-    contents = contents.substring(index2 + 4);
-    while (contents.startsWith("<br>")) {
-        contents = contents.substring(4);
-    }
-    if (contents.endsWith("</font>")) {
-        contents = contents.substring(0, contents.length - 7);
-    }
-    while (contents.endsWith("<br>")) {
-        contents = contents.substring(0, contents.length - 4);
-    }
-
-    let tContents = contents;
-    regex = new RegExp(/[a-zA-z0-9_\/|\"'][,.:]*(&nbsp;){0,1}<br>(&nbsp;){4}[a-zA-z0-9_\/|\"']/g);
-    while ((match = regex.exec(contents)) !== null)
-    {
-        tContents = tContents.replace(match[0], match[0].replace("<br>&nbsp;&nbsp;&nbsp;", "")); // leave a space
-    }
-    contents = tContents;
-
-    // break up &nbsp;s
-    tContents = contents;
-    regex = new RegExp(/(&nbsp;)(\w|'|\")/g);
-    while ((match = regex.exec(contents)) !== null)
-    {
-        tContents = tContents.replace(match[0], match[0].replace("&nbsp;", " "));
-    }
-    contents = tContents;
-
-    // Bold all numbered lines with a subject
-    tContents = contents;
-    regex = new RegExp(/\w*(?<=^|>)[1-9][0-9]{0,1}(&nbsp;| ){0,1}\.(&nbsp;| ).+?(?=<br>)/g);
-    while ((match = regex.exec(contents)) !== null) {
-        const value = match[0];
-        if (containsValidSubject(options, value)) {
-            tContents = tContents.replace(value, `<b>${value}</b>`);
-        }
-    }
-
-    contents = tContents;
-
-    // if (format === "parts") {
-        logger.log("Successfully retrieved history file section parts");
-        return getPartsFromHistorySection({options, logger}, contents);
     // }
 /*
     //
@@ -1804,6 +1671,38 @@ function getFormattedSubject({options}: IContext, subject: string)
     }
 
     return formattedSubject;
+}
+
+
+function getHtmlFormattedMessage(message: string, isHtmlMsg = false)
+{
+    let tContents = message,
+        match: RegExpExecArray;
+    const sc = !isHtmlMsg ? " " : "&nbsp;",
+          ls = !isHtmlMsg ? "^" : "<br>",
+          regex = !isHtmlMsg ? /[a-zA-z0-9_\/|\"'][,.:]* {0,1}[\r\n]+ {4}[a-zA-z0-9_\/|\"']/g :
+                               /[a-zA-z0-9_\/|\"'][,.:]*(?:&nbsp;){0,1}[<br>]+(?:&nbsp;){4}[a-zA-z0-9_\/|\"']/g;
+    while ((match = regex.exec(message)) !== null)
+    {
+        tContents = tContents.replace(match[0], match[0].replace(!isHtmlMsg ? "\r\n   " : `<br>${sc}${sc}${sc}`, "")); // leave a space
+    }
+    message = tContents;
+
+    if (!isHtmlMsg) {
+        message = message.replace(/^[ ]{10,}[\w]+/gm, (m) => { return "        " + m.trimLeft(); })
+                        .replace(/^[ ]{5,9}[\w]+/gm, (m) => { return "    " + m.trimLeft(); })
+                        .replace(/^[ ]{3,4}[\w]+/gm, (m) => { return m.trimLeft(); }).trim()
+                        .replace(/\r\n +\r\n/gm, "\r\n\r\n").replace(/\n +\n/gm, "\n\n")
+                        .replace(/\r\n/gm, "<br>").replace(/\n/gm, "<br>")
+                        .replace(/ /gm, "&nbsp;");
+    }
+    else {
+        message = message.replace(new RegExp(`<br>(?:${sc}){10,}[\\w]+`, "gm"), (m) => { return `<br>${sc}${sc}${sc}${sc}${sc}${sc}${sc}${sc}` + m.substring(4).replace(/&nbsp;/g, ""); })
+                        .replace(new RegExp(`<br>(?:${sc}){5,9}[\\w]+`, "gm"), (m) => { return `<br>${sc}${sc}${sc}${sc}` + m.substring(4).replace(/&nbsp;/g, ""); })
+                        .replace(new RegExp(`<br>(?:${sc}){3,4}[\\w]+`, "gm"), (m) => { return m.replace(/&nbsp;/g, ""); })
+                        .replace(/<br>(?:&nbsp;)+<br>/gm, "<br><br>");
+    }
+    return message;
 }
 
 
