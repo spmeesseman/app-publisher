@@ -61,14 +61,15 @@ export const publishRcOpts =
         "boolean",
         false,
         [ "-c", "--config" ],
-        "Display config.",
+        "Displays the configuration object and exits, for debugging.",
         "Note that the default publishrc file is '.publishrc.*'.  A config file can",
         "be one of four different formats:",
         "",
         "    .publishrc.json",
         "    .publishrc.js",
         "    .publishrc.yaml",
-        "    .publishrc.yml"
+        "    .publishrc.yml",
+        "    package.json { publishrc: { ... } }"
     ],
 
     configName: [
@@ -84,7 +85,8 @@ export const publishRcOpts =
         "    .publishrc.cst.json",
         "    .publishrc.cst.js",
         "    .publishrc.cst.yaml",
-        "    .publishrc.cst.yml"
+        "    .publishrc.cst.yml",
+        "    package.json { publishrc.cst: { ... } }"
     ],
 
     cProjectRcFile: [
@@ -569,33 +571,6 @@ export const publishRcOpts =
         "Name of the project.  This must match throughout the build",
         "files and the SVN project name."
     ],
-
-    rcFile: [
-        true,
-        "string",
-        ".publishrc.[json/yml/yaml/js]",
-        [ "-rc", "--rcfile", "--rc-file" ],
-        {
-            help: "Use the specified config name.  The config name determines the publishrc\n" +
-                  "file to use.  For example, consider the following command line:\n" +
-                  "\n" +
-                  "    app-publisher --config-name spm\n" +
-                  "\n" +
-                  "Specifying this will cause the publishrc file named '.publishrc.spm.json\n" +
-                  "to be used.\n" +
-                  "Note that the default publishrc file is '.publishrc.*'.  Examples:\n" +
-                  "\n" +
-                  "    .publishrc.json\n" +
-                  "    .publishrc.custom.json\n" +
-                  "    .publishrc.js\n" +
-                  "    .publishrc.yaml\n" +
-                  "    .publishrc.yml",
-            usage: [
-                "app-publisher --rc-file .publishrc.custom.json"
-            ]
-        }
-    ],
-
 
     readConfig: [
         true,

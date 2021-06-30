@@ -204,7 +204,18 @@ export interface IOptions
      */
     config: boolean;
     /**
-     * Can be used like --rc-file.  but just theconfig part i.e. 'custom' yields .publishrc.custom.*
+     * Use the specified config name.  The config name determines the publishrc file to use.
+     * For example, consider the following command line:
+     *
+     *     app-publisher --config-name spm
+     *
+     * Specifying this will cause the following files to be searched for a config:
+     *
+     *     .publishrc.spm.json
+     *     .publishrc.spm.js
+     *     .publishrc.spm.yaml
+     *     .publishrc.spm.yml
+     *     package.json { publishrc.spm: { ... } }
      */
     configName: string;
     /**
@@ -494,23 +505,6 @@ export interface IOptions
      * Must be set !!
      */
     projectName: string;
-    /**
-     * The publishrc file to read the initial configuration from.
-     * Use the specified config name.  The config name determines the publishrc file to use.
-     * For example, consider the following command line:
-     *
-     *     app-publisher --config-name spm
-     *
-     * Specifying this will cause the publishrc file named '.publishrc.spm.json' to be used.
-     * Note that the default publishrc file is '.publishrc.*'.  Examples:
-     *
-     *     .publishrc.json
-     *     .publishrc.custom.json
-     *     .publishrc.js
-     *     .publishrc.yaml
-     *     .publishrc.yml
-     */
-    rcFile: string;
     /**
      * Display the contents of the configuration file.
      */
