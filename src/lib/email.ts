@@ -30,12 +30,14 @@ export async function sendNotificationEmail(context: IContext, version: string):
 
     let emailBody = getEmailHeader({options, logger}, version);
     emailBody += "<br>Most Recent History File Entry:<br><br>";
-    emailBody += (context.changelog.fileNotes || context.changelog.fileNotesLast);
+    const notes = (context.changelog.fileNotes || context.changelog.fileNotesLast);
 
-    if (!emailBody) {
+    if (!notes) {
         logger.error("Notification could not be sent, history file not specified");
         return false;
     }
+
+    emailBody += notes;
 
     //
     // Attach app-publisher signature to body

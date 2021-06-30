@@ -71,6 +71,22 @@ export const publishRcOpts =
         "    .publishrc.yml"
     ],
 
+    configName: [
+        true,
+        "string",
+        "",
+        [ "-cn", "--config-name" ],
+        "Use config name.",
+        "Note that the default publishrc file is '.publishrc.*'.  A config name can",
+        "dyanimically modify the file used.  For example, a config name of 'cst' will",
+        "yield a search for the following config files:",
+        "",
+        "    .publishrc.cst.json",
+        "    .publishrc.cst.js",
+        "    .publishrc.cst.yaml",
+        "    .publishrc.cst.yml"
+    ],
+
     cProjectRcFile: [
         true,
         "string",

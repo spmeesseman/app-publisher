@@ -6,26 +6,32 @@ const readPkgUp = require("read-pkg-up");
 const cosmiconfig = require("cosmiconfig");
 const resolveFrom = require("resolve-from");
 const envCi = require("@spmeesseman/env-ci");
-const plugins = require("./plugins");
+// const plugins = require("./plugins");
 
 export = getConfig;
 
 
 async function getConfig(context: any, opts: IOptions)
 {
-    let configName = "publishrc";
-    if (opts.configName)
-    {
-        configName = "publishrc." + opts.configName;
-    }
-
-    let configFiles: string[];
+    let configName = "publishrc",
+        configFiles: string[];
 
     if (opts.rcFile)
     {
         configFiles = [
             "package.json",
             opts.rcFile
+        ];
+    }
+    else if (opts.configName)
+    {
+        configName = "publishrc." + opts.configName;
+        configFiles = [
+            "package.json",
+            `.${configName}.json`,
+            `.${configName}.yaml`,
+            `.${configName}.yml`,
+            `.${configName}.js`
         ];
     }
     else

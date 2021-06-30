@@ -55,7 +55,7 @@ async function runStart(context: IContext)
         `;
         context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
         context.stdout.write(JSON.stringify(options, undefined, 3));
-        return true;
+        return 0;
     }
 
     //
@@ -82,7 +82,7 @@ async function runStart(context: IContext)
         else {
             context.stdout.write("  No known CI environment was found" + EOL);
         }
-        return true;
+        return 0;
     }
 
     //
@@ -109,7 +109,7 @@ async function runStart(context: IContext)
     if (!isCi && !options.dryRun && !options.noCi)
     {
         logger.error("This run was not triggered in a known CI environment, use --no-ci flag for local publish.");
-        return false;
+        return 1;
     }
     else
     {
@@ -142,7 +142,7 @@ async function runStart(context: IContext)
     if (isCi && isPr && !options.noCi)
     {
         logger.error("This run was triggered by a pull request and therefore a new version won't be published.");
-        return false;
+        return 1;
     }
 
     if (ciBranch !== options.branch)
@@ -152,7 +152,7 @@ async function runStart(context: IContext)
         if (isCi) {
             logger.error(ciMsg);
             logger.error("A new version won’t be published");
-            return false;
+            return 1;
         }
         else if (!options.taskModeStdOut) {
             logger.warn(ciMsg);
@@ -180,19 +180,20 @@ async function runStart(context: IContext)
         };
     }
 
-    let success = false;
     try {
-        success = await runRelease(context);
+        const success = await runRelease(context);
         if (!success) {
             await revertChanges(context);
             logger.error("Release run returned failure status");
+            return 1;
         }
     }
     catch (e) {
         await callFail(context, e);
+        return 1;
     }
 
-    return success;
+    return 0;
 }
 
 

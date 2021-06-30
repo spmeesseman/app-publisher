@@ -165,20 +165,20 @@ pipeline {
             env.CURRENTVERSION = bat(returnStdout: true,
                                      script: """
                                        @echo off
-                                       app-publisher --rc-file .publishrc.pja.json --task-version-current
+                                       app-publisher --config-name pja --task-version-current
                                      """)
             if (env.TAG_NAME == null) {
               echo "No tag found, trunk/branch build set version"
               env.NEXTVERSION = bat(returnStdout: true,
                                     script: """
                                       @echo off
-                                      app-publisher --rc-file .publishrc.pja.json --task-version-next
+                                      app-publisher --config-name pja --task-version-next
                                     """)
               //
               // Update version files
               //
               echo "Update version files"
-              bat "app-publisher --rc-file .publishrc.pja.json --task-version-update"
+              bat "app-publisher --config-name pja --task-version-update"
             }
             else {
               echo "Tag found: ${env.TAG_NAME}, set next version to current"
@@ -249,11 +249,11 @@ pipeline {
               // If we don't use --version-force-next option then ap will bump the version again
               // since we ran the --task-version-update command already
               //
-              bat "app-publisher --rc-file .publishrc.pja.json --task-changelog --version-force-next ${env.NEXTVERSION}" 
+              bat "app-publisher --config-name pja --task-changelog --version-force-next ${env.NEXTVERSION}" 
               historyEntry = bat(returnStdout: true,
                                  script: """
                                    @echo off
-                                   app-publisher --rc-file .publishrc.pja.json --task-changelog-print --version-force-next ${env.NEXTVERSION}
+                                   app-publisher --config-name pja --task-changelog-print --version-force-next ${env.NEXTVERSION}
                                  """)
             }
           }
@@ -334,7 +334,7 @@ pipeline {
               // NPM and MantisBT Release
               //
               echo "Perform NPM and MantisBT Releases"
-              bat "app-publisher --rc-file .publishrc.pja.json --task-mantisbt-release --task-npm-release --task-email --version-force-next ${env.NEXTVERSION}"
+              bat "app-publisher --config-name pja --task-mantisbt-release --task-npm-release --version-force-next ${env.NEXTVERSION}"
             }
           }
         }
@@ -378,7 +378,7 @@ pipeline {
             echo "    1. Commit modified files to SVN."
             echo "    2. Tag version in SVN."
             echo "    3. Send release email."
-            bat "app-publisher --rc-file .publishrc.pja.json --task-commit --task-tag --task-email --version-force-next ${env.NEXTVERSION}"
+            bat "app-publisher --config-name pja --task-commit --task-tag --task-email --version-force-next ${env.NEXTVERSION}"
           }
         }
       }

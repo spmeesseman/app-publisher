@@ -7,7 +7,7 @@ const pkg = require("../../package.json");
 export = getOptions;
 
 
-function getOptions(env: any, cwd: string, useBanner = true): IOptions
+function getOptions(useBanner = true): IOptions
 {
     const version = require("../../package.json").version,
           banner = apBanner(version),

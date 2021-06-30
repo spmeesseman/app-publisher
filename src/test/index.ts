@@ -48,10 +48,6 @@ export = async () =>
         const testsRoot = path.resolve(__dirname, ".."),
               nycDir = path.join(__dirname, "..", "..");
 
-        console.log("TEST: cwd      : " + __dirname);
-        console.log("TEST: testRoot : " + testsRoot);
-        console.log("TEST: nycDir   : " + nycDir);
-
         const nyc = new NYC(
         {
             extends: "@istanbuljs/nyc-config-typescript",

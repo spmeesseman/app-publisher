@@ -8,6 +8,8 @@ import getOptions from "../lib/get-options";
 import validateOptions from "../lib/validate-options";
 import getConfig from "../lib/get-config";
 import getContext from "../lib/get-context";
+const envCi = require("@spmeesseman/env-ci");
+
 
 export const getDocPath = (p: string) =>
 {
@@ -25,8 +27,8 @@ export async function sleep(ms: number)
 export async function runApTest(options: IOptions)
 {
     try {
-        await require("../.")(options);
-        return 0;
+        const rc = await require("../.")(options);
+        return rc;
     }
     catch (error)
     {
@@ -37,18 +39,29 @@ export async function runApTest(options: IOptions)
 }
 
 let context: IContext;
+let ciInfo: any;
 
 export async function getApOptions(cmdOpts?: string[])
 {
     const procArgv = [ ...process.argv ];
-    process.argv = cmdOpts ? [ "", "", ...cmdOpts ] : [ "", "" ];
+    if (!ciInfo) {
+        ciInfo = envCi({ env: process.env, cwd: process.cwd() });
+    }
+    if (!ciInfo.isCi) {
+        cmdOpts.push("--no-ci");
+    }
+    if (ciInfo.isCi && ciInfo.buildUrl && ciInfo.buildUrl.indexOf("pjats.com") !== -1) {
+        process.argv = cmdOpts ? [ "", "", "--config-name", "pja", ...cmdOpts ] : [ "", "", "--config-name", "pja" ];
+    }
+    else {
+        process.argv = cmdOpts ? [ "", "", ...cmdOpts ] : [ "", "" ];
+    }
     if (!context) {
-        const argOptions = getOptions(process.env, process.cwd(), false);
-console.log("1: " + process.cwd());
+        const argOptions = getOptions(false);
         context = await getContext(argOptions, process.cwd(), process.env, process.stdout, process.stderr);
     }
     else {
-        const argOptions = getOptions(context.env, context.cwd, false);
+        const argOptions = getOptions(false);
         const { options, plugins } = await getConfig(context, argOptions);
         context.options = options;
         context.plugins = plugins;

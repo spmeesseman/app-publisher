@@ -9,42 +9,27 @@ import validateOptions = require("../lib/validate-options");
 import { getApOptions, runApTest, sleep } from "./helper";
 
 
-suite("Options tests", () =>
+suite("Tasks tests", () =>
 {
 
     test("stdout tasks", async () =>
     {
-        // const options = await getApOptions([ "--no-ci" ]);
-        const options = await getApOptions();
-
-        options.noCi = !options.ciInfo.isCi;
-
-        options.taskCiEnv = true;
-        await runApTest(options);
-
+        let options = await getApOptions([ "--task-ci-env"]);
+        expect(await runApTest(options)).to.equal(0, "task: ci env");
         sleep(500);
 
-        options.taskCiEnv = false;
-        options.taskDevTest = true;
-        await runApTest(options);
-
+        options = await getApOptions([ "--task-dev-test"]);
+        expect(await runApTest(options)).to.equal(0, "task: dev test");
         sleep(500);
-
-        options.taskDevTest = false;
-        options.taskVersionCurrent = true;
-        await runApTest(options);
     });
 
 
     test("version tasks", async () =>
     {
-        // const options = await getApOptions([ "--no-ci" ]);
-        const options = await getApOptions();
-
-        options.noCi = !options.ciInfo.isCi;
-
-        options.taskVersionCurrent = true;
-        await runApTest(options);
+        const options = await getApOptions([ "--task-version-current"]);
+        expect(await runApTest(options)).to.equal(0, "task: version-current");
+        // expect(await stdout_runApTest(options)).to.be.a("string", "task: version-current").and.not.be.empty;
+        sleep(500);
     });
 
 });

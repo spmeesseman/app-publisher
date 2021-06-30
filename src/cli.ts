@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { env, stderr, cwd } from "process";
+import { env, stderr } from "process";
 import { inspect } from "util";
 import hideSensitive = require("./lib/hide-sensitive");
 import getOptions = require("./lib/get-options");
@@ -9,8 +9,8 @@ import getOptions = require("./lib/get-options");
 export = async () =>
 {
     try {
-        await require(".")(getOptions(env, cwd()));
-        return 0;
+        const rc = await require(".")(getOptions());
+        return rc;
     }
     catch (error)
     {
