@@ -16,14 +16,7 @@ async function getConfig(context: any, opts: IOptions)
     let configName = "publishrc",
         configFiles: string[];
 
-    if (opts.rcFile)
-    {
-        configFiles = [
-            "package.json",
-            opts.rcFile
-        ];
-    }
-    else if (opts.configName)
+    if (opts.configName)
     {
         configName = "publishrc." + opts.configName;
         configFiles = [
