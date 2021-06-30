@@ -1,5 +1,14 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.2.1 (June 30th, 2021)
+
+### Bug Fixes
+
+- **Changelog:** mantis/github release messages are not aligned correctly when the commit message is multi-line and uses indentation.
+- **Configuration:** the 'configName' option no longer works.
+- **Email:** regression - notification is missing the release notes in v3.1.0.
+- **Versioning:** for ExtJs projects, when a pre-release version is read from from app.json, it is not converted back to true version using the '-' character.
+
 ## Version 3.2.0 (June 29th, 2021)
 
 ### Features
