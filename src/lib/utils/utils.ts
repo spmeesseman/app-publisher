@@ -331,10 +331,10 @@ export async function runScripts(context: IContext, scriptType: string, scripts:
 }
 
 
-export function validateVersion(version: string, nextVersion?: string, logger?: any)
+export function validateVersion(version: string, lastVersion?: string, logger?: any)
 {
     if (logger) {
         logger.log("Validate version : " + version);
     }
-    return semver.valid(version) && (!nextVersion || semver.gt(version, version));
+    return semver.valid(version) && (!lastVersion || semver.gt(version, lastVersion));
 }

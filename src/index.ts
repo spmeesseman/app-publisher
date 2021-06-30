@@ -423,7 +423,8 @@ async function runRelease(context: IContext)
         if (options.versionForceNext)
         {
             logger.log("Forcing next version to " + options.versionForceNext);
-            logger.log("   From version : " + nextRelease.version);
+            logger.log("   From version : " + nextRelease.versionInfo.version);
+            logger.log("   Last version : " + lastRelease.version);
             nextRelease.version = options.versionForceNext;
             if (!util.validateVersion(nextRelease.version, lastRelease.version, logger))
             {
