@@ -29,7 +29,7 @@ export async function sendNotificationEmail(context: IContext, version: string):
     }
 
     let emailBody = getEmailHeader({options, logger}, version);
-    emailBody += "<br>Most Recent History File Entry:<br><br>";
+    emailBody += "<br><b>Release Notes:</b><br><br>";
     const notes = (context.changelog.fileNotes || context.changelog.fileNotesLast);
 
     if (!notes) {

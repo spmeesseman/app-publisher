@@ -293,6 +293,7 @@ function createHistorySectionFromCommits({ options, commits, logger }: IContext)
             msg = msg.replace("refactor: ", `Refactoring${EOL}${EOL}`);
             msg = msg.replace("style: ", `Code Styling${EOL}${EOL}`);
             msg = msg.replace("test: ", `Tests${EOL}${EOL}`);
+            msg = msg.replace("tests: ", `Tests${EOL}${EOL}`);
             msg = msg.replace("tweak: ", `Refactoring${EOL}${EOL}`);
             msg = msg.replace("project: ", `Project Structure${EOL}${EOL}`);
             msg = msg.replace("layout: ", `Project Layout${EOL}${EOL}`);
@@ -322,6 +323,7 @@ function createHistorySectionFromCommits({ options, commits, logger }: IContext)
             msg = msg.replace("refactor(", "Refactoring(");
             msg = msg.replace("project(", "Project Structure(");
             msg = msg.replace("test(", "Tests(");
+            msg = msg.replace("tests(", "Tests(");
             msg = msg.replace("tweak(", "Refactoring(");
             msg = msg.replace("style(", "Code Styling(");
             msg = msg.replace("layout(", "Project Layout(");
@@ -1545,7 +1547,6 @@ async function getHistoryFileSections({ options, logger }, version?: string, num
     // Read in contents of file, and break it down to at least the first version requested
     //
     let contents = "",
-        finalContents = "",
         fileContents = await readFile(inputFile);
 
     //
@@ -1590,7 +1591,7 @@ async function getHistoryFileSections({ options, logger }, version?: string, num
     // Note that [\s\S]*? isnt working here, had to use [^]*? for a non-greedy grab, which isnt
     // supported in anything other than a JS regex
     //
-    let regex = new RegExp(`(?:^${options.versionText} ([0-9a-zA-Z\-\.]{3,})[\r\n]+.+[\r\n]+[\-]{20,}[\r\n]+[\*]{20,}[^]+?(?=[\*]{20,})[\*]{20,}[\r\n]+)([^]*?)(?=${options.versionText}|###END###)`, "gm");
+    let regex = new RegExp(`(?:^${options.versionText} ([0-9a-zA-Z\-\.]{3,})[\r\n]+.+[\r\n]+[\-]{20,}[\r\n]+[\*]{20,}[^]+?(?=[\*]{20,})[\*]{20,}[\r\n]+)([^]*?)(?=^${options.versionText}|###END###)`, "gm");
     while ((match = regex.exec(fileContents + "###END###")) !== null)
     {
         if (options.verbose) {
@@ -1648,6 +1649,14 @@ async function getHistoryFileSections({ options, logger }, version?: string, num
     // Style the contents to monospace font
     //
     contents = "<font face=\"Courier New\">" + contents + "</font>";
+
+    if (format !== "parts") {
+        return contents;
+    }
+
+    //
+    // Requested "parts"
+    //
 
     let index1 = contents.length;
     let index2 = 0;
@@ -1707,11 +1716,11 @@ async function getHistoryFileSections({ options, logger }, version?: string, num
 
     contents = tContents;
 
-    if (format === "parts") {
+    // if (format === "parts") {
         logger.log("Successfully retrieved history file section parts");
         return getPartsFromHistorySection({options, logger}, contents);
-    }
-
+    // }
+/*
     //
     // Reverse versions, display newest at top if more than 1 section
     //
@@ -1741,11 +1750,12 @@ async function getHistoryFileSections({ options, logger }, version?: string, num
                 contents += "<br>";
             }
         }
-        finalContents = "<font face=\"Courier New\" style=\"font-size:12px\">" + contents + "</font>";
+        contents = "<font face=\"Courier New\" style=\"font-size:12px\">" + contents + "</font>";
     }
 
     logger.log("Successfully retrieved history file content");
-    return finalContents;
+    return contents;
+    */
 }
 
 
@@ -1776,6 +1786,7 @@ function getFormattedSubject({options}: IContext, subject: string)
         case "refactor": formattedSubject = "Refactoring"; break;
         case "style"   : formattedSubject = "Code Styling"; break;
         case "test"    : formattedSubject = "Tests"; break;
+        case "tests"   : formattedSubject = "Tests"; break;
         case "tweak"   : formattedSubject = "Refactoring"; break;
         case "visual"  : formattedSubject = "Visuals"; break;
         default   : formattedSubject = subject; break;
