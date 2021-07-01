@@ -18,9 +18,9 @@ export abstract class Changelog implements IChangelog
     notesLast: string;
     context: IContext;
 
-    constructor(context: IContext, file: string)
+    constructor(context: IContext)
     {
-        this.file = file;
+        this.file = context.options.changelogFile;
         this.context = context;
     }
 

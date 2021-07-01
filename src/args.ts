@@ -299,13 +299,6 @@ export const publishRcOpts =
         "Ignored if githubRelease = N."
     ],
 
-    historyFile: [
-        true,
-        "string",
-        "",
-        "The location of this history file, can be a relative or full path."
-    ],
-
     historyHdrFile: [
         true,
         "string",

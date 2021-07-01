@@ -16,24 +16,7 @@ async function doDistRelease(context: IContext)
     logger.log("Starting Distribution release");
 
     //
-    // Copy history file to dist directory
-    //
-    if (options.historyFile)
-    {
-        logger.log("Copying history file to dist dir");
-        logger.log("   Source : " + options.historyFile);
-        logger.log("   Target : " + options.pathToDist);
-        //
-        // Copy to dist dir
-        //
-        await copyFile(options.historyFile, options.pathToDist);
-        //
-        // Track modified file
-        //
-        await addEdit(context, path.normalize(path.join(options.pathToDist, options.historyFile)));
-    }
-    //
-    // Copy history file to dist directory
+    // Copy changelog file to dist directory
     //
     if (options.changelogFile)
     {
@@ -47,7 +30,7 @@ async function doDistRelease(context: IContext)
         //
         // Track modified file
         //
-        await addEdit(context, path.normalize(path.join(options.pathToDist, options.historyFile)));
+        await addEdit(context, path.normalize(path.join(options.pathToDist, options.changelogFile)));
     }
 
     const targetNetLocation = options.distReleasePath ? path.normalize(path.join(options.distReleasePath, options.projectName, nextRelease.version)) : undefined,

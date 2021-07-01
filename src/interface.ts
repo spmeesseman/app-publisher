@@ -357,10 +357,6 @@ export interface IOptions
      */
     githubUser: string;
     /**
-     * The location of this history file, can be a relative or full path.
-     */
-    historyFile: string;
-    /**
      * The location of this history header file, can be a relative or full path.
      */
     historyHdrFile: string;

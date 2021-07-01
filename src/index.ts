@@ -263,12 +263,11 @@ async function runRelease(context: IContext)
     // from the changelog file itself and converted to html style changelog for GitHub and
     // MantisBT releases.
     //
-    const clFile = options.historyFile || options.changelogFile;
-    if (path.extname(clFile) !== ".txt") {
-        context.changelog = new ChangelogMd(context, clFile);
+    if (path.extname(options.changelogFile) !== ".txt") {
+        context.changelog = new ChangelogMd(context);
     }
     else {
-        context.changelog = new ChangelogTxt(context, clFile);
+        context.changelog = new ChangelogTxt(context);
     }
 
     //
@@ -936,10 +935,7 @@ async function processTasksStdOut2(context: IContext): Promise<boolean>
     {
         logger.log("Write CI environment to file 'ap.env'");
         let fileContent = lastRelease.version + EOL + nextRelease.version + EOL;
-        if (options.historyFile) {
-            fileContent += (options.historyFile + EOL);
-        }
-        else if (options.changelogFile) {
+        if (options.changelogFile) {
             fileContent += (options.changelogFile + EOL);
         }
         await writeFile("ap.env", fileContent);
@@ -948,10 +944,7 @@ async function processTasksStdOut2(context: IContext): Promise<boolean>
 
     if (options.taskCiEnvInfo)
     {
-        if (options.historyFile) {
-            context.stdout.write(`${lastRelease.version}|${nextRelease.version}|${options.historyFile}`);
-        }
-        else if (options.changelogFile) {
+        if (options.changelogFile) {
             context.stdout.write(`${lastRelease.version}|${nextRelease.version}|${options.changelogFile}`);
         }
         else {

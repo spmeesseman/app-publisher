@@ -431,7 +431,7 @@ export class ChangelogTxt extends Changelog
             isNewHistoryFileHasContent = false;
         const fmtDate = getFormattedDate(),
             { options, logger, lastRelease, nextRelease} = context,
-            originalFile = options.historyFile,
+            originalFile = options.changelogFile,
             taskSpecVersion = options.taskChangelogPrintVersion || options.taskChangelogViewVersion,
             version = !taskSpecVersion ? nextRelease.version : taskSpecVersion;
 
@@ -441,25 +441,25 @@ export class ChangelogTxt extends Changelog
         {
             if (options.taskChangelogFile || options.taskChangelogHtmlFile)
             {
-                options.historyFile = options.taskChangelogFile || options.taskChangelogHtmlFile;
-                if (await pathExists(options.historyFile))
+                options.changelogFile = options.taskChangelogFile || options.taskChangelogHtmlFile;
+                if (await pathExists(options.changelogFile))
                 {
-                    await deleteFile(options.historyFile);
+                    await deleteFile(options.changelogFile);
                 }
             }
             else if (options.taskMode && !options.taskChangelog)
             {
-                options.historyFile = path.join(os.tmpdir(), `history.${version}.txt`);
-                if (await pathExists(options.historyFile))
+                options.changelogFile = path.join(os.tmpdir(), `history.${version}.txt`);
+                if (await pathExists(options.changelogFile))
                 {
-                    await deleteFile(options.historyFile);
+                    await deleteFile(options.changelogFile);
                 }
             }
 
             //
             // If history file doesnt exist, create one with the project name as a title
             //
-            const historyPath = path.dirname(options.historyFile);
+            const historyPath = path.dirname(options.changelogFile);
 
             if (historyPath && !(await pathExists(historyPath)))
             {
@@ -467,16 +467,16 @@ export class ChangelogTxt extends Changelog
                 await createDir(historyPath);
             }
 
-            if (!(await pathExists(options.historyFile)))
+            if (!(await pathExists(options.changelogFile)))
             {
                 logger.log("Create new history file");
                 if (options.taskChangelog || !options.taskMode)
                 {
-                    await writeFile(options.historyFile, options.projectName + EOL + EOL);
+                    await writeFile(options.changelogFile, options.projectName + EOL + EOL);
                 }
                 else
                 {
-                    await writeFile(options.historyFile, "");
+                    await writeFile(options.changelogFile, "");
                 }
                 isNewHistoryFile = true;
             }
@@ -484,7 +484,7 @@ export class ChangelogTxt extends Changelog
             {   //
                 // If the history file already existed, but had no entries, we need to still set the 'new' flag
                 //
-                const contents = await readFile(options.historyFile);
+                const contents = await readFile(options.changelogFile);
                 if (contents.indexOf(options.versionText) === -1)
                 {
                     isNewHistoryFile = true;
@@ -492,7 +492,7 @@ export class ChangelogTxt extends Changelog
                 }
             }
 
-            if (!(await pathExists(options.historyFile)))
+            if (!(await pathExists(options.changelogFile)))
             {
                 logger.error("Could not create history file, exiting");
                 throw new Error("140");
@@ -526,8 +526,8 @@ export class ChangelogTxt extends Changelog
             // New file
             //
             if (isNewHistoryFile && !isNewHistoryFileHasContent && (options.taskChangelog || !options.taskMode)) {
-                const historyFileTitle = options.projectName + " History";
-                await appendFile(options.historyFile, historyFileTitle + EOL + EOL);
+                const changelogFileTitle = options.projectName + " History";
+                await appendFile(options.changelogFile, changelogFileTitle + EOL + EOL);
             }
 
             //
@@ -536,7 +536,7 @@ export class ChangelogTxt extends Changelog
             //
             // Add lines 'version', 'date', then the header content
             //
-            // Write the formatted commits text to options.historyFile
+            // Write the formatted commits text to options.changelogFile
             // Formatted commits are also contained in the temp text file $Env:TEMP\history.txt
             // Replace all newline pairs with cr/nl pairs as SVN will have sent commit comments back
             // with newlines only
@@ -544,7 +544,7 @@ export class ChangelogTxt extends Changelog
             if ((options.taskChangelog || !options.taskMode) && await pathExists(options.historyHdrFile))
             {
                 const historyHeader = await readFile(options.historyHdrFile);
-                await appendFile(options.historyFile, `${EOL}${options.versionText} ${version}${EOL}${fmtDate}${EOL}${historyHeader}${EOL}${tmpCommits}`);
+                await appendFile(options.changelogFile, `${EOL}${options.versionText} ${version}${EOL}${fmtDate}${EOL}${historyHeader}${EOL}${tmpCommits}`);
             }
             else if (options.taskChangelogPrint || options.taskChangelogPrintVersion) {
                 context.stdout.write(tmpCommits.trim());
@@ -553,13 +553,13 @@ export class ChangelogTxt extends Changelog
             else {
                 if (options.taskChangelog || !options.taskMode) {
                     logger.warn("History header template not found");
-                    await appendFile(options.historyFile, `${EOL}${options.versionText} ${version}${EOL}${fmtDate}${EOL}${EOL}${EOL}${tmpCommits}`);
+                    await appendFile(options.changelogFile, `${EOL}${options.versionText} ${version}${EOL}${fmtDate}${EOL}${EOL}${EOL}${tmpCommits}`);
                 }
                 else if (!options.taskChangelogFile && !options.taskChangelogHtmlFile && !options.taskChangelogHtmlView) {
-                    await appendFile(options.historyFile, `${EOL}${!taskSpecVersion ? "Pending " : ""}${options.versionText} ${version} Changelog:${EOL}${EOL}${EOL}${tmpCommits}`);
+                    await appendFile(options.changelogFile, `${EOL}${!taskSpecVersion ? "Pending " : ""}${options.versionText} ${version} Changelog:${EOL}${EOL}${EOL}${tmpCommits}`);
                 }
                 else {
-                    await appendFile(options.historyFile, tmpCommits.trim());
+                    await appendFile(options.changelogFile, tmpCommits.trim());
                 }
             }
         }
@@ -570,12 +570,12 @@ export class ChangelogTxt extends Changelog
         //
         // Allow manual modifications to history file
         //
-        await editFile(context, options.historyFile, true);
+        await editFile(context, options.changelogFile, true);
 
         //
         // Reset
         //
-        options.historyFile = originalFile;
+        options.changelogFile = originalFile;
     }
 
 
@@ -594,7 +594,7 @@ export class ChangelogTxt extends Changelog
         const { options, logger } = context;
 
         if (!inputFile) {
-            inputFile = options.historyFile;
+            inputFile = options.changelogFile;
         }
         //
         // Make sure user entered correct cmd line params

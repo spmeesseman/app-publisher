@@ -601,9 +601,9 @@ async function validateOptions({cwd, env, logger, options}: any): Promise<boolea
     //
     // Must specify one of changelogFile or hisotryFile
     //
-    if (!options.changelogFile && !options.historyFile)
+    if (!options.changelogFile)
     {
-        logger.error("changelogFile or historyFile must be specified");
+        logger.error("changelogFile must be specified");
         return false;
     }
 
