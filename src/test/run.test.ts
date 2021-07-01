@@ -10,7 +10,7 @@ suite("Full Run Tests", () =>
 
     test("dry run full", async () =>
     {
-        let options = await getApOptions([ "--skip-changelog-edits", "--skip-version-edits" ]);
+        let options = await getApOptions([ "--dry-run", "--skip-changelog-edits", "--skip-version-edits" ]);
         expect(await runApTest(options)).to.equal(0, "task: full dry run");
         sleep(500);
 
