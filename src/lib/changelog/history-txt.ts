@@ -541,26 +541,28 @@ export class ChangelogTxt extends Changelog
             // Replace all newline pairs with cr/nl pairs as SVN will have sent commit comments back
             // with newlines only
             //
-            if ((options.taskChangelog || !options.taskMode) && await pathExists(options.changelogHdrFile))
+            if (options.taskChangelog || !options.taskMode)
             {
-                const historyHeader = await readFile(options.changelogHdrFile);
-                await appendFile(options.changelogFile, `${EOL}${options.versionText} ${version}${EOL}${fmtDate}${EOL}${historyHeader}${EOL}${tmpCommits}`);
+                let header: string;
+                if (await pathExists(options.changelogHdrFile)) {
+                    header = await readFile(options.changelogHdrFile);
+                }
+                else {
+                    for (let i = 0; i < options.changelogLineLen; i++) {
+                        header += "-";
+                    }
+                }
+                await appendFile(options.changelogFile, `${EOL}${options.versionText} ${version}${EOL}${fmtDate}${EOL}${header}${EOL}${tmpCommits}`);
             }
             else if (options.taskChangelogPrint || options.taskChangelogPrintVersion) {
                 context.stdout.write(tmpCommits.trim());
                 return;
             }
+            else if (!options.taskChangelogFile && !options.taskChangelogHtmlFile && !options.taskChangelogHtmlView) {
+                await appendFile(options.changelogFile, `${EOL}${!taskSpecVersion ? "Pending " : ""}${options.versionText} ${version} Changelog:${EOL}${EOL}${EOL}${tmpCommits}`);
+            }
             else {
-                if (options.taskChangelog || !options.taskMode) {
-                    logger.warn("History header template not found");
-                    await appendFile(options.changelogFile, `${EOL}${options.versionText} ${version}${EOL}${fmtDate}${EOL}${EOL}${EOL}${tmpCommits}`);
-                }
-                else if (!options.taskChangelogFile && !options.taskChangelogHtmlFile && !options.taskChangelogHtmlView) {
-                    await appendFile(options.changelogFile, `${EOL}${!taskSpecVersion ? "Pending " : ""}${options.versionText} ${version} Changelog:${EOL}${EOL}${EOL}${tmpCommits}`);
-                }
-                else {
-                    await appendFile(options.changelogFile, tmpCommits.trim());
-                }
+                await appendFile(options.changelogFile, tmpCommits.trim());
             }
         }
         else {

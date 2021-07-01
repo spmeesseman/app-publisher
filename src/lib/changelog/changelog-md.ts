@@ -356,12 +356,20 @@ export class ChangelogMd extends Changelog
                     tmpCommits += EOL;
                 }
 
+                let header: string;
+                if (await pathExists(options.changelogHdrFile)) {
+                    header = await readFile(options.changelogHdrFile);
+                }
+
                 tmpCommits = `## ${options.versionText} ${titleVersion} (${fmtDate})${EOL}${EOL}${tmpCommits}`.trimRight();
 
                 let changeLogContents = await readFile(options.changelogFile);
                 changeLogContents = changeLogContents.replace(new RegExp(changelogTitle, "i"), "").trim();
 
                 changeLogFinal = `${changelogTitle}${EOL}${EOL}`;
+                if (header) {
+                    changeLogFinal += `${header}${EOL}${EOL}`;
+                }
                 if (tmpCommits) {
                     changeLogFinal = `${changeLogFinal}${tmpCommits}${EOL}${EOL}`;
                 }

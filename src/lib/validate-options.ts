@@ -412,7 +412,7 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     }
 
     //
-    // History file line length
+    // Changelog file line length
     //
     if (!options.changelogHdrFile) {
         options.changelogLineLen = 80;
@@ -437,11 +437,19 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
                 return false;
             }
         }
-        //
-        // Set a default NPM registry
-        //
-        if (!options.npmRegistry) {
-            options.npmRegistry = "https://registry.npmjs.org";
+        if (options.npmRelease === "Y")
+        {   //
+            // Set a default NPM registry
+            //
+            if (!options.npmRegistry) {
+                options.npmRegistry = "https://registry.npmjs.org";
+            }
+            //
+            // npmRegistry strip trailing '/'
+            //
+            else if (options.npmRegistry && options.npmRegistry.endsWith("/")) {
+                options.npmRegistry = options.npmRegistry.substring(0, options.npmRegistry.length - 1);
+            }
         }
     }
     else {
@@ -621,17 +629,18 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
         return false;
     }
 
+    //
+    // Version text
+    //
     if (!options.versionText) {
         options.versionText = "Version";
     }
 
     //
-    // Must specify one of changelogFile or hisotryFile
+    // changelog file
     //
-    if (!options.changelogFile)
-    {
-        logger.error("changelogFile must be specified");
-        return false;
+    if (!options.changelogFile) {
+        options.changelogFile = "CHANGELOG.md";
     }
 
     //

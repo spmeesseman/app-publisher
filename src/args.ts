@@ -34,16 +34,17 @@ export const publishRcOpts =
     changelogFile: [
         true,
         "string",
-        "",
-        "The location of this changelog file (markdown format), can be a",
-        "relative or full path."
+        "CHANGELOG.md",
+        "The location of this changelog file (markdown or text format), should be",
+        "a path relative to the project's root."
     ],
 
     changelogHdrFile: [
         true,
         "string",
         "",
-        "The location of this history header file, can be a relative or full path."
+        "The location of this history header file, should be a path relative to",
+        "the project's root."
     ],
 
     changelogLineLen: [
@@ -418,7 +419,11 @@ export const publishRcOpts =
         true,
         "string",
         "https://registry.npmjs.org",
-        "The URL of the NPM registry to use for making an NPM release.",
+        "The URL of the NPM registry to use for making an NPM release.  This needs",
+        "to be set if this is a privately hosted repository.  Should be in the form:",
+        "",
+        "    https://npm.mydomain.com",
+        "",
         "Ignored if npmRelease = N."
     ],
 

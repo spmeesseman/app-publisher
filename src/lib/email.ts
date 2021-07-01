@@ -170,15 +170,19 @@ function getEmailHeader({options, logger}: IContext, version: string)
     if (options.npmRelease === "Y")
     {
         let npmLocation: string;
-        const pkgJsonName = require("../../package.json").name;
-        if (pkgJsonName) {
-            npmLocation = `${options.npmRegistry}/-/web/detail/${pkgJsonName}`;
+        if (!options.npmScope) {
+            const pkgJsonName = require("../../package.json").name;
+            if (pkgJsonName) {
+                npmLocation = `${options.npmRegistry}/-/web/detail/${pkgJsonName}`;
+            }
         }
-        else if (options.npmScope) {
-            npmLocation = `${options.npmRegistry}/-/web/detail/${options.npmScope}/${options.projectName}`;
-        }
-        else {
-            npmLocation = `${options.npmRegistry}/-/web/detail/${options.projectName}`;
+        if (!npmLocation) {
+            if (options.npmScope) {
+                npmLocation = `${options.npmRegistry}/-/web/detail/${options.npmScope}/${options.projectName}`;
+            }
+            else {
+                npmLocation = `${options.npmRegistry}/-/web/detail/${options.projectName}`;
+            }
         }
         logger.log(`   NPM location       : '${npmLocation}'`);
         szHrefs += `<tr><td>NPM Location</td><td style="padding-left:10px"><a href="${npmLocation}">NPM Registry</a></td></tr>`;
