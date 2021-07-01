@@ -102,6 +102,8 @@ async function doMantisRelease(context: IContext): Promise<IReturnStatus>
             if (pathExists(asset))
             {
                 const extension = path.extname(assetName).toLowerCase();
+                // eslint-disable-next-line no-template-curly-in-string
+                asset = asset.replace("$(VERSION)", nextRelease.version);
                 //
                 // The format to upload an asset is the base64 encoded binary file data
                 //

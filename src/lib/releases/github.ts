@@ -174,6 +174,9 @@ async function doGithubRelease(context: IContext): Promise<IReturnStatus>
                     asset = ghAsset.split("|")[0];
                 }
 
+                // eslint-disable-next-line no-template-curly-in-string
+                asset = asset.replace("$(VERSION)", nextRelease.version);
+
                 if (await pathExists(asset))
                 {
                     //
