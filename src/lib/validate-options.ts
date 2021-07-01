@@ -18,6 +18,20 @@ async function validateOptions({cwd, env, logger, options}: any): Promise<boolea
     logger.log("Validating all options...");
 
     //
+    // First and foremost make sure the cosmic config parser found the config file
+    //
+    if (!options.configFilePath)
+    {
+        logger.error("No config file found");
+        logger.error("A config file must exist at the root of the project:");
+        logger.error("   .publishrc.json/js/yml/yaml");
+        logger.error("Or if using the --config-name command line option:");
+        logger.error("   .publishrc.CONFIGNAME.json/js/yml/yaml");
+        return false;
+    }
+
+    //
+    //
     // Set undefined options to defaults
     //
     // for (const o in options)

@@ -55,21 +55,6 @@ export abstract class Changelog implements IChangelog
 }
 
 
-/**
- * Gets the path to the changelog file for the current project.  This is one of `options.historyFile`
- * or `options.changelogFile`.
- *
- * @since 3.0.3
- * @param context The run context object.
- * @returns The path to the project changelog file.
- */
-export function getProjectChangelogFile(context: IContext)
-{
-    const { options } = context;
-    return options.historyFile ? options.historyFile : options.changelogFile;
-}
-
-
 export function getFormattedDate()
 {
     const monthNames = [

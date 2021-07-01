@@ -26,8 +26,7 @@ import { doGithubRelease, publishGithubRelease } from "./lib/releases/github";
 import { template } from "lodash";
 import { COMMIT_NAME, COMMIT_EMAIL, FIRST_RELEASE } from "./lib/definitions/constants";
 import { sendNotificationEmail } from "./lib/email";
-import { pathExists, writeFile } from "./lib/utils/fs";
-import { Changelog, getProjectChangelogFile } from "./lib/changelog/changelog";
+import { writeFile } from "./lib/utils/fs";
 import { commit, fetch, verifyAuth, getHead, tag, push, revert } from "./lib/repo";
 import { EOL } from "os";
 import { IContext, INextRelease, IOptions } from "./interface";
@@ -244,19 +243,6 @@ async function runRelease(context: IContext)
     }
 
     //
-    // The changelog object can have 3 parts, 'fileNotes' that are read from the changelog file
-    // itself, 'notes' with are buiilt from the commit messages, and htmlNotes which are built
-    // from the changelog file itself and converted to heml style changelog.
-    //
-    const clFile = getProjectChangelogFile(context);
-    if (path.extname(clFile) === ".md") {
-        context.changelog = new ChangelogMd(context, clFile);
-    }
-    else {
-        context.changelog = new ChangelogTxt(context, clFile);
-    }
-
-    //
     // If 'revert tak', we can just revertand exit.  setVersions() will recognize the
     // task and only populate a list of files that 'would be' or 'have been' edited by
     // a run.  Files that the run doesnt touch that have been edited by the user wont get
@@ -270,6 +256,23 @@ async function runRelease(context: IContext)
     }
 
     //
+    // Get the IChangelog for thus run
+    //
+    // The changelog object can have 3 parts, 'fileNotes' that are read from the changelog file
+    // itself, 'notes' with are buiilt from the commit messages, and htmlNotes which are built
+    // from the changelog file itself and converted to html style changelog for GitHub and
+    // MantisBT releases.
+    //
+    const clFile = options.historyFile || options.changelogFile;
+    if (path.extname(clFile) !== ".txt") {
+        context.changelog = new ChangelogMd(context, clFile);
+    }
+    else {
+        context.changelog = new ChangelogTxt(context, clFile);
+    }
+
+    //
+    // STDOUT TASKS
     // If a level-1 stdout task is processed, we'll be done
     //
     let taskDone = await processTasksStdOut1(context);
@@ -365,6 +368,7 @@ async function runRelease(context: IContext)
     }
 
     //
+    // STDOUT TASKS
     // Task '--task-version-current'
     //
     if (options.taskVersionCurrent)
@@ -381,6 +385,9 @@ async function runRelease(context: IContext)
 
     //
     // needNoCommits
+    // The taskChangelogPrintVersion and taskChangelogViewVersion tasks just display a
+    // section from the changelog (specified by version), so its referencing an existing
+    // version, no need to look at ay commits or anything like that.
     //
     const needNoCommits = options.taskChangelogPrintVersion || options.taskChangelogViewVersion;
 
@@ -487,6 +494,7 @@ async function runRelease(context: IContext)
     }
 
     //
+    // STDOUT TASKS
     // If a level2 stdout/fileout task is processed, we'll be done
     //
     taskDone = await processTasksStdOut2(context);
