@@ -11,7 +11,7 @@ import getConfig = require("../lib/get-config");
 import { getApOptions } from "./helper";
 
 
-suite("Options tests", () =>
+suite("Options Tests", () =>
 {
     // suiteSetup(async () =>
     // {

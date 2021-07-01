@@ -5,7 +5,7 @@ import { expect } from "chai";
 import { getApOptions, runApTest, sleep } from "./helper";
 
 
-suite("Tasks tests", () =>
+suite("Tasks Tests", () =>
 {
 
     test("info tasks", async () =>

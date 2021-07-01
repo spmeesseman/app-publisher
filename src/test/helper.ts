@@ -28,7 +28,7 @@ export async function runApTest(options: IOptions): Promise<number>
 {
     try {
         const rc = await require("../.")(options);
-        return rc;
+        return rc ? 1 : 0;
     }
     catch (error)
     {
