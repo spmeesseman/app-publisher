@@ -59,6 +59,7 @@ export async function getApOptions(cmdOpts?: string[])
     if (!ciInfo.isCi) {
         process.argv.push("--no-ci");
     }
+    process.argv.push("--tests");
     if (!context) {
         try {
             const argOptions = getOptions(false);

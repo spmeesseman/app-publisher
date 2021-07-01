@@ -761,6 +761,10 @@ export interface IOptions
      */
     vcTagPrefix: string;
     /**
+     * Internal use only.  Set by tests.
+     */
+    tests: boolean;
+    /**
      * Web path to the version control repository e.g. the project's home page on GitHub, or for
      * a Subversion project the project root in a web viewer such as WebSVN.
      * Primarily used for dynamically creating links in the changelogs and/or email notifications.

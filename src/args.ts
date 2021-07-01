@@ -1035,6 +1035,16 @@ export const publishRcOpts =
         "notification while running in dry run mode."
     ],
 
+    tests: [
+        true,
+        "boolean",
+        false,
+        [ "--tests" ],
+        {
+            help: "Internal tests use only."
+        }
+    ],
+
     textEditor: [
         true,
         "string",

@@ -700,6 +700,22 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     }
 
     //
+    // TESTS
+    //
+    if (options.tests)
+    {
+        options.skipChangelogEdits = "Y";
+        options.skipVersionEdits = "Y";
+        options.versionFilesEditAlways = [];
+        options.promptVersion = "N";
+        logger.info("Tests run detected, the following flags/properties have been set for tests:");
+        logger.info("   skipChangelogEdits");
+        logger.info("   skipVersionEdits");
+        logger.info("   promptVersion");
+        logger.info("   versionFilesEditAlways");
+    }
+
+    //
     // *** TASKS ***
     //
 
