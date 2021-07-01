@@ -814,7 +814,7 @@ export async function tag({options, logger, nextRelease, cwd, env}: IContext)
                     await execa("git", ["tag", "-fa", tagLocation, "-m", tagMessage], execaOpts);
                 }
             }
-            else if (!options.dryRun) {
+            else {
                 const proc = await execa("git", [ "push", "--dry-run", "origin", ":refs/tags/" + tagLocation ], execaOpts);
                 if (proc.code === 0) {
                     await execa("git", ["tag", "--dry-run", "-fa", tagLocation, "-m", tagMessage], execaOpts);
