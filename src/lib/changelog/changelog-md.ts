@@ -606,8 +606,11 @@ export class ChangelogMd extends Changelog
 
         index1 = contents.indexOf(`## ${options.versionText} ${version}`);
         if (index1 === -1) {
-            logger.log("Section could not be found, exit");
-            throw new Error("161");
+            index1 = contents.indexOf(`## ${options.versionText} [${version}`);
+            if (index1 === -1) {
+                logger.log("Section could not be found, exit");
+                throw new Error("161");
+            }
         }
 
         //
