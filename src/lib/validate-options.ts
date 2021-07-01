@@ -607,7 +607,7 @@ async function validateOptions({cwd, env, logger, options}: any): Promise<boolea
         {
             for (const val of value) {
                 if (val instanceof String || typeof(val) === "string") {
-                    if (val.trim().startsWith("$`{") && val.trim().endsWith("`}")) {
+                    if (val.trim().startsWith("${") && val.trim().endsWith("}")) {
                         logger.warn(`Option ${property} environment value was not found/set`);
                         logger.warn("   " + val);
                     }
@@ -616,7 +616,7 @@ async function validateOptions({cwd, env, logger, options}: any): Promise<boolea
         }
         else {
             if (value instanceof String || typeof(value) === "string") {
-                if (value.trim().startsWith("$`{") && value.trim().endsWith("`}")) {
+                if (value.trim().startsWith("${") && value.trim().endsWith("}")) {
                     logger.warn(`Option ${property} environment value was not found/set`);
                     logger.warn("   " + value);
                 }
