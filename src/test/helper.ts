@@ -43,9 +43,11 @@ let ciInfo: any;
 
 export async function getApOptions(cmdOpts?: string[])
 {
+    const cwd = process.cwd();
+    // const cwd = path.join(process.cwd(), "src", "test", "fixture");
     const procArgv = [ ...process.argv ];
     if (!ciInfo) {
-        ciInfo = envCi({ env: process.env, cwd: process.cwd() });
+        ciInfo = envCi({ env: process.env, cwd });
     }
     if (!ciInfo.isCi) {
         cmdOpts.push("--no-ci");
@@ -58,7 +60,7 @@ export async function getApOptions(cmdOpts?: string[])
     }
     if (!context) {
         const argOptions = getOptions(false);
-        context = await getContext(argOptions, process.cwd(), process.env, process.stdout, process.stderr);
+        context = await getContext(argOptions, cwd, process.env, process.stdout, process.stderr);
     }
     else {
         const argOptions = getOptions(false);

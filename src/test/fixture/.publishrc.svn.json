@@ -1,8 +1,8 @@
 {
     "projectName":      "app-publisher",
     "version": "3.2.1",
-    "branch":           "master",
-    "bugs":             "https://github.com/spmeesseman/app-publisher/issues",
+    "branch":           "trunk",
+    "bugs":             "https://app1.spmeesseman.com/projects/set_project.php?project=app-publisher&make_default=no&ref=bug_report_page.php",
     "buildCommand": [
         "npm run build"
     ],
@@ -32,9 +32,7 @@
     "emailRecip":        "spmeesseman@gmail.com",
     "emailSender":       "Scott Meesseman <scott@spmeesseman.com>",
     "emailServer":       "mail.spmeesseman.com",
-    "emailHrefs":        [
-        "<a href=\"https://github.com/spmeesseman/app-publisher/blob/master/CHANGELOG.md\">Changelog</a>"
-    ],
+    "emailHrefs":        [],
     "githubRelease":     "Y",
     "githubAssets":      [
         "CHANGELOG.md|Changelog File",
@@ -44,7 +42,7 @@
     "githubUser":        "spmeesseman",
     "githubReleasePreCommand": [],
     "githubReleasePostCommand": [],
-    "homePage":          "https://github.com/spmeesseman/app-publisher",
+    "homePage":          "",
     "mantisbtRelease":   "N",
     "mantisbtApiToken":  "",
     "mantisbtChglogEdit":"N",
@@ -67,15 +65,15 @@
     "postCommitCommand": [],
     "postReleaseCommand":"",
     "promptVersion":     "N",
-    "repo":              "https://github.com/spmeesseman/app-publisher.git",
-    "repoType":          "git",
+    "repo":              "https://svn.spmeesseman.com/pja/app-publisher/trunk",
+    "repoType":          "svn",
     "skipCommit":        "N",
     "skipChangelogEdits":"N",
     "skipVersionEdits":  "Y",
     "testEmailRecip":    "spmeesseman@gmail.com",
     "textEditor":        "notepad",
     "vcTagPrefix":       "",
-    "vcWebPath":         "https://github.com/spmeesseman/app-publisher",
+    "vcWebPath":         "https://app1.spmeesseman.com/web/svn/filedetails.php%3Frepname=pja%26usemime=1%26path=",
     "versionFiles":      [],
     "versionFilesEditAlways": [],
     "versionReplaceTags":     [],
