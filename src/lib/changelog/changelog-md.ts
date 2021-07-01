@@ -3,7 +3,7 @@ import * as path from "path";
 import { IChangelogEntry, IContext } from "../../interface";
 import { createDir, deleteFile, pathExists, readFile, writeFile } from "../utils/fs";
 import { editFile, properCase } from "../utils/utils";
-import { Changelog, cleanMessage, createHtmlChangelog, getFormattedDate, getHtmlFormattedMessage, isSkippedCommitMessage } from "./changelog";
+import { Changelog } from "./changelog";
 const execa = require("execa");
 const os = require("os"), EOL = os.EOL;
 
@@ -15,8 +15,7 @@ export class ChangelogMd extends Changelog
     {
         let tmpCommits = "",
             lastSection = "";
-        const me = this,
-              sectionless: string[] = [],
+        const sectionless: string[] = [],
               { options, commits, logger } = context;
 
         if (!commits || commits.length === 0) {
@@ -26,7 +25,7 @@ export class ChangelogMd extends Changelog
 
         logger.log(`Build changelog file section from ${commits.length} commits`);
 
-        function formatCommitPart(section: string, scope: string, commitMsg: string): string
+        const formatCommitPart = (section: string, scope: string, commitMsg: string): string =>
         {
             let fmtCommitMsg = "- ";
 
@@ -40,7 +39,7 @@ export class ChangelogMd extends Changelog
             //
             // Ignore chores, progress, and custom specified psubjects to ignore
             //
-            if (isSkippedCommitMessage(section)) {
+            if (this.isSkippedCommitMessage(section)) {
                 return "";
             }
 
@@ -97,12 +96,12 @@ export class ChangelogMd extends Changelog
             // title.  Comments are alphabetized.
             //
             if (section !== lastSection) {
-                const tmpSection = me.getFormattedSubject(context, section);
+                const tmpSection = this.getFormattedSubject(context, section);
                 fmtCommitMsg = `${EOL}### ${tmpSection}${EOL}${EOL}${fmtCommitMsg}`;
             }
             lastSection = section;
-            return cleanMessage(fmtCommitMsg);
-        }
+            return this.cleanMessage(fmtCommitMsg);
+        };
 
         //
         // Loop through the commits and build the markdown for appending to the changelog
@@ -323,20 +322,20 @@ export class ChangelogMd extends Changelog
         if (lastRelease.version !== nextRelease.version || newChangelog || options.taskMode)
         {
             const changelogTitle = `# ${options.projectName} Change Log`.toUpperCase(),
-                fmtDate = getFormattedDate();
+                fmtDate = this.getFormattedDate();
 
             let tmpCommits: string,
                 changeLogFinal = "";
 
             if (taskSpecVersion) {
-                tmpCommits = await this.getSections(context, version, 1, "raw", originalFile) as string;
+                tmpCommits = await this.getSections(context, version, 1, false, originalFile);
             }
             else if (!options.taskChangelogHtmlView && !options.taskChangelogHtmlFile) {
                 tmpCommits = context.changelog.notes || this.createSectionFromCommits(context);
             }
             else {
-                const changeLogParts = await this.getSections(context, version, 1, "parts", originalFile);
-                tmpCommits = await createHtmlChangelog(context, changeLogParts as IChangelogEntry[], false, false);
+                const changeLogParts = await this.getSectionEntries(context, version);
+                tmpCommits = await this.createHtmlChangelog(context, changeLogParts, false, false);
             }
 
             if (options.taskChangelogPrint || options.taskChangelogPrintVersion)
@@ -390,6 +389,115 @@ export class ChangelogMd extends Changelog
     }
 
 
+    async getSectionEntries(context: IContext, version?: string): Promise<IChangelogEntry[]>
+    {
+        const { logger } = context;
+        let contents = await this.getSections(context, version, 1, false);
+
+        const typeParts = [],
+                msgParts = [],
+                entries: IChangelogEntry[] = [];
+
+        logger.log("Determining changelog parts");
+
+        //
+        // Replace line feeds with html line breaks
+        //
+        contents = contents.replace(/\r\n/gm, "<br>");
+        contents = contents.replace(/\n/gm, "<br>");
+        contents = contents.replace(/\t/gm, "&nbsp;&nbsp;&nbsp;&nbsp;");
+
+        //
+        // The getChangelogSubjectsFromHtml() method returns a list of types for each note in the section.
+        //
+        // For example:
+        //
+        //     ### Features
+        //
+        //     - feature 1
+        //     - **scope1:** feature 2
+        //
+        //     ### Bug Fixes
+        //
+        //     - bug fix 1
+        //
+        // Will return a list like:
+        //
+        //    [ "Features", "Features", "Bug Fixes" ]
+        //
+        typeParts.push(...this.getSubjectsFromHtml(contents));
+        if (typeParts.length === 0) {
+            throw new Error("166");
+        }
+
+        //
+        // Get the 'msgParts', this will be the matching commit messages to the types list
+        // extracted above.
+        //
+        let match: RegExpExecArray,
+            regex = new RegExp(/\w*(?<=^|>)(- ){1}.+?(?=(<br>-|<br>##|$))/g);
+        while ((match = regex.exec(contents)) !== null)
+        {
+            let value = match[0].substring(2);
+            value = value.replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;[", "<br>["); // ticket tags
+            if (value.startsWith("<br>")) {
+                value = value.substring(4);
+            }
+            if (value.endsWith("<br>")) {
+                value = value.substring(0, value.length - 4);
+            }
+            msgParts.push(value.trim());
+        }
+
+        if (msgParts.length !== typeParts.length) {
+            logger.error("Error parsing changelog for commit parts");
+            logger.error(`Message array length ${msgParts.length} != types array length ${typeParts.length}`);
+            throw new Error("167");
+        }
+
+        for (let i = 0; i < typeParts.length; i++)
+        {
+            let scope = "",
+                tickets = "",
+                message = msgParts[i];
+            const subject = typeParts[i];
+            //
+            // Extract scope
+            //
+            if (/^(\*\*.+\:\*\* )/.test(msgParts[i])) {
+                scope = msgParts[i].substring(0, msgParts[i].indexOf(":**")).replace("**", "").trim();
+            }
+            //
+            // Extract message and ticket tags
+            //
+            regex = new RegExp(/\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/gi);
+            while ((match = regex.exec(msgParts[i])) !== null)
+            {
+                tickets = match[0].replace(/\[/, "").replace("]", "");
+                tickets = properCase(tickets.replace(/&nbsp;/g, " ")).trim();
+                message = message.replace(new RegExp("/<br><br>" + match[0], "g"), "")
+                                .replace(new RegExp("<br>" + match[0], "g"), "")
+                                .replace(new RegExp("&nbsp;&nbsp;&nbsp;&nbsp;" + match[0], "g"), "")
+                                .replace(new RegExp("&nbsp;&nbsp;&nbsp;" + match[0], "g"), "")
+                                .replace(new RegExp("&nbsp;&nbsp;" + match[0], "g"), "")
+                                .replace(new RegExp("&nbsp;" + match[0], "g"), "")
+                                .replace(new RegExp(" " + match[0], "g"), "")
+                                .replace(new RegExp(match[0], "g"), "").trim();
+            }
+            if (scope) {
+                message = message.replace(`**${scope}:**`, "");
+                while (message[0] === " ") {
+                    message = message.substring(1);
+                }
+            }
+            entries.push({ subject, scope, message: this.getHtmlFormattedMessage(message, true), tickets });
+        }
+
+        logger.log("Successfully retrieved changelog file section parts");
+        return entries;
+    }
+
+
     /**
      * Gets changelog file section using the hostory/changelog file by parsing the sepcified
      * versions section.
@@ -400,7 +508,7 @@ export class ChangelogMd extends Changelog
      * @param listOnly retrieve an array of strings only, not a formatted string
      * @returns HTML version of the requested cahngelog section(s)
      */
-    async getSections(context: IContext, version?: string, numSections = 1, format?: "raw" | "parts", inputFile?: string): Promise<IChangelogEntry[] | string>
+    async getSections(context: IContext, version?: string, numSections = 1, htmlFormat = true, inputFile?: string): Promise<string>
     {
         const { options, logger } = context;
         if (!inputFile) {
@@ -423,7 +531,7 @@ export class ChangelogMd extends Changelog
         logger.log(`   Num sections       : '${numSections}'`);
         logger.log(`   Version start      : '${version ?? "n/a"}'`);
         logger.log(`   Version string     : '${options.versionText}'`);
-        logger.log(`   Format             : '${format ?? "n/a"}'`);
+        logger.log(`   HTML Format        : '${htmlFormat}'`);
         logger.log(`   Input File         : '${inputFile}'`);
 
         //
@@ -512,114 +620,10 @@ export class ChangelogMd extends Changelog
         // Ex: ([ce9c8f0](https://github.com/spmeesseman/vscode-taskexplorer/commit/ce9c8f0))
         //
 
-        if (format === "raw")
+        if (!htmlFormat)
         {
             logger.log("Successfully retrieved raw changelog file content");
             return contents;
-        }
-        else if (format === "parts")
-        {
-            const typeParts = [],
-                msgParts = [],
-                contents2: IChangelogEntry[] = [];
-
-            logger.log("Determining changelog parts");
-
-            //
-            // Replace line feeds with html line breaks
-            //
-            contents = contents.replace(/\r\n/gm, "<br>");
-            contents = contents.replace(/\n/gm, "<br>");
-            contents = contents.replace(/\t/gm, "&nbsp;&nbsp;&nbsp;&nbsp;");
-
-            //
-            // The getChangelogSubjectsFromHtml() method returns a list of types for each note in the section.
-            //
-            // For example:
-            //
-            //     ### Features
-            //
-            //     - feature 1
-            //     - **scope1:** feature 2
-            //
-            //     ### Bug Fixes
-            //
-            //     - bug fix 1
-            //
-            // Will return a list like:
-            //
-            //    [ "Features", "Features", "Bug Fixes" ]
-            //
-            typeParts.push(...this.getSubjectsFromHtml(contents));
-            if (typeParts.length === 0) {
-                throw new Error("166");
-            }
-
-            //
-            // Get the 'msgParts', this will be the matching commit messages to the types list
-            // extracted above.
-            //
-            let match: RegExpExecArray,
-                regex = new RegExp(/\w*(?<=^|>)(- ){1}.+?(?=(<br>-|<br>##|$))/g);
-            while ((match = regex.exec(contents)) !== null)
-            {
-                let value = match[0].substring(2);
-                value = value.replace("<br>&nbsp;&nbsp;&nbsp;&nbsp;[", "<br>["); // ticket tags
-                if (value.startsWith("<br>")) {
-                    value = value.substring(4);
-                }
-                if (value.endsWith("<br>")) {
-                    value = value.substring(0, value.length - 4);
-                }
-                msgParts.push(value.trim());
-            }
-
-            if (msgParts.length !== typeParts.length) {
-                logger.error("Error parsing changelog for commit parts");
-                logger.error(`Message array length ${msgParts.length} != types array length ${typeParts.length}`);
-                throw new Error("167");
-            }
-
-            for (let i = 0; i < typeParts.length; i++)
-            {
-                let scope = "",
-                    tickets = "",
-                    message = msgParts[i];
-                const subject = typeParts[i];
-                //
-                // Extract scope
-                //
-                if (/^(\*\*.+\:\*\* )/.test(msgParts[i])) {
-                    scope = msgParts[i].substring(0, msgParts[i].indexOf(":**")).replace("**", "").trim();
-                }
-                //
-                // Extract message and ticket tags
-                //
-                regex = new RegExp(/\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/gi);
-                while ((match = regex.exec(msgParts[i])) !== null)
-                {
-                    tickets = match[0].replace(/\[/, "").replace("]", "");
-                    tickets = properCase(tickets.replace(/&nbsp;/g, " ")).trim();
-                    message = message.replace(new RegExp("/<br><br>" + match[0], "g"), "")
-                                    .replace(new RegExp("<br>" + match[0], "g"), "")
-                                    .replace(new RegExp("&nbsp;&nbsp;&nbsp;&nbsp;" + match[0], "g"), "")
-                                    .replace(new RegExp("&nbsp;&nbsp;&nbsp;" + match[0], "g"), "")
-                                    .replace(new RegExp("&nbsp;&nbsp;" + match[0], "g"), "")
-                                    .replace(new RegExp("&nbsp;" + match[0], "g"), "")
-                                    .replace(new RegExp(" " + match[0], "g"), "")
-                                    .replace(new RegExp(match[0], "g"), "").trim();
-                }
-                if (scope) {
-                    message = message.replace(`**${scope}:**`, "");
-                    while (message[0] === " ") {
-                        message = message.substring(1);
-                    }
-                }
-                contents2.push({ subject, scope, message: getHtmlFormattedMessage(message, true), tickets });
-            }
-
-            logger.log("Successfully retrieved changelog file section parts");
-            return contents2;
         }
 
         //
@@ -647,7 +651,7 @@ export class ChangelogMd extends Changelog
     async getVersion(context: IContext)
     {
         context.logger.log("Retrieve last version number from changelog file");
-        return await this.getSections(context) as string;
+        return this.getSections(context);
     }
 
 }

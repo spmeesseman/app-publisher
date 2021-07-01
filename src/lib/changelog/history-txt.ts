@@ -2,7 +2,7 @@ import * as path from "path";
 import { IChangelogEntry, IContext } from "../../interface";
 import { appendFile, createDir, deleteFile, pathExists, readFile, writeFile } from "../utils/fs";
 import { editFile, properCase } from "../utils/utils";
-import { Changelog, cleanMessage, containsValidSubject, createHtmlChangelog, getFormattedDate, isSkippedCommitMessage } from "./changelog";
+import { Changelog } from "./changelog";
 const os = require("os"), EOL = os.EOL;
 
 
@@ -57,7 +57,7 @@ export class ChangelogTxt extends Changelog
                 continue;
             }
 
-            if (msg && !isSkippedCommitMessage(msgLwr))
+            if (msg && !this.isSkippedCommitMessage(msgLwr))
             {   //
                 // Remove CI related tags
                 //
@@ -353,7 +353,7 @@ export class ChangelogTxt extends Changelog
                     }
                 }
 
-                comments = comments + cleanMessage(line) + EOL + EOL;
+                comments = comments + this.cleanMessage(line) + EOL + EOL;
                 commentNum++;
             }
         }
@@ -404,7 +404,7 @@ export class ChangelogTxt extends Changelog
                 tickets = match2[1]?.trim();
                 message = message.replace(tickets, "");
             }
-            if (!scope && !containsValidSubject(options, subject)) {
+            if (!scope && !this.containsValidSubject(options, subject)) {
                 message = subject + EOL + message;
                 subject = "General";
                 scope = "";
@@ -429,7 +429,7 @@ export class ChangelogTxt extends Changelog
     {
         let isNewHistoryFile = false,
             isNewHistoryFileHasContent = false;
-        const fmtDate = getFormattedDate(),
+        const fmtDate = this.getFormattedDate(),
             { options, logger, lastRelease, nextRelease} = context,
             originalFile = options.changelogFile,
             taskSpecVersion = options.taskChangelogPrintVersion || options.taskChangelogViewVersion,
@@ -507,7 +507,7 @@ export class ChangelogTxt extends Changelog
             let tmpCommits: string;
 
             if (taskSpecVersion) {
-                tmpCommits = await this.getSections(context, version, 1, "raw", originalFile) as string;
+                tmpCommits = await this.getSections(context, version, 1, false, originalFile);
             }
             else if (!options.taskChangelogHtmlView && !options.taskChangelogHtmlFile) {
                 tmpCommits = context.changelog.notes || this.createSectionFromCommits(context);
@@ -517,8 +517,8 @@ export class ChangelogTxt extends Changelog
                     tmpCommits = context.changelog.htmlNotes;
                 }
                 else {
-                    const entries = await this.getSections(context, version, 1, "parts", originalFile);
-                    tmpCommits = await createHtmlChangelog(context, entries as IChangelogEntry[], true, false);
+                    const entries = await this.getSectionEntries(context, version);
+                    tmpCommits = await this.createHtmlChangelog(context, entries, true, false);
                 }
             }
 
@@ -589,7 +589,7 @@ export class ChangelogTxt extends Changelog
      * @param listOnly retrieve an array of strings only, not a formatted string
      * @returns HTML version of the requested cahngelog section(s)
      */
-    async getSections(context: IContext, version?: string, numSections = 1, format?: "raw" | "parts", inputFile?: string): Promise<IChangelogEntry[] | string>
+    async getSections(context: IContext, version?: string, numSections = 1, htmlFormat = true, inputFile?: string): Promise<string>
     {
         const { options, logger } = context;
 
@@ -613,7 +613,7 @@ export class ChangelogTxt extends Changelog
         logger.log(`   Num sections       : '${numSections}'`);
         logger.log(`   Version start      : '${version ?? "n/a"}'`);
         logger.log(`   Version string     : '${options.versionText}'`);
-        logger.log(`   Format             : '${format ?? "n/a"}'`);
+        logger.log(`   Format             : '${htmlFormat}'`);
         logger.log(`   Input file         : '${inputFile}'`);
 
         //
@@ -678,7 +678,7 @@ export class ChangelogTxt extends Changelog
         // Note that [\s\S]*? isnt working here, had to use [^]*? for a non-greedy grab, which isnt
         // supported in anything other than a JS regex
         //
-        let regex = new RegExp(`(?:^${options.versionText} ([0-9a-zA-Z\-\.]{3,})[\r\n]+.+[\r\n]+[\-]{20,}[\r\n]+[\*]{20,}[^]+?(?=[\*]{20,})[\*]{20,}[\r\n]+)([^]*?)(?=^${options.versionText}|###END###)`, "gm");
+        const regex = new RegExp(`(?:^${options.versionText} ([0-9a-zA-Z\-\.]{3,})[\r\n]+.+[\r\n]+[\-]{20,}[\r\n]+[\*]{20,}[^]+?(?=[\*]{20,})[\*]{20,}[\r\n]+)([^]*?)(?=^${options.versionText}|###END###)`, "gm");
         while ((match = regex.exec(fileContents + "###END###")) !== null)
         {
             if (options.verbose) {
@@ -686,7 +686,7 @@ export class ChangelogTxt extends Changelog
             }
             if (match[1] === version)
             {
-                if (format !== "raw") {
+                if (htmlFormat) {
                     contents += match[0];       // add the whole match
                 }
                 else {
@@ -714,12 +714,9 @@ export class ChangelogTxt extends Changelog
         //
         // If request is for just the raw content, we're done.  Proceeding past here converts to HTML
         //
-        if (format === "raw") {
+        if (!htmlFormat) {
             logger.log("Successfully retrieved raw history file content");
             return contents;
-        }
-        else if (format === "parts") {
-            return this.getPartsFromSection({options, logger}, contents);
         }
 
         //
@@ -784,6 +781,12 @@ export class ChangelogTxt extends Changelog
     }
 
 
+    async getSectionEntries(context: IContext, version?: string): Promise<IChangelogEntry[]>
+    {
+        const contents = await this.getSections(context, version, 1, false);
+        return this.getPartsFromSection(context, contents);
+    }
+
     /**
      * Gets version number from the last entered section of the changelog / history file.
      *
@@ -794,7 +797,7 @@ export class ChangelogTxt extends Changelog
     async getVersion(context: IContext)
     {
         context.logger.log("Retrieve last version number from history file");
-        return await this.getSections(context) as string;
+        return this.getSections(context);
     }
 
 }
