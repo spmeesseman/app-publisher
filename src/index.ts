@@ -31,7 +31,7 @@ import { commit, fetch, verifyAuth, getHead, tag, push, revert } from "./lib/rep
 import { EOL } from "os";
 import { IContext, INextRelease, IOptions } from "./interface";
 import { ChangelogMd } from "./lib/changelog/changelog-md";
-import { ChangelogTxt } from "./lib/changelog/history-txt";
+import { ChangelogTxt } from "./lib/changelog/changelog-txt";
 
 
 marked.setOptions({ renderer: new TerminalRenderer() });
