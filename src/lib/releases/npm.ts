@@ -9,7 +9,6 @@ import { setNpmVersion } from "../version/npm";
 const execa = require("execa");
 
 
-export let npmLocation: string;
 export let defaultBugs: string;
 export let defaultHomePage: string;
 export let defaultName: string;
@@ -99,22 +98,7 @@ export async function doNpmRelease(context: IContext)
                 proc = await execa("npm", [ "publish", "--dry-run"]);
             }
         }
-        checkExitCode(proc.code, logger);
-        //
-        //
-        //
-        if (proc.code === 0)
-        {
-            if (options.npmScope) {
-                npmLocation = `${options.npmRegistry}/-/web/detail/${options.npmScope}/${options.projectName}`;
-            }
-            else {
-                npmLocation = `${options.npmRegistry}/-/web/detail/${options.projectName}`;
-            }
-        }
-        else {
-            throw new Error("180");
-        }
+        checkExitCode(proc.code, logger, true);
     }
     else {
         logger.warn("Could not find package.json");

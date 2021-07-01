@@ -2,7 +2,6 @@ import * as path from "path";
 import * as nodemailer from "nodemailer";
 import { IContext } from "../interface";
 import { properCase } from "./utils/utils";
-import { npmLocation } from "./releases/npm";
 
 
 // async..await is not allowed in global scope, must use a wrapper
@@ -28,7 +27,7 @@ export async function sendNotificationEmail(context: IContext, version: string):
         return false;
     }
 
-    let emailBody = getEmailHeader({options, logger}, version);
+    let emailBody = getEmailHeader(context, version);
     emailBody += "<br><b>Release Notes:</b><br><br>";
     const notes = (context.changelog.fileNotes || context.changelog.fileNotesLast);
 
@@ -44,7 +43,7 @@ export async function sendNotificationEmail(context: IContext, version: string):
     //
     emailBody += "<br><table><tr><td valign=\"middle\"><font style=\"font-size:12px;font-weight:bold\">";
     emailBody += "This automated email notification was generated and sent by </font></td><td>";
-    emailBody += "<img src=\"https://app1.spmeesseman.com/res/img/app/app-publisher.png\" height=\"16\">";
+    emailBody += "<img src=\"https://raw.githubusercontent.com/spmeesseman/app-publisher/master/res/app-publisher.png\" height=\"16\">";
     emailBody += "</td><td valign=\"middle\"><font style=\"color:#0000AA;font-size:12px;font-weight:bold\">";
     emailBody += "<i>app-publisher</i></font></td></tr><tr><td valign=\"middle\" colspan=\"3\">";
     emailBody += "<font style=\"font-size:10px;font-weight:bold\">Do not respond to this email message</font></td></tr></table>";
@@ -141,13 +140,9 @@ export async function sendNotificationEmail(context: IContext, version: string):
 }
 
 
-export function getEmailHeader({options, logger}, version: string)
+function getEmailHeader({options, logger}: IContext, version: string)
 {
     let szHrefs = "";
-    const incHeader = (options.distRelease === "Y" || options.distRelease === true) ||
-                      (options.npmRelease === "Y" || options.npmRelease === true) ||
-                      (options.nugetRelease === "Y" || options.nugetRelease === true) ||
-                      ((options.mantisbtRelease === "Y" || options.mantisbtRelease === true) && options.mantisbtUrl);
 
     logger.log("Get email body header");
     logger.log(`   Target Location    : '${options.distReleasePath}'`);
@@ -155,66 +150,75 @@ export function getEmailHeader({options, logger}, version: string)
     logger.log(`   Nuget              : '${options.nugetRelease}'`);
     logger.log(`   MantisBT release   : '${options.mantisbtRelease}'`);
     logger.log(`   MantisBT url       : '${options.mantisbtUrl}'`);
-    logger.log(`   Email hrefs        : '${options.emailHrefs}'`);
+    logger.log(`   Email hrefs ct.    : '${options.emailHrefs.length}'`);
     logger.log(`   Vc web path        : '${options.vcWebPath}'`);
 
-    if (incHeader)
+    szHrefs = "<table>";
+
+    szHrefs += `<tr><td colspan=\"2\"><b>${options.projectName} ${options.versionText} ${version} has been released.</b><br><br></td></tr>`;
+
+    if (options.mantisbtRelease === "Y" && options.mantisbtUrl) {
+        szHrefs += `<tr><td>Release Page</td><td style="padding-left:10px"><a href="${options.mantisbtUrl}/set_project.php?project=${options.projectName}&make_default=no&ref=plugin.php%3Fpage=Releases%2Freleases\">Releases - Projects Board</a></td></tr>`;
+    }
+
+    if (options.distRelease === "Y")
     {
-        szHrefs = "<table>";
+        const targetLoc = path.join(options.distReleasePath, options.projectName, version);
+        szHrefs += `<tr><td>Network Location</td><td style="padding-left:10px"><a href="${targetLoc}">Network Drive Location</a></td></tr>`;
+    }
 
-        szHrefs += `<tr><td colspan=\"2\"><b>${options.projectName} ${options.versionText} ${version} has been released.</b><br><br></td></tr>`;
-
-        if ((options.mantisbtRelease === "Y" || options.mantisbtRelease === true) && options.mantisbtUrl) {
-            szHrefs += `<tr><td>Release Page</td><td style="padding-left:10px"><a href="${options.mantisbtUrl}/set_project.php?project=${options.projectName}&make_default=no&ref=plugin.php%3Fpage=Releases%2Freleases\">Releases - Projects Board</a></td></tr>`;
+    if (options.npmRelease === "Y")
+    {
+        let npmLocation: string;
+        const pkgJsonName = require("../../package.json").name;
+        if (pkgJsonName) {
+            npmLocation = `${options.npmRegistry}/-/web/detail/${pkgJsonName}`;
         }
-
-        if (options.distRelease === "Y" || options.distRelease === true)
-        {
-            const targetLoc = path.join(options.distReleasePath, options.projectName, version);
-            szHrefs += `<tr><td>Network Location</td><td style="padding-left:10px"><a href="${targetLoc}">Network Drive Location</a></td></tr>`;
+        else if (options.npmScope) {
+            npmLocation = `${options.npmRegistry}/-/web/detail/${options.npmScope}/${options.projectName}`;
         }
-
-        if (npmLocation && (options.npmRelease === "Y" || options.npmRelease === true))
-        {
-            szHrefs += `<tr><td>NPM Location</td><td style="padding-left:10px"><a href="${npmLocation}">NPM Registry</a></td></tr>`;
+        else {
+            npmLocation = `${options.npmRegistry}/-/web/detail/${options.projectName}`;
         }
+        logger.log(`   NPM location       : '${npmLocation}'`);
+        szHrefs += `<tr><td>NPM Location</td><td style="padding-left:10px"><a href="${npmLocation}">NPM Registry</a></td></tr>`;
+    }
 
-        if (options.emailHrefs)
+    if (options.emailHrefs)
+    {
+        for (const emailHref of options.emailHrefs)
         {
-            for (const emailHref of options.emailHrefs)
+            let eLink = emailHref,
+                eLinkName = emailHref,
+                eLinkDescrip = "";
+            if (emailHref.includes("|"))
             {
-                let eLink = emailHref,
-                    eLinkName = emailHref,
-                    eLinkDescrip = "";
-                if (emailHref.includes("|"))
-                {
-                    const emailHrefParts = emailHref.split("|");
-                    eLink = emailHrefParts[0];
-                    eLinkDescrip = emailHrefParts[1];
-                    if (emailHrefParts.length > 2) {
-                        eLinkName = emailHrefParts[2];
-                    }
-                    szHrefs += `<tr><td>${eLinkDescrip}</td><td style="padding-left:10px"><a href="${eLink}">${eLinkName}</a></td></tr>`;
+                const emailHrefParts = emailHref.split("|");
+                eLink = emailHrefParts[0];
+                eLinkDescrip = emailHrefParts[1];
+                if (emailHrefParts.length > 2) {
+                    eLinkName = emailHrefParts[2];
                 }
+                szHrefs += `<tr><td>${eLinkDescrip}</td><td style="padding-left:10px"><a href="${eLink}">${eLinkName}</a></td></tr>`;
             }
         }
-
-        if (options.distReleasePath && !options.distReleasePath.includes("http://") && !options.distReleasePath.includes("https://")) {
-            szHrefs += `<tr><td>Complete History</td><td style="padding-left:10px"><a href="${options.distReleasePath}/history.txt">History File - Filesystem Storage</a></td></tr>`;
-        }
-        else if (options.mantisbtRelease === "Y" && options.mantisbtUrl && options.vcWebPath && options.repoType === "svn") {
-            szHrefs += `<tr><td>Complete History</td><td style="padding-left:10px"><a href="${options.mantisbtUrl}/plugin.php?page=IFramed/main?title=History&url=${options.vcWebPath}%2F${options.projectName}%2Ftrunk%2Fdoc%2Fhistory.txt">Changelog File - Mantis</a></td></tr>`;
-        }
-        else if (options.githubRelease === "Y" && options.vcWebPath && options.repoType === "git") {
-            szHrefs += `<tr><td>Complete History</td><td style="padding-left:10px"><a href="${options.vcWebPath}/blob/${options.branch}/${options.changelogFile}">Changelog File</a></td></tr>`;
-        }
-        // if (options.nugetRelease === "Y" || options.nugetRelease === true)
-        // {
-        //     szHrefs += `<tr><td>Nuget Location</td><td style="padding-left:10px"><a href="${options.nugetRelease}">Nuget Registry</a></td></tr>`;
-        // }
-
-        szHrefs += "</table>";
     }
+
+    if (options.distReleasePath && !options.distReleasePath.includes("http://") && !options.distReleasePath.includes("https://")) {
+        szHrefs += `<tr><td>Complete History</td><td style="padding-left:10px"><a href="${options.distReleasePath}/history.txt">History File - Filesystem Storage</a></td></tr>`;
+    }
+    else if (options.mantisbtRelease === "Y" && options.mantisbtUrl && options.vcWebPath && options.repoType === "svn") {
+        szHrefs += `<tr><td>Complete History</td><td style="padding-left:10px"><a href="${options.mantisbtUrl}/plugin.php?page=IFramed/main?title=History&url=${options.vcWebPath}%2F${options.projectName}%2Ftrunk%2Fdoc%2Fhistory.txt">Changelog File - Mantis</a></td></tr>`;
+    }
+    else if (options.githubRelease === "Y" && options.vcWebPath && options.repoType === "git") {
+        szHrefs += `<tr><td>Complete History</td><td style="padding-left:10px"><a href="${options.vcWebPath}/blob/${options.branch}/${options.changelogFile}">Changelog File</a></td></tr>`;
+    }
+    // if (options.nugetRelease === "Y" || options.nugetRelease === true)
+    // {
+    //     szHrefs += `<tr><td>Nuget Location</td><td style="padding-left:10px"><a href="${options.nugetRelease}">Nuget Registry</a></td></tr>`;
+    // }
+
+    szHrefs += "</table>";
 
     return szHrefs;
 }

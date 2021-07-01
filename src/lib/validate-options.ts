@@ -31,6 +31,16 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
     }
 
     //
+    // Project name must be set
+    //
+    if (!options.projectName)
+    {
+        logger.error("Invalid project name, or not defined");
+        logger.error("Configure 'projectName' in .publishrc");
+        return false;
+    }
+
+    //
     //
     // Set undefined options to defaults
     //
