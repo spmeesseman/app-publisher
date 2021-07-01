@@ -218,7 +218,7 @@ export class ChangelogTxt extends Changelog
                     // If this message line is longer than $LineLen - 4, break it up
                     // (allow 4 spaces or numbered item 1.  , 2.  , etc)
                     //
-                    const l = options.historyLineLen - 4;
+                    const l = options.changelogLineLen - 4;
                     if (msgPart.length > l)
                     {
                         idx = msgPart.lastIndexOf(" ", l);
@@ -541,9 +541,9 @@ export class ChangelogTxt extends Changelog
             // Replace all newline pairs with cr/nl pairs as SVN will have sent commit comments back
             // with newlines only
             //
-            if ((options.taskChangelog || !options.taskMode) && await pathExists(options.historyHdrFile))
+            if ((options.taskChangelog || !options.taskMode) && await pathExists(options.changelogHdrFile))
             {
-                const historyHeader = await readFile(options.historyHdrFile);
+                const historyHeader = await readFile(options.changelogHdrFile);
                 await appendFile(options.changelogFile, `${EOL}${options.versionText} ${version}${EOL}${fmtDate}${EOL}${historyHeader}${EOL}${tmpCommits}`);
             }
             else if (options.taskChangelogPrint || options.taskChangelogPrintVersion) {

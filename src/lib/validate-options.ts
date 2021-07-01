@@ -13,7 +13,7 @@ function error(logger: any, err: string)
     return false;
 }
 
-async function validateOptions({cwd, env, logger, options}: any): Promise<boolean>
+async function validateOptions({cwd, env, logger, options}: IContext): Promise<boolean>
 {
     logger.log("Validating all options...");
 
@@ -82,6 +82,10 @@ async function validateOptions({cwd, env, logger, options}: any): Promise<boolea
     if (options.distReleasePostCommand && isString(options.distReleasePostCommand))
     {
         options.distReleasePostCommand = [ options.distReleasePostCommand ]; // convert to array
+    }
+    if (options.emailHrefs && isString(options.emailHrefs))
+    {
+        options.emailHrefs = [ options.emailHrefs ]; // convert to array
     }
     if (options.githubAssets && isString(options.githubAssets))
     {
@@ -328,6 +332,19 @@ async function validateOptions({cwd, env, logger, options}: any): Promise<boolea
             }
         }
     }
+    //
+    // repo strip trailing '/'
+    //
+    if (options.repo && options.repo.endsWith("/")) {
+        options.repo = options.repo.substring(0, options.repo.length - 1);
+    }
+
+    //
+    // vcWebPath strip trailing '/'
+    //
+    if (options.vcWebPath && options.vcWebPath.endsWith("/")) {
+        options.vcWebPath = options.vcWebPath.substring(0, options.vcWebPath.length - 1);
+    }
 
     function setDefaultEditor()
     {
@@ -387,8 +404,8 @@ async function validateOptions({cwd, env, logger, options}: any): Promise<boolea
     //
     // History file line length
     //
-    if (!options.historyLineLen) {
-        options.historyLineLen = 80;
+    if (!options.changelogHdrFile) {
+        options.changelogLineLen = 80;
     }
 
     //

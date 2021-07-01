@@ -39,6 +39,21 @@ export const publishRcOpts =
         "relative or full path."
     ],
 
+    changelogHdrFile: [
+        true,
+        "string",
+        "",
+        "The location of this history header file, can be a relative or full path."
+    ],
+
+    changelogLineLen: [
+        true,
+        "number",
+        80,
+        "The maximum line lenth to use when parsing commits to populate the",
+        "history.txt file"
+    ],
+
     commitMsgMap: [
         false,
         "object",
@@ -297,29 +312,6 @@ export const publishRcOpts =
         "The Github username that owns the project the Github release will be made",
         "under.  Used to construct the Github project path i.e. github.com/username",
         "Ignored if githubRelease = N."
-    ],
-
-    historyHdrFile: [
-        true,
-        "string",
-        "",
-        "The location of this history header file, can be a relative or full path."
-    ],
-
-    historyLineLen: [
-        true,
-        "number",
-        80,
-        "The maximum line lenth to use when parsing commits to populate the",
-        "history.txt file"
-    ],
-
-    historyHref: [
-        false,
-        "string|string[]",
-        "",
-        "A link to the history file to insert into an email notification in raw",
-        "html link form i.e. <a href=\"...\">...</a>."
     ],
 
     homePage: [
@@ -1038,7 +1030,10 @@ export const publishRcOpts =
         true,
         "string",
         "",
-        "Web path to version control repository, if WebSVN is available"
+        "Web path to the version control repository e.g. the project's home page on GitHub,",
+        "or for a Subversion project the project root in a web viewer such as WebSVN.",
+        "Primarily used for dynamically creating links in the changelogs and/or email",
+        "notifications."
     ],
 
     versionFiles: [

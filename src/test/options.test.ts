@@ -63,7 +63,7 @@ suite("Options tests", () =>
         expect(options.taskMode).to.equal(undefined, "taskMode");
         expect(options.taskModeStdOut).to.equal(false, "taskModeStdOut");
 
-        expect(options.historyLineLen).to.equal(80, "historyLineLen");
+        expect(options.changelogLineLen).to.equal(80, "changelogLineLen");
         expect(options.buildCommand).to.be.an("array", "buildCommand").and.include("npm run build", "buildCommand");
         expect(options.appPublisherVersion).to.be.a("string", "appPublisherVersion").that.is.not.empty;
         //

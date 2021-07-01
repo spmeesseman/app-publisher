@@ -14,6 +14,7 @@ export abstract class Changelog implements IChangelog
     htmlNotes: string;
     notes: string;
     entries: IChangelogEntry[];
+    entriesLast: IChangelogEntry[];
     fileNotesLast: string;
     htmlNotesLast: string;
     notesLast: string;
@@ -42,15 +43,16 @@ export abstract class Changelog implements IChangelog
         logger.log("Get release changelogs");
 
         this.entries = await this.getSectionEntries(context, nextRelease.version);
-        this.notesLast = undefined;
-        this.fileNotes = getFileLog ? await this.getSections(context, nextRelease.version) : undefined;
-        this.htmlNotes = getHtmlLog ? await this.createHtmlChangelog(context, this.entries) : undefined;
-        this.fileNotesLast = getFileNotesLast ? await this.getSections(context, lastRelease.version) : undefined;
-        this. htmlNotesLast = getHtmlLogLast ? await this.createHtmlChangelog(context, this.entries) : undefined;
+        this.entriesLast = getHtmlLogLast ? await this.getSectionEntries(context, lastRelease.version) : undefined;
 
-        if (!context.changelog.notes) {
-            context.changelog.notes = this.createSectionFromCommits(context);
-        }
+        this.htmlNotes = getHtmlLog ? await this.createHtmlChangelog(context, this.entries) : undefined;
+        this.htmlNotesLast = getHtmlLogLast ? await this.createHtmlChangelog(context, this.entriesLast) : undefined;
+
+        this.fileNotes = getFileLog ? await this.getSections(context, nextRelease.version) : undefined;
+        this.fileNotesLast = getFileNotesLast ? await this.getSections(context, lastRelease.version) : undefined;
+
+        this.notes = this.notes || this.createSectionFromCommits(context);
+        this.notesLast = undefined; //  await this.getSections(context, lastRelease.version)
     }
 
 

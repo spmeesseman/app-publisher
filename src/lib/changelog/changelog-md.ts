@@ -278,7 +278,7 @@ export class ChangelogMd extends Changelog
     async doEdit(context: IContext)
     {
         let newChangelog = false;
-        const { options, logger, lastRelease, nextRelease, env, cwd } = context,
+        const { options, logger, lastRelease, nextRelease } = context,
             originalFile = options.changelogFile,
             taskSpecVersion = options.taskChangelogPrintVersion || options.taskChangelogViewVersion,
             version = !taskSpecVersion ? nextRelease.version : taskSpecVersion;
@@ -346,11 +346,17 @@ export class ChangelogMd extends Changelog
 
             if (options.taskChangelog || !options.taskMode)
             {
+                let titleVersion = nextRelease.version;
+                if (options.vcWebPath) {
+                    titleVersion = options.repoType === "git" ?
+                                        `[${nextRelease.version}](${options.vcWebPath}/compare/v${lastRelease.version}...v${nextRelease.version})` :
+                                        nextRelease.version;
+                }
                 if (!newChangelog && !tmpCommits.endsWith(EOL)) {
                     tmpCommits += EOL;
                 }
 
-                tmpCommits = `## ${options.versionText} ${nextRelease.version} (${fmtDate})${EOL}${EOL}${tmpCommits}`.trimRight();
+                tmpCommits = `## ${options.versionText} ${titleVersion} (${fmtDate})${EOL}${EOL}${tmpCommits}`.trimRight();
 
                 let changeLogContents = await readFile(options.changelogFile);
                 changeLogContents = changeLogContents.replace(new RegExp(changelogTitle, "i"), "").trim();
@@ -365,12 +371,12 @@ export class ChangelogMd extends Changelog
             }
             else {
                 if (!options.taskChangelogFile && !options.taskChangelogHtmlFile && !options.taskChangelogHtmlView) {
-                    changeLogFinal += `${EOL}${!taskSpecVersion ? "Pending " : ""}${options.versionText} ${nextRelease.version} Changelog:${EOL}${EOL}${EOL}`;
+                    changeLogFinal += `${EOL}${!taskSpecVersion ? "Pending " : ""}${options.versionText} ${version} Changelog:${EOL}${EOL}${EOL}`;
                 }
                 changeLogFinal += tmpCommits;
             }
 
-            changeLogFinal = changeLogFinal.trim() + EOL;
+            changeLogFinal = changeLogFinal.trimRight() + EOL;
             await writeFile(options.changelogFile, changeLogFinal);
         }
         else {

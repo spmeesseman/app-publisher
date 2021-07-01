@@ -14,6 +14,7 @@ export interface IChangelog
     htmlNotes: string;
     notes: string;
     entries: IChangelogEntry[];
+    entriesLast: IChangelogEntry[];
     fileNotesLast: string;
     htmlNotesLast: string;
     notesLast: string;
@@ -182,6 +183,15 @@ export interface IOptions
      * The location of this changelog file (markdown format), can be a relative or full path.
      */
     changelogFile: string;
+    /**
+     * The location of this history header file, can be a relative or full path.
+     */
+    changelogHdrFile: string;
+    /**
+     * The maximum line lenth to use when parsing commits to populate the history.txt file
+     * Defaults to 80
+     */
+    changelogLineLen: number;
     /**
      * Continous Integration Info
      */
@@ -356,20 +366,6 @@ export interface IOptions
      * Ignored if githubRelease = N.
      */
     githubUser: string;
-    /**
-     * The location of this history header file, can be a relative or full path.
-     */
-    historyHdrFile: string;
-    /**
-     * The maximum line lenth to use when parsing commits to populate the history.txt file
-     * Defaults to 80
-     */
-    historyLineLen: number;
-    /**
-     * A link to the history file to insert into an email notification in raw html link form
-     * i.e. <a href=\...\>...</a>.
-     */
-    historyHref: string | string[];
     /**
      * Overrides the 'homePage' property of package.json when an NPM release is, made, which
      * is extracted for display on the project page of the NPM repository.
@@ -752,7 +748,9 @@ export interface IOptions
      */
     vcTagPrefix: string;
     /**
-     * Web path to version control repository
+     * Web path to the version control repository e.g. the project's home page on GitHub, or for
+     * a Subversion project the project root in a web viewer such as WebSVN.
+     * Primarily used for dynamically creating links in the changelogs and/or email notifications.
      */
     vcWebPath: string;
     /**

@@ -144,7 +144,7 @@ export async function sendNotificationEmail(context: IContext, version: string):
 export function getEmailHeader({options, logger}, version: string)
 {
     let szHrefs = "";
-    const incHeader = options.historyHref || (options.distRelease === "Y" || options.distRelease === true) ||
+    const incHeader = (options.distRelease === "Y" || options.distRelease === true) ||
                       (options.npmRelease === "Y" || options.npmRelease === true) ||
                       (options.nugetRelease === "Y" || options.nugetRelease === true) ||
                       ((options.mantisbtRelease === "Y" || options.mantisbtRelease === true) && options.mantisbtUrl);
@@ -155,7 +155,6 @@ export function getEmailHeader({options, logger}, version: string)
     logger.log(`   Nuget              : '${options.nugetRelease}'`);
     logger.log(`   MantisBT release   : '${options.mantisbtRelease}'`);
     logger.log(`   MantisBT url       : '${options.mantisbtUrl}'`);
-    logger.log(`   History file href  : '${options.historyHref}'`);
     logger.log(`   Email hrefs        : '${options.emailHrefs}'`);
     logger.log(`   Vc web path        : '${options.vcWebPath}'`);
 
@@ -180,40 +179,39 @@ export function getEmailHeader({options, logger}, version: string)
             szHrefs += `<tr><td>NPM Location</td><td style="padding-left:10px"><a href="${npmLocation}">NPM Registry</a></td></tr>`;
         }
 
+        if (options.emailHrefs)
+        {
+            for (const emailHref of options.emailHrefs)
+            {
+                let eLink = emailHref,
+                    eLinkName = emailHref,
+                    eLinkDescrip = "";
+                if (emailHref.includes("|"))
+                {
+                    const emailHrefParts = emailHref.split("|");
+                    eLink = emailHrefParts[0];
+                    eLinkDescrip = emailHrefParts[1];
+                    if (emailHrefParts.length > 2) {
+                        eLinkName = emailHrefParts[2];
+                    }
+                    szHrefs += `<tr><td>${eLinkDescrip}</td><td style="padding-left:10px"><a href="${eLink}">${eLinkName}</a></td></tr>`;
+                }
+            }
+        }
+
+        if (options.distReleasePath && !options.distReleasePath.includes("http://") && !options.distReleasePath.includes("https://")) {
+            szHrefs += `<tr><td>Complete History</td><td style="padding-left:10px"><a href="${options.distReleasePath}/history.txt">History File - Filesystem Storage</a></td></tr>`;
+        }
+        else if (options.mantisbtRelease === "Y" && options.mantisbtUrl && options.vcWebPath && options.repoType === "svn") {
+            szHrefs += `<tr><td>Complete History</td><td style="padding-left:10px"><a href="${options.mantisbtUrl}/plugin.php?page=IFramed/main?title=History&url=${options.vcWebPath}%2F${options.projectName}%2Ftrunk%2Fdoc%2Fhistory.txt">Changelog File - Mantis</a></td></tr>`;
+        }
+        else if (options.githubRelease === "Y" && options.vcWebPath && options.repoType === "git") {
+            szHrefs += `<tr><td>Complete History</td><td style="padding-left:10px"><a href="${options.vcWebPath}/blob/${options.branch}/${options.changelogFile}">Changelog File</a></td></tr>`;
+        }
         // if (options.nugetRelease === "Y" || options.nugetRelease === true)
         // {
         //     szHrefs += `<tr><td>Nuget Location</td><td style="padding-left:10px"><a href="${options.nugetRelease}">Nuget Registry</a></td></tr>`;
         // }
-
-        //
-        // history file
-        //
-        if (options.historyHref) {
-            szHrefs += `<tr><td>Complete History</td><td style="padding-left:10px">${options.historyHref}</td></tr>`;
-        }
-        else if (options.distReleasePath && !options.distReleasePath.includes("http://") && !options.distReleasePath.includes("https://")) {
-            szHrefs += `<tr><td>Complete History</td><td style="padding-left:10px"><a href="${options.distReleasePath}/history.txt">History File - Filesystem Storage</a></td></tr>`;
-        }
-        else if (options.mantisbtRelease === "Y" && options.mantisbtUrl && options.vcWebPath) {
-            szHrefs += `<tr><td>Complete History</td><td style="padding-left:10px"><a href="${options.mantisbtUrl}/plugin.php?page=IFramed/main?title=History&url=${options.vcWebPath}%2F${options.projectName}%2Ftrunk%2Fdoc%2Fhistory.txt">History File - Projects Board</a></td></tr>`;
-        }
-
-        for (const emailHref of options.emailHrefs)
-        {
-            let eLink = emailHref,
-                eLinkName = emailHref,
-                eLinkDescrip = "";
-            if (emailHref.includes("|"))
-            {
-                const emailHrefParts = emailHref.split("|");
-                eLink = emailHrefParts[0];
-                eLinkDescrip = emailHrefParts[1];
-                if (emailHrefParts.length > 2) {
-                    eLinkName = emailHrefParts[2];
-                }
-                szHrefs += `<tr><td>${eLinkDescrip}</td><td style="padding-left:10px"><a href="${eLink}">${eLinkName}</a></td></tr>`;
-            }
-        }
 
         szHrefs += "</table>";
     }

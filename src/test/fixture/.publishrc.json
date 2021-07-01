@@ -30,7 +30,9 @@
     "emailRecip":        "spmeesseman@gmail.com",
     "emailSender":       "Scott Meesseman <scott@spmeesseman.com>",
     "emailServer":       "mail.spmeesseman.com",
-    "emailHrefs":        [],
+    "emailHrefs":        [
+        "<a href=\"https://github.com/spmeesseman/app-publisher/blob/master/CHANGELOG.md\">Changelog</a>"
+    ],
     "githubRelease":     "Y",
     "githubAssets":      [
         "CHANGELOG.md|Changelog File",
@@ -40,9 +42,8 @@
     "githubUser":        "spmeesseman",
     "githubReleasePreCommand": [],
     "githubReleasePostCommand": [],
-    "historyHdrFile":    "",
-    "historyLineLen":    80,
-    "historyHref":       "<a href=\"https://github.com/spmeesseman/app-publisher/blob/master/CHANGELOG.md\">Changelog</a>",
+    "changelogHdrFile":    "",
+    "changelogLineLen":    80,
     "homePage":          "https://github.com/spmeesseman/app-publisher",
     "mantisbtRelease":   "N",
     "mantisbtApiToken":  "",
