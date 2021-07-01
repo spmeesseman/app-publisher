@@ -11,13 +11,13 @@
     "bugs": {
         "url": "https://github.com/spmeesseman/app-publisher/issues"
     },
-    "homepage": "https://github.com/spmeesseman/app-publisher/issues",
+    "homepage": "https://github.com/spmeesseman/app-publisher",
     "repository": {
         "type": "git",
         "url": "https://github.com/spmeesseman/app-publisher.git"
     },
     "dependencies": {
-        "@spmeesseman/arg-parser": "^1.1.8",
+        "@spmeesseman/arg-parser": "^1.1.14",
         "@spmeesseman/env-ci": "^1.0.4",
         "aggregate-error": "^3.0.0",
         "chalk": "^2.4.2",
@@ -108,8 +108,6 @@
         "task-rt-version_current": "npx ./build/bin/app-publisher.js --no-ci --task-version-current",
         "task-rt-version_info": "npx ./build/bin/app-publisher.js --no-ci --task-version-info",
         "task-rt-version_next": "npx ./build/bin/app-publisher.js --no-ci --task-version-next",
-        "test-run": "mocha 'src/test/**/*.test.ts'",
-        "test-with-opts": "mocha -r ts-node\\register --ui tdd 'src/test/**/*.test.ts'",
         "test": "npx ./build/test/runTest.js"
     },
     "main": "./build/bin/app-publisher.js",

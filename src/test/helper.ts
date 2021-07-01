@@ -24,7 +24,7 @@ export async function sleep(ms: number)
 }
 
 
-export async function runApTest(options: IOptions)
+export async function runApTest(options: IOptions): Promise<number>
 {
     try {
         const rc = await require("../.")(options);
@@ -36,6 +36,7 @@ export async function runApTest(options: IOptions)
             stderr.write(hideSensitive(env)(inspect(error, {colors: true})));
         }
     }
+    return 1;
 }
 
 let context: IContext;
@@ -49,26 +50,39 @@ export async function getApOptions(cmdOpts?: string[])
     if (!ciInfo) {
         ciInfo = envCi({ env: process.env, cwd });
     }
-    if (!ciInfo.isCi) {
-        cmdOpts.push("--no-ci");
-    }
     if (ciInfo.isCi && ciInfo.buildUrl && ciInfo.buildUrl.indexOf("pjats.com") !== -1) {
         process.argv = cmdOpts ? [ "", "", "--config-name", "pja", ...cmdOpts ] : [ "", "", "--config-name", "pja" ];
     }
     else {
         process.argv = cmdOpts ? [ "", "", ...cmdOpts ] : [ "", "" ];
     }
+    if (!ciInfo.isCi) {
+        process.argv.push("--no-ci");
+    }
     if (!context) {
-        const argOptions = getOptions(false);
-        context = await getContext(argOptions, cwd, process.env, process.stdout, process.stderr);
+        try {
+            const argOptions = getOptions(false);
+            context = await getContext(argOptions, cwd, process.env, process.stdout, process.stderr);
+        }
+        catch (e) {
+            throw e;
+        }
     }
     else {
-        const argOptions = getOptions(false);
-        const { options, plugins } = await getConfig(context, argOptions);
-        context.options = options;
-        context.plugins = plugins;
+        try {
+            const argOptions = getOptions(false);
+            const { options, plugins } = await getConfig(context, argOptions);
+            context.options = options;
+            context.plugins = plugins;
+        }
+        catch (e) {
+            throw e;
+        }
     }
-    await validateOptions(context);
+    try {
+        await validateOptions(context);
+    }
+    catch (e) { /** */ }
     process.argv = procArgv;
     return context.options;
 }

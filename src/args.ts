@@ -315,6 +315,16 @@ export const publishRcOpts =
         "Ignored if githubRelease = N."
     ],
 
+    help: [
+        true,
+        "boolean",
+        false,
+        [ "-h", "--help" ],
+        {
+            help: "Display help."
+        }
+    ],
+
     homePage: [
         true,
         "string",
@@ -532,7 +542,7 @@ export const publishRcOpts =
         "",
         "Relative path to the .NET project version file (AssemblyInfo.cs).",
         "Any .NET assemblyinfo.cs files are attempted to be loaded and matched to a",
-        "project, but in the case where it cannot, this property can be set"
+        "project, but in the case where it cannot, this property can be set."
     ],
 
     projectFileExtJs: [
@@ -541,7 +551,7 @@ export const publishRcOpts =
         "",
         "Relative path to the ExtJs project version file (app.json).",
         "Any ExtJs app.json files are attempted to be loaded and matched to a",
-        "project, but in the case where it cannot, this property can be set"
+        "project, but in the case where it cannot, this property can be set."
     ],
 
     projectFileNpm: [
@@ -550,7 +560,7 @@ export const publishRcOpts =
         "",
         "Relative path to the NPM project version file (package.json).",
         "Any NPM package.json files are attempted to be loaded and matched to a",
-        "project, but in the case where it cannot, this property can be set"
+        "project, but in the case where it cannot, this property can be set."
     ],
 
 
@@ -560,6 +570,14 @@ export const publishRcOpts =
         "",
         "Name of the project.  This must match throughout the build",
         "files and the SVN project name."
+    ],
+
+
+    projectVersion: [
+        false,
+        "string",
+        "",
+        "Utility fieled for tarcking version if no other mechanism is available."
     ],
 
     readConfig: [
@@ -1039,6 +1057,26 @@ export const publishRcOpts =
         "or for a Subversion project the project root in a web viewer such as WebSVN.",
         "Primarily used for dynamically creating links in the changelogs and/or email",
         "notifications."
+    ],
+
+    verbose: [
+        true,
+        "boolean",
+        false,
+        [ "--verbose" ],
+        {
+            help: "Enable additional log output."
+        }
+    ],
+
+    version: [
+        true,
+        "boolean",
+        false,
+        [ "-v", "--version" ],
+        {
+            help: "Display the current app-publisher version."
+        }
     ],
 
     versionFiles: [

@@ -1,5 +1,29 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version [3.2.2](https://github.com/spmeesseman/app-publisher/compare/v3.2.1...v3.2.2) (July 1st, 2021)
+
+### Bug Fixes
+
+- if no config file is found, a misleading error message is given.  the error should specify the missing config.
+- the unset env variables warning in options validation is not working
+- version validation fails when using --version-force-next
+- **Dry Run:** the git tag/push is not running in dry run mode
+- **Email:** log in email notification is using an invaid path
+
+### Refactoring
+
+- removed publishrc property/argument 'historyFile', use 'changelogFile'.
+- **Changelogs:** add header specified by 'changelogHdrFile' to md type changelog
+- **Releases:** allow the tag $(VERSION)to be used  in an asset name for a Mantis or GitHub release, replaced with the version number upon runtime upload.
+
+### Tests
+
+- prepare for full tests
+
+### Continuous Integration
+
+- prepare for first test publish
+
 ## Version 3.2.1 (June 30th, 2021)
 
 ### Bug Fixes

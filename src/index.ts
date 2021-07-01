@@ -21,6 +21,7 @@ import getGitAuthUrl = require("./lib/get-git-auth-url");
 import validateOptions = require("./lib/validate-options");
 import doDistRelease = require("./lib/releases/dist");
 import runDevCodeTests = require("./test");
+import { publishRcOpts } from "./args";
 import { getNextVersion } from "./lib/version/get-next-version";
 import { doGithubRelease, publishGithubRelease } from "./lib/releases/github";
 import { template } from "lodash";
@@ -32,6 +33,7 @@ import { EOL } from "os";
 import { IContext, INextRelease, IOptions } from "./interface";
 import { ChangelogMd } from "./lib/changelog/changelog-md";
 import { ChangelogTxt } from "./lib/changelog/changelog-txt";
+const displayHelp = require("@spmeesseman/arg-parser").displayHelp;
 
 
 marked.setOptions({ renderer: new TerminalRenderer() });
@@ -46,6 +48,35 @@ async function runStart(context: IContext)
     } = options.ciInfo;
 
     //
+    // If user specified '-h' or --help', then just display help and exit
+    //
+    if (options.help)
+    {
+        const title =
+`----------------------------------------------------------------------------
+Detailed Help
+----------------------------------------------------------------------------
+`;
+        context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
+        displayHelp(publishRcOpts);
+        return 0;
+    }
+
+    //
+    // If user specified '--version', then just display version and exit
+    //
+    if (options.version)
+    {
+        const title =
+`----------------------------------------------------------------------------
+App-Publisher Version :  ${options.version}
+----------------------------------------------------------------------------
+`;
+        context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
+        return 0;
+    }
+
+    //
     // If user specified 'cfg' or '--config', then just display config and exit
     //
     if (options.config)
@@ -54,7 +85,7 @@ async function runStart(context: IContext)
 `----------------------------------------------------------------------------
  Run Configuration - .publishrc / cmd line
 ----------------------------------------------------------------------------
-        `;
+`;
         context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
         context.stdout.write(JSON.stringify(options, undefined, 3));
         return 0;
@@ -96,6 +127,16 @@ async function runStart(context: IContext)
         context.stdout.write(EOL);
         logger.log("Loaded config from " + options.configFilePath);
         logger.log(`Running in ${mode}`);
+    }
+
+    if (options.verbose) // even if it's a stdout type task
+    {
+        const title =
+`----------------------------------------------------------------------------
+Current Command Line Options
+----------------------------------------------------------------------------
+`;
+        context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
     }
 
     //

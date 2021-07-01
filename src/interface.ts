@@ -336,6 +336,12 @@ export interface IOptions
      */
     emailServer: string;
     /**
+     * A list of argument validation errors populated by arg-parser, if any.
+     *
+     * @readonly
+     */
+    errors: string[];
+    /**
      * A path to a file resource or list of file resource paths to upload as assets of the Github release.
      * Ignored if githubRelease = N.
      */
@@ -366,6 +372,12 @@ export interface IOptions
      * Ignored if githubRelease = N.
      */
     githubUser: string;
+    /**
+     * Displays help using arg-parser displayHelp()
+     *
+     * @readonly
+     */
+    help: boolean;
     /**
      * Overrides the 'homePage' property of package.json when an NPM release is, made, which
      * is extracted for display on the project page of the NPM repository.
@@ -496,6 +508,7 @@ export interface IOptions
     projectFileDotNet: string;
     projectFileExtJs: string;
     projectFileNpm: string;
+    projectVersion: string;
     /**
      * Name of the project.  This must match throughout the build files and the SVN project name.
      * Must be set !!

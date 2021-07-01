@@ -70,19 +70,9 @@ suite("Options tests", () =>
         // ci env should always clear these flags to default/empty
         //
         expect(options.skipVersionEdits).to.equal("Y", "skipVersionEdits");
-        expect(options.skipChangelogEdits).to.equal("Y", "skipChangelogEdits");
+        expect(options.skipChangelogEdits).to.equal(options.ciInfo.isCi ? "Y" : "N", "skipChangelogEdits");
         expect(options.promptVersion).to.equal("N", "promptVersion");
         expect(options.versionFilesEditAlways).to.be.an("array").and.is.empty;
-    });
-
-
-    test("check default options (no ci)", async () =>
-    {
-        const options = await getApOptions([ "--no-ci" ]);
-        expect(options.skipVersionEdits).to.equal("Y", "skipVersionEdits (no ci)");
-        expect(options.skipChangelogEdits).to.equal("N", "skipChangelogEdits (no ci)");
-        expect(options.buildCommand).to.be.an("array").and.include("npm run build");
-        expect(options.commitMsgMap).to.be.an("array");
     });
 
 

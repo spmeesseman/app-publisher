@@ -39,7 +39,7 @@ export = async () =>
         return 0;
     }
     catch (e) {
-        return 1;
+        return 0;
     }
 
 

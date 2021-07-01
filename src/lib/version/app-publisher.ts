@@ -30,7 +30,7 @@ async function getFiles(logger: any)
 export function getAppPublisherVersion({options, logger}: IContext): IVersionInfo
 {
     let versionSystem: string;
-    const version = options.version;
+    const version = options.projectVersion;
 
     if (version)
     {
@@ -87,11 +87,11 @@ export async function setAppPublisherVersion(context: IContext)
 
                 logger.log(`Setting version ${nextRelease.version} in ` + rFile);
                 // const publishrcJson = require(path.join(process.cwd(), file));
-                // if (publishrcJson.version)
+                // if (publishrcJson.projectVersion)
                 // {
-                    // publishrcJson.version = nextRelease.version;
+                    // publishrcJson.projectVersion = nextRelease.version;
                     // await writeFile(file, JSON.stringify(publishrcJson, undefined, 4));
-                    await replaceInFile(file, "\"version\"[ ]*:[ ]*[\"][0-9a-z.\-]+", `"version": "${nextRelease.version}`);
+                    await replaceInFile(file, "\"projectVersion\"[ ]*:[ ]*[\"][0-9a-z.\-]+", `"projectVersion": "${nextRelease.version}`);
                     //
                     // Allow manual modifications to mantisbt main plugin file and commit to modified list
                     //

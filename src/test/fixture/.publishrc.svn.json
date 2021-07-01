@@ -1,6 +1,6 @@
 {
     "projectName":      "app-publisher",
-    "version": "3.2.1",
+    "projectVersion": "3.2.1",
     "branch":           "trunk",
     "bugs":             "https://app1.spmeesseman.com/projects/set_project.php?project=app-publisher&make_default=no&ref=bug_report_page.php",
     "buildCommand": [

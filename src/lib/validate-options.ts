@@ -17,6 +17,15 @@ async function validateOptions({cwd, env, logger, options}: IContext): Promise<b
 {
     logger.log("Validating all options...");
 
+    if (options.errors && options.errors.length > 0)
+    {
+        logger.error("Invalid argument(s) sepcified");
+        for (const e of options.errors) {
+            logger.error("   " + e.toString());
+        }
+        return false;
+    }
+
     //
     // First and foremost make sure the cosmic config parser found the config file
     //

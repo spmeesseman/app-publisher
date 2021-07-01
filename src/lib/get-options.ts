@@ -2,6 +2,7 @@ import chalk from "chalk";
 import gradient from "gradient-string";
 import { publishRcOpts } from "../args";
 import { IOptions } from "../interface";
+import { parseArgs, ArgParserOptions } from "@spmeesseman/arg-parser";
 const pkg = require("../../package.json");
 
 export = getOptions;
@@ -10,15 +11,13 @@ export = getOptions;
 function getOptions(useBanner = true): IOptions
 {
     const version = require("../../package.json").version,
-          banner = apBanner(version),
-          ArgParser = require("@spmeesseman/arg-parser").ArgParser;
+          banner = apBanner(version);
 
-    const parser = new ArgParser({
-        app: "app-publisher",
-        banner, version,
+    const parserOpts: ArgParserOptions = {
+        enforceConstraints: false,
         ignorePositional: [ "-p", "--profile" ]
-    });
-    const opts = parser.parseArgs(publishRcOpts);
+    };
+    const opts = parseArgs(publishRcOpts, parserOpts);
 
     //
     // Set task mode stdout flag on the options object
