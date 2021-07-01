@@ -1,4 +1,5 @@
 
+import * as path from "path";
 import * as util from "./lib/utils/utils";
 import * as npm from "./lib/releases/npm";
 import semver from "semver";
@@ -25,11 +26,13 @@ import { doGithubRelease, publishGithubRelease } from "./lib/releases/github";
 import { template } from "lodash";
 import { COMMIT_NAME, COMMIT_EMAIL, FIRST_RELEASE } from "./lib/definitions/constants";
 import { sendNotificationEmail } from "./lib/email";
-import { writeFile } from "./lib/utils/fs";
-import { createSectionFromCommits, doEdit, getProjectChangelogFile, populateChangelogs } from "./lib/changelog-file";
+import { pathExists, writeFile } from "./lib/utils/fs";
+import { Changelog, getProjectChangelogFile } from "./lib/changelog/changelog";
 import { commit, fetch, verifyAuth, getHead, tag, push, revert } from "./lib/repo";
 import { EOL } from "os";
 import { IContext, INextRelease, IOptions } from "./interface";
+import { ChangelogMd } from "./lib/changelog/changelog-md";
+import { ChangelogTxt } from "./lib/changelog/history-txt";
 
 
 marked.setOptions({ renderer: new TerminalRenderer() });
@@ -238,6 +241,19 @@ async function runRelease(context: IContext)
 `;
         context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
         logger.log(JSON.stringify(options, undefined, 3));
+    }
+
+    //
+    // The changelog object can have 3 parts, 'fileNotes' that are read from the changelog file
+    // itself, 'notes' with are buiilt from the commit messages, and htmlNotes which are built
+    // from the changelog file itself and converted to heml style changelog.
+    //
+    const clFile = getProjectChangelogFile(context);
+    if (path.extname(clFile) === ".md") {
+        context.changelog = new ChangelogMd(context, clFile);
+    }
+    else {
+        context.changelog = new ChangelogTxt(context, clFile);
     }
 
     //
@@ -485,22 +501,6 @@ async function runRelease(context: IContext)
     nextRelease.tag = template(options.tagFormat)({ version: nextRelease.version });
 
     //
-    // The changelog object can have 3 parts, 'fileNotes' that are read from the changelog file
-    // itself, 'notes' with are buiilt from the commit messages, and htmlNotes which are built
-    // from the changelog file itself and converted to heml style changelog.
-    //
-    context.changelog = {
-        entries: undefined,
-        fileNotes: undefined,
-        fileNotesLast: undefined,
-        htmlNotes: undefined,
-        htmlNotesLast: undefined,
-        notes: undefined,
-        notesLast: undefined,
-        file: getProjectChangelogFile(context)
-    };
-
-    //
     // TODO - Plugins maybe?
     //
     // await plugins.verifyRelease(context);
@@ -522,12 +522,12 @@ async function runRelease(context: IContext)
         // populateChangelogs() does the rest of the work below after the changelog file edit
         //
         if (!options.taskChangelogPrintVersion && !options.taskChangelogViewVersion) {
-            context.changelog.notes = createSectionFromCommits(context);
+            context.changelog.notes = context.changelog.createSectionFromCommits(context);
         }
         //
         // Do edit/view
         //
-        await doEdit(context);
+        await context.changelog.doEdit(context);
         //
         // If this is task mode, we're done maybe
         //
@@ -548,7 +548,7 @@ async function runRelease(context: IContext)
     // TODO - can probably do some more options checking in populateChangelog so that they
     // arent built under certin task mode conditions
     //
-    await populateChangelogs(context);
+    await context.changelog.populate(context);
 
     //
     // Pre-build scipts (.publishrc)

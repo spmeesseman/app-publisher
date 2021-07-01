@@ -17,6 +17,10 @@ export interface IChangelog
     fileNotesLast: string;
     htmlNotesLast: string;
     notesLast: string;
+    createSectionFromCommits(context: IContext): string;
+    doEdit(context: IContext): Promise<void>;
+    getVersion(context: IContext): Promise<string>;
+    populate(context: IContext): Promise<void>;
 }
 
 
