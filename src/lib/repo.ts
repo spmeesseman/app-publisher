@@ -753,23 +753,25 @@ export async function revert(context: IContext, files?: IEdit[])
     //
     // Modifications - vc revert
     //
-    try {
-        const chgListPaths = changeListModify.map((e: any) => e.path);
-        logger.info("Reverting all modifications:");
-        logger.info("   " + chgListPaths.join(" "));
-        if (options.repoType === "git") {
-            await execa("git", [ "stash", "push", "--", ...chgListPaths ], execaOpts);
-            await execa("git", [ "stash", "drop" ], execaOpts);
+    if (changeListModify.length > 0) {
+        try {
+            const chgListPaths = changeListModify.map((e: any) => e.path);
+            logger.info("Reverting all modifications:");
+            logger.info("   " + chgListPaths.join(" "));
+            if (options.repoType === "git") {
+                await execa("git", [ "stash", "push", "--", ...chgListPaths ], execaOpts);
+                await execa("git", [ "stash", "drop" ], execaOpts);
+            }
+            else if (options.repoType === "svn") {
+                await execSvn([ "revert", "-R", ...chgListPaths ], execaOpts);
+            }
+            else {
+                throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
+            }
         }
-        else if (options.repoType === "svn") {
-            await execSvn([ "revert", "-R", ...chgListPaths ], execaOpts);
+        catch (e) {
+            logger.warn("Could not revert modified files");
         }
-        else {
-            throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
-        }
-    }
-    catch (e) {
-        logger.warn("Could not revert modified files");
     }
 }
 

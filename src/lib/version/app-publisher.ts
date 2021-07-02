@@ -72,8 +72,7 @@ export async function setAppPublisherVersion(context: IContext)
     for (const file of files)
     {
         if (await pathExists(file) && !(await isIgnored(context, path.resolve(cwd, file))))
-        {
-            //
+        {   //
             // If this is '--task-revert', all we're doing here is collecting the paths of the
             // files that would be updated in a run, don't actually do the update
             //
@@ -81,21 +80,14 @@ export async function setAppPublisherVersion(context: IContext)
                 await addEdit(context, file);
                 continue;
             }
-
             logger.log(`Setting version ${nextRelease.version} in ` + file);
-            // const publishrcJson = require(path.join(cwd, file));
-            // if (publishrcJson.projectVersion)
-            // {
-                // publishrcJson.projectVersion = nextRelease.version;
-                // await writeFile(file, JSON.stringify(publishrcJson, undefined, 4));
-                await replaceInFile(file, "\"projectVersion\"( )*:( )*[\"][0-9a-z.\-]+", (m: RegExpExecArray) => {
-                    return `"projectVersion"${m[1] || ""}:${m[2] || ""}"${nextRelease.version}`;
-                });
-                //
-                // Allow manual modifications to mantisbt main plugin file and commit to modified list
-                //
-                await editFile(context, file);
-            // }
+            await replaceInFile(file, "\"projectVersion\"( *):( *)[\"][0-9a-z.\-]+", (m: RegExpExecArray) => {console.log(2);
+                return `"projectVersion"${m[1] || ""}:${m[2] || ""}"${nextRelease.version}`;
+            });
+            //
+            // Allow manual modifications to mantisbt main plugin file and commit to modified list
+            //
+            await editFile(context, file);
         }
     }
 

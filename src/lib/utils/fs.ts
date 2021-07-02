@@ -270,7 +270,7 @@ export function appendFile(file: string, data: string): Promise<void>
 export async function replaceInFile(file: string, old: string, nu: string | ((m: RegExpExecArray) => string), caseSensitive = true)
 {
     const content = await readFile(file),
-          regex = new RegExp(old, caseSensitive ? undefined : "gmi");
+          regex = new RegExp(old, caseSensitive ? "gm" : "gmi");
     let contentNew = "";
     if (isString(nu)) {
         if (!caseSensitive) {
@@ -283,7 +283,7 @@ export async function replaceInFile(file: string, old: string, nu: string | ((m:
     else {
         let match: RegExpExecArray;
         while ((match = regex.exec(content)) !== null) {
-            contentNew = content.replace(regex, nu(match));
+            contentNew = content.replace(new RegExp(old, caseSensitive ? "gm" : "gmi"), nu(match));
         }
     }
     if (contentNew && content !== contentNew)
