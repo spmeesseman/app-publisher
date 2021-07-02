@@ -24,7 +24,9 @@
     "distDocPathSrc":    "doc",
     "distDocPath":       "dest/doc",
     "distReleasePreCommand": [],
-    "distReleasePostCommand": [],
+    "distReleasePostCommand": [
+        "npx rimraf dest"
+    ],
     "distAddAllToVC":    "N",
     "dryRunVcRevert":    "Y",
     "emailNotification": "N",

@@ -118,7 +118,7 @@ async function doDistRelease(context: IContext)
         {
             if (!options.dryRun || options.tests) {
                 await mkdir(targetDocLocation);
-                await copyDir(docDirSrc, targetDocLocation, new RegExp(`/.*\.(?:pdf|${nextRelease.version})`, ""));
+                await copyDir(docDirSrc, targetDocLocation, new RegExp(`.*\.(?:pdf|${nextRelease.version})$`, "i"));
             }
             else {
                 logger.info("   Dry Run - Skipped Dist doc push");

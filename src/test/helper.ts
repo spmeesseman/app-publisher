@@ -12,7 +12,7 @@ import { setCwd } from "../lib/utils/fs";
 const envCi = require("@spmeesseman/env-ci");
 
 
-const cwd = path.join(process.cwd(), "src", "test", "fixture");
+export const cwd = path.join(process.cwd(), "src", "test", "fixture");
 setCwd(cwd);
 
 let context: IContext;

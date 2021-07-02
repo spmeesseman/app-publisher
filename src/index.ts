@@ -684,16 +684,16 @@ async function runRelease(context: IContext)
         //
         await npm.doNpmRelease(context);
         //
+        //  Run pre npm-release scripts if specified.
+        //
+        await util.runScripts(context, "postNpmRelease", options.npmReleasePostCommand, options.taskNpmRelease);
+        //
         // If this is task mode, we're done maybe
         //
         if (options.taskNpmRelease) {
             logTaskResult(true, "npm release", logger);
             return true;
         }
-        //
-        //  Run pre npm-release scripts if specified.
-        //
-        await util.runScripts(context, "postNpmRelease", options.npmReleasePostCommand, options.taskNpmRelease);
     }
 
     //
@@ -711,16 +711,16 @@ async function runRelease(context: IContext)
         //
         await doDistRelease(context);
         //
+        // Run pre distribution-release scripts if specified.
+        //
+        await util.runScripts(context, "postDistRelease", options.distReleasePostCommand, options.taskDistRelease);
+        //
         // If this is task mode, we're done maybe
         //
         if (options.taskDistRelease) {
             logTaskResult(true, "dist release", logger);
             return true;
         }
-        //
-        // Run pre distribution-release scripts if specified.
-        //
-        await util.runScripts(context, "postDistRelease", options.distReleasePostCommand, options.taskDistRelease);
     }
 
     //
@@ -743,6 +743,10 @@ async function runRelease(context: IContext)
         // Perform Github release
         //
         const ghRc = await doGithubRelease(context);
+        //
+        // Post-github release (.publishrc).
+        //
+        await util.runScripts(context, "postGithubRelease", options.githubReleasePostCommand, options.taskGithubRelease);
         if (options.taskMode && ghRc.error) {
             logTaskResult(ghRc.error, "github release", logger);
             return false;
@@ -750,10 +754,6 @@ async function runRelease(context: IContext)
         else if (options.taskGithubRelease) {
             logTaskResult(true, "github release", logger);
         }
-        //
-        // Post-github release (.publishrc).
-        //
-        await util.runScripts(context, "postGithubRelease", options.githubReleasePostCommand, options.taskGithubRelease);
         //
         // Set flag to 'publish' release once changes are committed and tag is created
         //
@@ -775,6 +775,10 @@ async function runRelease(context: IContext)
         // Perform MantisBT release
         //
         const mantisRc = await doMantisbtRelease(context);
+        //
+        // Post-mantis release scripts (.publishrc).
+        //
+        await util.runScripts(context, "postMantisRelease", options.mantisbtReleasePostCommand, options.taskMantisbtRelease);
         if (options.taskMode && mantisRc.error) {
             logTaskResult(mantisRc.error, "mantisbt release", logger);
             return false;
@@ -782,10 +786,6 @@ async function runRelease(context: IContext)
         if (options.taskMantisbtRelease) {
             logTaskResult(true, "mantisbt release", logger);
         }
-        //
-        // Post-mantis release scripts (.publishrc).
-        //
-        await util.runScripts(context, "postMantisRelease", options.mantisbtReleasePostCommand, options.taskMantisbtRelease);
     }
 
     //

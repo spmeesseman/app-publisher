@@ -84,7 +84,7 @@ export function copyDir(src: string, dst: string, filter?: RegExp, copyWithBaseF
         const files = fs.readdirSync(srcDir);
         for (const file of files)
         {
-            const newSrc = path.join(srcDir, file);console.log(5, newSrc, tgtDir);
+            const newSrc = path.join(srcDir, file);
             if (fs.lstatSync(newSrc).isDirectory()) {
                 try {
                     await copyDir(newSrc, tgtDir, filter, copyWithBaseFolder);

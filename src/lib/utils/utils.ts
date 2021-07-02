@@ -277,7 +277,7 @@ export async function runScripts(context: IContext, scriptType: string, scripts:
         return;
     }
 
-    if (options.versionForceCurrent) {
+    if (!forceRun && options.versionForceCurrent) {
         logger.log(`Running custom ${scriptType} script(s) skipped in current version forced task mode`);
         return;
     }
@@ -300,7 +300,7 @@ export async function runScripts(context: IContext, scriptType: string, scripts:
 
         scriptTypesProcessed.push(scriptType);
 
-        if (!options.dryRun || runInTestMode)
+        if (!options.dryRun || runInTestMode || options.tests)
         {
             for (let script of scripts)
             {
