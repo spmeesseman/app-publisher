@@ -293,10 +293,10 @@ export async function runScripts(context: IContext, scriptType: string, scripts:
 
     if (scripts && scripts.length > 0) // && !$script:BuildCmdsRun.includes($ScriptType))
     {
-        if (scriptTypesProcessed.includes(scriptType)) {
-            logger.warn(`The script type ${scriptType} has already been ran during this run, skipping`);
-            return;
-        }
+        // if (scriptTypesProcessed.includes(scriptType)) {
+        //     logger.warn(`The script type ${scriptType} has already been ran during this run, skipping`);
+        //     return;
+        // }
 
         // scriptTypesProcessed.push(scriptType);
 
