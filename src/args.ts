@@ -215,11 +215,21 @@ export const publishRcOpts =
         }
     ],
 
-    dryRunVcRevert: [
+    vcRevert: [
         true,
         "flag",
         "Y",
-        "Reverts all file modification made during a 'dry run' using version control."
+        "Reverts all file modifications made if a publish failes, or, after a dry",
+        "run is completed.  Uses version control."
+    ],
+
+    vcRevertFiles: [
+        true,
+        "string[]",
+        "[]",
+        "Additional files to be reverted if a publish run fails, or, after a dry",
+        "run completes.  Uses version control.",
+        "Ignored if 'vcRevert' = 'N'"
     ],
 
     emailHrefs: [
@@ -1205,6 +1215,17 @@ export const publishRcOpts =
                 "app-publisher --version-pre-release-id alpha", "app-publisher --version-pre-release-id pre1"
             ]
         }
+    ],
+
+    versionSystem: [
+        true,
+        "enum(auto|semver|incremental)",
+        "auto",
+        "Specify the versioning system to be used if it cannot be determined",
+        "automatically:",
+        "",
+        "    1. semver         Ex. 1.0.0, 1.0.1, 1.0.2",
+        "    2. incremental    Ex. 100, 101, 102"
     ],
 
     versionText: [

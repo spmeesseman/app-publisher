@@ -88,7 +88,9 @@ Detailed Help
 `;
         context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
         context.stdout.write(JSON.stringify(options, undefined, 3));
-        return 0;
+        if (options.config) {
+            return 0;
+        }
     }
 
     //
@@ -353,19 +355,19 @@ async function runRelease(context: IContext)
     await fetch(context);
 
     //
-    // Populate context with last release info, populates version number, uses
-    // remote method with getTags()
-    //
-    const lastRelease = await getLastRelease(context);
-
-    //
     // Populate context with last release version info, parsed from local version files
     //
     //    version (should be same as context.lastRelease.version)
     //    versionSystem (semver or incremental)
     //    versionInfo (for mavn builds and auto constructing version #)
     //
-    lastRelease.versionInfo = await getCurrentVersion(context);
+    const lastVersionInfo = await getCurrentVersion(context);
+console.log(lastVersionInfo);
+    //
+    // Populate context with last release info, populates version number, uses
+    // remote method with getTags()
+    //
+    const lastRelease = await getLastRelease(context, lastVersionInfo);
 
     //
     // Check to see if last version found with the latestversion tag matches what was
@@ -479,7 +481,7 @@ async function runRelease(context: IContext)
             logger.log("   From version : " + nextRelease.versionInfo.version);
             logger.log("   Last version : " + lastRelease.version);
             nextRelease.version = options.versionForceNext;
-            if (!util.validateVersion(nextRelease.version, lastRelease.version, logger))
+            if (!util.validateVersion(nextRelease.version, nextRelease.versionInfo.system, lastRelease.version, logger))
             {
                 logger.error("Invalid 'next version' specified");
                 return false;
@@ -499,7 +501,7 @@ async function runRelease(context: IContext)
                     logger.log("    1. The 'no-ci' and 'first-release' flags are set");
                     logger.log(`    2. The version extracted from local files ${lastRelease.versionInfo.version} > ${FIRST_RELEASE}`);
                 }
-                nextRelease.version = await promptForVersion(lastRelease.version, nextRelease.version || FIRST_RELEASE, logger);
+                nextRelease.version = await promptForVersion(lastRelease.version, lastRelease.versionInfo.system, nextRelease.version || FIRST_RELEASE, logger);
                 if (!nextRelease.version) {
                     return false;
                 }
@@ -998,7 +1000,7 @@ async function processTasksStdOut2(context: IContext): Promise<boolean>
 
 
 
-async function promptForVersion(lastVersion: string, proposedNextVersion: string, logger: any)
+async function promptForVersion(lastVersion: string, versionSystem: "auto" | "manual" | "semver" | "incremental", proposedNextVersion: string, logger: any)
 {
     let version = proposedNextVersion;
     const promptSchema = {
@@ -1017,7 +1019,7 @@ async function promptForVersion(lastVersion: string, proposedNextVersion: string
     const { inVersion } = await prompt.get(promptSchema);
     if (inVersion) {
         version = inVersion;
-        if (!util.validateVersion(version, lastVersion, logger))
+        if (!util.validateVersion(version, versionSystem, lastVersion, logger))
         {
             logger.error("Invalid 'next version' specified");
             return "";
@@ -1051,7 +1053,7 @@ async function revertChanges(context: IContext)
 {//
     // Revert all changes if dry run, and configured to do so
     //
-    if (context.options.dryRun && context.options.dryRunVcRevert)
+    if (context.options.dryRun && context.options.vcRevert)
     {
         await revert(context);
     }

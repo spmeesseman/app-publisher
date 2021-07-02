@@ -15,10 +15,12 @@ async function doDistRelease(context: IContext)
 
     logger.log("Starting Distribution release");
 
-    const mkdir = async (d) => {
+    const mkdir = async (d: string) => {
         if (!await pathExists(d)) {
             await createDir(d);
+            return 1;
         }
+        return 0;
     };
 
     //
@@ -28,16 +30,26 @@ async function doDistRelease(context: IContext)
     {
         logger.log("Copying changlog file to dist dir");
         logger.log("   Source : " + options.changelogFile);
-        logger.log("   Target : " + options.distReleasePath);
+        logger.log("   Target : " + options.distReleasePathSrc);
         //
         // Copy to dist dir
         //
-        await mkdir(options.distReleasePath);
-        await copyFile(options.changelogFile, options.distReleasePath);
-        //
-        // Track modified file
-        //
-        await addEdit(context, path.normalize(path.join(options.distReleasePath, options.changelogFile)));
+        if (!options.dryRun || options.tests) {
+            const rc = await mkdir(options.distReleasePathSrc);
+            await copyFile(options.changelogFile, options.distReleasePathSrc);
+            //
+            // Track modified file/folder
+            //
+            if (rc === 0) {
+                await addEdit(context, path.normalize(path.join(options.distReleasePath, options.changelogFile)));
+            }
+            else {
+                await addEdit(context, path.normalize(options.distReleasePath));
+            }
+        }
+        else {
+            logger.log("   Dry run - skipped changelog copy to dist");
+        }
     }
 
     const targetNetLocation = options.distReleasePath ? path.normalize(path.join(options.distReleasePath, options.projectName, nextRelease.version)) : undefined,
@@ -121,14 +133,11 @@ async function doDistRelease(context: IContext)
                 await copyDir(docDirSrc, targetDocLocation, new RegExp(`.*\.(?:pdf|${nextRelease.version})$`, "i"));
             }
             else {
-                logger.info("   Dry Run - Skipped Dist doc push");
+                logger.info("   Dry Run - Skipped dist doc push");
             }
         }
         else {
-            logger.warn("   Skipped dist release doc push, source doc directory not found");
+            logger.warn("   Skipped dist doc push, source doc directory not found");
         }
-    }
-    else {
-        logger.warn("   Invalid path(s) - dist release docs not copied");
     }
 }

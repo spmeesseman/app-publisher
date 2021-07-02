@@ -28,7 +28,6 @@
         "npx rimraf dest"
     ],
     "distAddAllToVC":    "N",
-    "dryRunVcRevert":    "Y",
     "emailNotification": "N",
     "emailMode":         "",
     "emailPort":         25,
@@ -73,6 +72,8 @@
     "skipVersionEdits":  "Y",
     "testEmailRecip":    "spmeesseman@gmail.com",
     "textEditor":        "notepad",
+    "vcRevert":          "Y",
+    "vcRevertFiles":     [],
     "vcTagPrefix":       "",
     "vcWebPath":         "https://github.com/spmeesseman/app-publisher",
     "versionFiles":      [],

@@ -21,16 +21,28 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
     let warn = false;
     const {logger, options} = context;
 
-    let versionInfo: IVersionInfo = {
+    const versionInfo: IVersionInfo = {
         version: undefined,
-        system: "semver",
+        system: options.versionSystem || "semver",
         info: undefined
     };
 
     function doCheck(v: IVersionInfo, type: string, throwError = true)
     {
-        if (v && v.version) {
-            if (versionInfo.version) {
+        if (v && v.version)
+        {
+            if (versionInfo.version)
+            {
+                if (versionInfo.system) {
+                    if (versionInfo.system === "incremental") {
+                        const fv = v.version.replace(/\./g, "");
+                        if (v.version.indexOf(".") !== -1) {
+                            logger.log("   Converting semver style version to incremental");
+                            logger.log("   Converted version  : " + fv);
+                        }
+                        v.version = fv;
+                    }
+                }
                 if (v.version !== versionInfo.version)
                 {
                     let logFn = logger.warn;
@@ -54,13 +66,24 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
                 if (!versionInfo.info) {
                     versionInfo.info = v.info;
                 }
+                if (!versionInfo.system || versionInfo.system === "auto") {
+                    versionInfo.system = v.system;
+                }
             }
             else {
-                versionInfo = v;
+                versionInfo.version = v.version;
+                versionInfo.info = v.info;
+                if (!versionInfo.system || versionInfo.system === "auto") {
+                    versionInfo.system = v.system;
+                }
             }
         }
     }
 
+    //
+    // Extract from changelog/history file
+    //
+    doCheck(await getChangelogVersion(context), "changelog", false);
     //
     // If node_modules dir exists, use package.json to obtain cur version
     //
@@ -90,10 +113,6 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
     // The 'mantisbtPlugin' option specifies the main class file, containing version #
     //
     doCheck(await getMantisBtVersion(context), "mantisbt");
-    //
-    // Extract from changelog/history file
-    //
-    doCheck(await getChangelogVersion(context), "changelog", false);
 
     //
     // Loop through all specified files and validate version number

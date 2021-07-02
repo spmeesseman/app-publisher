@@ -343,10 +343,17 @@ export async function runScripts(context: IContext, scriptType: string, scripts:
 }
 
 
-export function validateVersion(version: string, lastVersion?: string, logger?: any)
+export function validateVersion(version: string, system?: "auto" | "manual" | "incremental" | "semver", lastVersion?: string, logger?: any)
 {
     if (logger) {
         logger.log("Validate version : " + version);
     }
-    return semver.valid(version) && (!lastVersion || semver.gt(version, lastVersion));
+    if (!system || system === "auto" || system === "manual") {
+        return semver.valid(version) && (!lastVersion || semver.gt(version, lastVersion)) ||
+               (isNumeric(version) && (!lastVersion || !isNumeric(lastVersion) || parseInt(version, 10) > parseInt(lastVersion)));
+    }
+    else if (system !== "incremental") {
+        return semver.valid(version) && (!lastVersion || semver.gt(version, lastVersion));
+    }
+    return isNumeric(version) && (!lastVersion || !isNumeric(lastVersion) || parseInt(version, 10) > parseInt(lastVersion));
 }

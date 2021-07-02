@@ -35,14 +35,16 @@ export async function doNpmRelease(context: IContext)
         //
         if (options.npmPackDist === "Y")
         {
-            let tmpPkgFile;
+            let tmpPkgFile: string, doAddEdit = true;
             let proc = await execa("npm", ["pack"], pick(context, [ "cwd", "env"]));
             checkExitCode(proc.code, logger);
 
             if (!options.distReleasePathSrc)
             {
                 logger.log("Creating tarball file directory and adding to version control");
-                createDir(options.distReleasePathSrc);
+                await createDir(options.distReleasePathSrc);
+                await addEdit(context, options.distReleasePathSrc);
+                doAddEdit = false;
             }
 
             const destPackedFile = path.join(options.distReleasePathSrc, `${options.projectName}.tgz`);
@@ -72,7 +74,9 @@ export async function doNpmRelease(context: IContext)
             //
             // Track modified file
             //
-            addEdit(context, destPackedFile);
+            if (doAddEdit) {
+                await addEdit(context, destPackedFile);
+            }
         }
         //
         // Publish to npm server

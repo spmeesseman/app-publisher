@@ -2,8 +2,9 @@ import { escapeRegExp, template } from "lodash";
 import semver from "semver";
 import pLocate from "p-locate";
 import { getTags, isRefInHistory, getTagHead } from "./repo";
-import { IContext, IRelease } from "../interface";
+import { IContext, IRelease, IVersionInfo } from "../interface";
 import { EOL } from "os";
+import { isNumeric } from "./utils/utils";
 
 export = getLastRelease;
 
@@ -27,9 +28,22 @@ export = getLastRelease;
  *
  * @return {Promise<LastRelease>} The last tagged release or `undefined` if none is found.
  */
-async function getLastRelease(context: IContext): Promise<IRelease>
+async function getLastRelease(context: IContext, lastVersionInfo: IVersionInfo): Promise<IRelease>
 {
-    const { cwd, env, options, logger } = context;
+    const { env, options, logger } = context;
+    const isValid = (v: string) => {
+        if (!v) { return false; }
+        if (lastVersionInfo.system !== "incremental") { console.log(4);
+            return semver.valid(semver.clean(v)) && !semver.prerelease(semver.clean(v));
+        }
+        return isNumeric(v);
+    };
+    const doSort = (a: any, b: any) => {
+        if (lastVersionInfo.system !== "incremental") {
+            return semver.rcompare(a.version, b.version);
+        }
+        return a === b ? 0 : (a < b ? 1 : -1);
+    };
     //
     // Generate a regex to parse tags formatted with `tagFormat`
     // by replacing the `version` variable in the template by `(.+)`.
@@ -41,13 +55,11 @@ async function getLastRelease(context: IContext): Promise<IRelease>
 
     const tags = tagsRaw
                  .map((tag: any) => ({ tag, version: (tag.match(tagRegexp) || new Array(2))[1] }))
-                 .filter(
-                     tag => tag.version && semver.valid(semver.clean(tag.version)) && !semver.prerelease(semver.clean(tag.version))
-                 )
-                 .sort((a: any, b: any) => semver.rcompare(a.version, b.version));
+                 .filter((tag: any) => isValid(tag.version))
+                 .sort((a: any, b: any) => doSort);
 
     if (options.verbose) {
-        context.stdout.write("Tags:" + EOL + JSON.stringify(tags, undefined, 2));
+        context.stdout.write("Tags:" + EOL + JSON.stringify(tags, undefined, 2) + EOL);
     }
 
     const tag: any = await pLocate(tags, (tag: any) => isRefInHistory(context, tag.tag, true), { preserveOrder: true });
@@ -55,7 +67,7 @@ async function getLastRelease(context: IContext): Promise<IRelease>
     if (tag)
     {
         logger.info(`Found ${options.repoType} tag ${tag.tag} associated with version ${tag.version}`);
-        return { head: await getTagHead({options, logger, cwd, env} as IContext, tag.tag), ...tag };
+        return { head: await getTagHead(context, tag.tag), versionInfo: lastVersionInfo, ...tag };
     }
 
     logger.info(`No ${options.repoType} tag version found`);

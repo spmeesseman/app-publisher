@@ -13,30 +13,39 @@ export async function addEdit(context: IContext, pathToAdd: string | string[])
         return;
     }
 
-    const {options, nextRelease, logger, env, cwd} = context;
+    const {nextRelease} = context;
 
     async function doAdd(p: string) // , isDir = false)
     {
         let editType = "M";
-
-        // const pathResolved = path.resolve(cwd, p),
+        //
+        // Check existence in edits already
+        //
+        for (const e of nextRelease.edits)
+        {
+            if (p === e.path) {
+                return;
+            }
+        }
+        //
+        // Resolve path, our cwd may not be the process cwd
+        //
         const pathResolved = path.relative(process.cwd(), path.resolve(p)),
               versioned = await isVersioned(context, pathResolved);
+        //
+        // If the edit is already versioned, tag it with "M", if it is not under vc, then
+        // tag it with an "A".  If it is ignored from vc, tag it with an "I". Non-vc files
+        // will get deleted on revert in the event of a run fail or a dry run completion (if
+        // the 'vcRevert' flag is set to Y).
+        //
         if (!versioned)
         {
             const ignored = await isIgnored(context, pathResolved);
-            // const dir = path.dirname(pathResolved);
-            // if (!(await isVersioned({options}, dir, {cwd, env}))) {
-            //     _add(dir); // , true);
-            // }
-            if (!ignored) {
-                editType = "A";
-            }
-            else {
-                editType = "I";
-            }
+            editType = !ignored ? "A" : "I";
         }
-
+        //
+        // Save the edit
+        //
         nextRelease.edits.push({
             path: pathResolved,
             type: editType
@@ -723,17 +732,28 @@ export async function revert(context: IContext, files?: IEdit[])
         return;
     }
 
+    let vcRcFileCt = 0;
     const execaOpts = { cwd, env },
           changeListAdd = !files ? nextRelease.edits.filter((e: any) => e.type === "A") :
                                    files.filter((e: any) => e.type === "A"),
           changeListModify = !files ? nextRelease.edits.filter((e: any) => e.type === "M") :
                                       files.filter((e: any) => e.type === "M");
 
-    // const changeListAdd: string = edits.filter((e: any) => e.type === "A").map((e: any) => e.path).join(" ").trim(),
-    //       changeListModify: string = edits.filter((e: any) => e.type === "M").map((e: any) => e.path).join(" ").trim();
+    if (options.vcRevertFiles)
+    {
+        for (const vcFile of options.vcRevertFiles) {
+            if (await isVersioned(context, vcFile)) {
+                changeListModify.push({ path: vcFile, type: "M" });
+            }
+            else {
+                changeListModify.push({ path: vcFile, type: "A" });
+            }
+            ++vcRcFileCt;
+        }
+    }
 
     logger.info("Revert changes");
-    logger.info(`   Total Edits   : ${!files ? nextRelease.edits.length : files.length}`);
+    logger.info(`   Total Edits   : ${vcRcFileCt + (!files ? nextRelease.edits.length : files.length)}`);
     logger.info(`   Additions     : ${changeListAdd.length}`);
     logger.info(`   Modifications : ${changeListModify.length}`);
 

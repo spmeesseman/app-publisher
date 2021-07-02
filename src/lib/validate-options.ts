@@ -148,6 +148,10 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     {
         options.npmReleasePostCommand = [ options.npmReleasePostCommand ]; // convert to array
     }
+    if (options.vcRevertFiles && isString(options.vcRevertFiles))
+    {
+        options.vcRevertFiles = [ options.vcRevertFiles ]; // convert to array
+    }
     if (options.versionFiles && !(options.versionFiles instanceof Array))
     {
         options.versionFiles = [ options.versionFiles ]; // convert to array
@@ -413,16 +417,6 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     }
 
     //
-    // Create dist directory if it doesnt exist
-    //
-    if (options.distReleasePathSrc && !(await pathExists(options.distReleasePathSrc)))
-    {
-        logger.log("Creating dist directory");
-        await createDir(options.distReleasePathSrc);
-        // VcChangelistAddRemove "$distReleasePathSrc";
-    }
-
-    //
     // Changelog file line length
     //
     if (!options.changelogHdrFile) {
@@ -574,14 +568,14 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
         }
     }
 
-    if (options.dryRunVcRevert) {
-        if (options.dryRunVcRevert !== "Y" && options.dryRunVcRevert !== "N") {
+    if (options.vcRevert) {
+        if (options.vcRevert !== "Y" && options.vcRevert !== "N") {
             logger.error("Invalid value specified for testModeSvnRevert, accepted values are Y/N");
             return false;
         }
     }
     else {
-        options.dryRunVcRevert = "Y";
+        options.vcRevert = "Y";
     }
 
     if (options.writeLog) {
@@ -641,7 +635,14 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     }
 
     //
-    // Version text
+    // Version System
+    //
+    if (!options.versionSystem) {
+        options.versionSystem = "auto";
+    }
+
+    //
+    // Version Text
     //
     if (!options.versionText) {
         options.versionText = "Version";

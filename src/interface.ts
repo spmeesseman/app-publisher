@@ -156,7 +156,7 @@ export interface IVersionInfo
 {
     version: string;
     info: string[];
-    system: string;
+    system: "auto" | "manual" | "semver" | "incremental";
 }
 
 
@@ -309,10 +309,6 @@ export interface IOptions
      * reverted to original state via SCM
      */
     dryRun: boolean;
-    /**
-     * Reverts all file modification made during a 'dry run' using version control.
-     */
-    dryRunVcRevert: "Y" | "N";
     /**
      * A link or list of links to insert into an email notification in the form 'link|name'.
      */
@@ -756,6 +752,16 @@ export interface IOptions
      */
     textEditor: string;
     /**
+     * Reverts all file modifications made if a publish failes, or, after a dry run is completed.
+     * Uses version control.
+     */
+    vcRevert: "Y" | "N";
+    /**
+     * Additional files to be reverted if a publish run fails, or, after a dry run completes.
+     * Uses version control.  Ignored if 'vcRevert' = 'N'
+     */
+    vcRevertFiles: string[];
+    /**
      * Tag prefix for the version tag.  Labels the created tag in the form prefix-vX.X.X.
      * Can be used for sub-projects within a single project.
      */
@@ -856,6 +862,10 @@ export interface IOptions
      *     app-publisher --version-pre-release-id alpha, * app-publisher --version-pre-release-id pre1
      */
     versionPreReleaseId: string;
+    /**
+     * Specify the versioning system to be used if it cannot be determined automatically.
+     */
+    versionSystem: "auto" | "semver" | "incremental";
     /**
      * The text tag to use in the history file for preceding the version number.  It should be one of
      * the following:,

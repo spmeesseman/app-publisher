@@ -149,7 +149,7 @@
 
 - **Mantis Release:** a failed github release causes uncaught exceptions
 - **NPM Release:** commit messages with a scope are not figuring into the calculation of the next version
-- **Dry Run:** dry run changes are not being reverted if dryRunVcRevert flag is set to "Y"
+- **Dry Run:** dry run changes are not being reverted if vcRevert flag is set to "Y"
 - **Changelog:** the --task-changelog task is writing a section with 0 messages
 - **NPM Release:** dynamic scoping from pubishrc property not wokring
 - **Verify:** svn runnot verifying tag name exists
