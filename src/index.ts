@@ -69,7 +69,7 @@ Detailed Help
     {
         const title =
 `----------------------------------------------------------------------------
-App-Publisher Version :  ${options.version}
+App-Publisher Version :  ${options.appPublisherVersion}
 ----------------------------------------------------------------------------
 `;
         context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));

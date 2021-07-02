@@ -90,7 +90,7 @@ export = async () =>
             ui: "tdd", // the TDD UI is being used in extension.test.ts (suite, test, etc.)
             // color: true, // colored output from test results,
             timeout: 30000, // default timeout: 10 seconds
-            retries: 1,
+            retries: 0,
             reporter: "mocha-multi-reporters",
             reporterOptions: {
                 reporterEnabled: "spec, mocha-junit-reporter",

@@ -1,0 +1,474 @@
+App-Publisher
+
+
+Version 3.0.0
+June 22nd, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature
+    
+    Use pure NodeJS based implementation (BETA).
+
+    To use the underlying NodeJS based implementation, the following command
+    line switch can be used:
+
+        --node
+
+    By default, the underlying implementation used will continue to use NodeJS
+    for the loader and PowerShell for the publish run and/or all tasks.  The
+    PowerShell implementation will be depracated in favor of NodeJS when it
+    becomes stable.
+
+
+Version 3.0.1
+June 23rd, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Continuous Integration:  Jenkinsfile
+    
+    Update to latest v3 API.
+
+2.  Bug Fix
+    
+    Spaces are being removed in changelog scope names when constructing the
+    changelog section entries.
+
+3.  Bug Fix
+    
+    Tags are being created with an additional 'v' pre-pended.
+
+4.  Bug Fix:  Changelog
+    
+    Commits are not being sorted alphabetically when retrieved from the VCS.
+
+5.  Bug Fix:  Changelog
+    
+    Creating the HTML changelog with the --task-changelog-html-* tasks is not
+    parsing the notes correctly.
+
+6.  Bug Fix:  Github Release
+    
+    Assets fails to upload.
+
+7.  Refactoring
+    
+    The --task-changelog-view task is not printing the version header when
+    the project uses a markdown type changelog file.
+
+8.  Refactoring:  Tasks
+    
+    Allow MantisBT and GitHub release tasks w/o the constraint of there having
+    to be existing changes since the previous release.
+
+
+Version 3.0.2
+June 23rd, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+    
+    A failed MantisBT release causes uncaught exceptions.
+
+2.  Bug Fix:  Npm Release
+    
+    Dynamic scoping for a build using relevant .pubishrc properties is not
+    working.
+
+3.  Refactoring:  General
+    
+    Powershell implementation is now removed, application is now a pure NodeJS
+    implementation.
+
+
+Version 3.0.3
+June 24th, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix
+    
+    Handful of fixes exposed by IOptions interface extension.
+
+2.  Bug Fix:  Changelog
+    
+    HTML changelog extracted from md type doesnt remove scope name from
+    message.
+
+3.  Bug Fix:  Changelog
+    
+    When constructing the changelog / history file, commit messages with a 'ci'
+    subject are being sorted alphabetically with other commits, they should be
+    sorted to the end along with commits having a subject of 'build'.
+
+4.  Bug Fix:  General
+    
+    Builds in v3.0.2 fail on win32:
+    
+        Command failed: powershell.exe, the term 'undefined' is not recognized
+        as the name of a cmdlet.
+
+5.  Bug Fix:  NPM Release
+    
+    The dynamic package.json manipulation does not restore homepage or the
+    repository URL correctly.
+
+6.  Bug Fix:  Changelog
+    
+    Words/acronyms that are all uppercase in the commit message subject get
+    title cased when creating the history / changelof file entry.
+
+7.  Bug Fix:  Changelog
+    
+    Remove [...] commit tags from commit message entries other than ticket
+    related tags.
+
+8.  Refactoring:  Changelog
+    
+    Populate the scope column with 'General' in the HTML changelog if there is
+    no scope in the commit message for that entry.
+
+9.  Continuous Integration:  Checkout
+    
+    If the last commit message includes the [skip-ci] tag, then exit build.
+
+
+Version 3.1.0
+June 27th, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Documentation:  README
+    
+    Add section link on vscode-taskexplorer intergation.
+    Remove semantic-release badge.
+    Update banner image.
+    Update with v3 changes.
+
+2.  Feature: Versioning
+    
+    Complete version validation across all local version files.
+
+3.  Feature: Versioning
+    
+    Cross-file version handling with 'versionFiles.setFiles' property.
+
+4.  Feature:  Tasks
+    
+    Add new 'task mode' command line switch:
+    
+            -tcp ,  --task-changelog-print
+    
+    Using this option instructs the process to output the the pending version's
+    current changelog to stdout.
+
+5.  Feature:  Tasks
+    
+    Add new 'task mode' command line switches:
+    
+        --task-changelog-print-version
+        --task-changelog-view-version
+    
+    Using these options instructs the process to view, or output to stdout, the
+    changelog for the specified version.
+
+6.  Feature:  Tasks
+    
+    Add new 'task mode' command line switches:
+    
+        --task-deploy
+    
+    Using these options instructs the process to run the deployment scripts
+    defined in the 'deployCommand' publishrc property.
+
+7.  Feature:  Tasks
+    
+    Add new 'task mode' command line switches:
+    
+        --task-npm-json-restore
+        --task-npm-json-update
+    
+    Using these options instructs the process to dynamically update/restore the
+    package.json file with the NPM related .publishrc defined properties.
+
+8.  Feature:  Tasks
+    
+    Add new 'task mode' command line switches:
+    
+        --task-revert
+    
+    Using these options instructs the process to revert all changes made from
+    task usage.
+
+9.  Bug Fix: Versioning
+    
+    The edit-file script for file edits is not found and causes an exception.
+
+10. Bug Fix: Versioning
+    
+    Version replacement is only replacing first match found it more than one
+    match exists.
+
+11. Bug Fix: Versioning
+    
+    Version replacement is throwing an exception in publishrc.versionFiles
+    defined files.
+
+12. Bug Fix:  Dotnet
+    
+    Assemblyinfo file version replacement is removing the 4th part of the .NET
+    version number (build number).
+
+13. Bug Fix:  Dry Run
+    
+    Files that are 'added' are causing the dry commit to fail.
+
+14. Bug Fix:  Versioning
+    
+    The .publishrc file's 'promptVersion' property value is being overwritten
+    with the new version number when performing the version file updates.
+
+15. Bug Fix:  Versioning
+    
+    The 'versionPreReleaseId' option is not figuring into the calculation of
+    the next version.
+
+16. Refactoring:  Dry Run
+    
+    Revert dry run changes in vcs on a controlled fail as well as on a thrown
+    exception.
+
+17. Refactoring:  Changelog
+    
+    Add 'crud' and 'readme' text to list of commit message formatters that get
+    uppercased when formatting commit messages for a changelog section.
+
+18. Refactoring:  Changelog
+    
+    Capitalize and pluralize ticket tags. i.e. "fix" should become "Fixes".
+
+
+Version 3.1.1
+June 29th, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix:  MantisBT
+    
+    Extracted version number contains a space character and fails version
+    validation
+
+2.  Bug Fix:  Versioning
+    
+    An ExtJS app.json version bump doesn't replace the Sencha Cmd un-supported
+    '-' character with '.', and production builds fail with an error similar
+    to the following:
+    
+        Java.lang.NumberFormatException: For input string: "2-"
+
+3.  Bug Fix:  Versioning
+    
+    The taskRevert task fails with the following error:
+
+        TypeError: Cannot read property 'info' of undefined
+
+4.  Refactoring:  Versioning
+    
+    The --task-version-current switch now checks remote tag and runs local
+    version file validation.
+
+
+Version 3.2.0
+June 29th, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Feature:  Tasks
+    
+    Add new 'task mode' command line switches:
+    
+        --task-release-level
+    
+    Using this option instructs the process to output the next version's release
+    level to stdout.  Can be one of 'none', 'patch', 'minor', or 'major'.
+
+2.  Bug Fix:  Releases
+    
+    First/initial release fails if locally extracted version number is not
+    1.0.0.
+
+3.  Bug Fix:  Validation
+    
+    SVN repo path is incorrect if publishrc specifes branch path with branch
+    name in the 'branch' property.
+
+4.  Refactoring
+    
+    Dynamic type lookup on args to set stdout mode.
+
+5.  Refactoring:  Changelog
+    
+    Add text 'MantisBT' to 'GitHub' to subject formatting.
+
+
+Version 3.2.1
+June 30th, 2021
+-------------------------------------------------------------------------------
+********************************************************************************
+***                                                                            *
+*** Verify that the following requirements have been satisfied:                *
+***                                                                            *
+*** Requirements:                                                              *
+*** -------------                                                              *
+***                                                                            *
+***    1.  Operating System            : Windows 7+                            * 
+***                                                                            *
+***    2.  CPU                         : 1.0+ GHz                              *
+***                                                                            *
+***    3.  RAM                         : 128 MB                                *
+***                                                                            *
+***    4.  NodeJS                      : 8+                                    *
+***                                                                            *
+***    5.  Powershell                  : 5                                     *
+***                                                                            *
+********************************************************************************
+
+1.  Bug Fix:  Changelog
+    
+    The MantisBT release notes are not aligned correctly when the commit message
+    is multi-line and uses indentation.
+
+2.  Bug Fix:  Configuration
+    
+    The 'configName' option no longer works.
+
+3.  Bug Fix:  Email
+    
+    Regression - Email notification is missing the release notes in v3.1.0.
+
+4.  Bug Fix:  Versioning
+    
+    For ExtJs projects, when a pre-release version is read from from app.json,
+    it is not converted back to true version using the '-' character.
+

@@ -11,10 +11,9 @@ import getContext from "../lib/get-context";
 const envCi = require("@spmeesseman/env-ci");
 
 
-export const getDocPath = (p: string) =>
-{
-    return path.resolve(__dirname, "../../../../client/testFixture", p);
-};
+const cwd = path.join(process.cwd(), "src", "test", "fixture");
+let context: IContext;
+let ciInfo: any;
 
 
 export async function sleep(ms: number)
@@ -27,7 +26,7 @@ export async function sleep(ms: number)
 export async function runApTest(options: IOptions): Promise<number>
 {
     try {
-        const rc = await require("../.")(options);
+        const rc = await require("../.")(options, { cwd });
         return rc ? 1 : 0;
     }
     catch (error)
@@ -39,8 +38,6 @@ export async function runApTest(options: IOptions): Promise<number>
     return 1;
 }
 
-let context: IContext;
-let ciInfo: any;
 
 export async function getApOptions(cmdOpts?: string[])
 {
