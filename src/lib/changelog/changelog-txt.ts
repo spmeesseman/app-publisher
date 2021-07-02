@@ -10,7 +10,7 @@ export class ChangelogTxt extends Changelog
 {
 
     /**
-     * Creates a changelog entry for the history/changelog file using the commits list
+     * Creates a changelog entry for the changelog txt file using the commits list
      *
      * @since 2.8.0
      *
@@ -23,11 +23,11 @@ export class ChangelogTxt extends Changelog
         const { options, commits, logger } = context;
 
         if (!commits || commits.length === 0) {
-            logger.warn("Cannot build history file section, there are no commits");
+            logger.warn("Cannot build changelog txt file section, there are no commits");
             return comments;
         }
 
-        logger.log(`Build history file section from ${commits.length} commits`);
+        logger.log(`Build changelog txt file section from ${commits.length} commits`);
 
         //
         // Parse the commit messages
@@ -386,7 +386,7 @@ export class ChangelogTxt extends Changelog
         let match: RegExpExecArray;
         const entries: IChangelogEntry[] = [];
 
-        logger.log("   Extracting parts from history file section");
+        logger.log("   Extracting parts from changelog txt file section");
         //
         // Process entries with a subject (sorrounded by <b></b>)
         //
@@ -420,7 +420,7 @@ export class ChangelogTxt extends Changelog
             }
         }
 
-        logger.log("Successfully retrieved history file parts");
+        logger.log("Successfully retrieved changelog txt file parts");
         return entries;
     }
 
@@ -435,7 +435,7 @@ export class ChangelogTxt extends Changelog
             taskSpecVersion = options.taskChangelogPrintVersion || options.taskChangelogViewVersion,
             version = !taskSpecVersion ? nextRelease.version : taskSpecVersion;
 
-        logger.log("Start history file edit");
+        logger.log("Start changelog txt file edit");
 
         if (!options.taskChangelogPrint && !options.taskChangelogPrintVersion)
         {
@@ -457,13 +457,13 @@ export class ChangelogTxt extends Changelog
             }
 
             //
-            // If history file doesnt exist, create one with the project name as a title
+            // If changelog txt file doesnt exist, create one with the project name as a title
             //
             const historyPath = path.dirname(options.changelogFile);
 
             if (historyPath && !(await pathExists(historyPath)))
             {
-                logger.log("Create history file directory");
+                logger.log("Create changelog txt file directory");
                 await createDir(historyPath);
             }
 
@@ -482,7 +482,7 @@ export class ChangelogTxt extends Changelog
             }
             else
             {   //
-                // If the history file already existed, but had no entries, we need to still set the 'new' flag
+                // If the changelog txt file already existed, but had no entries, we need to still set the 'new' flag
                 //
                 const contents = await readFile(options.changelogFile);
                 if (contents.indexOf(options.versionText) === -1)
@@ -494,7 +494,7 @@ export class ChangelogTxt extends Changelog
 
             if (!(await pathExists(options.changelogFile)))
             {
-                logger.error("Could not create history file, exiting");
+                logger.error("Could not create changelog txt file, exiting");
                 throw new Error("140");
             }
         }
@@ -531,7 +531,7 @@ export class ChangelogTxt extends Changelog
             }
 
             //
-            // Touch history file with the latest version info, either update existing, or create
+            // Touch changelog txt file with the latest version info, either update existing, or create
             // a new one if it doesnt exist
             //
             // Add lines 'version', 'date', then the header content
@@ -566,13 +566,13 @@ export class ChangelogTxt extends Changelog
             }
         }
         else {
-            logger.warn("Version match, not touching history file");
+            logger.warn("Version match, not touching changelog txt file");
         }
 
         //
-        // Allow manual modifications to history file
+        // Allow manual modifications to changelog txt file
         //
-        await editFile(context, options.changelogFile, true);
+        await editFile(context, options.changelogFile, true, true);
 
         //
         // Reset
@@ -582,11 +582,11 @@ export class ChangelogTxt extends Changelog
 
 
     /**
-     * Gets history file section using the hostory/changelog file by parsing the sepcified
+     * Gets changelog txt file section using the hostory/changelog file by parsing the sepcified
      * versions section.
      *
      * @param context The run context object.
-     * @param version The version to extract the notes from in the history/changelog file.
+     * @param version The version to extract the notes from in the changelog txt file.
      * @param numsections # of section to extract
      * @param listOnly retrieve an array of strings only, not a formatted string
      * @returns HTML version of the requested cahngelog section(s)
@@ -602,7 +602,7 @@ export class ChangelogTxt extends Changelog
         // Make sure user entered correct cmd line params
         //
         if (!inputFile) {
-            logger.error("Error: No history file specified");
+            logger.error("Error: No changelog txt file specified");
             throw new Error("160");
         }
 
@@ -711,13 +711,13 @@ export class ChangelogTxt extends Changelog
             logger.error("History file section could not be found");
             throw new Error("162");
         }
-        logger.log("   Found history file section(s)");
+        logger.log("   Found changelog txt file section(s)");
 
         //
         // If request is for just the raw content, we're done.  Proceeding past here converts to HTML
         //
         if (!htmlFormat) {
-            logger.log("Successfully retrieved raw history file content");
+            logger.log("Successfully retrieved raw changelog txt file content");
             return contents;
         }
 
@@ -777,7 +777,7 @@ export class ChangelogTxt extends Changelog
             contents = "<font face=\"Courier New\" style=\"font-size:12px\">" + contents + "</font>";
         }
 
-        logger.log("Successfully retrieved history file content");
+        logger.log("Successfully retrieved changelog txt file content");
         return contents;
         */
     }
@@ -790,15 +790,15 @@ export class ChangelogTxt extends Changelog
     }
 
     /**
-     * Gets version number from the last entered section of the changelog / history file.
+     * Gets version number from the last entered section of the changelog txt file.
      *
      * @since 3.0.0
      * @param context The run context object.
-     * @returns The version number of the last section found in the history / changelog file.
+     * @returns The version number of the last section found in the changelog txt file.
      */
     async getVersion(context: IContext)
     {
-        context.logger.log("Retrieve last version number from history file");
+        context.logger.log("Retrieve last version number from changelog txt file");
         return this.getSections(context);
     }
 

@@ -398,7 +398,7 @@ export class ChangelogMd extends Changelog
         //
         // Allow manual modifications to history file
         //
-        await editFile(context, options.changelogFile);
+        await editFile(context, options.changelogFile, true);
 
         //
         // Reset

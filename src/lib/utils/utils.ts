@@ -72,11 +72,12 @@ export function checkExitCode(code: number, logger: any, throwOnError = false)
 }
 
 
-export async function editFile({ options, nextRelease, logger, cwd, env }, editFile: string, seekToEnd = false)
+export async function editFile({ options, nextRelease, logger, cwd, env }: IContext, editFile: string, isChangelog = false, seekToEnd = false)
 {
     if (editFile && await pathExists(editFile))
     {
-        let skipEdit = (options.skipVersionEdits === "Y" || options.taskVersionUpdate || options.taskChangelogFile) &&
+        const fSkipEdits = !isChangelog ? options.skipVersionEdits === "Y" : options.skipChangelogEdits === "Y";
+        let skipEdit = (fSkipEdits || options.taskVersionUpdate || options.taskChangelogFile) &&
                         !options.taskChangelogView && !options.taskChangelogHtmlView && !options.taskChangelogPrint;
         if (options.versionFilesEditAlways && options.versionFilesEditAlways.includes(editFile)) {
             skipEdit = false;

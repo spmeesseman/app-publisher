@@ -42,7 +42,7 @@ async function doDistRelease(context: IContext)
                 // Track modified file/folder
                 //
                 if (rc === 0) {
-                    await addEdit(context, path.normalize(path.join(options.distReleasePathSrc, options.changelogFile)));
+                    await addEdit(context, path.normalize(path.join(options.distReleasePathSrc, path.basename(options.changelogFile))));
                 }
                 else {
                     await addEdit(context, path.normalize(options.distReleasePathSrc));
