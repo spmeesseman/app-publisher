@@ -33,7 +33,7 @@ async function getLastRelease(context: IContext, lastVersionInfo: IVersionInfo):
     const { env, options, logger } = context;
     const isValid = (v: string) => {
         if (!v) { return false; }
-        if (lastVersionInfo.system !== "incremental") { console.log(4);
+        if (lastVersionInfo.system !== "incremental") {
             return semver.valid(semver.clean(v)) && !semver.prerelease(semver.clean(v));
         }
         return isNumeric(v);

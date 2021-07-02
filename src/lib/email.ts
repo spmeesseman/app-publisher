@@ -203,6 +203,9 @@ function getEmailHeader({options, logger}: IContext, version: string)
                 if (emailHrefParts.length > 2) {
                     eLinkName = emailHrefParts[2];
                 }
+                else if (emailHrefParts.length === 2) {
+                    eLinkName = eLinkDescrip;
+                }
                 szHrefs += `<tr><td>${eLinkDescrip}</td><td style="padding-left:10px"><a href="${eLink}">${eLinkName}</a></td></tr>`;
             }
         }

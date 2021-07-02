@@ -362,7 +362,7 @@ async function runRelease(context: IContext)
     //    versionInfo (for mavn builds and auto constructing version #)
     //
     const lastVersionInfo = await getCurrentVersion(context);
-console.log(lastVersionInfo);
+
     //
     // Populate context with last release info, populates version number, uses
     // remote method with getTags()

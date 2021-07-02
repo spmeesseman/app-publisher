@@ -118,7 +118,7 @@ export abstract class Changelog implements IChangelog
             // fm += "s";
             return "[" + properCase(m.replace(/[\[\]]/g, "").trim()) + "]";
         })
-        .replace("Mantisbt", "MantisBT").replace("Github", "GitHub");
+        .replace("Mantisbt", "MantisBT").replace("Github", "GitHub").replace("App-publisher", "App-Publisher");
     }
 
 

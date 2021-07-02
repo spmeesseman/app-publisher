@@ -36,15 +36,22 @@ async function doDistRelease(context: IContext)
         //
         if (!options.dryRun || options.tests) {
             const rc = await mkdir(options.distReleasePathSrc);
-            await copyFile(options.changelogFile, options.distReleasePathSrc);
-            //
-            // Track modified file/folder
-            //
-            if (rc === 0) {
-                await addEdit(context, path.normalize(path.join(options.distReleasePath, options.changelogFile)));
+            try {
+                await copyFile(options.changelogFile, options.distReleasePathSrc);
+                //
+                // Track modified file/folder
+                //
+                if (rc === 0) {
+                    await addEdit(context, path.normalize(path.join(options.distReleasePathSrc, options.changelogFile)));
+                }
+                else {
+                    await addEdit(context, path.normalize(options.distReleasePathSrc));
+                }
             }
-            else {
-                await addEdit(context, path.normalize(options.distReleasePath));
+            catch (e) {
+                console.warn("Failed to copy changelog file to dist source:");
+                console.warn(e.toString().trim());
+                console.warn("Manually copy the files if required, continuing");
             }
         }
         else {
@@ -67,8 +74,15 @@ async function doDistRelease(context: IContext)
         {   //
             // Copy all files in 'dist' directory that start with options.projectName, and the history file
             //
-            await mkdir(targetNetLocation);
-            await copyDir(options.distReleasePathSrc, targetNetLocation);
+            try {
+                await mkdir(targetNetLocation);
+                await copyDir(options.distReleasePathSrc, targetNetLocation);
+            }
+            catch (e) {
+                console.warn("Failed to copy files to dist destination:");
+                console.warn(e.toString().trim());
+                console.warn("Manually copy the files if required, continuing");
+            }
         }
         else {
             logger.log("   Dry run - skipped dist release file push");
@@ -129,8 +143,15 @@ async function doDistRelease(context: IContext)
         if (docDirSrc)
         {
             if (!options.dryRun || options.tests) {
-                await mkdir(targetDocLocation);
-                await copyDir(docDirSrc, targetDocLocation, new RegExp(`.*\.(?:pdf|${nextRelease.version})$`, "i"));
+                try {
+                    await mkdir(targetDocLocation);
+                    await copyDir(docDirSrc, targetDocLocation, new RegExp(`.*\.(?:pdf|${nextRelease.version})$`, "i"));
+                }
+                catch (e) {
+                    console.warn("Failed to copy documentation to dist destination:");
+                    console.warn(e.toString().trim());
+                    console.warn("Manually copy the documentation if required, continuing");
+                }
             }
             else {
                 logger.info("   Dry Run - Skipped dist doc push");
