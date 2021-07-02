@@ -22,7 +22,7 @@ export function copyFile(src: string, dst: string)
     {   //
         // If dst is a directory, a new file with the same name will be created
         //
-        let fullPath = path.resolve(cwd, dst);console.log("*********************************"); console.log(fullPath);
+        let fullPath = path.resolve(cwd, dst);
         if (await pathExists(fullPath)) {
             try {
                 if (fs.lstatSync(fullPath).isDirectory()) {
