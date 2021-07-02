@@ -3,7 +3,7 @@ import * as fs from "fs";
 import { filter } from "lodash";
 import * as path from "path";
 import { addEdit } from "../repo";
-import { getPsScriptLocation, timeout } from "./utils";
+import { getPsScriptLocation, isString, timeout } from "./utils";
 const execa = require("execa");
 
 
@@ -267,16 +267,24 @@ export function appendFile(file: string, data: string): Promise<void>
  * @param nu Text to insert in place of 'old'
  * @param caseSensitive `true` to make the replacement case sensitive
  */
-export async function replaceInFile(file: string, old: string, nu: string, caseSensitive = true)
+export async function replaceInFile(file: string, old: string, nu: string | ((m: RegExpExecArray) => string), caseSensitive = true)
 {
     const content = await readFile(file),
           regex = new RegExp(old, caseSensitive ? undefined : "gmi");
     let contentNew = "";
-    if (!caseSensitive) {
-        contentNew = content.replace(regex, nu);
+    if (isString(nu)) {
+        if (!caseSensitive) {
+            contentNew = content.replace(regex, nu);
+        }
+        else {
+            contentNew = content.replace(regex, nu);
+        }
     }
     else {
-        contentNew = content.replace(regex, nu);
+        let match: RegExpExecArray;
+        while ((match = regex.exec(old)) !== null) {
+            contentNew = content.replace(regex, nu(match));
+        }
     }
     if (content !== contentNew)
     {
