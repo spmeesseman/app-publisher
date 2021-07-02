@@ -71,7 +71,7 @@ export async function setAppPublisherVersion(context: IContext)
     }
     for (const file of files)
     {
-        if (await pathExists(file) && !(await isIgnored(context, path.resolve(cwd, file))))
+        if (await pathExists(file) && !(await isIgnored(context, file)))
         {   //
             // If this is '--task-revert', all we're doing here is collecting the paths of the
             // files that would be updated in a run, don't actually do the update
@@ -81,7 +81,7 @@ export async function setAppPublisherVersion(context: IContext)
                 continue;
             }
             logger.log(`Setting version ${nextRelease.version} in ` + file);
-            await replaceInFile(file, "\"projectVersion\"( *):( *)[\"][0-9a-z.\-]+", (m: RegExpExecArray) => {console.log(2);
+            await replaceInFile(file, "\"projectVersion\"( *):( *)[\"][0-9a-z.\-]+", (m: RegExpExecArray) => {
                 return `"projectVersion"${m[1] || ""}:${m[2] || ""}"${nextRelease.version}`;
             });
             //
