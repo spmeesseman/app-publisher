@@ -60,6 +60,6 @@ export async function setMakefileVersion(context: IContext)
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
-        await editFile({options, logger, nextRelease, cwd, env}, options.cProjectRcFile);
+        await editFile(context, options.cProjectRcFile);
     }
 }

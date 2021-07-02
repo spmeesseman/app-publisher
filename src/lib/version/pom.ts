@@ -91,6 +91,6 @@ export async function setPomVersion(context: IContext)
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
-        await editFile({options, logger, nextRelease, cwd, env}, "pom.xml");
+        await editFile(context, "pom.xml");
     }
 }

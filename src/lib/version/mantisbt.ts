@@ -54,6 +54,6 @@ export async function setMantisBtVersion(context: IContext)
         //
         // Allow manual modifications to mantisbt main plugin file and commit to modified list
         //
-        await editFile({options, logger, nextRelease, cwd, env}, options.mantisbtPlugin);
+        await editFile(context, options.mantisbtPlugin);
     }
 }
