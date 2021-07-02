@@ -1,10 +1,10 @@
 {
-    "projectName":      "app-publisher",
+    "projectName":       "app-publisher",
     "projectVersion": "3.2.1",
-    "branch":           "master",
-    "bugs":             "https://github.com/spmeesseman/app-publisher/issues",
-    "buildCommand": [
-        "npm run build"
+    "branch":            "master",
+    "bugs":              "https://github.com/spmeesseman/app-publisher/issues",
+    "buildCommand":      [
+        "echo running  - buildCommand"
     ],
     "changelogFile":     "CHANGELOG.md",
     "changelogHdrFile":  "",

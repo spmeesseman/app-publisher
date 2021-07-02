@@ -158,6 +158,16 @@ export async function getPsScriptLocation(scriptFile: string, execaOpts: any): P
     if (await pathExists(p)) { // dev
         return p;
     }
+    // try {
+    //     p = join("..", "..", "script", `${scriptFile}.ps1`);
+    //     if (await pathExists(p)) { // tests
+    //         return p;
+    //     }
+    //     p = join("..", "..", "..", "script", `${scriptFile}.ps1`);
+    //     if (await pathExists(p)) { // tests
+    //         return p;
+    //     }
+    // } catch (e) { /* */ }
 
     //
     // Global NPM path

@@ -64,7 +64,7 @@ suite("Options Tests", () =>
         expect(options.taskModeStdOut).to.equal(false, "taskModeStdOut");
 
         expect(options.changelogLineLen).to.equal(80, "changelogLineLen");
-        expect(options.buildCommand).to.be.an("array", "buildCommand").and.include("npm run build", "buildCommand");
+        expect(options.buildCommand).to.be.an("array", "buildCommand").and.include("echo running  - buildCommand", "buildCommand");
         expect(options.appPublisherVersion).to.be.a("string", "appPublisherVersion").that.is.not.empty;
         //
         // ci env should always clear these flags to default/empty

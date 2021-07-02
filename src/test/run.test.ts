@@ -10,13 +10,14 @@ suite("Full Run Tests", () =>
 
     test("dry run full", async () =>
     {
-        let options = await getApOptions([ "--dry-run", "--skip-changelog-edits", "--skip-version-edits" ]);
-        expect(await runApTest(options)).to.equal(0, "task: full dry run");
+        let options = await getApOptions([ "--dry-run" ]);
+        expect(await runApTest(options)).to.equal(0, "task: full dry run default config");
         sleep(500);
 
-        options = await getApOptions([ "--config-name", "pja" ]);
-        // expect(await runApTest(options)).to.equal(0, "task: full dry run cst config");
-        // sleep(500);
+        options = await getApOptions([ "--dry-run", "--config-name", "svn" ]);
+        expect(await runApTest(options)).to.equal(0, "task: full dry run svn config");
+        sleep(500);
+
     }).timeout(120000);
 
 });

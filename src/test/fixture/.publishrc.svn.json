@@ -1,10 +1,10 @@
 {
-    "projectName":      "app-publisher",
+    "projectName":       "app-publisher",
     "projectVersion": "3.2.1",
-    "branch":           "trunk",
-    "bugs":             "https://app1.spmeesseman.com/projects/set_project.php?project=app-publisher&make_default=no&ref=bug_report_page.php",
-    "buildCommand": [
-        "npm run build"
+    "branch":            "trunk",
+    "bugs":              "https://github.com/spmeesseman/app-publisher/issues",
+    "buildCommand":      [
+        "echo running  - buildCommand"
     ],
     "changelogFile":     "CHANGELOG.md",
     "changelogHdrFile":  "",
@@ -65,7 +65,7 @@
     "postCommitCommand": [],
     "postReleaseCommand":"",
     "promptVersion":     "N",
-    "repo":              "https://svn.spmeesseman.com/pja/app-publisher/trunk",
+    "repo":              "https://svn.development.pjats.com/pja/app-publisher/trunk",
     "repoType":          "svn",
     "skipCommit":        "N",
     "skipChangelogEdits":"N",
@@ -73,7 +73,7 @@
     "testEmailRecip":    "spmeesseman@gmail.com",
     "textEditor":        "notepad",
     "vcTagPrefix":       "",
-    "vcWebPath":         "https://app1.spmeesseman.com/web/svn/filedetails.php%3Frepname=pja%26usemime=1%26path=",
+    "vcWebPath":         "https://github.com/spmeesseman/app-publisher",
     "versionFiles":      [],
     "versionFilesEditAlways": [],
     "versionReplaceTags":     [],
