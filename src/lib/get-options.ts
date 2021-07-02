@@ -17,7 +17,7 @@ function getOptions(useBanner = true): IOptions
         enforceConstraints: false,
         ignorePositional: [ "-p", "--profile" ]
     };
-    const opts = parseArgs(publishRcOpts, parserOpts);
+    const opts = parseArgs({ ...{}, ...publishRcOpts}, parserOpts);
 
     //
     // Set task mode stdout flag on the options object

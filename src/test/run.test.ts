@@ -17,6 +17,6 @@ suite("Full Run Tests", () =>
         options = await getApOptions([ "--config-name", "pja" ]);
         // expect(await runApTest(options)).to.equal(0, "task: full dry run cst config");
         // sleep(500);
-    });
+    }).timeout(120000);
 
 });

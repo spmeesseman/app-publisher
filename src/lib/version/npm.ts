@@ -77,11 +77,11 @@ export async function setNpmVersion(context: IContext)
 
     if (file)
     {
-        const packageJson = require(path.join(process.cwd(), file)),
+        const packageJson = JSON.parse(await readFile(path.join(process.cwd(), file))),
               packageJsonDir = path.dirname(file),
               packageLockFile = path.join(packageJsonDir, "package-lock.json"),
               packageLockFileExists = await pathExists(packageLockFile),
-              packageLockJson = packageLockFileExists ? require(path.join(process.cwd(), packageLockFile)) : undefined;
+              packageLockJson = packageLockFileExists ? JSON.parse(await readFile(path.join(process.cwd(), packageLockFile))) : undefined;
         //
         // If this is '--task-revert', all we're doing here is collecting the paths of the
         // files that would be updated in a run

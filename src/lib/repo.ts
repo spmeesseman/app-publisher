@@ -815,10 +815,11 @@ export async function tag({options, logger, nextRelease, cwd, env}: IContext)
                 }
             }
             else {
-                const proc = await execa("git", [ "push", "--dry-run", "origin", ":refs/tags/" + tagLocation ], execaOpts);
-                if (proc.code === 0) {
-                    await execa("git", ["tag", "--dry-run", "-fa", tagLocation, "-m", tagMessage], execaOpts);
-                }
+                logger.info("   Dry-run emulate tag, success");
+                // const proc = await execa("git", [ "push", "--dry-run", "origin", ":refs/tags/" + tagLocation ], execaOpts);
+                // if (proc.code === 0) {
+                //     await execa("git", ["tag", "--dry-run", "-fa", tagLocation, "-m", tagMessage], execaOpts);
+                // }
             }
         }
     }
@@ -837,6 +838,9 @@ export async function tag({options, logger, nextRelease, cwd, env}: IContext)
         logger.info(`Tagging SVN version at ${tagLocation}`);
         if (!options.dryRun) {
             await execSvn(["copy", options.repo, tagLocation, "-m", tagMessage], execaOpts);
+        }
+        else {
+            logger.info("   Dry-run emulate tag, success");
         }
     }
     else {
