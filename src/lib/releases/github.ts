@@ -12,7 +12,7 @@ export { doGithubRelease, publishGithubRelease };
 
 async function doGithubRelease(context: IContext): Promise<IReturnStatus>
 {
-    const { options, logger, nextRelease, env } = context;
+    const { options, logger, nextRelease, lastRelease, env } = context;
 
     logger.log("Starting GitHub release");
     logger.log(`   Version : ${nextRelease.version}`);
@@ -175,7 +175,9 @@ async function doGithubRelease(context: IContext): Promise<IReturnStatus>
                 }
 
                 // eslint-disable-next-line no-template-curly-in-string
-                asset = asset.replace("$(VERSION)", nextRelease.version);
+                asset = asset.replace("$(VERSION)", nextRelease.version)
+                             .replace("$(NEXTVERSION)", nextRelease.version)
+                             .replace("$(LASTVERSION)", lastRelease.version);
 
                 if (await pathExists(asset))
                 {

@@ -56,7 +56,7 @@ async function getLastRelease(context: IContext, lastVersionInfo: IVersionInfo):
     const tags = tagsRaw
                  .map((tag: any) => ({ tag, version: (tag.match(tagRegexp) || new Array(2))[1] }))
                  .filter((tag: any) => isValid(tag.version))
-                 .sort((a: any, b: any) => doSort);
+                 .sort(doSort);
 
     if (options.verbose) {
         context.stdout.write("Tags:" + EOL + JSON.stringify(tags, undefined, 2) + EOL);

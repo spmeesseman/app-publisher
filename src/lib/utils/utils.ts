@@ -229,6 +229,12 @@ export function isString(value: any): value is string
 }
 
 
+export function isObject(value: any): value is string
+{
+    return value && value instanceof Object || typeof value === "object";
+}
+
+
 export function logWarning(context: IContext, msg: string, err: string | Error)
 {
     context.logger.warn(msg);

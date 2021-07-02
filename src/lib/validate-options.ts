@@ -1,6 +1,6 @@
 
 import * as path from "path";
-import { isString, validateVersion } from "./utils/utils";
+import { isObject, isString, validateVersion } from "./utils/utils";
 import { createDir, pathExists } from "./utils/fs";
 import { IContext, IVersionFile } from "../interface";
 
@@ -222,6 +222,15 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     {
         for (const vf of options.versionFiles)
         {
+            if (!isObject(vf)) {
+                logger.error("Invalid versionFiles definition, must be an array of IVersionFile");
+                return false;
+            }
+            else if (!vf.path) {
+                logger.error("Invalid versionFiles definition, must be an array of IVersionFile");
+                logger.error("   The 'path' property is not defined on one or more definitions");
+                return false;
+            }
             validateVersionFileDef(vf);
             if (vf.setFiles) {
                 if (vf.setFiles.length === 0)
@@ -419,7 +428,7 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     //
     // Changelog file line length
     //
-    if (!options.changelogHdrFile) {
+    if (!options.changelogLineLen) {
         options.changelogLineLen = 80;
     }
 

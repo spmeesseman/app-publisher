@@ -14,7 +14,7 @@ export = doMantisRelease;
 
 async function doMantisRelease(context: IContext): Promise<IReturnStatus>
 {
-    const { options, logger, nextRelease } = context;
+    const { options, logger, nextRelease, lastRelease } = context;
 
     logger.log("Starting MantisBT release");
     logger.log(`   Version : ${nextRelease.version}`);
@@ -103,7 +103,9 @@ async function doMantisRelease(context: IContext): Promise<IReturnStatus>
             {
                 const extension = path.extname(assetName).toLowerCase();
                 // eslint-disable-next-line no-template-curly-in-string
-                asset = asset.replace("$(VERSION)", nextRelease.version);
+                asset = asset.replace("$(VERSION)", nextRelease.version)
+                             .replace("$(NEXTVERSION)", nextRelease.version)
+                             .replace("$(LASTVERSION)", lastRelease.version);
                 //
                 // The format to upload an asset is the base64 encoded binary file data
                 //

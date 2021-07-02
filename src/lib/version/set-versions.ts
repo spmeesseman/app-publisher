@@ -157,7 +157,11 @@ async function setVersionFiles(context: IContext): Promise<void>
 
     for (const versionFileDef of options.versionFiles)
     {
-        const tvFile = versionFileDef.path;
+        let tvFile = versionFileDef.path;
+
+        tvFile = tvFile.replace("$(VERSION)", nextRelease.version)
+                       .replace("$(NEXTVERSION)", nextRelease.version)
+                       .replace("$(LASTVERSION)", lastRelease.version);
 
         if (await pathExists(tvFile))
         {
