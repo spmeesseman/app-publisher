@@ -69,7 +69,7 @@ Detailed Help
     {
         const title =
 `----------------------------------------------------------------------------
-App-Publisher Version :  ${options.appPublisherVersion}
+ App-Publisher Version :  ${options.appPublisherVersion}
 ----------------------------------------------------------------------------
 `;
         context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
@@ -79,11 +79,11 @@ App-Publisher Version :  ${options.appPublisherVersion}
     //
     // If user specified 'cfg' or '--config', then just display config and exit
     //
-    if (options.config)
+    if (options.config || options.verbose)
     {
         const title =
 `----------------------------------------------------------------------------
- Run Configuration - .publishrc / cmd line
+ Pre-Validation Options Object
 ----------------------------------------------------------------------------
 `;
         context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
@@ -127,16 +127,6 @@ App-Publisher Version :  ${options.appPublisherVersion}
         context.stdout.write(EOL);
         logger.log("Loaded config from " + options.configFilePath);
         logger.log(`Running in ${mode}`);
-    }
-
-    if (options.verbose) // even if it's a stdout type task
-    {
-        const title =
-`----------------------------------------------------------------------------
-Current Command Line Options
-----------------------------------------------------------------------------
-`;
-        context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
     }
 
     //
@@ -276,7 +266,7 @@ async function runRelease(context: IContext)
     if (options.verbose) {
         const title =
 `----------------------------------------------------------------------------
-    Options Object
+ Options Object
 ----------------------------------------------------------------------------
 `;
         context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));
