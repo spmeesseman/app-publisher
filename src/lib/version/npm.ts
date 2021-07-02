@@ -7,7 +7,7 @@ import { pathExists, readFile, writeFile } from "../utils/fs";
 import { editFile } from "../utils/utils";
 
 
-async function getNpmFile({logger, options, cwd}: IContext)
+export async function getNpmFile({logger, options, cwd}: IContext)
 {
     return new Promise<string>(async (resolve, reject) =>
     {
@@ -21,7 +21,7 @@ async function getNpmFile({logger, options, cwd}: IContext)
             return;
         }
 
-        glob("**/package.json", { nocase: true, ignore: "node_modules/**" }, async (err, files) =>
+        glob("**/package.json", { nocase: true, ignore: "node_modules/**", cwd }, async (err, files) =>
         {
             if (err) {
                 logger.error("package.json");
@@ -40,7 +40,7 @@ async function getNpmFile({logger, options, cwd}: IContext)
                         if (files.length > 1) {
                             logger.warn("Using : " + f);
                         }
-                        resolve(path.resolve(cwd, f));
+                        resolve(f);
                         return;
                     }
                 }
@@ -77,8 +77,8 @@ export async function setNpmVersion(context: IContext)
 
     if (file)
     {
-        const packageJson = JSON.parse(await readFile(file)),
-              packageJsonDir = path.dirname(file),
+        const packageJson = JSON.parse(await readFile(path.join(cwd, file))),
+              packageJsonDir = path.dirname(path.join(cwd, file)),
               packageLockFile = path.join(packageJsonDir, "package-lock.json"),
               packageLockFileExists = await pathExists(packageLockFile),
               packageLockJson = packageLockFileExists ? JSON.parse(await readFile(packageLockFile)) : undefined;

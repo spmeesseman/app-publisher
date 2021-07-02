@@ -3,9 +3,9 @@ import { pick } from "lodash";
 import * as path from "path";
 import { IContext } from "../../interface";
 import { addEdit, revert } from "../repo";
-import { createDir, pathExists, writeFile } from "../utils/fs";
+import { createDir, pathExists, readFile, writeFile } from "../utils/fs";
 import { timeout, checkExitCode } from "../utils/utils";
-import { setNpmVersion } from "../version/npm";
+import { getNpmFile, setNpmVersion } from "../version/npm";
 const execa = require("execa");
 
 
@@ -22,11 +22,12 @@ export async function doNpmRelease(context: IContext)
 {
     const options = context.options,
           logger = context.logger,
-          nextRelease = context.nextRelease;
+          nextRelease = context.nextRelease,
+          file = await getNpmFile(context);
 
     logger.log("Starting NPM release");
 
-    if (await pathExists("package.json"))
+    if (file)
     {
         let proc: any;
         //
@@ -106,22 +107,25 @@ export async function doNpmRelease(context: IContext)
 }
 
 
-export async function setPackageJson({options, logger, cwd}: IContext)
+export async function setPackageJson(context: IContext)
 {
     let modified = false;
+    const {options, logger, cwd} = context;
 
     if (options.taskMode && !options.taskNpmRelease && !options.taskNpmJsonUpdate && !options.taskVersionUpdate) {
         return modified;
     }
 
-    const packageJsonExists = await pathExists("package.json"),
-          packageJson = packageJsonExists ? require(path.join(cwd, "package.json")) : undefined,
-          packageLockFileExists = packageJsonExists ? await pathExists("package-lock.json") : undefined,
-          packageLockJson = packageLockFileExists ? require(path.join(cwd, "package-lock.json")) : undefined;
-
-    if (!packageJsonExists) {
+    const file = await getNpmFile(context);
+    if (!file) {
         return modified;
     }
+
+    const packageJson = JSON.parse(await readFile(path.join(cwd, file))),
+          packageJsonDir = path.dirname(path.join(cwd, file)),
+          packageLockFile = path.join(packageJsonDir, "package-lock.json"),
+          packageLockFileExists = await pathExists(packageLockFile),
+          packageLockJson = packageLockFileExists ? JSON.parse(await readFile(packageLockFile)) : undefined;
 
     //
     // A full publish run can modify the npm configs at runtime and have them restored to

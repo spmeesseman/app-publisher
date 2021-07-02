@@ -7,7 +7,7 @@ import { replaceInFile, readFile, pathExists } from "../utils/fs";
 import { editFile } from "../utils/utils";
 
 
-async function getDotNetFile({options, logger}: IContext)
+async function getDotNetFile({options, logger, cwd}: IContext)
 {
     return new Promise<string>(async (resolve, reject) =>
     {
@@ -26,7 +26,7 @@ async function getDotNetFile({options, logger}: IContext)
             return;
         }
 
-        glob("**/assemblyinfo.cs", { nocase: true, ignore: "node_modules/**" }, async (err, files) =>
+        glob("**/assemblyinfo.cs", { nocase: true, ignore: "node_modules/**", cwd }, async (err, files) =>
         {
             if (err) {
                 logger.error("Error tring to find assemblyinfo.cs files");

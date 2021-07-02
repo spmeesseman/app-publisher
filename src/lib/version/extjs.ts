@@ -8,7 +8,7 @@ import { replaceInFile, pathExists, readFile, writeFile } from "../utils/fs";
 import { editFile } from "../utils/utils";
 
 
-export async function getExtJsFiles({logger, options}: IContext)
+export async function getExtJsFiles({logger, options, cwd}: IContext)
 {
     return new Promise<string>(async (resolve, reject) =>
     {
@@ -22,7 +22,7 @@ export async function getExtJsFiles({logger, options}: IContext)
             return;
         }
 
-        glob("**/app.json", { nocase: true, ignore: "node_modules/**" }, async (err, files) =>
+        glob("**/app.json", { nocase: true, ignore: "node_modules/**", cwd }, async (err, files) =>
         {
             if (err) {
                 logger.error("app.json");

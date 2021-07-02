@@ -9,11 +9,11 @@ import { replaceInFile, pathExists } from "../utils/fs";
 import { editFile } from "../utils/utils";
 
 
-async function getFiles(logger: any)
+async function getFiles(cwd: string, logger: any)
 {
     return new Promise<string[]>((resolve, reject) =>
     {
-        glob("**/.publishrc*", { nocase: true, ignore: "node_modules/**" }, (err, files) =>
+        glob("**/.publishrc*", { nocase: true, ignore: "node_modules/**", cwd }, (err, files) =>
         {
             if (err) {
                 logger.error("Error tring to find publishrc files");
@@ -65,7 +65,7 @@ export async function setAppPublisherVersion(context: IContext)
         return;
     }
 
-    files = await getFiles(logger);
+    files = await getFiles(cwd, logger);
     if (!files || files.length === 0) {
         return files;
     }
