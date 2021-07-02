@@ -726,7 +726,7 @@ export async function repoUrl({options, logger, cwd, env}: IContext)
  */
 export async function revert(context: IContext, files?: IEdit[])
 {
-    const {options, nextRelease, logger, cwd, env} = context;
+    const {options, nextRelease, lastRelease, logger, cwd, env} = context;
 
     if (!files && (!nextRelease || !nextRelease.edits)) {
         return;
@@ -741,7 +741,11 @@ export async function revert(context: IContext, files?: IEdit[])
 
     if (options.vcRevertFiles)
     {
-        for (const vcFile of options.vcRevertFiles) {
+        for (let vcFile of options.vcRevertFiles)
+        {
+            vcFile = vcFile.replace("$(VERSION)", nextRelease.version)
+                           .replace("$(NEXTVERSION)", nextRelease.version)
+                           .replace("$(LASTVERSION)", lastRelease.version);
             if (await isVersioned(context, vcFile)) {
                 changeListModify.push({ path: vcFile, type: "M" });
             }
