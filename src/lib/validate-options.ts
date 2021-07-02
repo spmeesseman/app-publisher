@@ -13,15 +13,17 @@ function error(logger: any, err: string)
     return false;
 }
 
-async function validateOptions({cwd, env, logger, options}: IContext): Promise<boolean>
+async function validateOptions({cwd, env, logger, options}: IContext, suppressArgErrors?: boolean): Promise<boolean>
 {
     logger.log("Validating all options...");
 
     if (options.errors && options.errors.length > 0)
     {
-        logger.error("Invalid argument(s) sepcified");
-        for (const e of options.errors) {
-            logger.error("   " + e.toString());
+        if (!suppressArgErrors) { // Suppress if this is a check from the tests
+            logger.error("Argument parser reported validation errors:");
+            for (const e of options.errors) {
+                logger.error("   " + e.toString());
+            }
         }
         return false;
     }

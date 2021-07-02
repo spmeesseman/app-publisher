@@ -75,9 +75,11 @@ export async function editFile({ options, nextRelease, logger, cwd, env }, editF
 {
     if (editFile && await pathExists(editFile))
     {
-        const skipEdit = (options.skipVersionEdits === " Y" || options.taskVersionUpdate || options.taskChangelogFile) &&
-                         !options.taskChangelogView && !options.taskChangelogHtmlView && !options.taskChangelogPrint &&
-                         ((options.versionFilesEditAlways && options.versionFilesEditAlways.includes(editFile)) || options.taskMode);
+        let skipEdit = (options.skipVersionEdits === "Y" || options.taskVersionUpdate || options.taskChangelogFile) &&
+                        !options.taskChangelogView && !options.taskChangelogHtmlView && !options.taskChangelogPrint;
+        if (options.versionFilesEditAlways && options.versionFilesEditAlways.includes(editFile)) {
+            skipEdit = false;
+        }
 
         seekToEnd = seekToEnd || (options.versionFilesScrollDown ? options.versionFilesScrollDown.includes(editFile) : false);
 

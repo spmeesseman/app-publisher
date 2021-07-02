@@ -70,7 +70,7 @@ suite("Options Tests", () =>
         // ci env should always clear these flags to default/empty
         //
         expect(options.skipVersionEdits).to.equal("Y", "skipVersionEdits");
-        expect(options.skipChangelogEdits).to.equal(options.ciInfo.isCi ? "Y" : "N", "skipChangelogEdits");
+        expect(options.skipChangelogEdits).to.equal("Y", "skipChangelogEdits"); // always 'Y' for --tests
         expect(options.promptVersion).to.equal("N", "promptVersion");
         expect(options.versionFilesEditAlways).to.be.an("array").and.is.empty;
     });

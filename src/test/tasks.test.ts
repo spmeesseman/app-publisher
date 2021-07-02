@@ -10,15 +10,15 @@ suite("Tasks Tests", () =>
 
     test("info tasks", async () =>
     {
-        // let options = await getApOptions([ "--version"]);
-        // expect(await runApTest(options)).to.equal(0, "stdout: version");
-        // sleep(500);
+        let options = await getApOptions([ "--version"]);
+        expect(await runApTest(options)).to.equal(0, "stdout: version");
+        sleep(500);
 
-        // options = await getApOptions([ "--help"]);
-        // expect(await runApTest(options)).to.equal(0, "task: help");
-        // sleep(500);
+        options = await getApOptions([ "--help"]);
+        expect(await runApTest(options)).to.equal(0, "task: help");
+        sleep(500);
 
-        const options = await getApOptions([ "--task-dev-test"]);
+        options = await getApOptions([ "--task-dev-test"]);
         expect(await runApTest(options)).to.equal(0, "task: dev test");
         sleep(500);
     });

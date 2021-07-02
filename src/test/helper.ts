@@ -81,7 +81,7 @@ export async function getApOptions(cmdOpts?: string[])
         }
     }
     try {
-        await validateOptions(context);
+        await validateOptions(context, true);
     }
     catch (e) { /** */ }
     process.argv = procArgv;
