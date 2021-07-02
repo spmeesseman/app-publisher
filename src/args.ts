@@ -1045,6 +1045,20 @@ export const publishRcOpts =
         "The editor program to use when opening version files for manual editing."
     ],
 
+    /**
+     * A list of files that should be checked into version control in the commit phase.  These
+     * would include files generated/moved/modified by any of the hook scripts that are to be
+     * included in the version commit/tag.
+     */
+    vcFiles: [
+        true,
+        "string[]",
+        "v",
+        "A list of files that should be checked into version control in the commit",
+        "phase.  These would include files generated/moved/modified by any of the",
+        "hook scripts that are to be included in the version commit/tag"
+    ],
+
     vcRevert: [
         true,
         "flag",

@@ -72,8 +72,9 @@ export async function addEdit(context: IContext, pathToAdd: string | string[])
  */
 export async function commit(context: IContext)
 {
-    let proc: any;
-    const {options, nextRelease, logger, cwd, env} = context;
+    let proc: any,
+        vcRcFileCt = 0;
+    const {options, nextRelease, lastRelease, logger, cwd, env} = context;
 
     if (!nextRelease.edits || nextRelease.edits.length === 0) {
         logger.info("Commit - Nothing to commit");
@@ -84,7 +85,32 @@ export async function commit(context: IContext)
           changeList = nextRelease.edits.filter((e: any) => e.type !== "I");
 
     logger.info("Commit changes");
-    logger.info(`   Total Edits     : ${nextRelease.edits.length}`);
+
+    if (options.vcFiles)
+    {
+        for (let vcFile of options.vcFiles)
+        {
+            vcFile = vcFile.replace("$(VERSION)", nextRelease.version)
+                           .replace("$(NEXTVERSION)", nextRelease.version)
+                           .replace("$(LASTVERSION)", lastRelease.version);
+            if (await isVersioned(context, vcFile)) {
+                if (options.verbose) {
+                    logger.info(`vcFiles: Pushed ${vcFile} to 'modified' files`);
+                }
+                changeList.push({ path: vcFile, type: "M" });
+            }
+            else {
+                if (options.verbose) {
+                    logger.info(`vcFiles: Pushed ${vcFile} to 'added' files`);
+                }
+                changeListAdd.push({ path: vcFile, type: "A" });
+                changeList.push({ path: vcFile, type: "A" });
+            }
+            ++vcRcFileCt;
+        }
+    }
+
+    logger.info(`   Total Edits     : ${vcRcFileCt + nextRelease.edits.length}`);
     logger.info(`   Additions       : ${changeListAdd.length}`);
     logger.info(`   Total to commit : ${changeList.length}`);
 
@@ -738,15 +764,14 @@ export async function repoUrl({options, logger, cwd, env}: IContext)
  */
 export async function revert(context: IContext, files?: IEdit[])
 {
-    const {options, nextRelease, lastRelease, logger, cwd, env} = context;
+    const {options, nextRelease, lastRelease, logger} = context;
 
     if (!files && (!nextRelease || !nextRelease.edits)) {
         return;
     }
 
     let vcRcFileCt = 0;
-    const execaOpts = { cwd, env },
-          changeListAdd = !files ? nextRelease.edits.filter((e: any) => e.type === "A") :
+    const changeListAdd = !files ? nextRelease.edits.filter((e: any) => e.type === "A") :
                                    files.filter((e: any) => e.type === "A"),
           changeListModify = !files ? nextRelease.edits.filter((e: any) => e.type === "M") :
                                       files.filter((e: any) => e.type === "M");
@@ -762,13 +787,13 @@ export async function revert(context: IContext, files?: IEdit[])
                            .replace("$(LASTVERSION)", lastRelease.version);
             if (await isVersioned(context, vcFile)) {
                 if (options.verbose) {
-                    logger.info(`vcReverChanges: Pushed ${vcFile} to 'modified' files`);
+                    logger.info(`vcRevertFiles: Pushed ${vcFile} to 'modified' files`);
                 }
                 changeListModify.push({ path: vcFile, type: "M" });
             }
             else {
                 if (options.verbose) {
-                    logger.info(`vcReverChanges: Pushed ${vcFile} to 'added' files`);
+                    logger.info(`vcRevertFiles: Pushed ${vcFile} to 'added' files`);
                 }
                 changeListAdd.push({ path: vcFile, type: "A" });
             }

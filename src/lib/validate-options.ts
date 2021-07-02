@@ -148,6 +148,10 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     {
         options.npmReleasePostCommand = [ options.npmReleasePostCommand ]; // convert to array
     }
+    if (options.vcFiles && isString(options.vcFiles))
+    {
+        options.vcFiles = [ options.vcFiles ]; // convert to array
+    }
     if (options.vcRevertFiles && isString(options.vcRevertFiles))
     {
         options.vcRevertFiles = [ options.vcRevertFiles ]; // convert to array

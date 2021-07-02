@@ -752,6 +752,12 @@ export interface IOptions
      */
     textEditor: string;
     /**
+     * A list of files that should be checked into version control in the commit phase.  These
+     * would include files generated/moved/modified by any of the hook scripts that are to be
+     * included in the version commit/tag.
+     */
+    vcFiles: string[];
+    /**
      * Reverts all file modifications made if a publish failes, or, after a dry run is completed.
      * Uses version control.
      */
