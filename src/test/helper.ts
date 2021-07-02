@@ -50,10 +50,10 @@ export async function getApOptions(cmdOpts?: string[])
     if (!ciInfo) {
         ciInfo = envCi({ env: process.env, cwd });
     }
+    process.argv = cmdOpts ? [ "", "", ...cmdOpts ] : [ "", "" ];
     if (!ciInfo.isCi) {
         process.argv.push("--no-ci");
     }
-    process.argv = cmdOpts ? [ "", "", ...cmdOpts ] : [ "", "" ];
     process.argv.push("--tests");
     if (!context) {
         try {

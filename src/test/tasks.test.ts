@@ -14,9 +14,9 @@ suite("Tasks Tests", () =>
         expect(await runApTest(options)).to.equal(0, "stdout: version");
         sleep(500);
 
-        options = await getApOptions([ "--help"]);
-        expect(await runApTest(options)).to.equal(0, "task: help");
-        sleep(500);
+        // options = await getApOptions([ "--help"]);
+        // expect(await runApTest(options)).to.equal(0, "task: help");
+        // sleep(500);
 
         options = await getApOptions([ "--task-dev-test"]);
         expect(await runApTest(options)).to.equal(0, "task: dev test");
