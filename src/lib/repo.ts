@@ -18,7 +18,9 @@ export async function addEdit(context: IContext, pathToAdd: string | string[])
     async function doAdd(p: string) // , isDir = false)
     {
         let editType = "M";
-        const pathResolved = path.resolve(cwd, p),
+
+        // const pathResolved = path.resolve(cwd, p),
+        const pathResolved = path.relative(process.cwd(), path.resolve(p)),
               versioned = await isVersioned(context, pathResolved);
         if (!versioned)
         {
@@ -36,7 +38,7 @@ export async function addEdit(context: IContext, pathToAdd: string | string[])
         }
 
         nextRelease.edits.push({
-            path: p,
+            path: pathResolved,
             type: editType
         });
     }

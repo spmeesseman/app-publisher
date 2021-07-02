@@ -89,7 +89,7 @@ export async function setNpmVersion(context: IContext)
         if (options.taskRevert) {
             await addEdit(context, file);
             if (packageLockFileExists) {
-                await addEdit(context, packageLockFile);
+                await addEdit(context, file.replace("package.json", "package-lock.json"));
             }
             return;
         }
