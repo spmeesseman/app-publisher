@@ -71,7 +71,7 @@ export async function setAppPublisherVersion(context: IContext)
     }
     for (const file of files)
     {
-        if (await pathExists(file) && !(await isIgnored(context, file)))
+        if (await pathExists(file) && !(await isIgnored(context, path.resolve(cwd, file))))
         {
             //
             // If this is '--task-revert', all we're doing here is collecting the paths of the

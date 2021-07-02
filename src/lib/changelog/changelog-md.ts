@@ -311,9 +311,9 @@ export class ChangelogMd extends Changelog
                 logger.log("Create changeLog file directory");
                 await createDir(changeLogPath);
             }
-
             if (!(await pathExists(options.changelogFile)))
             {
+                logger.log("Create new changelog md file");
                 await writeFile(options.changelogFile, "");
                 newChangelog = true;
             }
@@ -348,9 +348,13 @@ export class ChangelogMd extends Changelog
             {
                 let titleVersion = nextRelease.version;
                 if (options.vcWebPath) {
-                    titleVersion = options.repoType === "git" ?
-                                        `[${nextRelease.version}](${options.vcWebPath}/compare/v${lastRelease.version}...v${nextRelease.version})` :
-                                        nextRelease.version;
+                    titleVersion = nextRelease.version;
+                    //
+                    // TODO - links in changelog (but not in title, or redo version parser)
+                    //
+                    // titleVersion = options.repoType === "git" ?
+                    //                     `[${nextRelease.version}](${options.vcWebPath}/compare/v${lastRelease.version}...v${nextRelease.version})` :
+                    //                     nextRelease.version;
                 }
                 if (!newChangelog && !tmpCommits.endsWith(EOL)) {
                     tmpCommits += EOL;

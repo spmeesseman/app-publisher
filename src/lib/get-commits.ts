@@ -107,7 +107,6 @@ async function getCommits(context: IContext): Promise<ICommit[]>
             parser.parseString(xml, (err, result) =>
             {
                 if (err) {
-                    console.log("Err");
                     console.log(err);
                     return commits;
                 }

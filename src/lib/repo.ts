@@ -19,10 +19,10 @@ export async function addEdit(context: IContext, pathToAdd: string | string[])
     {
         let editType = "M";
         const pathResolved = path.resolve(cwd, p),
-              versioned = await isVersioned({options, logger, cwd, env} as IContext, pathResolved);
+              versioned = await isVersioned(context, pathResolved);
         if (!versioned)
         {
-            const ignored = await isIgnored({options, logger, cwd, env} as IContext, pathResolved);
+            const ignored = await isIgnored(context, pathResolved);
             // const dir = path.dirname(pathResolved);
             // if (!(await isVersioned({options}, dir, {cwd, env}))) {
             //     _add(dir); // , true);

@@ -469,7 +469,7 @@ export class ChangelogTxt extends Changelog
 
             if (!(await pathExists(options.changelogFile)))
             {
-                logger.log("Create new history file");
+                logger.log("Create new changelog txt file");
                 if (options.taskChangelog || !options.taskMode)
                 {
                     await writeFile(options.changelogFile, options.projectName + EOL + EOL);

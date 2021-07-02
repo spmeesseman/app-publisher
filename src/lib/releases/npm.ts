@@ -200,10 +200,10 @@ export async function setPackageJson(context: IContext)
     }
 
     if (modified) {
-        await writeFile("package.json", JSON.stringify(packageJson, undefined, 4));
+        await writeFile(file, JSON.stringify(packageJson, undefined, 4));
         if (packageLockFileExists)
         {
-            await writeFile("package-lock.json", JSON.stringify(packageLockJson, undefined, 4));
+            await writeFile(packageLockFile, JSON.stringify(packageLockJson, undefined, 4));
         }
     }
 

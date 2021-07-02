@@ -8,10 +8,13 @@ import getOptions from "../lib/get-options";
 import validateOptions from "../lib/validate-options";
 import getConfig from "../lib/get-config";
 import getContext from "../lib/get-context";
+import { setCwd } from "../lib/utils/fs";
 const envCi = require("@spmeesseman/env-ci");
 
 
 const cwd = path.join(process.cwd(), "src", "test", "fixture");
+setCwd(cwd);
+
 let context: IContext;
 let ciInfo: any;
 
@@ -25,6 +28,7 @@ export async function sleep(ms: number)
 
 export async function runApTest(options: IOptions): Promise<number>
 {
+
     try {
         const rc = await require("../.")(options, { cwd });
         return rc ? 1 : 0;
