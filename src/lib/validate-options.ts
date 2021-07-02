@@ -272,7 +272,7 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     {
         if (await pathExists(path.join(cwd, "package.json")))
         {
-            const packageJson = require(path.join(process.cwd(), "package.json"));
+            const packageJson = require(path.join(cwd, "package.json"));
 
             if (!options.repo && packageJson.repository && packageJson.repository.url)
             {
@@ -385,7 +385,7 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     if (options.textEditor)
     {
         options.textEditor = options.textEditor.trim();
-        if (!options.textEditor.toLowerCase().startsWith("notepad") && !(await pathExists(options.textEditor, false)))
+        if (!options.textEditor.toLowerCase().startsWith("notepad") && !(await pathExists(options.textEditor)))
         {
             let found = false;
             const paths = process.platform === "win32" ? env.Path.split(";") : env.PATH.split(";");

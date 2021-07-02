@@ -7,16 +7,25 @@ import { getPsScriptLocation, timeout } from "./utils";
 const execa = require("execa");
 
 
+let cwd = process.cwd();
+
+
+export function setCwd(dir: string)
+{
+    cwd = dir;
+}
+
+
 export function copyFile(src: string, dst: string)
 {
     return new Promise<boolean>(async (resolve, reject) =>
     {   //
         // If dst is a directory, a new file with the same name will be created
         //
-        if (await pathExists(dst)) {
+        if (await pathExists(path.resolve(cwd, dst))) {
             try {
                 if (fs.lstatSync(dst).isDirectory()) {
-                    dst = path.join(dst, path.basename(src));
+                    dst = path.join(path.resolve(cwd, dst), path.basename(src));
                 }
             }
             catch (e) {
@@ -24,7 +33,7 @@ export function copyFile(src: string, dst: string)
             }
         }
         try {
-            fs.copyFile(path.resolve(src), path.resolve(dst), (err) => {
+            fs.copyFile(path.resolve(cwd, src), path.resolve(cwd, dst), (err) => {
                 if (err) {
                     reject(err);
                 }
@@ -37,20 +46,6 @@ export function copyFile(src: string, dst: string)
     });
 }
 
-
-function copyFileSync(src: string, dst: string) {
-
-    let targetFile = dst;
-    //
-    // If target is a directory, a new file with the same name will be created
-    //
-    if (fs.existsSync(dst)) {
-        if (fs.lstatSync(dst).isDirectory()) {
-            targetFile = path.join(dst, path.basename(src));
-        }
-    }
-    fs.writeFileSync(targetFile, fs.readFileSync(src));
-}
 
 //
 // TODO - make a pure async imp.
@@ -67,10 +62,10 @@ export function copyDir(src: string, dst: string, filter?: RegExp, copyWithBaseF
         //
         let tgtDir;
         if (!copyWithBaseFolder) {
-            tgtDir = path.resolve(dst);
+            tgtDir = path.resolve(cwd, dst);
         }
         else {
-            tgtDir = path.join(path.resolve(dst), path.basename(src));
+            tgtDir = path.join(path.resolve(cwd, dst), path.basename(src));
         }
         if (!fs.existsSync(tgtDir)) {
             try {
@@ -83,10 +78,11 @@ export function copyDir(src: string, dst: string, filter?: RegExp, copyWithBaseF
         //
         // Copy
         //
-        const files = fs.readdirSync(src);
+        const srcDir = path.resolve(cwd, src);
+        const files = fs.readdirSync(srcDir);
         for (const file of files)
         {
-            const newSrc = path.join(src, file);
+            const newSrc = path.join(srcDir, file);
             if (fs.lstatSync(newSrc).isDirectory()) {
                 try {
                     await copyDir(newSrc, tgtDir, filter, copyWithBaseFolder);
@@ -125,7 +121,7 @@ export function createDir(dir: string)
             if (!(await pathExists(baseDir))) {
                 await createDir(baseDir);
             }
-            fs.mkdir(path.resolve(dir), { mode: 0o777 }, (err) => {
+            fs.mkdir(path.resolve(cwd, dir), { mode: 0o777 }, (err) => {
                 if (err) {
                     reject(err);
                 }
@@ -139,7 +135,7 @@ export function createDir(dir: string)
 }
 
 
-export function pathExists(file: string, resolve = true): Promise<boolean>
+export function pathExists(file: string): Promise<boolean>
 {
     return new Promise<boolean>((resolve, reject) => {
         try {
@@ -147,7 +143,7 @@ export function pathExists(file: string, resolve = true): Promise<boolean>
                 resolve(false);
                 return;
             }
-            fs.access(resolve ? path.resolve(file) : file, (e) => {
+            fs.access(path.resolve(cwd, file), (e) => {
                 if (e) {
                     resolve(false);
                 }
@@ -182,7 +178,7 @@ export function readFileBuf(file: string): Promise<Buffer>
 {
     return new Promise<Buffer>((resolve, reject) => {
         try {
-            fs.readFile(path.resolve(file), (e, data) => {
+            fs.readFile(path.resolve(cwd, file), (e, data) => {
                 if (e) {
                     reject(e);
                 }
@@ -203,7 +199,7 @@ export function deleteFile(file: string): Promise<void>
         try {
             if (await pathExists(file))
             {
-                fs.unlink(path.resolve(file), (e) => {
+                fs.unlink(path.resolve(cwd, file), (e) => {
                     if (e) {
                         reject(e);
                     }
@@ -231,7 +227,7 @@ export function writeFile(file: string, data: string): Promise<void>
 {
     return new Promise<void>((resolve, reject) => {
         try {
-            fs.writeFile(path.resolve(file), data, (err) => {
+            fs.writeFile(path.resolve(cwd, file), data, (err) => {
                 if (err) {
                     reject(err);
                 }
@@ -249,7 +245,7 @@ export function appendFile(file: string, data: string): Promise<void>
 {
     return new Promise<void>((resolve, reject) => {
         try {
-            fs.appendFile(path.resolve(file), data, (err) => {
+            fs.appendFile(path.resolve(cwd, file), data, (err) => {
                 if (err) {
                     reject(err);
                 }
@@ -260,12 +256,6 @@ export function appendFile(file: string, data: string): Promise<void>
             reject(e);
         }
     });
-}
-
-
-export function readFileSync(file: string)
-{
-    return fs.readFileSync(path.resolve(file)).toString();
 }
 
 

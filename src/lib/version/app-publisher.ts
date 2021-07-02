@@ -84,7 +84,7 @@ export async function setAppPublisherVersion(context: IContext)
             }
 
             logger.log(`Setting version ${nextRelease.version} in ` + rFile);
-            // const publishrcJson = require(path.join(process.cwd(), file));
+            // const publishrcJson = require(path.join(cwd, file));
             // if (publishrcJson.projectVersion)
             // {
                 // publishrcJson.projectVersion = nextRelease.version;

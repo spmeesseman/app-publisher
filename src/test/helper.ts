@@ -41,8 +41,6 @@ export async function runApTest(options: IOptions): Promise<number>
 
 export async function getApOptions(cmdOpts?: string[])
 {
-    // const cwd = process.cwd();
-    const cwd = path.join(process.cwd(), "src", "test", "fixture");
     const procArgv = [ ...process.argv ];
     if (!ciInfo) {
         ciInfo = envCi({ env: process.env, cwd });

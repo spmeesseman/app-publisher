@@ -72,16 +72,16 @@ export async function getNpmVersion(context: IContext): Promise<IVersionInfo>
 export async function setNpmVersion(context: IContext)
 {
     let modified = false;
-    const {options, nextRelease, logger} = context,
+    const {options, nextRelease, logger, cwd} = context,
           file = await getNpmFile(context);
 
     if (file)
     {
-        const packageJson = JSON.parse(await readFile(path.join(process.cwd(), file))),
+        const packageJson = JSON.parse(await readFile(path.join(cwd, file))),
               packageJsonDir = path.dirname(file),
               packageLockFile = path.join(packageJsonDir, "package-lock.json"),
               packageLockFileExists = await pathExists(packageLockFile),
-              packageLockJson = packageLockFileExists ? JSON.parse(await readFile(path.join(process.cwd(), packageLockFile))) : undefined;
+              packageLockJson = packageLockFileExists ? JSON.parse(await readFile(path.join(cwd, packageLockFile))) : undefined;
         //
         // If this is '--task-revert', all we're doing here is collecting the paths of the
         // files that would be updated in a run

@@ -543,7 +543,7 @@ export class ChangelogTxt extends Changelog
             //
             if (options.taskChangelog || !options.taskMode)
             {
-                let header: string;
+                let header = "";
                 if (await pathExists(options.changelogHdrFile)) {
                     header = await readFile(options.changelogHdrFile);
                 }

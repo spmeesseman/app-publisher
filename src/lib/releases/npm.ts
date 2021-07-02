@@ -106,7 +106,7 @@ export async function doNpmRelease(context: IContext)
 }
 
 
-export async function setPackageJson({options, logger}: IContext)
+export async function setPackageJson({options, logger, cwd}: IContext)
 {
     let modified = false;
 
@@ -115,9 +115,9 @@ export async function setPackageJson({options, logger}: IContext)
     }
 
     const packageJsonExists = await pathExists("package.json"),
-          packageJson = packageJsonExists ? require(path.join(process.cwd(), "package.json")) : undefined,
+          packageJson = packageJsonExists ? require(path.join(cwd, "package.json")) : undefined,
           packageLockFileExists = packageJsonExists ? await pathExists("package-lock.json") : undefined,
-          packageLockJson = packageLockFileExists ? require(path.join(process.cwd(), "package-lock.json")) : undefined;
+          packageLockJson = packageLockFileExists ? require(path.join(cwd, "package-lock.json")) : undefined;
 
     if (!packageJsonExists) {
         return modified;
@@ -209,7 +209,7 @@ export async function setPackageJson({options, logger}: IContext)
 
 export async function restorePackageJson(context: IContext)
 {
-    const {options, logger} = context;
+    const {options, logger, cwd} = context;
 
     if (options.taskMode && !options.taskNpmRelease && !options.taskNpmJsonRestore && !options.taskVersionUpdate) {
         return;
@@ -242,8 +242,8 @@ export async function restorePackageJson(context: IContext)
         }
     }
 
-    const packageJson = packageJsonExists ? require(path.join(process.cwd(), "package.json")) : undefined,
-          packageLockJson = packageLockFileExists ? require(path.join(process.cwd(), "package-lock.json")) : undefined;
+    const packageJson = packageJsonExists ? require(path.join(cwd, "package.json")) : undefined,
+          packageLockJson = packageLockFileExists ? require(path.join(cwd, "package-lock.json")) : undefined;
     //
     // Set repo
     //
