@@ -36,7 +36,7 @@ export async function addEdit(context: IContext, pathToAdd: string | string[])
         }
 
         nextRelease.edits.push({
-            path: pathResolved,
+            path: p,
             type: editType
         });
     }

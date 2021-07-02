@@ -55,7 +55,7 @@ suite("Tasks Tests", () =>
         expect(await runApTest(options)).to.equal(0, "task: changelog print");
         sleep(500);
 
-        options = await getApOptions([ "--task-changelog-print-version", "2.0.0" ]);
+        options = await getApOptions([ "--task-changelog-print-version", "3.0.0" ]);
         expect(await runApTest(options)).to.equal(0, "task: changelog print version");
         sleep(500);
 
