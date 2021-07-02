@@ -57,7 +57,7 @@
     "npmRegistry":       "",
     "npmReleasePreCommand": [],
     "npmReleasePostCommand": [],
-    "npmScope":          "@spmeesseman",
+    "npmScope":          "@perryjohnson",
     "nugetRelease":      "N",
     "pathToDist":        "",
     "postBuildCommand":  "",
