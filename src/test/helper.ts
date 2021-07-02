@@ -50,15 +50,10 @@ export async function getApOptions(cmdOpts?: string[])
     if (!ciInfo) {
         ciInfo = envCi({ env: process.env, cwd });
     }
-    if (ciInfo.isCi && ciInfo.buildUrl && ciInfo.buildUrl.indexOf("pjats.com") !== -1) {
-        process.argv = cmdOpts ? [ "", "", "--config-name", "pja", ...cmdOpts ] : [ "", "", "--config-name", "pja" ];
-    }
-    else {
-        process.argv = cmdOpts ? [ "", "", ...cmdOpts ] : [ "", "" ];
-    }
     if (!ciInfo.isCi) {
         process.argv.push("--no-ci");
     }
+    process.argv = cmdOpts ? [ "", "", ...cmdOpts ] : [ "", "" ];
     process.argv.push("--tests");
     if (!context) {
         try {
