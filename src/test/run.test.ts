@@ -12,12 +12,12 @@ suite("Full Run Tests", () =>
     {
         let options = await getApOptions([ "--dry-run" ]);
         expect(await runApTest(options)).to.equal(0, "task: full dry run default config");
-        sleep(500);
+        sleep(1000);
 
         options = await getApOptions([ "--dry-run", "--config-name", "svn" ]);
         expect(await runApTest(options)).to.equal(0, "task: full dry run svn config");
         sleep(500);
 
-    }).timeout(120000);
+    }).timeout(180000);
 
 });

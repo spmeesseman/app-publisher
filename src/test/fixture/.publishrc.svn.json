@@ -6,8 +6,8 @@
     "buildCommand":      [
         "echo running  - buildCommand"
     ],
-    "changelogFile":     "CHANGELOG.md",
-    "changelogHdrFile":  "",
+    "changelogFile":     "history.txt",
+    "changelogHdrFile":  "history-hdr.txt",
     "changelogLineLen":  80,
     "cProjectRcFile":    "",
     "commitMsgMap": [{
