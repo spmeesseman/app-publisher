@@ -261,7 +261,12 @@ async function execSvn(svnArgs: string[], execaOpts: any, stdout = false)
              proc = await execa("svn", [...svnArgs, "--non-interactive", "--no-auth-cache", "--username", svnUser, "--password", svnToken ], execaOpts);
         }
         else {
-            proc = await execa.stdout("svn", [...svnArgs, "--non-interactive", "--no-auth-cache", "--username", svnUser, "--password", svnToken ], execaOpts);
+            try {
+                proc = await execa.stdout("svn", [...svnArgs, "--non-interactive", "--no-auth-cache", "--username", svnUser, "--password", svnToken ], execaOpts);
+            }
+            catch (e) {
+                return e.toString();
+            }
         }
     }
     else {
@@ -269,7 +274,12 @@ async function execSvn(svnArgs: string[], execaOpts: any, stdout = false)
             proc = await execa("svn", [...svnArgs, "--non-interactive" ], execaOpts);
         }
         else {
-            proc = await execa.stdout("svn", [...svnArgs, "--non-interactive" ], execaOpts);
+            try {
+                proc = await execa.stdout("svn", [...svnArgs, "--non-interactive" ], execaOpts);
+            }
+            catch (e) {
+                return e.toString();
+            }
         }
     }
     return proc;
@@ -629,7 +639,6 @@ export async function isVersioned({options, logger, cwd, env}: IContext, objectP
     let isVersioned = false,
         stdout: string;
     const execaOpts = { cwd, env };
-
     try {
         if (options.repoType === "svn")
         {   //
@@ -750,7 +759,7 @@ export async function revert(context: IContext, files?: IEdit[])
                 changeListModify.push({ path: vcFile, type: "M" });
             }
             else {
-                changeListModify.push({ path: vcFile, type: "A" });
+                changeListAdd.push({ path: vcFile, type: "A" });
             }
             ++vcRcFileCt;
         }
