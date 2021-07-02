@@ -43,7 +43,7 @@ export async function setMantisBtVersion(context: IContext)
         // files that would be updated in a run, don't actually do the update
         //
         if (options.taskRevert) {
-            await addEdit({options, logger, nextRelease, cwd, env} as IContext, options.mantisbtPlugin);
+            await addEdit(context, options.mantisbtPlugin);
             return;
         }
         //

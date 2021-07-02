@@ -1,8 +1,8 @@
 
+
+import * as path from "path";
 import glob = require("glob");
 import semver from "semver";
-import { options } from "marked";
-import { relative } from "path";
 import { IContext, IVersionInfo } from "../../interface";
 import { addEdit, isIgnored } from "../repo";
 import { replaceInFile, pathExists } from "../utils/fs";
@@ -59,7 +59,7 @@ export function getAppPublisherVersion({options, logger}: IContext): IVersionInf
 export async function setAppPublisherVersion(context: IContext)
 {
     let files: string[] = [];
-    const {nextRelease, options, logger, cwd, env} = context;
+    const {nextRelease, options, logger, cwd} = context;
 
     if (!options.projectVersion) {
         return;
@@ -71,15 +71,15 @@ export async function setAppPublisherVersion(context: IContext)
     }
     for (const file of files)
     {
-        if (await pathExists(file) && !(await isIgnored({options, logger, cwd, env} as IContext, file)))
+        if (await pathExists(file) && !(await isIgnored(context, file)))
         {
-            const rFile = relative(cwd, file);
+            const rFile = path.resolve(cwd, file);
             //
             // If this is '--task-revert', all we're doing here is collecting the paths of the
             // files that would be updated in a run, don't actually do the update
             //
             if (options.taskRevert) {
-                await addEdit({options, logger, nextRelease, cwd, env} as IContext, rFile);
+                await addEdit(context, rFile);
                 continue;
             }
 
@@ -93,7 +93,7 @@ export async function setAppPublisherVersion(context: IContext)
                 //
                 // Allow manual modifications to mantisbt main plugin file and commit to modified list
                 //
-                await editFile({nextRelease, options, logger, cwd, env}, file);
+                await editFile(context, file);
             // }
         }
     }

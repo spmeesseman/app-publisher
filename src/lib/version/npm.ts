@@ -40,7 +40,7 @@ async function getNpmFile({logger, options, cwd}: IContext)
                         if (files.length > 1) {
                             logger.warn("Using : " + f);
                         }
-                        resolve(f);
+                        resolve(path.resolve(cwd, f));
                         return;
                     }
                 }
@@ -77,11 +77,11 @@ export async function setNpmVersion(context: IContext)
 
     if (file)
     {
-        const packageJson = JSON.parse(await readFile(path.join(cwd, file))),
+        const packageJson = JSON.parse(await readFile(file)),
               packageJsonDir = path.dirname(file),
               packageLockFile = path.join(packageJsonDir, "package-lock.json"),
               packageLockFileExists = await pathExists(packageLockFile),
-              packageLockJson = packageLockFileExists ? JSON.parse(await readFile(path.join(cwd, packageLockFile))) : undefined;
+              packageLockJson = packageLockFileExists ? JSON.parse(await readFile(packageLockFile)) : undefined;
         //
         // If this is '--task-revert', all we're doing here is collecting the paths of the
         // files that would be updated in a run

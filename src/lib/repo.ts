@@ -18,7 +18,7 @@ export async function addEdit(context: IContext, pathToAdd: string | string[])
     async function doAdd(p: string) // , isDir = false)
     {
         let editType = "M";
-        const pathResolved = path.relative(cwd, path.resolve(p)),
+        const pathResolved = path.resolve(cwd, p),
               versioned = await isVersioned({options, logger, cwd, env} as IContext, pathResolved);
         if (!versioned)
         {
