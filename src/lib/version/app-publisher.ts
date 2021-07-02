@@ -73,17 +73,16 @@ export async function setAppPublisherVersion(context: IContext)
     {
         if (await pathExists(file) && !(await isIgnored(context, file)))
         {
-            const rFile = path.resolve(cwd, file);
             //
             // If this is '--task-revert', all we're doing here is collecting the paths of the
             // files that would be updated in a run, don't actually do the update
             //
             if (options.taskRevert) {
-                await addEdit(context, rFile);
+                await addEdit(context, file);
                 continue;
             }
 
-            logger.log(`Setting version ${nextRelease.version} in ` + rFile);
+            logger.log(`Setting version ${nextRelease.version} in ` + file);
             // const publishrcJson = require(path.join(cwd, file));
             // if (publishrcJson.projectVersion)
             // {
