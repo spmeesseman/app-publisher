@@ -1,6 +1,6 @@
 {
     "projectName":       "app-publisher",
-    "projectVersion": "3.2.1",
+    "projectVersion": "3.2.2",
     "branch":            "trunk",
     "bugs":              "https://github.com/spmeesseman/app-publisher/issues",
     "buildCommand":      [
@@ -33,23 +33,22 @@
     "emailSender":       "Scott Meesseman <scott@spmeesseman.com>",
     "emailServer":       "mail.spmeesseman.com",
     "emailHrefs":        [],
-    "githubRelease":     "Y",
-    "githubAssets":      [
-        "CHANGELOG.md|Changelog File",
-        "install\\dist\\app-publisher.tgz|NPM Tarball"
-    ],
+    "githubRelease":     "N",
+    "githubAssets":      [],
     "githubChglogEdit":  "N",
-    "githubUser":        "spmeesseman",
+    "githubUser":        "",
     "githubReleasePreCommand": [],
     "githubReleasePostCommand": [],
     "homePage":          "",
-    "mantisbtRelease":   "N",
-    "mantisbtApiToken":  "",
-    "mantisbtChglogEdit":"N",
+    "mantisbtRelease":   "Y",
+    "mantisbtApiToken": "${MANTISBT_API_TOKEN}",
+    "mantisbtChglogEdit":  "N",
     "mantisbtPlugin":    "",
     "mantisbtProject":   "",
-    "mantisbtUrl":       "",
-    "mantisbtAssets":    [],
+    "mantisbtUrl": "https://app1.development.pjats.com/projects",
+    "mantisbtAssets": [
+        "history.txt|History File"
+    ],
     "mantisReleasePreCommand": [],
     "mantisReleasePostCommand": [],
     "npmPackDist":       "N",
