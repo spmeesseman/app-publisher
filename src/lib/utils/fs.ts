@@ -282,11 +282,11 @@ export async function replaceInFile(file: string, old: string, nu: string | ((m:
     }
     else {
         let match: RegExpExecArray;
-        while ((match = regex.exec(old)) !== null) {
+        while ((match = regex.exec(content)) !== null) {
             contentNew = content.replace(regex, nu(match));
         }
     }
-    if (content !== contentNew)
+    if (contentNew && content !== contentNew)
     {
         await writeFile(file, contentNew);
         timeout(500);
