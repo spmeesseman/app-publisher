@@ -1,6 +1,6 @@
 
 import * as path from "path";
-import { copyDir, pathExists, copyFile } from "../utils/fs";
+import { copyDir, pathExists, copyFile, createDir } from "../utils/fs";
 import { addEdit } from "../repo";
 import { IContext } from "../../interface";
 
@@ -15,6 +15,12 @@ async function doDistRelease(context: IContext)
 
     logger.log("Starting Distribution release");
 
+    const mkdir = async (d) => {
+        if (!await pathExists(d)) {
+            await createDir(d);
+        }
+    };
+
     //
     // Copy changelog file to dist directory
     //
@@ -22,15 +28,16 @@ async function doDistRelease(context: IContext)
     {
         logger.log("Copying changlog file to dist dir");
         logger.log("   Source : " + options.changelogFile);
-        logger.log("   Target : " + options.distReleasePathSrc);
+        logger.log("   Target : " + options.distReleasePath);
         //
         // Copy to dist dir
         //
-        await copyFile(options.changelogFile, options.distReleasePathSrc);
+        await mkdir(options.distReleasePath);
+        await copyFile(options.changelogFile, options.distReleasePath);
         //
         // Track modified file
         //
-        await addEdit(context, path.normalize(path.join(options.distReleasePathSrc, options.changelogFile)));
+        await addEdit(context, path.normalize(path.join(options.distReleasePath, options.changelogFile)));
     }
 
     const targetNetLocation = options.distReleasePath ? path.normalize(path.join(options.distReleasePath, options.projectName, nextRelease.version)) : undefined,
@@ -44,10 +51,11 @@ async function doDistRelease(context: IContext)
     {
         logger.log("   Source : " + options.distReleasePathSrc);
         logger.log("   Target : " + targetNetLocation);
-        if (!options.dryRun)
+        if (!options.dryRun || options.tests)
         {   //
             // Copy all files in 'dist' directory that start with options.projectName, and the history file
             //
+            await mkdir(targetNetLocation);
             await copyDir(options.distReleasePathSrc, targetNetLocation);
         }
         else {
@@ -108,8 +116,9 @@ async function doDistRelease(context: IContext)
         logger.log("   Target : " + targetDocLocation);
         if (docDirSrc)
         {
-            if (!options.dryRun) {
-                await copyDir(docDirSrc, targetDocLocation, /.*\.pdf/i);
+            if (!options.dryRun || options.tests) {
+                await mkdir(targetDocLocation);
+                await copyDir(docDirSrc, targetDocLocation, new RegExp(`/.*\.(?:pdf|${nextRelease.version})`, ""));
             }
             else {
                 logger.info("   Dry Run - Skipped Dist doc push");

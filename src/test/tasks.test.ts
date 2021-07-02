@@ -64,4 +64,20 @@ suite("Tasks Tests", () =>
         sleep(500);
     });
 
+
+    test("release tasks", async () =>
+    {
+        let options = await getApOptions([ "--task-dist-release", "--version-force-current", "--dry-run", "--config-name", "svn" ]);
+        expect(await runApTest(options)).to.equal(0, "task: dist release");
+        sleep(500);
+
+        // options = await getApOptions([ "--task-github-release", "--version-force-current", "--dry-run" ]);
+        // expect(await runApTest(options)).to.equal(0, "task: github release");
+        // sleep(500);
+
+        // options = await getApOptions([ "--task-mantis-release", "--version-force-current", "--dry-run", "--config-name", "svn" ]);
+        // expect(await runApTest(options)).to.equal(0, "task: mantisbt release");
+        // sleep(500);
+    });
+
 });

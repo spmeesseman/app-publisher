@@ -22,10 +22,11 @@ export function copyFile(src: string, dst: string)
     {   //
         // If dst is a directory, a new file with the same name will be created
         //
-        if (await pathExists(path.resolve(cwd, dst))) {
+        let fullPath = path.resolve(cwd, dst);
+        if (await pathExists(fullPath)) {
             try {
-                if (fs.lstatSync(dst).isDirectory()) {
-                    dst = path.join(path.resolve(cwd, dst), path.basename(src));
+                if (fs.lstatSync(fullPath).isDirectory()) {
+                    fullPath = path.join(fullPath, path.basename(src));
                 }
             }
             catch (e) {
@@ -33,7 +34,7 @@ export function copyFile(src: string, dst: string)
             }
         }
         try {
-            fs.copyFile(path.resolve(cwd, src), path.resolve(cwd, dst), (err) => {
+            fs.copyFile(path.resolve(cwd, src), fullPath, (err) => {
                 if (err) {
                     reject(err);
                 }
@@ -54,7 +55,9 @@ export function copyDir(src: string, dst: string, filter?: RegExp, copyWithBaseF
 {
     return new Promise<boolean>(async (resolve, reject) =>
     {
-        if (!fs.lstatSync(src).isDirectory()) {
+        const srcDir = path.resolve(cwd, src);
+
+        if (!fs.lstatSync(srcDir).isDirectory()) {
             resolve(false);
         }
         //
@@ -78,11 +81,10 @@ export function copyDir(src: string, dst: string, filter?: RegExp, copyWithBaseF
         //
         // Copy
         //
-        const srcDir = path.resolve(cwd, src);
         const files = fs.readdirSync(srcDir);
         for (const file of files)
         {
-            const newSrc = path.join(srcDir, file);
+            const newSrc = path.join(srcDir, file);console.log(5, newSrc, tgtDir);
             if (fs.lstatSync(newSrc).isDirectory()) {
                 try {
                     await copyDir(newSrc, tgtDir, filter, copyWithBaseFolder);
