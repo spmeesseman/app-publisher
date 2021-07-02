@@ -1029,10 +1029,10 @@ async function promptForVersion(lastVersion: string, proposedNextVersion: string
 
 function logErrors({ logger, stderr }, err)
 {
-    const errors = util.extractErrors(err).sort(error => (error.semanticRelease ? -1 : 0));
+    const errors = util.extractErrors(err).sort(error => (error.appPublisher ? -1 : 0));
     for (const error of errors)
     {
-        if (error.semanticRelease)
+        if (error.appPublisher)
         {
             logger.error(`${error.code} ${error.message}`);
             if (error.details)

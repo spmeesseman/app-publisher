@@ -265,7 +265,7 @@ export function timeout(ms: number)
 }
 
 
-const scriptTypesProcessed = [];
+// const scriptTypesProcessed = [];
 
 
 export async function runScripts(context: IContext, scriptType: string, scripts: string | string[], forceRun = false, throwOnError = false, runInTestMode = false)
@@ -298,7 +298,7 @@ export async function runScripts(context: IContext, scriptType: string, scripts:
             return;
         }
 
-        scriptTypesProcessed.push(scriptType);
+        // scriptTypesProcessed.push(scriptType);
 
         if (!options.dryRun || runInTestMode || options.tests)
         {
