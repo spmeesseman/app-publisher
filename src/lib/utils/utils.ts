@@ -274,7 +274,7 @@ export function timeout(ms: number)
 // const scriptTypesProcessed = [];
 
 
-export async function runScripts(context: IContext, scriptType: string, scripts: string | string[], forceRun = false, throwOnError = false, runInTestMode = false)
+export async function runScripts(context: IContext, scriptType: string, scripts: string | string[], forceRun = false, throwOnError = false)
 {
     const {options, logger, cwd, env} = context;
 
@@ -297,7 +297,7 @@ export async function runScripts(context: IContext, scriptType: string, scripts:
         logger.log(`   # of scipts: ${scripts.length}`);
     }
 
-    if (scripts && scripts.length > 0) // && !$script:BuildCmdsRun.includes($ScriptType))
+    if (scripts && scripts.length > 0)
     {
         // if (scriptTypesProcessed.includes(scriptType)) {
         //     logger.warn(`The script type ${scriptType} has already been ran during this run, skipping`);
@@ -306,44 +306,38 @@ export async function runScripts(context: IContext, scriptType: string, scripts:
 
         // scriptTypesProcessed.push(scriptType);
 
-        if (!options.dryRun || runInTestMode || options.tests)
+        for (let script of scripts)
         {
-            for (let script of scripts)
+            script = script.trim();
+            if (script)
             {
-                script = script.trim();
-                if (script)
+                let proc: any,
+                    procPromise: any;
+                const scriptParts = script.split(" ").filter(a => a !== "");
+                if (scriptParts.length > 1)
                 {
-                    let proc: any,
-                        procPromise: any;
-                    const scriptParts = script.split(" ").filter(a => a !== "");
-                    if (scriptParts.length > 1)
-                    {
-                        const scriptPrg = scriptParts[0];
-                        scriptParts.splice(0, 1);
-                        logger.log(`   Run script: ${scriptParts.join(" ")}`);
-                        procPromise = execa(scriptPrg, scriptParts, {cwd, env});
-                        procPromise.stdout.pipe(process.stdout);
-                        proc = await procPromise;
-                    }
-                    else if (scriptParts.length === 1)
-                    {
-                        logger.log(`   Run script: ${scriptParts[0]}`);
-                        procPromise = await execa(scriptParts[0], [], {cwd, env});
-                        procPromise.stdout.pipe(process.stdout);
-                        proc = await procPromise;
-                    }
-                    else {
-                        logger.warn("Invalid script not processed");
-                    }
-                    checkExitCode(proc.code, logger, throwOnError);
+                    const scriptPrg = scriptParts[0];
+                    scriptParts.splice(0, 1);
+                    logger.log(`   Run script: ${scriptParts.join(" ")}`);
+                    procPromise = execa(scriptPrg, scriptParts, {cwd, env});
+                    procPromise.stdout.pipe(process.stdout);
+                    proc = await procPromise;
+                }
+                else if (scriptParts.length === 1)
+                {
+                    logger.log(`   Run script: ${scriptParts[0]}`);
+                    procPromise = await execa(scriptParts[0], [], {cwd, env});
+                    procPromise.stdout.pipe(process.stdout);
+                    proc = await procPromise;
                 }
                 else {
-                    logger.warn("Empty scripts arg not processed");
+                    logger.warn("Invalid script not processed");
                 }
+                checkExitCode(proc.code, logger, throwOnError);
             }
-        }
-        else {
-            logger.log("   Dry run, skipping script run");
+            else {
+                logger.warn("Empty scripts arg not processed");
+            }
         }
     }
 }

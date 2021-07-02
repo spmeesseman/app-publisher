@@ -446,7 +446,7 @@ async function runRelease(context: IContext)
     // If there were no commits that set the release level to 'patch', 'minor', or 'major',
     // then we're done
     //
-    if (!nextRelease.level && !needNoCommits)
+    if (!nextRelease.level && !needNoCommits && lastVersionInfo.system === "semver")
     {   //
         // There are certain tasks a user may want to run after a release is made.  e.g. re-send
         // a notification email, or redo a Mantis or GitHub release. In these cases, user must
@@ -595,7 +595,7 @@ async function runRelease(context: IContext)
     // Scripts that are run before manipluation of the verson files and before any build
     // scripts are ran.
     //
-    await util.runScripts(context, "preBuild", options.preBuildCommand, options.taskBuild, true, true);
+    await util.runScripts(context, "preBuild", options.preBuildCommand, options.taskBuild, true);
 
     //
     // Pre - NPM release
@@ -650,7 +650,7 @@ async function runRelease(context: IContext)
     //
     // Build scipts (.publishrc)
     //
-    await util.runScripts(context, "build", options.buildCommand, options.taskBuild, true, true);
+    await util.runScripts(context, "build", options.buildCommand, options.taskBuild, true);
     //
     // If this is task mode, lof this task's result
     //

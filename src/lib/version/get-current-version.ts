@@ -153,7 +153,9 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
                 let match: RegExpExecArray,
                     matched = false;
                 const content = await readFile(tvFile),
-                      rgxStr = versionFileDef.regex.replace("VERSION", `(${versionFileDef.regexVersion})`).replace("((VERSION))", "(VERSION)"),
+                      rgxStr = versionFileDef.regex.replace(new RegExp("\\$\\(VERSION\\)", "g"), `(${versionFileDef.regexVersion})`)
+                                                   .replace(new RegExp(`\\(\\(${versionFileDef.regexVersion.replace(/\./g, "\\.")}\\)\\)`, "g"),
+                                                            `(${versionFileDef.regexVersion})`),
                       regex = new RegExp(rgxStr, "gm");
                 while ((match = regex.exec(content)) !== null)
                 {

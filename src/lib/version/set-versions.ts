@@ -76,8 +76,6 @@ async function setVersions(context: IContext): Promise<void>
 async function setVersionFiles(context: IContext): Promise<void>
 {
     const { options, logger, nextRelease, lastRelease, cwd } = context;
-    let incremental = false,
-        semVersion = "", semVersionCUR = "";
 
     if (!options.versionFiles || options.versionFiles.length === 0) {
         return;
@@ -96,33 +94,6 @@ async function setVersionFiles(context: IContext): Promise<void>
         if (options.verbose) {
             context.stdout.write("Definitions:" + EOL);
             context.stdout.write(JSON.stringify(options.versionFiles, undefined, 2) + EOL);
-        }
-
-        //
-        // Below is set to handle an assemblyinfo.cs file or other version file in semver format, but the
-        // build version type is incremental
-        //
-        if (!nextRelease.version.includes("."))
-        {
-            incremental = true;
-            for (const c of nextRelease.version) {
-                semVersion = `${semVersion}${c}.`;
-            }
-            semVersion = semVersion.substring(0, semVersion.length - 1);
-        }
-        else {
-            semVersion = nextRelease.version;
-        }
-
-        if (!lastRelease.version.includes("."))
-        {
-            for (const c of lastRelease.version) {
-                semVersionCUR = `${semVersionCUR}${c}.`;
-            }
-            semVersionCUR = semVersionCUR.substring(0, semVersionCUR.length - 1);
-        }
-        else {
-            semVersionCUR = lastRelease.version;
         }
     }
 
@@ -181,14 +152,16 @@ async function setVersionFiles(context: IContext): Promise<void>
                     content: string,
                     regex: RegExp;
 
-                if (path.basename(versionFileDef.path) === "package.json" || path.basename(versionFileDef.path) === "app.json")
+                if (path.basename(tvFile) === "package.json" || path.basename(tvFile) === "app.json")
                 {
-                    version = json5.parse(await readFile(path.join(cwd, versionFileDef.path))).version;
+                    version = json5.parse(await readFile(path.join(cwd, tvFile))).version;
                 }
                 else
                 {
-                    regexPattern = versionFileDef.regex.replace("(VERSION)", "VERSION").replace("VERSION", versionFileDef.regexVersion);
-                    content = await readFile(versionFileDef.path);
+                    regexPattern = versionFileDef.regex.replace(new RegExp("\\$\\(VERSION\\)", "g"), `(${versionFileDef.regexVersion})`)
+                                                       .replace(new RegExp(`\\(\\(${versionFileDef.regexVersion.replace(/\./g, "\\.")}\\)\\)`, "g"),
+                                                                `(${versionFileDef.regexVersion})`);
+                    content = await readFile(tvFile);
                     regex = new RegExp(regexPattern, "gm");
                     if ((match = regex.exec(content)) !== null)
                     {
@@ -212,15 +185,17 @@ async function setVersionFiles(context: IContext): Promise<void>
                             }
                             if (!sf.regex && !sf.regexWrite && path.basename(sf.path) === "package.json")
                             {
-                                const jso = json5.parse(await readFile(path.join(cwd, versionFileDef.path)));
+                                const jso = json5.parse(await readFile(path.join(cwd, tvFile)));
                                 jso.version = version;
                                 logger.log(`   Writing version to '${sf.path}'`);
                                 await writeFile(sf.path, JSON.stringify(jso, undefined, 4));
                             }
                             else
                             {
-                                const regexWrite = sf.regexWrite.replace("VERSION", version);
-                                regexPattern = sf.regex.replace("VERSION", sf.regexVersion).replace("((VERSION))", "(VERSION)");
+                                const regexWrite = sf.regexWrite.replace(new RegExp("\\$\\(VERSION\\)", "g"), version);
+                                regexPattern = sf.regex.replace(new RegExp("\\$\\(VERSION\\)", "g"), `(${versionFileDef.regexVersion})`)
+                                                       .replace(new RegExp(`\\(\\(${versionFileDef.regexVersion.replace(/\./g, "\\.")}\\)\\)`, "g"),
+                                                                `(${versionFileDef.regexVersion})`);
                                 logger.log(`   Writing custom version string to '${sf.path}':`);
                                 logger.log(`      ${regexWrite}`);
                                 await replaceInFile(sf.path, regexPattern, regexWrite);
@@ -235,15 +210,17 @@ async function setVersionFiles(context: IContext): Promise<void>
                 if (path.basename(tvFile) === "package.json")
                 {
                     const jso = json5.parse(await readFile(path.join(cwd, tvFile)));
-                    jso.version = semVersion;
+                    jso.version = nextRelease.version;
                     await writeFile(tvFile, JSON.stringify(jso, undefined, 4));
                     await editFile(context, tvFile);
                     matched = true;
                 }
                 else {
-                    const regexWrite = versionFileDef.regexWrite.replace("VERSION", semVersion),
-                          regexPattern = versionFileDef.regex.replace("VERSION", versionFileDef.regexVersion).replace("((VERSION))", "(VERSION)"),
-                          content = await readFile(versionFileDef.path),
+                    const regexWrite = versionFileDef.regexWrite.replace(new RegExp("\\$\\(VERSION\\)", "g"), nextRelease.version),
+                          regexPattern = versionFileDef.regex.replace(new RegExp("\\$\\(VERSION\\)", "g"), `(${versionFileDef.regexVersion})`)
+                                                              .replace(new RegExp(`\\(\\(${versionFileDef.regexVersion.replace(/\./g, "\\.")}\\)\\)`, "g"),
+                                                                       `(${versionFileDef.regexVersion})`),
+                          content = await readFile(tvFile),
                           regex = new RegExp(regexPattern, "gm");
                     if (regex.test(content))
                     {   //
@@ -254,7 +231,7 @@ async function setVersionFiles(context: IContext): Promise<void>
                             await addEdit(context, tvFile);
                             continue;
                         }
-                        logger.log(`   Writing new version ${semVersion} to '${tvFile}'`);
+                        logger.log(`   Writing new version ${nextRelease.version} to '${tvFile}'`);
                         await replaceInFile(tvFile, regexPattern, regexWrite);
                         await editFile(context, tvFile);
                         matched = true;

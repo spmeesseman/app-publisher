@@ -99,7 +99,7 @@ async function doMantisRelease(context: IContext): Promise<IReturnStatus>
 
             const assetName = path.basename(asset);
 
-            if (pathExists(asset))
+            if (await pathExists(asset))
             {
                 const extension = path.extname(assetName).toLowerCase();
                 // eslint-disable-next-line no-template-curly-in-string

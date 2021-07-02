@@ -42,7 +42,7 @@ async function getLastRelease(context: IContext, lastVersionInfo: IVersionInfo):
         if (lastVersionInfo.system !== "incremental") {
             return semver.rcompare(a.version, b.version);
         }
-        return a === b ? 0 : (a < b ? 1 : -1);
+        return a === b ? 0 : (parseInt(a) > parseInt(b) ? -1 : 1);
     };
     //
     // Generate a regex to parse tags formatted with `tagFormat`
