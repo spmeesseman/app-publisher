@@ -22,15 +22,15 @@ async function doDistRelease(context: IContext)
     {
         logger.log("Copying changlog file to dist dir");
         logger.log("   Source : " + options.changelogFile);
-        logger.log("   Target : " + options.pathToDist);
+        logger.log("   Target : " + options.distReleasePathSrc);
         //
         // Copy to dist dir
         //
-        await copyFile(options.changelogFile, options.pathToDist);
+        await copyFile(options.changelogFile, options.distReleasePathSrc);
         //
         // Track modified file
         //
-        await addEdit(context, path.normalize(path.join(options.pathToDist, options.changelogFile)));
+        await addEdit(context, path.normalize(path.join(options.distReleasePathSrc, options.changelogFile)));
     }
 
     const targetNetLocation = options.distReleasePath ? path.normalize(path.join(options.distReleasePath, options.projectName, nextRelease.version)) : undefined,
@@ -40,15 +40,15 @@ async function doDistRelease(context: IContext)
     // Copy contents of dist dir to target location, and pdf docs to docs location
     //
     logger.log("Deploying dist release files");
-    if (options.pathToDist && targetNetLocation)
+    if (options.distReleasePathSrc && targetNetLocation)
     {
-        logger.log("   Source : " + options.pathToDist);
+        logger.log("   Source : " + options.distReleasePathSrc);
         logger.log("   Target : " + targetNetLocation);
         if (!options.dryRun)
         {   //
             // Copy all files in 'dist' directory that start with options.projectName, and the history file
             //
-            await copyDir(options.pathToDist, targetNetLocation);
+            await copyDir(options.distReleasePathSrc, targetNetLocation);
         }
         else {
             logger.log("   Dry run - skipped dist release file push");

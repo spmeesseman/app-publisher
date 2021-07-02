@@ -415,11 +415,11 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     //
     // Create dist directory if it doesnt exist
     //
-    if (options.pathToDist && !(await pathExists(options.pathToDist)))
+    if (options.distReleasePathSrc && !(await pathExists(options.distReleasePathSrc)))
     {
         logger.log("Creating dist directory");
-        await createDir(options.pathToDist);
-        // VcChangelistAddRemove "$PATHTODIST";
+        await createDir(options.distReleasePathSrc);
+        // VcChangelistAddRemove "$distReleasePathSrc";
     }
 
     //
@@ -443,8 +443,8 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
         }
         if (options.npmPackDist === "Y")
         {
-            if (!options.pathToDist) {
-                logger.error("You must specify 'pathToDist' if 'npmPackDist' flag is set to Y");
+            if (!options.distReleasePathSrc) {
+                logger.error("You must specify 'distReleasePathSrc' if 'npmPackDist' flag is set to Y");
                 return false;
             }
         }
@@ -635,8 +635,8 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     //
     // Check dist release path for dist release
     //
-    if (options.distRelease === "Y" && !options.pathToDist) {
-        logger.error("pathToDist must be specified for dist release");
+    if (options.distRelease === "Y" && !options.distReleasePathSrc) {
+        logger.error("distReleasePathSrc must be specified for dist release");
         return false;
     }
 

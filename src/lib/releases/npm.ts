@@ -39,13 +39,13 @@ export async function doNpmRelease(context: IContext)
             let proc = await execa("npm", ["pack"], pick(context, [ "cwd", "env"]));
             checkExitCode(proc.code, logger);
 
-            if (!options.pathToDist)
+            if (!options.distReleasePathSrc)
             {
                 logger.log("Creating tarball file directory and adding to version control");
-                createDir(options.pathToDist);
+                createDir(options.distReleasePathSrc);
             }
 
-            const destPackedFile = path.join(options.pathToDist, `${options.projectName}.tgz`);
+            const destPackedFile = path.join(options.distReleasePathSrc, `${options.projectName}.tgz`);
             timeout(100);
             if (options.npmScope) {
                 tmpPkgFile = `${options.npmScope}-${options.projectName}-${nextRelease.version}.tgz`.substring(1);

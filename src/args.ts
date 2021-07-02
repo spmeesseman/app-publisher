@@ -169,6 +169,16 @@ export const publishRcOpts =
         "   distReleasePath/projectName/nextVersion"
     ],
 
+    distReleasePathSrc: [
+        true,
+        "string",
+        "install\\dist",
+        "The local path to use as the source directory for a standard 'dist' release.",
+        "Will be renamed to 'distSrcPath' in a future release.",
+        "Path to DIST should be relative to PATHTOROOT",
+        "Ignored if distRelease = N."
+    ],
+
     distReleasePostCommand: [
         false,
         "string|string[]",
@@ -421,7 +431,7 @@ export const publishRcOpts =
         true,
         "flag",
         "Y",
-        "Copy the NPM package to the directory specified by 'pathToDist'.",
+        "Copy the NPM package to the directory specified by 'distReleasePathSrc'.",
         "Ignored if npmRelease = N."
     ],
 
@@ -477,16 +487,6 @@ export const publishRcOpts =
         "N",
         "Build the nuget release.",
         "Not supported as of this version."
-    ],
-
-    pathToDist: [
-        true,
-        "string",
-        "install\\dist",
-        "The local path to use as the source directory for a standard 'dist' release.",
-        "Will be renamed to 'distSrcPath' in a future release.",
-        "Path to DIST should be relative to PATHTOROOT",
-        "Ignored if distRelease = N."
     ],
 
     postBuildCommand: [

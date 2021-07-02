@@ -280,6 +280,14 @@ export interface IOptions
      */
     distReleasePath: string;
     /**
+     * The local path to use as the source directory for a standard 'dist' release.
+     * Will be renamed to 'distSrcPath' in a future release.,
+     * Path to DIST should be relative to PATHTOROOT,
+     * Ignored if distRelease = N.
+     * Defaults to "install\dist"
+     */
+    distReleasePathSrc: string;
+    /**
      * A script or list of scripts to run for the build stage, after building a standard 'dist' release.
      * Ignored if distRelease = N.
      */
@@ -435,7 +443,7 @@ export interface IOptions
      */
     noCi: boolean;
     /**
-     * Copy the NPM package to the directory specified by 'pathToDist'.,
+     * Copy the NPM package to the directory specified by 'distReleasePathSrc'.,
      * Ignored if npmRelease = N.
      */
     npmPackDist: "Y" | "N";
@@ -468,14 +476,6 @@ export interface IOptions
      * Perform a Nuget release.  Not supported as of this version.
      */
     nugetRelease: "Y" | "N";
-    /**
-     * The local path to use as the source directory for a standard 'dist' release.
-     * Will be renamed to 'distSrcPath' in a future release.,
-     * Path to DIST should be relative to PATHTOROOT,
-     * Ignored if distRelease = N.
-     * Defaults to "install\dist"
-     */
-    pathToDist: string;
     /**
      * A script or list of scripts to run for the build stage, after the build process is started.
      */
