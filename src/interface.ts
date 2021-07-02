@@ -762,6 +762,11 @@ export interface IOptions
      */
     vcRevertFiles: string[];
     /**
+     * Outputs stdout from the vc process (git or svn) and pipes it to the current runs stdout.
+     * Use for debugging version control issues.
+     */
+    vcStdOut: boolean;
+    /**
      * Tag prefix for the version tag.  Labels the created tag in the form prefix-vX.X.X.
      * Can be used for sub-projects within a single project.
      */

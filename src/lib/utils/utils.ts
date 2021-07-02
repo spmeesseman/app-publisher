@@ -7,6 +7,7 @@ import { pathExists } from "./fs";
 import { addEdit } from "../repo";
 import { IContext } from "../../interface";
 import { EOL } from "os";
+import { options } from "marked";
 const execa = require("execa");
 // const find = require("find-process");
 
@@ -126,6 +127,27 @@ export async function editFile({ options, nextRelease, logger, cwd, env }, editF
 export function escapeRegExp(text: string)
 {
     return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
+}
+
+
+/**
+ * Executes a script/program with execa and pipes the external program's stdout
+ * this the current process stdout.
+ *
+ * @since 3.2.2
+ * @param context Current run context
+ * @param scriptPrg The script/program to execute
+ * @param scriptPArgs Arguments to the script/program
+ * @returns execa promise
+ */
+export function execaEx(context: IContext, scriptPrg: string, scriptPArgs: string[])
+{
+    const {options, cwd, env, stdout} = context;
+    const procPromise = execa(scriptPrg, scriptPArgs, {cwd, env});
+    if (options.verbose || options.vcStdOut) {
+        procPromise.stdout.pipe(stdout);
+    }
+    return procPromise;
 }
 
 
@@ -273,7 +295,6 @@ export function timeout(ms: number)
 
 // const scriptTypesProcessed = [];
 
-
 export async function runScripts(context: IContext, scriptType: string, scripts: string | string[], forceRun = false, throwOnError = false)
 {
     const {options, logger, cwd, env} = context;
@@ -320,14 +341,14 @@ export async function runScripts(context: IContext, scriptType: string, scripts:
                     scriptParts.splice(0, 1);
                     logger.log(`   Run script: ${scriptParts.join(" ")}`);
                     procPromise = execa(scriptPrg, scriptParts, {cwd, env});
-                    procPromise.stdout.pipe(process.stdout);
+                    procPromise.stdout.pipe(context.stdout);
                     proc = await procPromise;
                 }
                 else if (scriptParts.length === 1)
                 {
                     logger.log(`   Run script: ${scriptParts[0]}`);
                     procPromise = await execa(scriptParts[0], [], {cwd, env});
-                    procPromise.stdout.pipe(process.stdout);
+                    procPromise.stdout.pipe(context.stdout);
                     proc = await procPromise;
                 }
                 else {

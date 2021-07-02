@@ -215,23 +215,6 @@ export const publishRcOpts =
         }
     ],
 
-    vcRevert: [
-        true,
-        "flag",
-        "Y",
-        "Reverts all file modifications made if a publish failes, or, after a dry",
-        "run is completed.  Uses version control."
-    ],
-
-    vcRevertFiles: [
-        true,
-        "string[]",
-        "[]",
-        "Additional files to be reverted if a publish run fails, or, after a dry",
-        "run completes.  Uses version control.",
-        "Ignored if 'vcRevert' = 'N'"
-    ],
-
     emailHrefs: [
         false,
         "string|string[]",
@@ -1062,11 +1045,37 @@ export const publishRcOpts =
         "The editor program to use when opening version files for manual editing."
     ],
 
+    vcRevert: [
+        true,
+        "flag",
+        "Y",
+        "Reverts all file modifications made if a publish failes, or, after a dry",
+        "run is completed.  Uses version control."
+    ],
+
+    vcRevertFiles: [
+        true,
+        "string[]",
+        "[]",
+        "Additional files to be reverted if a publish run fails, or, after a dry",
+        "run completes.  Uses version control.",
+        "Ignored if 'vcRevert' = 'N'"
+    ],
+
+    vcStdOut: [
+        true,
+        "boolean",
+        false,
+        "Outputs stdout from the vc process (git or svn) and pipes it to the current",
+        "runs stdout.  Use for debugging version control issues."
+    ],
+
     vcTagPrefix: [
         true,
         "string",
         "v",
-        "Tag prefix for the version tag.  Labels the created tag in the form prefix-vX.X.X."
+        "Tag prefix for the version tag.  Labels the created tag in the form",
+        "prefix-vX.X.X."
     ],
 
     vcWebPath: [

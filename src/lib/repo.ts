@@ -1,6 +1,6 @@
 
 import * as path from "path";
-import { isString } from "./utils/utils";
+import { execaEx, isString } from "./utils/utils";
 import { deleteFile, pathExists } from "./utils/fs";
 import { IContext, IEdit } from "../interface";
 const execa = require("execa");
@@ -70,10 +70,10 @@ export async function addEdit(context: IContext, pathToAdd: string | string[])
  *
  * @throws {Error} if the commit failed or the repository type is invalid.
  */
-export async function commit({options, nextRelease, logger, cwd, env}: IContext)
+export async function commit(context: IContext)
 {
     let proc: any;
-    const execaOpts = { cwd, env };
+    const {options, nextRelease, logger, cwd, env} = context;
 
     if (!nextRelease.edits || nextRelease.edits.length === 0) {
         logger.info("Commit - Nothing to commit");
@@ -96,10 +96,10 @@ export async function commit({options, nextRelease, logger, cwd, env}: IContext)
             logger.info("Adding unversioned touched files to git version control");
             logger.info("   " + chgListPathsAdded.join(" "));
             if (!options.dryRun) {
-                proc = await execa("git", [ "add", "--", ...chgListPathsAdded ], execaOpts);
+                proc = await execa("git", [ "add", "--", ...chgListPathsAdded ], { cwd, env });
             }
             else {
-                proc = await execa("git", [ "add", "--dry-run", "--", ...chgListPathsAdded ], execaOpts);
+                proc = await execa("git", [ "add", "--dry-run", "--", ...chgListPathsAdded ], { cwd, env });
             }
             if (proc.code !== 0) {
                 logger.warn("Add file(s) to VCS failed");
@@ -122,18 +122,18 @@ export async function commit({options, nextRelease, logger, cwd, env}: IContext)
             logger.info("Committing touched files to git version control");
             logger.info("   " + chgListPaths.join(" "));
             if (!options.dryRun) {
-                proc = await execa("git", [ "commit", "-m", `"chore(release): v${nextRelease.version} [skip ci]"`, "--", ...chgListPaths ], execaOpts);
+                proc = await execaEx(context, "git", [ "commit", "-m", `"chore(release): v${nextRelease.version} [skip ci]"`, "--", ...chgListPaths ]);
             }
             else {
-                proc = await execa("git", [ "commit", "--dry-run", "-m", `"chore(release): v${nextRelease.version} [skip ci]"`, "--", ...chgListPaths  ], execaOpts);
+                proc = await execaEx(context, "git", [ "commit", "--dry-run", "-m", `"chore(release): v${nextRelease.version} [skip ci]"`, "--", ...chgListPaths  ]);
             }
             if (proc.code === 0) {
                 logger.info("Pushing touched files to git version control");
                 if (!options.dryRun) {
-                    proc = await execa("git", [ "push", "origin", `${options.branch}:${options.branch}` ], execaOpts);
+                    proc = await execaEx(context, "git", [ "push", "origin", `${options.branch}:${options.branch}` ]);
                 }
                 else {
-                    proc = await execa("git", [ "push", "--dry-run", "origin", `${options.branch}:${options.branch}` ], execaOpts);
+                    proc = await execaEx(context, "git", [ "push", "--dry-run", "origin", `${options.branch}:${options.branch}` ]);
                 }
             }
             else {
@@ -149,10 +149,10 @@ export async function commit({options, nextRelease, logger, cwd, env}: IContext)
             logger.info("Adding unversioned touched files to svn version control");
             logger.info("   " + chgListPathsAdded);
             if (!options.dryRun) {
-                await execSvn([ "add", ...chgListPathsAdded ], execaOpts);
+                await execSvn(context, [ "add", ...chgListPathsAdded ]);
             }
             else {
-                await execSvn(["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
+                await execSvn(context, ["merge", "--dry-run", "-r", "BASE:HEAD", "." ]);
             }
         }
         if (changeList.length > 0)
@@ -161,10 +161,10 @@ export async function commit({options, nextRelease, logger, cwd, env}: IContext)
             logger.info("Committing touched files to svn version control");
             logger.info("   " + chgListPaths);
             if (!options.dryRun) {
-                await execSvn(["commit", ...chgListPaths, "-m", `"chore: v${nextRelease.version} [skip ci]"` ], execaOpts);
+                await execSvn(context, ["commit", ...chgListPaths, "-m", `"chore: v${nextRelease.version} [skip ci]"` ]);
             }
             else {
-                await execSvn(["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
+                await execSvn(context, ["merge", "--dry-run", "-r", "BASE:HEAD", "." ]);
             }
         }
     }
@@ -185,15 +185,15 @@ export async function commit({options, nextRelease, logger, cwd, env}: IContext)
  * @returns `true` if the tag exists, `false` otherwise
  * @throws {Error} If the `git` or `svn` command fails or the repository type is invalid.
  */
-export async function doesTagExist({options, logger, cwd, env}: IContext, tag: string): Promise<boolean>
+export async function doesTagExist(context: IContext, tag: string): Promise<boolean>
 {
-    const execaOpts = { cwd, env };
+    const {options, logger, cwd, env} = context;
 
     logger.info("Check tag exists : " + tag);
 
     if (options.repoType === "git")
     {
-        return (await execa.stdout("git", ["tag"], execaOpts))
+        return (await execa.stdout("git", ["tag"], { cwd, env }))
                            .split("\n")
                            .map((tag: { trim: () => void }) => tag.trim())
                            .filter((f: string) => f === tag)
@@ -205,7 +205,7 @@ export async function doesTagExist({options, logger, cwd, env}: IContext, tag: s
               parser = new xml2js.Parser(),
               tagLocation = getSvnTagLocation({options, logger});
 
-        const xml = await execSvn([ "log", "--xml", `${tagLocation}`, "--verbose", "--limit", "50" ], true);
+        const xml = await execSvn(context, [ "log", "--xml", `${tagLocation}`, "--verbose", "--limit", "50" ], true);
 
         logger.info("Parsing response from SVN");
         try {
@@ -251,18 +251,20 @@ export async function doesTagExist({options, logger, cwd, env}: IContext, tag: s
  *
  * @returns The process object returned by execa()
  */
-async function execSvn(svnArgs: string[], execaOpts: any, stdout = false)
+async function execSvn(context: IContext, svnArgs: string[], stdout = false)
 {
     let proc: any;
-    const svnUser = process.env.SVN_AUTHOR_NAME,
+    const {cwd, env} = context,
+          svnUser = process.env.SVN_AUTHOR_NAME,
           svnToken = process.env.SVN_TOKEN;
+
     if (svnUser && svnToken) {
         if (!stdout) {
-             proc = await execa("svn", [...svnArgs, "--non-interactive", "--no-auth-cache", "--username", svnUser, "--password", svnToken ], execaOpts);
+             proc = await execaEx(context, "svn", [...svnArgs, "--non-interactive", "--no-auth-cache", "--username", svnUser, "--password", svnToken ]);
         }
         else {
             try {
-                proc = await execa.stdout("svn", [...svnArgs, "--non-interactive", "--no-auth-cache", "--username", svnUser, "--password", svnToken ], execaOpts);
+                proc = await execa.stdout("svn", [...svnArgs, "--non-interactive", "--no-auth-cache", "--username", svnUser, "--password", svnToken ], {cwd, env});
             }
             catch (e) {
                 return e.toString();
@@ -271,11 +273,11 @@ async function execSvn(svnArgs: string[], execaOpts: any, stdout = false)
     }
     else {
         if (!stdout) {
-            proc = await execa("svn", [...svnArgs, "--non-interactive" ], execaOpts);
+            proc = await execaEx(context, "svn", [...svnArgs, "--non-interactive" ]);
         }
         else {
             try {
-                proc = await execa.stdout("svn", [...svnArgs, "--non-interactive" ], execaOpts);
+                proc = await execa.stdout("svn", [...svnArgs, "--non-interactive" ], {cwd, env});
             }
             catch (e) {
                 return e.toString();
@@ -292,22 +294,22 @@ async function execSvn(svnArgs: string[], execaOpts: any, stdout = false)
  * @param context The run context object.
  * @param execaOpts execa options
  */
-export async function fetch({ options, logger, cwd, env }: IContext)
+export async function fetch(context: IContext)
 {
-    const execaOpts = { cwd, env };
+    const { options, logger, cwd, env, stdout } = context;
 
     if (options.repoType === "git")
     {
         try {
-            await execa("git", ["fetch", "--unshallow", "--tags", options.repo], execaOpts);
+            await execaEx(context, "git", ["fetch", "--unshallow", "--tags", options.repo]);
         }
         catch (error) {
-            await execa("git", ["fetch", "--tags", options.repo], execaOpts);
+            await execaEx(context, "git", ["fetch", "--tags", options.repo]);
         }
     }
     else if (options.repoType === "svn")
     {
-        await execSvn([ "update", "--force" ], execaOpts);
+        await execSvn(context, [ "update", "--force" ]);
     }
     else {
         throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
@@ -404,14 +406,15 @@ export async function getTagHead({options, logger, cwd, env}: IContext, tagName:
  * @returns List of tags.
  * @throws {Error} If the `git` or `svn` command fails or the repository type is invalid.
  */
-export async function getTags({options, logger, cwd, env}: IContext)
+export async function getTags(context: IContext)
 {
-    const execaOpts = { cwd, env };
+    const {options, logger, cwd, env} = context;
+
     logger.info("Get tags");
 
     if (options.repoType === "git")
     {
-        return (await execa.stdout("git", ["tag"], execaOpts)).split("\n").map((tag: { trim: () => void }) => tag.trim()).filter(Boolean);
+        return (await execa.stdout("git", ["tag"], { cwd, env })).split("\n").map((tag: { trim: () => void }) => tag.trim()).filter(Boolean);
     }
     else if (options.repoType === "svn")
     {
@@ -419,7 +422,7 @@ export async function getTags({options, logger, cwd, env}: IContext)
               parser = new xml2js.Parser(),
               tagLocation = getSvnTagLocation({options, logger});
 
-        const xml = await execSvn([ "log", "--xml", `${tagLocation}`, "--verbose", "--limit", "50" ], execaOpts, true);
+        const xml = await execSvn(context, [ "log", "--xml", `${tagLocation}`, "--verbose", "--limit", "50" ], true);
 
         logger.info("Parsing response from SVN");
         try {
@@ -509,7 +512,7 @@ export async function isGitRepo(context: IContext)
     const { logger, cwd, env } = context;
     try
     {
-        return (await execa("git", ["rev-parse", "--git-dir"], {cwd, env })).code === 0;
+        return (await execaEx(context, "git", ["rev-parse", "--git-dir"])).code === 0;
     }
     catch (error) {
         logger.error("Exception in isGitRepo: " + error.toString());
@@ -517,9 +520,9 @@ export async function isGitRepo(context: IContext)
 }
 
 
-export async function isIgnored({options, logger, cwd, env}: IContext, objectPath: string)
+export async function isIgnored(context: IContext, objectPath: string)
 {
-    const execaOpts = { cwd, env },
+    const {options, logger, cwd, env} = context,
           nPath = path.normalize(objectPath);
 
     // const excapedRegex = escapeRegExp(objectPath);
@@ -528,7 +531,7 @@ export async function isIgnored({options, logger, cwd, env}: IContext, objectPat
     if (options.repoType === "svn")
     {
         try {
-            const stdout = await execSvn(["propget", "svn:ignore", path.dirname(objectPath) ], execaOpts, true);
+            const stdout = await execSvn(context, ["propget", "svn:ignore", path.dirname(objectPath) ], true);
             if (new RegExp(`^${objectPath}$`, "gm").test(stdout)) {
                 logger.info("   This file is being ignored from version control");
                 return true;
@@ -546,7 +549,7 @@ export async function isIgnored({options, logger, cwd, env}: IContext, objectPat
         if (await pathExists(".gitignore"))
         {
             try {
-                const proc = await execa("git", ["check-ignore", "--quiet", objectPath ], execaOpts);
+                const proc = await execaEx(context, "git", ["check-ignore", "--quiet", objectPath ]);
                 if (proc.code === 0) {
                     logger.info("   This file is being ignored from version control");
                     return true;
@@ -582,11 +585,11 @@ export async function isRefInHistory(context: IContext, ref: any, isTags = false
     try
     {
         if (repoType === "git") {
-            await execa("git", ["merge-base", "--is-ancestor", ref, "HEAD"], {cwd, env});
+            await execaEx(context, "git", ["merge-base", "--is-ancestor", ref, "HEAD"]);
         }
         else if (repoType === "svn") {
             const tagLoc = !isTags ? repo : repo.replace(branch, "tags");
-            await execa("svn", ["ls", tagLoc + "/" + ref], {cwd, env});
+            await execaEx(context, "svn", ["ls", tagLoc + "/" + ref]);
         }
         else {
             throw new Error("Invalid repository type");
@@ -634,11 +637,11 @@ export async function isSvnRepo(context: IContext)
  * @throws {Error} if the repository type is invalid
  * @returns `true` if the specifed file or directory is under version control, `false` otherwise.
  */
-export async function isVersioned({options, logger, cwd, env}: IContext, objectPath: string)
+export async function isVersioned(context: IContext, objectPath: string)
 {
     let isVersioned = false,
         stdout: string;
-    const execaOpts = { cwd, env };
+    const {options, logger, cwd, env} = context;
     try {
         if (options.repoType === "svn")
         {   //
@@ -646,7 +649,7 @@ export async function isVersioned({options, logger, cwd, env}: IContext, objectP
             //     svn: warning: W155010: The node '...' was not found.
             //     svn: E200009: Could not display info for all targets because some targets don't exist
             //
-            stdout = await execSvn(["info", objectPath], execaOpts, true);
+            stdout = await execSvn(context, ["info", objectPath], true);
             isVersioned = !stdout.includes("W155010") && !stdout.includes("E200009");
         }
         else if (options.repoType === "git")
@@ -654,7 +657,7 @@ export async function isVersioned({options, logger, cwd, env}: IContext, objectP
             // If not versioned, the error message shouldbe:
             //     error: pathspec 'test.txt' did not match any file(s) known to git
             //
-            stdout = await execa.stdout("git", ["ls-files", "--error-unmatch", objectPath ], execaOpts);
+            stdout = await execa.stdout("git", ["ls-files", "--error-unmatch", objectPath ], { cwd, env });
             isVersioned = !stdout.includes("E200009");
         }
         else {
@@ -673,15 +676,15 @@ export async function isVersioned({options, logger, cwd, env}: IContext, objectP
  *
  * @throws {Error} if the push failed or the repository type is invalid.
  */
-export async function push({options, logger, cwd, env}: IContext)
+export async function push(context: IContext)
 {
-    const execaOpts = { cwd, env };
+    const {options, logger} = context;
     if (options.repoType === "git") {
         if (!options.dryRun) {
-            await execa("git", ["push", "--tags", options.repo], execaOpts);
+            await execaEx(context, "git", ["push", "--tags", options.repo]);
         }
         else {
-            await execa("git", ["push", "--dry-run", "--tags", options.repo], execaOpts);
+            await execaEx(context, "git", ["push", "--dry-run", "--tags", options.repo]);
         }
     }
     else if (options.repoType === "svn") {
@@ -748,6 +751,8 @@ export async function revert(context: IContext, files?: IEdit[])
           changeListModify = !files ? nextRelease.edits.filter((e: any) => e.type === "M") :
                                       files.filter((e: any) => e.type === "M");
 
+    logger.info("Revert changes");
+
     if (options.vcRevertFiles)
     {
         for (let vcFile of options.vcRevertFiles)
@@ -756,16 +761,21 @@ export async function revert(context: IContext, files?: IEdit[])
                            .replace("$(NEXTVERSION)", nextRelease.version)
                            .replace("$(LASTVERSION)", lastRelease.version);
             if (await isVersioned(context, vcFile)) {
+                if (options.verbose) {
+                    logger.info(`vcReverChanges: Pushed ${vcFile} to 'modified' files`);
+                }
                 changeListModify.push({ path: vcFile, type: "M" });
             }
             else {
+                if (options.verbose) {
+                    logger.info(`vcReverChanges: Pushed ${vcFile} to 'added' files`);
+                }
                 changeListAdd.push({ path: vcFile, type: "A" });
             }
             ++vcRcFileCt;
         }
     }
 
-    logger.info("Revert changes");
     logger.info(`   Total Edits   : ${vcRcFileCt + (!files ? nextRelease.edits.length : files.length)}`);
     logger.info(`   Additions     : ${changeListAdd.length}`);
     logger.info(`   Modifications : ${changeListModify.length}`);
@@ -792,11 +802,11 @@ export async function revert(context: IContext, files?: IEdit[])
             logger.info("Reverting all modifications:");
             logger.info("   " + chgListPaths.join(" "));
             if (options.repoType === "git") {
-                await execa("git", [ "stash", "push", "--", ...chgListPaths ], execaOpts);
-                await execa("git", [ "stash", "drop" ], execaOpts);
+                await execaEx(context, "git", [ "stash", "push", "--", ...chgListPaths ]);
+                await execaEx(context, "git", [ "stash", "drop" ]);
             }
             else if (options.repoType === "svn") {
-                await execSvn([ "revert", "-R", ...chgListPaths ], execaOpts);
+                await execSvn(context, [ "revert", "-R", ...chgListPaths ]);
             }
             else {
                 throwVcsError(`Invalid repository type: ${options.repoType}`, logger);
@@ -816,11 +826,11 @@ export async function revert(context: IContext, files?: IEdit[])
  *
  * @throws {Error} if the tag creation failed or the repository type is invalid.
  */
-export async function tag({options, logger, nextRelease, cwd, env}: IContext)
+export async function tag(context: IContext)
 {
     let tagMessage: string,
         tagLocation: string;
-    const execaOpts = { cwd, env };
+    const {options, logger, nextRelease, cwd, env} = context;
 
     if (options.repoType === "git")
     {
@@ -835,10 +845,10 @@ export async function tag({options, logger, nextRelease, cwd, env}: IContext)
 
         if (options.githubRelease !== "Y" || options.taskGithubRelease) {
             if (!options.dryRun) {
-                await execa("git", ["tag", "-a", tagLocation, "-m", tagMessage], execaOpts);
+                await execaEx(context, "git", ["tag", "-a", tagLocation, "-m", tagMessage]);
             }
             else {
-                await execa("git", ["tag", "--dry-run",  "-a", tagLocation, "-m", tagMessage], execaOpts);
+                await execaEx(context, "git", ["tag", "--dry-run",  "-a", tagLocation, "-m", tagMessage]);
             }
         }
         else { //
@@ -846,16 +856,16 @@ export async function tag({options, logger, nextRelease, cwd, env}: IContext)
              //
             logger.info("Re-tagging after release");
             if (!options.dryRun) {
-                const proc = await execa("git", [ "push", "origin", ":refs/tags/" + tagLocation ], execaOpts);
+                const proc = await execaEx(context, "git", [ "push", "origin", ":refs/tags/" + tagLocation ]);
                 if (proc.code === 0) {
-                    await execa("git", ["tag", "-fa", tagLocation, "-m", tagMessage], execaOpts);
+                    await execaEx(context, "git", ["tag", "-fa", tagLocation, "-m", tagMessage]);
                 }
             }
             else {
                 logger.info("   Dry-run emulate tag, success");
-                // const proc = await execa("git", [ "push", "--dry-run", "origin", ":refs/tags/" + tagLocation ], execaOpts);
+                // const proc = await execaEx(context, "git", [ "push", "--dry-run", "origin", ":refs/tags/" + tagLocation ]);
                 // if (proc.code === 0) {
-                //     await execa("git", ["tag", "--dry-run", "-fa", tagLocation, "-m", tagMessage], execaOpts);
+                //     await execaEx(context, "git", ["tag", "--dry-run", "-fa", tagLocation, "-m", tagMessage]);
                 // }
             }
         }
@@ -874,7 +884,7 @@ export async function tag({options, logger, nextRelease, cwd, env}: IContext)
         }
         logger.info(`Tagging SVN version at ${tagLocation}`);
         if (!options.dryRun) {
-            await execSvn(["copy", options.repo, tagLocation, "-m", tagMessage], execaOpts);
+            await execSvn(context, ["copy", options.repo, tagLocation, "-m", tagMessage]);
         }
         else {
             logger.info("   Dry-run emulate tag, success");
@@ -910,8 +920,7 @@ function throwVcsError(msg: string, logger: any)
  */
 export async function verifyAuth(context: IContext)
 {
-    const { options, logger, cwd, env } = context,
-          execaOpts = { cwd, env };
+    const { options, logger, cwd, env } = context;
 
     logger.info("Verify vcs authorization");
 
@@ -919,7 +928,7 @@ export async function verifyAuth(context: IContext)
     {
         if (options.repoType === "git") {
             try {
-                await execa("git", ["push", "--dry-run", options.repo, `HEAD:${options.branch}`], execaOpts);
+                await execaEx(context, "git", ["push", "--dry-run", options.repo, `HEAD:${options.branch}`]);
             }
             catch (error) {
                 if (!(await isBranchUpToDate(context, options.branch)))
@@ -937,7 +946,7 @@ export async function verifyAuth(context: IContext)
         else if (options.repoType === "svn")
         {
             try {
-                await execSvn(["merge", "--dry-run", "-r", "BASE:HEAD", "." ], execaOpts);
+                await execSvn(context, ["merge", "--dry-run", "-r", "BASE:HEAD", "." ]);
             }
             catch (error) {
                 if (!error.toString().includes("E195020")) { // Cannot merge into mixed-revision working copy
@@ -982,14 +991,14 @@ export async function verifyTagName(context: IContext, tagName: string)
     try
     {
         if (options.repoType === "git") {
-            return (await execa("git", ["check-ref-format", `refs/tags/${tagName}`], {cwd, env})).code === 0;
+            return (await execaEx(context, "git", ["check-ref-format", `refs/tags/${tagName}`])).code === 0;
         }
         else if (options.repoType === "svn") {
             //
             // TODO - does svn have something similar to git?
             //
             // const tagLocation = getSvnTagLocation({options, logger});
-            // return (await execSvn(["info", "-r", `${tagLocation}/${tagName}`], {cwd, env})).code === 0;
+            // return (await execSvn(["info", "-r", `${tagLocation}/${tagName}`])).code === 0;
             return /v[0-9\.\-]+/.test(tagName);
         }
         else {
