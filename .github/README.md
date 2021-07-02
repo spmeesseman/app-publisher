@@ -37,7 +37,7 @@
 
 ## Description
 
-This package provides a multi-release publishing mechanism similar to semantic-release using a more integrated approach, with support for **Subversion** as well as **Git**.  The code base for this package was started from the [semantic-release project](https://github.com/semantic-release/semantic-release), to give credit where it's due.
+This package provides a multi-release publishing mechanism similar to semantic-release using a more integrated approach, with support for **Subversion** as well as **Git**.  The code base for this package was started from the [semantic-release project](https://github.com/semantic-release/semantic-release), to give credit where it's due.  This package originally focused on local environment releases (publish mode) and has since exposed a sort of CI tool interface (task mode) to be used for various things like retrieving the next version number from a CI script.
 
 There are two modes to run app-publisher in:
 
