@@ -1217,14 +1217,6 @@ export const publishRcOpts =
         "that of a package.json file and can be semantically parsed.",
     ],
 
-    versionReplaceTags: [
-        false,
-        "string|string[]",
-        "",
-        "A tag or list of tags to use for performing version string replacement in files",
-        "specified by 'versionFiles', and default versioned files (e.g. package.json)."
-    ],
-
     versionPreReleaseId: [
         true,
         "string",

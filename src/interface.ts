@@ -862,11 +862,6 @@ export interface IOptions
      */
     versionProperty: string;
     /**
-     * A tag or list of tags to use for performing version string replacement in files specified by
-     * 'versionFiles', and default versioned files (e.g. package.json).
-     */
-    versionReplaceTags: string | string[];
-    /**
      * An identifier denoting a pre-release can to be appenended to the next version number to
      * produce the final version string, e.g. 'alpha' produces the final version string of x.y.z-alpha.
      * Example usage:

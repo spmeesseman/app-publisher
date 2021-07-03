@@ -168,10 +168,6 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     {
         options.versionFilesScrollDown = [ options.versionFilesScrollDown ]; // convert to array
     }
-    if (options.versionReplaceTags && isString(options.versionReplaceTags))
-    {
-        options.versionReplaceTags = [ options.versionReplaceTags ]; // convert to array
-    }
     if (options.emailRecip && isString(options.emailRecip))
     {
         options.emailRecip = [ options.emailRecip ]; // convert to array
