@@ -82,11 +82,14 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
     // If a pre-releaseid is being used and this is task mode, then there will be no
     // changelog section for the pre-release version.  We
     //
-    if (!options.versionPreReleaseId && !options.taskTag && !options.taskCommit) {
+    if (!options.versionPreReleaseId && !options.taskTag && !options.taskCommit && !options.tests) {
         doCheck(await getChangelogVersion(context), "changelog", false);
     }
     else if (options.verbose) {
-        if (options.versionPreReleaseId) {
+        if (options.tests) {
+            logger.log("This is a tests run, the changelog file will not be checked for version");
+        }
+        else if (options.versionPreReleaseId) {
             logger.log("This is a pre-release, the changelog file will not be checked for version");
         }
         else {

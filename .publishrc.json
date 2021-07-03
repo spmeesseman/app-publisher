@@ -2,7 +2,7 @@
     "projectName":      "app-publisher",
     "projectVersion":   "3.2.5",
     "branch":           "master",
-    "bugs":             "https://github.com/spmeesseman/app-publisher/issues",
+    "bugs":             "",
     "buildCommand": [
         "npm run build"
     ],
@@ -27,7 +27,7 @@
     "distReleasePostCommand": [],
     "distAddAllToVC":    "N",
     "emailNotification": "N",
-    "emailMode":         "",
+    "emailMode":         "ssl",
     "emailPort":         25,
     "emailRecip":        "spmeesseman@gmail.com",
     "emailSender":       "Scott Meesseman <scott@spmeesseman.com>",
@@ -59,7 +59,7 @@
     "npmRegistry":       "https://registry.npmjs.org",
     "npmReleasePreCommand": [],
     "npmReleasePostCommand": [],
-    "npmScope":          "@spmeesseman",
+    "npmScope":          "",
     "nugetRelease":      "N",
     "postBuildCommand":  "",
     "preCommitCommand":  [],
@@ -78,7 +78,11 @@
     "vcRevertFiles":     [],
     "vcTagPrefix":       "",
     "vcWebPath":         "https://github.com/spmeesseman/app-publisher",
-    "versionFiles":      [],
+    "versionFiles":      [
+        {
+            "path": "src/test/fixture/package.json"
+        }
+    ],
     "versionFilesEditAlways": [],
     "versionFilesScrollDown": [],
     "versionText":       "Version",
