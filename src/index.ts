@@ -822,7 +822,7 @@ async function runRelease(context: IContext)
     {   //
         // Commit
         //
-        if (!options.taskTag || options.taskCommit || !options.taskMode)
+        if (options.taskCommit || !options.taskMode)
         {   //
             // Pre-commit scripts
             //
@@ -841,7 +841,7 @@ async function runRelease(context: IContext)
         //
         // Create the tag before calling the publish plugins as some require the tag to exists
         //
-        if (!options.taskCommit || options.taskTag || !options.taskMode)
+        if (options.taskTag || !options.taskMode)
         {
             try {
                 await tag(context);
