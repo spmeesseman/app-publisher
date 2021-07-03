@@ -17,14 +17,16 @@ function getOptions(useBanner = true): IOptions
         enforceConstraints: false,
         ignorePositional: [ "-p", "--profile" ]
     };
-    const opts = parseArgs({ ...{}, ...publishRcOpts}, parserOpts);
+    const opts: IOptions = parseArgs({ ...{}, ...publishRcOpts}, parserOpts);
 
     //
     // Set task mode stdout flag on the options object
     //
     opts.taskModeStdOut = !!(opts.taskVersionCurrent || opts.taskVersionNext || opts.taskVersionInfo ||
-                             opts.taskCiEvInfo || opts.taskVersionPreReleaseId || opts.taskChangelogPrint ||
+                             opts.taskCiEnvInfo || opts.taskVersionPreReleaseId || opts.taskChangelogPrint ||
                              opts.taskChangelogPrintVersion || opts.taskReleaseLevel);
+    opts.taskCount = 0;
+
     //
     // Set task mode flag on the options object
     //
@@ -39,7 +41,7 @@ function getOptions(useBanner = true): IOptions
             //
             if (oDef && (valueType === "boolean" && opts[o] === true) || (valueType === "string"  && opts[o])) {
                 opts.taskMode = true;
-                break;
+                ++opts.taskCount;
             }
         }
     }

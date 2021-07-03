@@ -240,9 +240,13 @@ export async function getPsScriptLocation(scriptFile: string, execaOpts: any): P
 
 export function isNumeric(value: string | number): boolean
 {
-   return ((value !== null) && (value !== undefined) &&
-           (value !== "") &&
-           !isNaN(Number(value.toString())));
+    try {
+        return ((value !== null) && (value !== undefined) &&
+                (value !== "") && !isNaN(Number(value.toString())));
+    }
+    catch (e) {
+        return false;
+    }
 }
 
 
