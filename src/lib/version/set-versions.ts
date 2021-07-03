@@ -193,9 +193,9 @@ async function setVersionFiles(context: IContext): Promise<void>
                             else
                             {
                                 const regexWrite = sf.regexWrite.replace(new RegExp("\\$\\(VERSION\\)", "g"), version);
-                                regexPattern = sf.regex.replace(new RegExp("\\$\\(VERSION\\)", "g"), `(${versionFileDef.regexVersion})`)
-                                                       .replace(new RegExp(`\\(\\(${versionFileDef.regexVersion.replace(/\./g, "\\.")}\\)\\)`, "g"),
-                                                                `(${versionFileDef.regexVersion})`);
+                                regexPattern = sf.regex.replace(new RegExp("\\$\\(VERSION\\)", "g"), `(${sf.regexVersion})`)
+                                                       .replace(new RegExp(`\\(\\(${sf.regexVersion.replace(/\./g, "\\.")}\\)\\)`, "g"),
+                                                                `(${sf.regexVersion})`);
                                 logger.log(`   Writing custom version string to '${sf.path}':`);
                                 logger.log(`      ${regexWrite}`);
                                 await replaceInFile(sf.path, regexPattern, regexWrite);

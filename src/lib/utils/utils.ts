@@ -79,7 +79,7 @@ export async function editFile({ options, nextRelease, logger, cwd, env }: ICont
         const fSkipEdits = !isChangelog ? options.skipVersionEdits === "Y" : options.skipChangelogEdits === "Y";
         let skipEdit = (fSkipEdits || options.taskVersionUpdate || options.taskChangelogFile) &&
                         !options.taskChangelogView && !options.taskChangelogHtmlView && !options.taskChangelogPrint;
-        if (options.versionFilesEditAlways && options.versionFilesEditAlways.includes(editFile)) {
+        if (!options.taskMode && options.versionFilesEditAlways && options.versionFilesEditAlways.includes(editFile)) {
             skipEdit = false;
         }
 
