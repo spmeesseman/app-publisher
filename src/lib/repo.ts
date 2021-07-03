@@ -93,20 +93,23 @@ export async function commit(context: IContext)
             vcFile = vcFile.replace("$(VERSION)", nextRelease.version)
                            .replace("$(NEXTVERSION)", nextRelease.version)
                            .replace("$(LASTVERSION)", lastRelease.version);
-            if (await isVersioned(context, vcFile)) {
-                if (options.verbose) {
-                    logger.info(`vcFiles: Pushed ${vcFile} to 'modified' files`);
+            if (await pathExists(vcFile))
+            {
+                if (await isVersioned(context, vcFile)) {
+                    if (options.verbose) {
+                        logger.info(`vcFiles: Pushed ${vcFile} to 'modified' files`);
+                    }
+                    changeList.push({ path: vcFile, type: "M" });
                 }
-                changeList.push({ path: vcFile, type: "M" });
-            }
-            else {
-                if (options.verbose) {
-                    logger.info(`vcFiles: Pushed ${vcFile} to 'added' files`);
+                else {
+                    if (options.verbose) {
+                        logger.info(`vcFiles: Pushed ${vcFile} to 'added' files`);
+                    }
+                    changeListAdd.push({ path: vcFile, type: "A" });
+                    changeList.push({ path: vcFile, type: "A" });
                 }
-                changeListAdd.push({ path: vcFile, type: "A" });
-                changeList.push({ path: vcFile, type: "A" });
+                ++vcRcFileCt;
             }
-            ++vcRcFileCt;
         }
     }
 
@@ -785,19 +788,22 @@ export async function revert(context: IContext, files?: IEdit[])
             vcFile = vcFile.replace("$(VERSION)", nextRelease.version)
                            .replace("$(NEXTVERSION)", nextRelease.version)
                            .replace("$(LASTVERSION)", lastRelease.version);
-            if (await isVersioned(context, vcFile)) {
-                if (options.verbose) {
-                    logger.info(`vcRevertFiles: Pushed ${vcFile} to 'modified' files`);
+            if (await pathExists(vcFile))
+            {
+                if (await isVersioned(context, vcFile)) {
+                    if (options.verbose) {
+                        logger.info(`vcRevertFiles: Pushed ${vcFile} to 'modified' files`);
+                    }
+                    changeListModify.push({ path: vcFile, type: "M" });
                 }
-                changeListModify.push({ path: vcFile, type: "M" });
-            }
-            else {
-                if (options.verbose) {
-                    logger.info(`vcRevertFiles: Pushed ${vcFile} to 'added' files`);
+                else {
+                    if (options.verbose) {
+                        logger.info(`vcRevertFiles: Pushed ${vcFile} to 'added' files`);
+                    }
+                    changeListAdd.push({ path: vcFile, type: "A" });
                 }
-                changeListAdd.push({ path: vcFile, type: "A" });
+                ++vcRcFileCt;
             }
-            ++vcRcFileCt;
         }
     }
 
