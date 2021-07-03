@@ -584,16 +584,6 @@ export const publishRcOpts =
         "Utility fieled for tarcking version if no other mechanism is available."
     ],
 
-    readConfig: [
-        true,
-        "boolean",
-        false,
-        [ "-rcfg", "--read-config" ],
-        {
-            help: "Display the contents of the configuration file."
-        }
-    ],
-
     repo: [
         false,
         "string",

@@ -515,10 +515,6 @@ export interface IOptions
      */
     projectName: string;
     /**
-     * Display the contents of the configuration file.
-     */
-    readConfig: boolean;
-    /**
      * The repository URL.  In the form:
      *     https://svn.mydomain.com/path/to/repo/projectname/trunk
      *     https://github.com/username/projectname
