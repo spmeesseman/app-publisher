@@ -541,16 +541,16 @@ export class ChangelogMd extends Changelog
         }
 
         if (!(await pathExists(inputFile))) {
-            logger.warn("No changelog file exists");
+            logger.warn("Changelog md file does not exist");
             return "";
         }
 
-        logger.log("Extract section from changelog file");
+        logger.log(`Extract changelog section from '${inputFile}'`);
         logger.log(`   Num sections       : '${numSections}'`);
         logger.log(`   Version start      : '${version ?? "n/a"}'`);
         logger.log(`   Version string     : '${options.versionText}'`);
-        logger.log(`   HTML Format        : '${htmlFormat}'`);
-        logger.log(`   Input File         : '${inputFile}'`);
+        logger.log(`   HTML format        : '${htmlFormat}'`);
+        logger.log(`   Input file         : '${inputFile}'`);
 
         //
         // Code operation:

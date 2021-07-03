@@ -588,7 +588,7 @@ async function runRelease(context: IContext)
     // TODO - can probably do some more options checking in populateChangelog so that they
     // arent built under certin task mode conditions
     //
-    await context.changelog.populate(context);
+    await context.changelog.populate(context, !!doChangelog);
 
     //
     // Pre-build scipts (.publishrc)

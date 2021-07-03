@@ -607,15 +607,15 @@ export class ChangelogTxt extends Changelog
         }
 
         if (!(await pathExists(inputFile))) {
-            logger.warn("History file does not exist");
+            logger.warn("Changelog txt file does not exist");
             return "";
         }
 
-        logger.log("Extract from history.txt file");
+        logger.log(`Extract changelog section from '${inputFile}'`);
         logger.log(`   Num sections       : '${numSections}'`);
         logger.log(`   Version start      : '${version ?? "n/a"}'`);
         logger.log(`   Version string     : '${options.versionText}'`);
-        logger.log(`   Format             : '${htmlFormat}'`);
+        logger.log(`   HTML format        : '${htmlFormat}'`);
         logger.log(`   Input file         : '${inputFile}'`);
 
         //
@@ -666,7 +666,7 @@ export class ChangelogTxt extends Changelog
         //
         const idx = fileContents.indexOf(`${options.versionText} ${version}`);
         if (idx === -1) {
-            logger.error("   History section could not be found, exit");
+            logger.error("   Changelog txt section could not be found, exit");
             throw new Error("161");
         }
         fileContents = fileContents.substring(idx);

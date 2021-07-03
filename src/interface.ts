@@ -21,7 +21,7 @@ export interface IChangelog
     createSectionFromCommits(context: IContext): string;
     doEdit(context: IContext): Promise<void>;
     getVersion(context: IContext): Promise<string>;
-    populate(context: IContext): Promise<void>;
+    populate(context: IContext, nextVersionChangelogWritten?: boolean): Promise<void>;
 }
 
 

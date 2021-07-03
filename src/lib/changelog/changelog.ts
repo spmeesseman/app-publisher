@@ -32,23 +32,30 @@ export abstract class Changelog implements IChangelog
      * @since 3.0.3
      * @param context The run context object.  The `context.changelog` object will be populated.
      */
-    public async populate(context: IContext)
+    public async populate(context: IContext, nextVersionChangelogWritten = true)
     {
-        const {options, lastRelease, nextRelease, logger} = context,
-            getFileNotesLast = options.taskEmail,
-            getHtmlLog = !options.taskMode && (options.githubRelease === "Y" || options.mantisbtRelease === "Y"),
-            getHtmlLogLast = context.options.taskGithubRelease || context.options.taskMantisbtRelease,
-            getFileLog = context.options.taskEmail || (!options.taskMode && options.emailNotification === "Y");
+        const {options, lastRelease, nextRelease, logger} = context;
+
+        if (options.taskVersionUpdate) {
+            return;
+        }
+
+        const getFileNotesLast = options.taskEmail,
+              getHtmlLog = !options.taskMode && (options.githubRelease === "Y" || options.mantisbtRelease === "Y"),
+              getHtmlLogLast = context.options.taskGithubRelease || context.options.taskMantisbtRelease,
+              getFileLog = context.options.taskEmail || (!options.taskMode && options.emailNotification === "Y");
 
         logger.log("Get release changelogs");
 
-        this.entries = await this.getSectionEntries(context, nextRelease.version);
+        this.entries = nextVersionChangelogWritten ? await this.getSectionEntries(context, nextRelease.version) : undefined;
         this.entriesLast = getHtmlLogLast ? await this.getSectionEntries(context, lastRelease.version) : undefined;
 
-        this.htmlNotes = getHtmlLog ? await this.createHtmlChangelog(context, this.entries) : undefined;
-        this.htmlNotesLast = getHtmlLogLast ? await this.createHtmlChangelog(context, this.entriesLast) : undefined;
+        if (this.entries) {
+            this.htmlNotes = getHtmlLog ? await this.createHtmlChangelog(context, this.entries) : undefined;
+            this.htmlNotesLast = getHtmlLogLast ? await this.createHtmlChangelog(context, this.entriesLast) : undefined;
+        }
 
-        this.fileNotes = getFileLog ? await this.getSections(context, nextRelease.version) : undefined;
+        this.fileNotes = getFileLog && nextVersionChangelogWritten ? await this.getSections(context, nextRelease.version) : undefined;
         this.fileNotesLast = getFileNotesLast ? await this.getSections(context, lastRelease.version) : undefined;
 
         this.notes = this.notes || this.createSectionFromCommits(context);
