@@ -29,7 +29,7 @@
     ],
     "distAddAllToVC":    "N",
     "emailNotification": "N",
-    "emailMode":         "",
+    "emailMode":         "std",
     "emailPort":         25,
     "emailRecip":        "smeesseman@pjats.com",
     "emailSender":       "${AP_EMAIL_SENDER_PJA}",

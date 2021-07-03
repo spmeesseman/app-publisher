@@ -27,7 +27,7 @@
     "distReleasePostCommand": [],
     "distAddAllToVC":    "N",
     "emailNotification": "N",
-    "emailMode":         "",
+    "emailMode":         "std",
     "emailPort":         25,
     "emailRecip":        "spmeesseman@gmail.com",
     "emailSender":       "Scott Meesseman <scott@spmeesseman.com>",
