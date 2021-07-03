@@ -246,7 +246,7 @@ export const publishRcOpts =
 
     emailRecip: [
         true,
-        "string",
+        "string|string[]",
         "",
         "The email address to use as the 'To' address when sending an email",
         "notification."
@@ -365,8 +365,9 @@ export const publishRcOpts =
     mantisbtPlugin: [
         true,
         "flag",
-        "N",
-        "Specifies this project is a MantisBT plugin."
+        "",
+        "Specifies the main project file for a MantisBT plugin project.  The file",
+        "extension must be '.php'"
     ],
 
     mantisbtProject: [
@@ -423,7 +424,7 @@ export const publishRcOpts =
     npmPackDist: [
         true,
         "flag",
-        "Y",
+        "N",
         "Copy the NPM package to the directory specified by 'distReleasePathSrc'.",
         "Ignored if npmRelease = N."
     ],
@@ -628,7 +629,15 @@ export const publishRcOpts =
         "flag",
         "N",
         "Skip committing changes to version control when the final release stage is",
-        "finished."
+        "finished (commit stage)."
+    ],
+
+    skipTag: [
+        true,
+        "flag",
+        "N",
+        "Skip tagging version in version control when the final release stage is",
+        "finished (commit stage)."
     ],
 
     skipVersionEdits: [
@@ -1022,7 +1031,7 @@ export const publishRcOpts =
 
     testEmailRecip: [
         true,
-        "string",
+        "string|string[]",
         "",
         "The email address to use as the 'To' address when sending an email",
         "notification while running in dry run mode."
@@ -1206,15 +1215,6 @@ export const publishRcOpts =
         "",
         "A file path or list of file paths where sroll-down is perfoemed when opened",
         "for editing."
-    ],
-
-    versionProperty: [
-        true,
-        "string",
-        "",
-        "A version property to be used or a project that does not use a package.json",
-        "file.  Versions specified by this property should be in the same format as",
-        "that of a package.json file and can be semantically parsed.",
     ],
 
     versionPreReleaseId: [

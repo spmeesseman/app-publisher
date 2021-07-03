@@ -1,6 +1,7 @@
 
 import * as path from "path";
-import { isObject, isString, validateVersion } from "./utils/utils";
+import { publishRcOpts } from "../args";
+import { isNumeric, isObject, isString, validateVersion } from "./utils/utils";
 import { createDir, pathExists } from "./utils/fs";
 import { IContext, IVersionFile } from "../interface";
 
@@ -181,6 +182,89 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
         options.commitMsgMap = [ options.commitMsgMap ]; // convert to array
     }
 
+    function doInvalidOpt(p: string, v: string, d: string)
+    {
+        logger.error(`Invalid value specified for '${p}' in ${path.basename(options.configFilePath)}:`);
+        logger.error(`   ${p}`);
+        logger.error(d);
+        return false;
+    }
+
+    //
+    // FLAGS - Verify Y/N, set to default value on empty
+    //
+    for (const o in options)
+    {
+        if (publishRcOpts[o])
+        {
+            const optType = publishRcOpts[o][1];
+            if (optType === "flag")
+            {
+                if (options[o]) {
+                    if (options[o] !== "Y" && options[o] !== "N") {
+                        return doInvalidOpt(o, options[o], "Accepted values are Y|N");
+                    }
+                }
+                else {
+                    options[o] = publishRcOpts[o][2];
+                }
+            }
+            else if (optType === "string")
+            {
+                if (options[o]) {
+                    if (!isString(options[o])) {
+                        return doInvalidOpt(o, options[o], "Value must be a string");
+                    }
+                }
+            }
+            else if (optType.startsWith("string"))
+            {
+                if (options[o]) {
+                    for (const s of options[o])
+                    {
+                        if (!isString(s)) {
+                            return doInvalidOpt(o, options[o], "All values must be strings");
+                        }
+                    }
+                }
+            }
+            else if (optType === "number")
+            {
+                if (options[o]) {
+                    if (!isNumeric(options[o])) {
+                        return doInvalidOpt(o, options[o], "Value must be a number");
+                    }
+                }
+            }
+            else if (optType.startsWith("enum("))
+            {
+                if (options[o]) {
+                    const allowedValues = optType.substring(5, optType.length - 1).trim().split("|");
+                    if (!isString(options[o]) || !allowedValues.includes(options[o].toString())) {
+                        return doInvalidOpt(o, options[o], "Accepted values are " + allowedValues.join("|"));
+                    }
+                }
+                else {
+                    options[o] = publishRcOpts[o][2];
+                }
+            }
+        }
+    }
+    //
+    // Loop through all possible arguments, and set efault values if they dont
+    // already exist on the options object
+    //
+    for (const o in publishRcOpts)
+    {   //
+        // TODO - techincally w=all defaults should be set here if theres a defined
+        // default value and the property is not on the options object.  In lieu of
+        // creating side effect bugs from this change, leaving it to just flags for now
+        //
+        if (publishRcOpts[o][1] === "flag" && !options[o]) {
+            options[o] = publishRcOpts[o][2];
+        }
+    }
+
     //
     // Version files
     //
@@ -218,6 +302,7 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
             }
         }
     }
+
     if (options.versionFiles)
     {
         for (const vf of options.versionFiles)
@@ -366,19 +451,6 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
             }
         }
     }
-    //
-    // repo strip trailing '/'
-    //
-    if (options.repo && options.repo.endsWith("/")) {
-        options.repo = options.repo.substring(0, options.repo.length - 1);
-    }
-
-    //
-    // vcWebPath strip trailing '/'
-    //
-    if (options.vcWebPath && options.vcWebPath.endsWith("/")) {
-        options.vcWebPath = options.vcWebPath.substring(0, options.vcWebPath.length - 1);
-    }
 
     function setDefaultEditor()
     {
@@ -426,24 +498,13 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     }
 
     //
-    // Changelog file line length
-    //
-    if (!options.changelogLineLen) {
-        options.changelogLineLen = 80;
-    }
-
-    //
     // NPM
     //
     if (options.taskNpmRelease) {
         options.npmRelease = "Y";
     }
-    if (options.npmRelease)
+    if (options.npmRelease === "Y")
     {
-        if (options.npmRelease !== "Y" && options.npmRelease !== "N") {
-            logger.error("Invalid value specified for npmRelease, accepted values are Y/N");
-            return false;
-        }
         if (options.npmPackDist === "Y")
         {
             if (!options.distReleasePathSrc) {
@@ -451,39 +512,32 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
                 return false;
             }
         }
-        if (options.npmRelease === "Y")
-        {   //
-            // Set a default NPM registry
-            //
-            if (!options.npmRegistry) {
-                options.npmRegistry = "https://registry.npmjs.org";
-            }
-            //
-            // npmRegistry strip trailing '/'
-            //
-            else if (options.npmRegistry && options.npmRegistry.endsWith("/")) {
-                options.npmRegistry = options.npmRegistry.substring(0, options.npmRegistry.length - 1);
-            }
+        //
+        // Set a default NPM registry
+        //
+        if (!options.npmRegistry) {
+            options.npmRegistry = "https://registry.npmjs.org";
         }
-    }
-    else {
-        options.npmRelease = "N";
+        //
+        // npmRegistry strip trailing '/'
+        //
+        else if (options.npmRegistry && options.npmRegistry.endsWith("/")) {
+            options.npmRegistry = options.npmRegistry.substring(0, options.npmRegistry.length - 1);
+        }
     }
 
     //
-    // Convert any Y/N vars to upper case and check validity
+    // Dist Release
     //
     if (options.taskDistRelease) {
         options.distRelease = "Y";
     }
-    if (options.distRelease) {
-        if (options.distRelease !== "Y" && options.distRelease !== "N") {
-            logger.error("Invalid value specified for distRelease, accepted values are Y/N");
-            return false;
-        }
-    }
-    else {
-        options.distRelease = "N";
+    //
+    // Check dist release path for dist release
+    //
+    if (options.distRelease === "Y" && !options.distReleasePathSrc) {
+        logger.error("distReleasePathSrc must be specified for dist release");
+        return false;
     }
 
     //
@@ -492,28 +546,42 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     if (options.taskGithubRelease) {
         options.githubRelease = "Y";
     }
-    if (options.githubRelease) {
-        if (options.githubRelease !== "Y" && options.githubRelease !== "N") {
-            logger.error("Invalid value specified for githubRelease, accepted values are Y/N");
+    if (options.githubRelease === "Y") {
+        if (!options.githubUser) {
+            logger.error("You must specify githubUser for a GitHub release type");
             return false;
         }
-        if (options.githubRelease === "Y")
-        {
-            if (!options.githubUser) {
-                logger.error("You must specify githubUser for a GitHub release type");
-                return false;
-            }
-            if (!env.GITHUB_TOKEN) {
-                logger.error("You must have GITHUB_TOKEN defined in the environment for a GitHub release type");
-                logger.error("Set the environment variable GITHUB_TOKEN using the token value created on the GitHub website");
-                return false;
-            }
+        if (!env.GITHUB_TOKEN) {
+            logger.error("You must have GITHUB_TOKEN defined in the environment for a GitHub release type");
+            logger.error("Set the environment variable GITHUB_TOKEN using the token value created on the GitHub website");
+            return false;
         }
     }
-    else {
-        options.githubRelease = "N";
-    }
 
+    //
+    // Mantis Release
+    //
+    if (options.taskMantisbtRelease) {
+        options.mantisbtRelease = "Y";
+    }
+    if (options.mantisbtRelease === "Y")
+    {
+        if (options.mantisbtUrl.length === 0) {
+            logger.error("You must specify mantisbtUrl for a MantisBT release type");
+            return false;
+        }
+        if (options.mantisbtApiToken.length === 0) {
+            logger.error("You must have MANTISBT_API_TOKEN defined for a MantisBT release type");
+            logger.error("-or- you must have mantisbtApiToken defined in publishrc");
+            logger.error("Set the envvar MANTISBT_API_TOKEN or the config mantisApiToken with the token value created on the MantisBT website");
+            logger.error("To create a token, see the \"Tokens\" section of your Mantis User Preferences page");
+            return false;
+        }
+        if (options.mantisbtUrl.length !== options.mantisbtApiToken.length) {
+            logger.error("You must specify the same number of MantisBT urls and API tokens");
+            return false;
+        }
+    }
     //
     // Mantis Plugin
     //
@@ -528,44 +596,8 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     }
 
     //
-    // Mantis Release
+    // C Projects
     //
-    if (options.taskMantisbtRelease) {
-        options.mantisbtRelease = "Y";
-    }
-    if (options.mantisbtRelease)
-    {
-        if (options.mantisbtRelease !== "Y" && options.mantisbtRelease !== "N") {
-            logger.error("Invalid value specified for mantisbtRelease, accepted values are Y/N");
-            return false;
-        }
-        if (options.mantisbtRelease === "Y")
-        {
-            if (options.mantisbtUrl.length === 0) {
-                logger.error("You must specify mantisbtUrl for a MantisBT release type");
-                return false;
-            }
-            if (options.mantisbtApiToken.length === 0) {
-                logger.error("You must have MANTISBT_API_TOKEN defined for a MantisBT release type");
-                logger.error("-or- you must have mantisbtApiToken defined in publishrc");
-                logger.error("Set the envvar MANTISBT_API_TOKEN or the config mantisApiToken with the token value created on the MantisBT website");
-                logger.error("To create a token, see the \"Tokens\" section of your Mantis User Preferences page");
-                return false;
-            }
-            if (options.mantisbtUrl.length !== options.mantisbtApiToken.length) {
-                logger.error("You must specify the same number of MantisBT urls and API tokens");
-                return false;
-            }
-        }
-    }
-    else {
-        options.mantisbtRelease = "N";
-    }
-
-    //
-    // Other flag types (Y/N)
-    //
-
     if (options.cProjectRcFile) {
         if (!options.cProjectRcFile.toLowerCase().includes((".rc"))) {
             logger.error("Invalid value for cProjectRcFile, file must have an rc extension");
@@ -575,72 +607,6 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
             logger.error("Invalid value for cProjectRcFile, non-existent file specified");
             return false;
         }
-    }
-
-    if (options.vcRevert) {
-        if (options.vcRevert !== "Y" && options.vcRevert !== "N") {
-            logger.error("Invalid value specified for testModeSvnRevert, accepted values are Y/N");
-            return false;
-        }
-    }
-    else {
-        options.vcRevert = "Y";
-    }
-
-    if (options.writeLog) {
-        if (options.writeLog !== "Y" && options.writeLog !== "N") {
-            logger.error("Invalid value specified for writeLog, accepted values are Y/N");
-            return false;
-        }
-    }
-    else {
-        options.writeLog = "N";
-    }
-
-    if (options.promptVersion) {
-        if (options.promptVersion !== "Y" && options.promptVersion !== "N") {
-            logger.error("Invalid value specified for promptVersion, accepted values are Y/N");
-            return false;
-        }
-    }
-    else {
-        options.promptVersion = "N";
-    }
-
-    if (options.skipChangelogEdits) {
-        if (options.skipChangelogEdits !== "Y" && options.skipChangelogEdits !== "N") {
-            logger.error("Invalid value specified for skipChangelogEdits, accepted values are Y/N");
-            return false;
-        }
-        if (options.dryRun === true && !options.taskMode) {
-            options.skipChangelogEdits = "N";
-            logger.warn("Overriding skipChangelogEdits on dry run, auto set to 'N'");
-        }
-    }
-    else {
-        options.skipChangelogEdits = "N";
-    }
-
-    if (options.skipVersionEdits) {
-        if (options.skipVersionEdits !== "Y" && options.skipVersionEdits !== "N") {
-            logger.error("Invalid value specified for skipVersionEdits, accepted values are Y/N");
-            return false;
-        }
-        if (options.dryRun === true) {
-            options.skipVersionEdits = "N";
-            logger.warn("Overriding skipVersionEdits on dry run, auto set to 'N'");
-        }
-    }
-    else {
-        options.skipVersionEdits = "Y";
-    }
-
-    //
-    // Check dist release path for dist release
-    //
-    if (options.distRelease === "Y" && !options.distReleasePathSrc) {
-        logger.error("distReleasePathSrc must be specified for dist release");
-        return false;
     }
 
     //
@@ -662,6 +628,27 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     //
     if (!options.changelogFile) {
         options.changelogFile = "CHANGELOG.md";
+    }
+
+    //
+    // Changelog file line length
+    //
+    if (!options.changelogLineLen) {
+        options.changelogLineLen = 80;
+    }
+
+    //
+    // repo strip trailing '/'
+    //
+    if (options.repo && options.repo.endsWith("/")) {
+        options.repo = options.repo.substring(0, options.repo.length - 1);
+    }
+
+    //
+    // vcWebPath strip trailing '/'
+    //
+    if (options.vcWebPath && options.vcWebPath.endsWith("/")) {
+        options.vcWebPath = options.vcWebPath.substring(0, options.vcWebPath.length - 1);
     }
 
     //
@@ -704,11 +691,23 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
         options.skipVersionEdits = "Y";
         options.versionFilesEditAlways = [];
         options.promptVersion = "N";
-        logger.warn("CI environment detected, the following flags/properties have been cleared:");
-        logger.warn("   skipChangelogEdits");
-        logger.warn("   skipVersionEdits");
-        logger.warn("   promptVersion");
-        logger.warn("   versionFilesEditAlways");
+        logger.warn("CI environment detected, the following flags/properties have been set:");
+        logger.warn("   skipChangelogEdits     : Y");
+        logger.warn("   skipVersionEdits       : Y");
+        logger.warn("   promptVersion          : N");
+        logger.warn("   versionFilesEditAlways : []");
+    }
+
+    //
+    // DRY RUN
+    //
+    if (options.dryRun)
+    {
+        options.skipChangelogEdits = "N";
+        options.skipVersionEdits = "N";
+        logger.warn("Dry run, the following flags have been set set:");
+        logger.warn("   skipChangelogEdits  : N");
+        logger.warn("   skipVersionEdits    : N");
     }
 
     //
@@ -720,11 +719,11 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
         options.skipVersionEdits = "Y";
         options.versionFilesEditAlways = [];
         options.promptVersion = "N";
-        logger.info("Tests run detected, the following flags/properties have been set for tests:");
-        logger.info("   skipChangelogEdits");
-        logger.info("   skipVersionEdits");
-        logger.info("   promptVersion");
-        logger.info("   versionFilesEditAlways");
+        logger.info("Tests run detected, the following flags/properties have been set:");
+        logger.warn("   skipChangelogEdits     : Y");
+        logger.warn("   skipVersionEdits       : Y");
+        logger.warn("   promptVersion          : N");
+        logger.warn("   versionFilesEditAlways : []");
     }
 
     //

@@ -407,7 +407,7 @@ export interface IOptions
      */
     mantisbtChglogEdit: "Y" | "N";
     /**
-     * Specifies this project is a MantisBT plugin.
+     * Specifies the main project file for a MantisBT plugin project.  The file extension must be '.php'.
      */
     mantisbtPlugin: string;
     /**
@@ -540,10 +540,15 @@ export interface IOptions
      */
     skipChangelogEdits: "Y" | "N";
     /**
-     * Skip committing changes to version control when the final release stage is finished.
+     * Skip committing changes to version control when the final release stage is finished. (commit stage)
      * Defaults to N
      */
     skipCommit: "Y" | "N";
+    /**
+     * Skip tagging version in version control when the final release stage is finished. (commit stage)
+     * Defaults to N
+     */
+    skipTag: "Y" | "N";
     /**
      * Skip all version edits in version files.
      * Defaults to N
@@ -611,7 +616,6 @@ export interface IOptions
      * Output the CI environment name to stdout.
      */
     taskCiEnv: boolean;
-
     /**
      * Finds CI related build information, and outputs the info to stdout using a concatenated
      * string in the form 'current|next|changelogpath'.
@@ -627,6 +631,14 @@ export interface IOptions
      * format for the commit message.
      */
     taskCommit: boolean;
+    /**
+     * Represents how many tasks are enabled for the current run.  Tasks are enabled using the
+     * --task-* command line options.
+     *
+     * @readonly
+     * @since 3.2.5
+     */
+    taskCount: number;
     /**
      * Runs the deployment scripts defined in the .publishrc configuration
      */
@@ -755,6 +767,8 @@ export interface IOptions
      * A list of files that should be checked into version control in the commit phase.  These
      * would include files generated/moved/modified by any of the hook scripts that are to be
      * included in the version commit/tag.
+     *
+     * @since 3.2.2
      */
     vcFiles: string[];
     /**
@@ -779,6 +793,8 @@ export interface IOptions
     vcTagPrefix: string;
     /**
      * Internal use only.  Set by tests.
+     *
+     * @since 3.2.0
      */
     tests: boolean;
     /**
@@ -855,12 +871,6 @@ export interface IOptions
      * A file path or list of file paths where sroll-down is perfoemed when opened for editing.
      */
     versionFilesScrollDown: string | string[];
-    /**
-     * A version property to be used or a project that does not use a package.json file.  Versions
-     * specified by this property should be in the same format as that of a package.json file and
-     * can be semantically parsed.
-     */
-    versionProperty: string;
     /**
      * An identifier denoting a pre-release can to be appenended to the next version number to
      * produce the final version string, e.g. 'alpha' produces the final version string of x.y.z-alpha.
