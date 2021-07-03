@@ -1,5 +1,12 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.2.3 (July 3rd, 2021)
+
+### Bug Fixes
+
+- **Versioning:** regression - The 'setFiles' operation of the versionFiles definition is broken in v3.2.2.
+- **Versioning:** regression - The '--task-version-update' task is broken in 3.2.2, and throws a changelog parsing error.
+
 ## Version 3.2.2 (July 2nd, 2021)
 
 ### Bug Fixes
