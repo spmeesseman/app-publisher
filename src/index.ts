@@ -79,7 +79,7 @@ Detailed Help
     //
     // If user specified 'cfg' or '--config', then just display config and exit
     //
-    if (options.config || options.verbose)
+    if (options.config || options.verbosex)
     {
         const title =
 `----------------------------------------------------------------------------
@@ -96,7 +96,7 @@ Detailed Help
     //
     // If user specified '--task-ci-env' then just display config and exit
     //
-    if (options.taskCiEnv)
+    if (options.taskCiEnv|| options.verbosex)
     {
         const title =
 `----------------------------------------------------------------------------
@@ -265,7 +265,7 @@ async function runRelease(context: IContext)
         return false;
     }
 
-    if (options.verbose) {
+    if (options.verbosex) {
         const title =
 `----------------------------------------------------------------------------
  Options Object

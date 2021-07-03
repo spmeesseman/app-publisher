@@ -51,13 +51,16 @@ function getOptions(useBanner = true): IOptions
     //
     opts.appPublisherVersion = pkg.version;
     opts.isNodeJsEnv = typeof module !== "undefined" && module.exports;
+    if (opts.verbosex) {
+        opts.verbose = true;
+    }
 
     //
     // Display color banner
     // If opts.verbose s set, then the ArgumentParser will have diplayed the banner already
     // For stdout type tasks, then we dont display the banner or anything else for that matter.
     //
-    if (!opts.taskModeStdOut && !opts.verbose && useBanner) {
+    if (!opts.taskModeStdOut && useBanner) {
         displayIntro(banner);
     }
 

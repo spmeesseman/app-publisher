@@ -1134,7 +1134,18 @@ export const publishRcOpts =
         false,
         [ "--verbose" ],
         {
-            help: "Enable additional log output."
+            help: "Enables additional log output."
+        }
+    ],
+
+    verbosex: [
+        true,
+        "boolean",
+        false,
+        [ "--verbosex" ],
+        {
+            help: "Enables additional log output, including stringified objects.\n" +
+                  "Pronounced 'ver-bose ecks' ;)"
         }
     ],
 

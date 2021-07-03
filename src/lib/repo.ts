@@ -5,6 +5,7 @@ import { deleteFile, pathExists } from "./utils/fs";
 import { IContext, IEdit } from "../interface";
 const execa = require("execa");
 const xml2js = require("xml2js");
+import { EOL } from "os";
 
 
 export async function addEdit(context: IContext, pathToAdd: string | string[])
@@ -152,7 +153,7 @@ export async function commit(context: IContext)
         {
             const chgListPaths = changeList.map((e: any) => e.path);
             logger.info("Committing touched files to git version control");
-            logger.info("   " + chgListPaths.join(" "));
+            context.stdout.write("   " + chgListPaths.join(EOL + "   ") + EOL);
             if (!options.dryRun) {
                 proc = await execaEx(context, "git", [ "commit", "-m", `"chore(release): v${nextRelease.version} [skip ci]"`, "--", ...chgListPaths ]);
             }
@@ -191,7 +192,7 @@ export async function commit(context: IContext)
         {
             const chgListPaths = changeList.map((e: any) => e.path);
             logger.info("Committing touched files to svn version control");
-            logger.info("   " + chgListPaths.join(" "));
+            context.stdout.write("   " + chgListPaths.join(EOL + "   ") + EOL);
             if (!options.dryRun) {
                 await execSvn(context, ["commit", ...chgListPaths, "-m", `"chore: v${nextRelease.version} [skip ci]"` ]);
             }

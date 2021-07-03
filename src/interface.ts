@@ -809,9 +809,17 @@ export interface IOptions
      */
     vcWebPath: string;
     /**
+     * Enables additional log output
+     *
      * @readonly
      */
     verbose: boolean;
+    /**
+     * Enables additional log output, including stringified objects.  Pronounced 'ver-bose ecks' ;)
+     *
+     * @readonly
+     */
+    verbosex: boolean;
     /**
      * @readonly
      */
