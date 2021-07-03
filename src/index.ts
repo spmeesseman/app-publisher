@@ -297,7 +297,7 @@ async function runRelease(context: IContext)
     //
     let taskDone = await processTasksLevel1(context);
     if (taskDone) {
-        logTaskResult(taskDone, "stdout level 1", logger);
+        logTaskResult(taskDone, "level 1 tasks", logger);
         return taskDone;
     }
 
@@ -338,7 +338,7 @@ async function runRelease(context: IContext)
     //
     taskDone = await processTasksLevel2(context);
     if (taskDone) {
-        logTaskResult(taskDone, "standard level 1", logger);
+        logTaskResult(taskDone, "level 2 tasks", logger);
         return taskDone;
     }
 
@@ -403,7 +403,7 @@ async function runRelease(context: IContext)
     //
     taskDone = await processTasksLevel3(context);
     if (taskDone) {
-        logTaskResult(taskDone, "standard level 1", logger);
+        logTaskResult(taskDone, "level 3 tasks", logger);
         return taskDone;
     }
 
@@ -532,7 +532,7 @@ async function runRelease(context: IContext)
     //
     taskDone = await processTasksLevel4(context);
     if (taskDone) {
-        logTaskResult(taskDone, "stdout level 2", logger);
+        logTaskResult(taskDone, "level 4 tasks", logger);
         return taskDone;
     }
 

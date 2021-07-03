@@ -127,7 +127,9 @@ export async function commit(context: IContext)
         {
             const chgListPathsAdded = changeListAdd.map((e: any) => e.path);
             logger.info("Adding unversioned touched files to git version control");
-            logger.info("   " + chgListPathsAdded.join(" "));
+            if (options.verbose) {
+                context.stdout.write("   " + chgListPathsAdded.join(EOL + "   ") + EOL);
+            }
             if (!options.dryRun) {
                 proc = await execa("git", [ "add", "--", ...chgListPathsAdded ], { cwd, env });
             }
@@ -153,7 +155,9 @@ export async function commit(context: IContext)
         {
             const chgListPaths = changeList.map((e: any) => e.path);
             logger.info("Committing touched files to git version control");
-            context.stdout.write("   " + chgListPaths.join(EOL + "   ") + EOL);
+            if (options.verbose) {
+                context.stdout.write("   " + chgListPaths.join(EOL + "   ") + EOL);
+            }
             if (!options.dryRun) {
                 proc = await execaEx(context, "git", [ "commit", "-m", `"chore(release): v${nextRelease.version} [skip ci]"`, "--", ...chgListPaths ]);
             }
@@ -180,7 +184,9 @@ export async function commit(context: IContext)
         {
             const chgListPathsAdded = changeListAdd.map((e: any) => e.path);
             logger.info("Adding unversioned touched files to svn version control");
-            logger.info("   " + chgListPathsAdded);
+            if (options.verbose) {
+                context.stdout.write("   " + chgListPathsAdded.join(EOL + "   ") + EOL);
+            }
             if (!options.dryRun) {
                 await execSvn(context, [ "add", ...chgListPathsAdded ]);
             }
@@ -192,7 +198,9 @@ export async function commit(context: IContext)
         {
             const chgListPaths = changeList.map((e: any) => e.path);
             logger.info("Committing touched files to svn version control");
-            context.stdout.write("   " + chgListPaths.join(EOL + "   ") + EOL);
+            if (options.verbose) {
+                context.stdout.write("   " + chgListPaths.join(EOL + "   ") + EOL);
+            }
             if (!options.dryRun) {
                 await execSvn(context, ["commit", ...chgListPaths, "-m", `"chore: v${nextRelease.version} [skip ci]"` ]);
             }
