@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.2.4 (July 3rd, 2021)
+
+### Bug Fixes
+
+- **Commit:** the '--task-commit' task fails if the distributed task run targets a pre-release.
+
 ## Version 3.2.3 (July 3rd, 2021)
 
 ### Bug Fixes
