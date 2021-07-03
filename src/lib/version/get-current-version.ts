@@ -82,8 +82,15 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
 
     //
     // Extract from changelog/history file
+    // If a pre-releaseid is being used and this is task mode, then there will be no
+    // changelog section for the pre-release version.  We
     //
-    doCheck(await getChangelogVersion(context), "changelog", false);
+    if (!options.versionPreReleaseId) {
+        doCheck(await getChangelogVersion(context), "changelog", false);
+    }
+    else {
+        logger.log("This is a pre-release, the changelog file will not be checked for version");
+    }
     //
     // If node_modules dir exists, use package.json to obtain cur version
     //
