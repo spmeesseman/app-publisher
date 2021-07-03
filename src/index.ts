@@ -24,11 +24,11 @@ import runDevCodeTests = require("./test");
 import { publishRcOpts } from "./args";
 import { getNextVersion } from "./lib/version/get-next-version";
 import { doGithubRelease, publishGithubRelease } from "./lib/releases/github";
-import { template } from "lodash";
+import { last, template } from "lodash";
 import { COMMIT_NAME, COMMIT_EMAIL, FIRST_RELEASE } from "./lib/definitions/constants";
 import { sendNotificationEmail } from "./lib/email";
 import { writeFile } from "./lib/utils/fs";
-import { commit, fetch, verifyAuth, getHead, tag, push, revert } from "./lib/repo";
+import { commit, fetch, verifyAuth, getHead, tag, push, revert, addEdit } from "./lib/repo";
 import { EOL } from "os";
 import { IContext, INextRelease, IOptions } from "./interface";
 import { ChangelogMd } from "./lib/changelog/changelog-md";
@@ -276,19 +276,6 @@ async function runRelease(context: IContext)
     }
 
     //
-    // If 'revert tak', we can just revertand exit.  setVersions() will recognize the
-    // task and only populate a list of files that 'would be' or 'have been' edited by
-    // a run.  Files that the run doesnt touch that have been edited by the user wont get
-    // reverted (or someone be in trouble)
-    //
-    if (options.taskRevert)
-    {
-        await setVersions(context);
-        await revert(context);
-        return true;
-    }
-
-    //
     // Get the IChangelog for thus run
     //
     // The changelog object can have 3 parts, 'fileNotes' that are read from the changelog file
@@ -305,9 +292,10 @@ async function runRelease(context: IContext)
 
     //
     // STDOUT TASKS
-    // If a level-1 stdout task is processed, we'll be done
+    // If a level-1 stdout task is processed, we'll be done.  taskDone returns `true` if
+    // a task ran auccessfully, `false` if no task ran, and a `string` if there was an error
     //
-    let taskDone = await processTasksStdOut1(context);
+    let taskDone = await processTasksLevel1(context);
     if (taskDone) {
         logTaskResult(taskDone, "stdout level 1", logger);
         return taskDone;
@@ -345,6 +333,16 @@ async function runRelease(context: IContext)
     }
 
     //
+    // Some tasks we can just process and exit after authentication verification, without
+    // any other processing
+    //
+    taskDone = await processTasksLevel2(context);
+    if (taskDone) {
+        logTaskResult(taskDone, "standard level 1", logger);
+        return taskDone;
+    }
+
+    //
     // TODO - Plugins maybe?
     //
     // await plugins.verifyConditions(context);
@@ -362,7 +360,6 @@ async function runRelease(context: IContext)
     //    versionInfo (for mavn builds and auto constructing version #)
     //
     const lastVersionInfo = await getCurrentVersion(context);
-
     //
     // Populate context with last release info, populates version number, uses
     // remote method with getTags()
@@ -387,27 +384,12 @@ async function runRelease(context: IContext)
             logger.error("   Tagged : " + lastRelease.version);
             logger.error("   Local  : " + lastRelease.versionInfo.version);
             logger.error("Need to correct versioning difference, exiting");
-            throw new Error("101");
+            return false;
         }
         else {
             logger.warn("Version mismatch found between latest tag and local files");
             logger.warn(`   Continuing in ${options.taskMode ? "task" : "republish"} mode`);
-            //
-            // Replace locally extracted version with tag version
-            //
-            lastRelease.versionInfo.version = lastRelease.version;
         }
-    }
-
-    //
-    // STDOUT TASKS
-    // Task '--task-version-current'
-    //
-    if (options.taskVersionCurrent)
-    {
-        context.stdout.write(lastRelease.version || FIRST_RELEASE);
-        // logTaskResult(true, "task version current", logger);
-        return true;
     }
 
     //
@@ -416,15 +398,25 @@ async function runRelease(context: IContext)
     context.lastRelease = lastRelease;
 
     //
+    // Some tasks we can just process and exit after authentication verification, without
+    // any other processing
+    //
+    taskDone = await processTasksLevel3(context);
+    if (taskDone) {
+        logTaskResult(taskDone, "standard level 1", logger);
+        return taskDone;
+    }
+
+    //
     // needNoCommits
     // The taskChangelogPrintVersion and taskChangelogViewVersion tasks just display a
     // section from the changelog (specified by version), so its referencing an existing
     // version, no need to look at ay commits or anything like that.
     //
     const needNoCommits = options.taskChangelogPrintVersion || options.taskChangelogViewVersion;
-
     //
-    // Populate context with commits
+    // Populate context with commits.  Retrieve all commits since the previous version tag,
+    // or all commits if a version tag does not exist.
     //
     if (!options.versionForceCurrent && !needNoCommits) {
         context.commits = await getCommits(context);
@@ -433,6 +425,9 @@ async function runRelease(context: IContext)
         context.commits = [];
     }
 
+    //
+    // Set the release level based on commit messages, and retrieve the HEAD revision.
+    //
     if (!options.versionForceCurrent)
     {
         nextRelease.level = await getReleaseLevel(context);
@@ -446,7 +441,7 @@ async function runRelease(context: IContext)
     // If there were no commits that set the release level to 'patch', 'minor', or 'major',
     // then we're done
     //
-    if (!nextRelease.level && !needNoCommits && lastVersionInfo.system === "semver")
+    if (!nextRelease.level && !needNoCommits && lastRelease.versionInfo.system === "semver")
     {   //
         // There are certain tasks a user may want to run after a release is made.  e.g. re-send
         // a notification email, or redo a Mantis or GitHub release. In these cases, user must
@@ -526,19 +521,20 @@ async function runRelease(context: IContext)
     }
 
     //
-    // STDOUT TASKS
-    // If a level2 stdout/fileout task is processed, we'll be done
+    // Get the tag name for the next release
     //
-    taskDone = await processTasksStdOut2(context);
+    nextRelease.tag = template(options.tagFormat)({ version: nextRelease.version });
+
+    //
+    // STDOUT TASKS
+    // If a level2 stdout/fileout task is processed, we'll be done.  taskDone returns `true` if
+    // a task ran auccessfully, `false` if no task ran, and a `string` if there was an error
+    //
+    taskDone = await processTasksLevel4(context);
     if (taskDone) {
         logTaskResult(taskDone, "stdout level 2", logger);
         return taskDone;
     }
-
-    //
-    // Get the tag name for the next release
-    //
-    nextRelease.tag = template(options.tagFormat)({ version: nextRelease.version });
 
     //
     // TODO - Plugins maybe?
@@ -598,7 +594,8 @@ async function runRelease(context: IContext)
     await util.runScripts(context, "preBuild", options.preBuildCommand, options.taskBuild, true);
 
     //
-    // Pre - NPM release
+    // Pre - NPM release - Package.json manipulation for multi-destination releases.
+    //
     // We can manipulate the package.json file for an npm release with various properties
     // on the options object.  Can be used to release the same build to multiple npm
     // repositories.  THis needs to be done now before any version edits are made and before
@@ -648,20 +645,22 @@ async function runRelease(context: IContext)
     }
 
     //
-    // Build scipts (.publishrc)
+    // Build scripts
     //
-    await util.runScripts(context, "build", options.buildCommand, options.taskBuild, true);
-    //
-    // If this is task mode, lof this task's result
-    //
-    if (options.taskBuild) {
-        logTaskResult(true, "build", logger);
+    if (options.buildCommand && options.buildCommand.length > 0 && (!options.taskMode || options.taskBuild))
+    {
+        await util.runScripts(context, "build", options.buildCommand, options.taskBuild, true);
+        //
+        // Post-build scripts (.publishrc)
+        //
+        await util.runScripts(context, "postBuild", options.postBuildCommand, options.taskBuild);
+        //
+        // If this is task mode, lof this task's result
+        //
+        if (options.taskBuild) {
+            logTaskResult(true, "build", logger);
+        }
     }
-
-    //
-    // Post-build scripts (.publishrc)
-    //
-    await util.runScripts(context, "postBuild", options.postBuildCommand, options.taskBuild);
 
     //
     // NPM release
@@ -818,60 +817,9 @@ async function runRelease(context: IContext)
     //
     // Commit / Tag
     //
-    if (!options.taskMode || options.taskCommit || options.taskTag)
-    {   //
-        // Commit
-        //
-        if (options.taskCommit || !options.taskMode)
-        {   //
-            // Pre-commit scripts
-            //
-            await util.runScripts(context, "preCommit", options.preCommitCommand); // (.publishrc)
-            //
-            // Commit changes to vcs
-            //
-            try {
-                await commit(context);
-            }
-            catch (e) {
-                logger.warn(`Failed to commit changes for v${nextRelease.version}`);
-                util.logWarning(context, "Manually commit the changes using the commit message format 'chore: vX.X.X'", e);
-            }
-        }
-        //
-        // Create the tag before calling the publish plugins as some require the tag to exists
-        //
-        if (options.taskTag || !options.taskMode)
-        {
-            try {
-                await tag(context);
-                await push(context);
-            }
-            catch (e) {
-                logger.warn(`Failed to tag v${nextRelease.version}`);
-                util.logWarning(context, `Manually tag the repository using the tag '${nextRelease.tag}'`, e);
-            }
-            //
-            // If there was a Github release made, then publish it and re-tag
-            //
-            // TODO - I think we can do just one release creation request at this point, and do
-            // a 'draft: false' here, instead of doing it b4 the commit/tag, and then issuing a
-            // patch request here
-            //
-            if (githubReleaseId) {
-                try {
-                    await publishGithubRelease(context, githubReleaseId);
-                }
-                catch (e) {
-                    logger.warn(`Failed to tag v${nextRelease.version}`);
-                    util.logWarning(context, "Manually publish the release using the GitHub website", e);
-                }
-            }
-        }
-        //
-        // Revert all changes if dry run, and configured to do so
-        //
-        await revertChanges(context);
+    if (!options.taskMode)
+    {
+        await commitAndTag(context, githubReleaseId);
     }
 
     //
@@ -911,12 +859,72 @@ async function runRelease(context: IContext)
 }
 
 
+async function commitAndTag(context: IContext, githubReleaseId: string)
+{
+    const { options, logger, nextRelease } = context;
+    //
+    // Commit
+    //
+    if (options.taskCommit || (!options.taskMode && options.skipCommit !== "Y"))
+    {   //
+        // Pre-commit scripts
+        //
+        await util.runScripts(context, "preCommit", options.preCommitCommand); // (.publishrc)
+        //
+        // Commit changes to vcs
+        //
+        try {
+            await commit(context);
+        }
+        catch (e) {
+            logger.warn(`Failed to commit changes for v${nextRelease.version}`);
+            util.logWarning(context, "Manually commit the changes using the commit message format 'chore: vX.X.X'", e);
+        }
+    }
+    //
+    // Create the tag before calling the publish plugins as some require the tag to exists
+    //
+    if (options.taskTag || (!options.taskMode && options.skipTag !== "Y"))
+    {
+        try {
+            await tag(context);
+            await push(context); // doesnt do anything for svn
+        }
+        catch (e) {
+            logger.warn(`Failed to tag v${nextRelease.version}`);
+            util.logWarning(context, `Manually tag the repository using the tag '${nextRelease.tag}'`, e);
+        }
+        //
+        // If there was a Github release made, then publish it and re-tag
+        //
+        // TODO - I think we can do just one release creation request at this point, and do
+        // a 'draft: false' here, instead of doing it b4 the commit/tag, and then issuing a
+        // patch request here
+        //
+        if (githubReleaseId) {
+            try {
+                await publishGithubRelease(context, githubReleaseId);
+            }
+            catch (e) {
+                logger.warn(`Failed to tag v${nextRelease.version}`);
+                util.logWarning(context, "Manually publish the release using the GitHub website", e);
+            }
+        }
+    }
+    //
+    // Revert all changes - only reverts if dry run, and configured to do so
+    //
+    await revertChanges(context);
+}
+
+
 /**
  * Tasks that can be processed without retrieving commits and other tag related info
+ * including authentication verification with the VCS.
  *
  * @param context The run context object.
  */
-async function processTasksStdOut1(context: IContext): Promise<boolean>
+async function processTasksLevel1(context: IContext): Promise<string | boolean>
 {
     const options = context.options;
 
@@ -942,11 +950,87 @@ async function processTasksStdOut1(context: IContext): Promise<boolean>
 
 
 /**
- * Tasks that need to be processed "after" retrieving commits and other tag related info
+ * Tasks that can be processed before version info is obtained, but after authentication
+ * is verified with the VCS.
  *
  * @param context The run context object.
  */
-async function processTasksStdOut2(context: IContext): Promise<boolean>
+async function processTasksLevel2(context: IContext): Promise<string | boolean>
+{
+    const options = context.options;
+
+    //
+    // Use setVersions() will recognize the task and only populate a list of files that
+    // 'would be' or 'have been' edited by a run.  Files that the run doesnt touch that
+    // have been edited by the user wont get reverted (or someone be in trouble)
+    //
+    if (options.taskRevert)
+    {
+        await addEdit(context, options.changelogFile);
+        await setVersions(context, true);
+        await revert(context);
+        return true;
+    }
+
+    return false;
+}
+
+
+/**
+ * Tasks that can be processed once version info is obtained
+ *
+ * @param context The run context object.
+ */
+async function processTasksLevel3(context: IContext): Promise<string | boolean>
+{
+    const { options, lastRelease, nextRelease } = context;
+
+    //
+    // STDOUT TASKS
+    // Task '--task-version-current'
+    //
+    if (options.taskVersionCurrent)
+    {
+        context.stdout.write(lastRelease.version || FIRST_RELEASE);
+        // logTaskResult(true, "task version current", logger);
+        return true;
+    }
+
+    //
+    // Tasks --task-commit / --task-tag
+    // When these tasks are used, the local version files should be updated with the new
+    // version already from a '--task-version-update' run.  lastRelease.versionInfo.version
+    // will contain the new version read from the local files.  lastRelease.version will have
+    // been set to the current version that was read from the version tags.
+    //
+    if (options.taskCommit || options.taskTag)
+    {
+        if (options.taskTagVersion) {
+            if (!util.validateVersion(options.taskTagVersion, lastRelease.versionInfo.system)) {
+                return `Invalid version provided with --task-tag-version : ${options.taskTagVersion}`;
+            }
+        }
+        nextRelease.version = options.taskTagVersion || lastRelease.versionInfo.version;
+        nextRelease.tag = template(options.tagFormat)({ version: nextRelease.version });
+        await addEdit(context, options.changelogFile);
+        await setVersions(context, true);
+        await commitAndTag(context, undefined);
+        return true;
+    }
+
+    return false;
+}
+
+
+/**
+ * Tasks that need to be processed after retrieving commits and populating the
+ * nextRelease object, but before any of the editing, build, and release operations
+ * take place (i.e. just before the changelog edit stage and the following release
+ * type processing).
+ *
+ * @param context The run context object.
+ */
+async function processTasksLevel4(context: IContext): Promise<string | boolean>
 {
     const options = context.options,
           logger = context.logger,

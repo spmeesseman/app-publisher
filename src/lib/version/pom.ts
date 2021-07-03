@@ -64,7 +64,7 @@ export async function getPomVersion({logger}): Promise<IVersionInfo>
 }
 
 
-export async function setPomVersion(context: IContext)
+export async function setPomVersion(context: IContext, recordEditOnly: boolean)
 {
     const {options, logger, nextRelease, cwd, env} = context;
 
@@ -73,7 +73,7 @@ export async function setPomVersion(context: IContext)
         // If this is '--task-revert', all we're doing here is collecting the paths of the
         // files that would be updated in a run, don't actually do the update
         //
-        if (options.taskRevert) {
+        if (recordEditOnly) {
             await addEdit(context, "pom.xml");
             return;
         }

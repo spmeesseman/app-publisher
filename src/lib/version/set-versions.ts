@@ -12,7 +12,6 @@ import { setNpmVersion } from "./npm";
 import { IContext } from "../../interface";
 import { EOL } from "os";
 import { addEdit } from "../repo";
-import { stringify } from "json5";
 import json5 from "json5";
 
 export = setVersions;
@@ -25,32 +24,32 @@ export = setVersions;
  *
  * @param context context
  */
-async function setVersions(context: IContext): Promise<void>
+async function setVersions(context: IContext, recordEditOnly = false): Promise<void>
 {
     //
     // NPM managed project, update package.json if required
     //
-    await setNpmVersion(context);
+    await setNpmVersion(context, recordEditOnly);
     //
     // AppPublisher publishrc version
     //
-    await setAppPublisherVersion(context);
+    await setAppPublisherVersion(context, recordEditOnly);
     //
     // ExtJs build
     //
-    await setExtJsVersion(context);
+    await setExtJsVersion(context, recordEditOnly);
     //
     // Maven managed project, update pom.xml if required
     //
-    await setPomVersion(context);
+    await setPomVersion(context, recordEditOnly);
     //
     // Mantisbt plugin project, update main plugin file if required
     //
-    await setMantisBtVersion(context);
+    await setMantisBtVersion(context, recordEditOnly);
     //
     // C project, update main rc file if required
     //
-    await setMakefileVersion(context);
+    await setMakefileVersion(context, recordEditOnly);
     //
     // If this is a .NET build, update assemblyinfo file
     // Search root dir and one level deep.  If the assembly file is located deeper than 1 dir
@@ -59,7 +58,7 @@ async function setVersions(context: IContext): Promise<void>
     // $AssemblyInfoLoc = Get-ChildItem -Name -Recurse -Depth 1 -Filter "assemblyinfo.cs" -File -Path . -ErrorAction SilentlyContinue
     // if ($AssemblyInfoLoc -is [system.string] && ![string]::IsNullOrEmpty($AssemblyInfoLoc))
     // {
-    await setDotNetVersion(context);
+    await setDotNetVersion(context, recordEditOnly);
     // }
     // else if ($AssemblyInfoLoc -is [System.Array] && $AssemblyInfoLoc.Length -gt 0) {
     //    foreach ($AssemblyInfoLocFile in $AssemblyInfoLoc) {
@@ -69,11 +68,11 @@ async function setVersions(context: IContext): Promise<void>
     //
     // Version bump specified files in publishrc config 'versionFiles'
     //
-    await setVersionFiles(context);
+    await setVersionFiles(context, recordEditOnly);
 }
 
 
-async function setVersionFiles(context: IContext): Promise<void>
+async function setVersionFiles(context: IContext, recordEditOnly: boolean): Promise<void>
 {
     const { options, logger, nextRelease, lastRelease, cwd } = context;
 
@@ -86,11 +85,10 @@ async function setVersionFiles(context: IContext): Promise<void>
     // that would be updated in a run, don't actually do the update.  So we don't need to
     // look at any version stuff.
     //
-    if (!options.taskRevert)
+    if (!recordEditOnly)
     {
         logger.log("Update 'versionFiles' specified version files");
         logger.log("   # of definitions : " + options.versionFiles.length);
-
         if (options.verbose) {
             context.stdout.write("Definitions:" + EOL);
             context.stdout.write(JSON.stringify(options.versionFiles, undefined, 2) + EOL);
@@ -179,7 +177,7 @@ async function setVersionFiles(context: IContext): Promise<void>
                             // If this is '--task-revert', all we're doing here is collecting the paths of
                             // the files that would be updated in a run, don't actually do the update
                             //
-                            if (options.taskRevert) {
+                            if (recordEditOnly) {
                                 await addEdit(context, sf.path);
                                 continue;
                             }
@@ -227,7 +225,7 @@ async function setVersionFiles(context: IContext): Promise<void>
                         // If this is '--task-revert', all we're doing here is collecting the paths of
                         // the files that would be updated in a run, don't actually do the update
                         //
-                        if (options.taskRevert) {
+                        if (recordEditOnly) {
                             await addEdit(context, tvFile);
                             continue;
                         }
@@ -239,7 +237,7 @@ async function setVersionFiles(context: IContext): Promise<void>
                 }
             }
 
-            if (!matched && !options.taskRevert) {
+            if (!matched && !recordEditOnly) {
                 logger.error("   Not found (no match)");
                 throw new Error("Local version file validation failed");
             }

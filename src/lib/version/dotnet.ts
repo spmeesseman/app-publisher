@@ -86,7 +86,7 @@ export async function getDotNetVersion(context: IContext): Promise<IVersionInfo>
 }
 
 
-export async function setDotNetVersion(context: IContext)
+export async function setDotNetVersion(context: IContext, recordEditOnly: boolean)
 {
     let semVersion = "";
     const {lastRelease, nextRelease, options, logger, cwd, env} = context,
@@ -97,7 +97,7 @@ export async function setDotNetVersion(context: IContext)
         // If this is '--task-revert', all we're doing here is collecting the paths of the
         // files that would be updated in a run, don't actually do the update
         //
-        if (options.taskRevert) {
+        if (recordEditOnly) {
             await addEdit(context, file);
             return;
         }

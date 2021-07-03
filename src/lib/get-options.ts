@@ -18,13 +18,6 @@ function getOptions(useBanner = true): IOptions
         ignorePositional: [ "-p", "--profile" ]
     };
     const opts: IOptions = parseArgs({ ...{}, ...publishRcOpts}, parserOpts);
-
-    //
-    // Set task mode stdout flag on the options object
-    //
-    opts.taskModeStdOut = !!(opts.taskVersionCurrent || opts.taskVersionNext || opts.taskVersionInfo ||
-                             opts.taskCiEnvInfo || opts.taskVersionPreReleaseId || opts.taskChangelogPrint ||
-                             opts.taskChangelogPrintVersion || opts.taskReleaseLevel);
     opts.taskCount = 0;
 
     //
@@ -40,11 +33,18 @@ function getOptions(useBanner = true): IOptions
             // check 'string' and 'boolean' types differently
             //
             if (oDef && (valueType === "boolean" && opts[o] === true) || (valueType === "string"  && opts[o])) {
-                opts.taskMode = true;
                 ++opts.taskCount;
             }
         }
     }
+    opts.taskMode = opts.taskCount > 0;
+
+    //
+    // Set task mode stdout flag on the options object
+    //
+    opts.taskModeStdOut = !!(opts.taskVersionCurrent || opts.taskVersionNext || opts.taskVersionInfo ||
+                             opts.taskCiEnvInfo || opts.taskVersionPreReleaseId || opts.taskChangelogPrint ||
+                             opts.taskChangelogPrintVersion || opts.taskReleaseLevel);
 
     //
     // Set some additional options

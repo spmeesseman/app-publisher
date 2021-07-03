@@ -56,7 +56,7 @@ export function getAppPublisherVersion({options, logger}: IContext): IVersionInf
 }
 
 
-export async function setAppPublisherVersion(context: IContext)
+export async function setAppPublisherVersion(context: IContext, recordEditOnly: boolean)
 {
     let files: string[] = [];
     const {nextRelease, options, logger, cwd} = context;
@@ -76,7 +76,7 @@ export async function setAppPublisherVersion(context: IContext)
             // If this is '--task-revert', all we're doing here is collecting the paths of the
             // files that would be updated in a run, don't actually do the update
             //
-            if (options.taskRevert) {
+            if (recordEditOnly) {
                 await addEdit(context, file);
                 continue;
             }

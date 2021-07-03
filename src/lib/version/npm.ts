@@ -69,7 +69,7 @@ export async function getNpmVersion(context: IContext): Promise<IVersionInfo>
 }
 
 
-export async function setNpmVersion(context: IContext)
+export async function setNpmVersion(context: IContext, recordEditOnly: boolean)
 {
     let modified = false;
     const {options, nextRelease, logger, cwd} = context,
@@ -86,7 +86,7 @@ export async function setNpmVersion(context: IContext)
         // If this is '--task-revert', all we're doing here is collecting the paths of the
         // files that would be updated in a run
         //
-        if (options.taskRevert) {
+        if (recordEditOnly) {
             await addEdit(context, file);
             if (packageLockFileExists) {
                 await addEdit(context, file.replace("package.json", "package-lock.json"));

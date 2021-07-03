@@ -191,7 +191,7 @@ export async function commit(context: IContext)
         {
             const chgListPaths = changeList.map((e: any) => e.path);
             logger.info("Committing touched files to svn version control");
-            logger.info("   " + chgListPaths);
+            logger.info("   " + chgListPaths.join(" "));
             if (!options.dryRun) {
                 await execSvn(context, ["commit", ...chgListPaths, "-m", `"chore: v${nextRelease.version} [skip ci]"` ]);
             }

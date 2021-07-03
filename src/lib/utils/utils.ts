@@ -76,6 +76,7 @@ export async function editFile({ options, nextRelease, logger, cwd, env }: ICont
 {
     if (editFile && await pathExists(editFile))
     {
+        let recordEdit = !options.taskMode;
         const fSkipEdits = !isChangelog ? options.skipVersionEdits === "Y" : options.skipChangelogEdits === "Y";
         let skipEdit = (fSkipEdits || options.taskVersionUpdate || options.taskChangelogFile) &&
                         !options.taskChangelogView && !options.taskChangelogHtmlView && !options.taskChangelogPrint;
@@ -84,6 +85,19 @@ export async function editFile({ options, nextRelease, logger, cwd, env }: ICont
         }
 
         seekToEnd = seekToEnd || (options.versionFilesScrollDown ? options.versionFilesScrollDown.includes(editFile) : false);
+
+        //
+        // Task 'commit' is a special case task where the edits need to be recorded so
+        // that the commit command can be submitted with only the files that were changed
+        // by the publish run.  We could 'commit all', but since this is 50/50 local tool,
+        // we'll leave anything thats modified, but not modified by the publish run, alone.
+        //
+        if ((options.taskCommit && options.taskCount === 1) || (options.taskTag && options.taskCount === 1) ||
+            (options.taskCommit && options.taskTag && options.taskCount === 2))
+        {
+            skipEdit = true;
+            recordEdit = options.taskCommit;
+        }
 
         if (!skipEdit)
         {
@@ -118,7 +132,7 @@ export async function editFile({ options, nextRelease, logger, cwd, env }: ICont
         //
         // Track modified files during a publish run (non-task mode)
         //
-        if (!options.taskMode) {
+        if (recordEdit) {
             await addEdit({options, logger, nextRelease, cwd, env} as IContext, editFile);
         }
     }
@@ -298,8 +312,6 @@ export function timeout(ms: number)
 }
 
 
-// const scriptTypesProcessed = [];
-
 export async function runScripts(context: IContext, scriptType: string, scripts: string | string[], forceRun = false, throwOnError = false)
 {
     const {options, logger, cwd, env} = context;
@@ -314,24 +326,16 @@ export async function runScripts(context: IContext, scriptType: string, scripts:
         return;
     }
 
-    if (isString(scripts)) {
-        scripts = [ scripts ];
-    }
-
     logger.log(`Running custom '${scriptType}' script(s)`);
     if (scripts) {
+        if (isString(scripts)) {
+            scripts = [ scripts ];
+        }
         logger.log(`   # of scipts: ${scripts.length}`);
     }
 
     if (scripts && scripts.length > 0)
     {
-        // if (scriptTypesProcessed.includes(scriptType)) {
-        //     logger.warn(`The script type ${scriptType} has already been ran during this run, skipping`);
-        //     return;
-        // }
-
-        // scriptTypesProcessed.push(scriptType);
-
         for (let script of scripts)
         {
             script = script.trim();

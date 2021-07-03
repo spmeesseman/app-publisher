@@ -94,7 +94,7 @@ export async function getExtJsVersion(context: IContext): Promise<IVersionInfo>
 }
 
 
-export async function setExtJsVersion(context: IContext)
+export async function setExtJsVersion(context: IContext, recordEditOnly: boolean)
 {
     const {nextRelease, options, logger, cwd} = context,
           file = await getExtJsFiles(context);
@@ -104,7 +104,7 @@ export async function setExtJsVersion(context: IContext)
         // If this is '--task-revert', all we're doing here is collecting the paths of the
         // files that would be updated in a run, don't actually do the update
         //
-        if (options.taskRevert) {
+        if (recordEditOnly) {
             await addEdit(context, file);
             return;
         }

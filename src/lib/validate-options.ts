@@ -610,6 +610,13 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     }
 
     //
+    // Dry run
+    //
+    if (options.dryRunQuiet) {
+        options.dryRun = true;
+    }
+
+    //
     // Version System
     //
     if (!options.versionSystem) {
@@ -781,6 +788,23 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
         return false;
     }
 
+    if (options.taskTagVersion && isString(options.taskTagVersion)) {
+        options.taskTag = true;
+    }
+
+    if (options.taskCommit || options.taskTag || options.taskTagVersion) {
+        for (const o in options) {
+            if (o.startsWith("task") && options[o] === true && o !== "taskCommit" && o !== "taskTag" &&
+                o !== "taskTagVersion" && o !== "taskMode" && o !== "taskModeStdOut")
+            {
+                logger.error("Invalid options specified:");
+                logger.error(`   The taskCommit and taskTag* switches cannot be used with '${o}'`);
+                logger.error("   They can only be used alone, or together");
+                return false;
+            }
+        }
+    }
+
     //
     // Only certain tasks are allowed with --version-force-current.  e.g. re-send a notification
     // email, or redo a Mantis or GitHub or NPM or other release
@@ -790,18 +814,16 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
         if (!options.taskMode)
         {
             logger.error("Invalid options specified:");
-            logger.error("  The --version-force-current switch can only be usedin task mode");
+            logger.error("   The --version-force-current switch can only be usedin task mode");
             return false;
         }
         let taskSet = false;
-        for (const o in options)
-        {
-            if (o.startsWith("task") && options[o] === true)
-            {
+        for (const o in options) {
+            if (o.startsWith("task") && options[o] === true) {
                 if (!o.endsWith("Release") && o !== "taskEmail" && o !== "taskMode" && o !== "taskModeStdOut")
                 {
                     logger.error("Invalid options specified:");
-                    logger.error(`  The versionForceCurrent switch cannot be used with '${o}'`);
+                    logger.error(`   The versionForceCurrent switch cannot be used with '${o}'`);
                     return false;
                 }
                 taskSet = true;
@@ -810,7 +832,7 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
         if (!taskSet) {
             logger.error("Invalid options specified:");
             logger.error("The versionForceCurrent switch can only be used with the following tasks:");
-            logger.error("  task*XYZ*Release, taskEmail");
+            logger.error("   task*XYZ*Release, taskEmail");
             return false;
         }
     }
@@ -829,10 +851,8 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     //
     if (options.taskModeStdOut)
     {
-        for (const o in options)
-        {
-            if (o.startsWith("task"))
-            {
+        for (const o in options) {
+            if (o.startsWith("task")) {
                 if (options[o] === true) {
                     if (o !== "taskVersionCurrent" && o !== "taskVersionNext" && o !== "taskVersionInfo" &&
                         o !== "taskChangelogPrint" && o !== "taskCiEvInfo" && o !== "taskVersionPreReleaseId" &&

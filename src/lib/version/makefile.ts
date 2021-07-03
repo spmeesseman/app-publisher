@@ -15,16 +15,16 @@ import { getChangelogVersion } from "./changelog";
 // }
 
 
-export async function setMakefileVersion(context: IContext)
+export async function setMakefileVersion(context: IContext, recordEditOnly: boolean)
 {
-    const {nextRelease, options, logger, cwd, env} = context;
+    const {nextRelease, options} = context;
 
     if (options.cProjectRcFile && await pathExists(options.cProjectRcFile))
     {   //
         // If this is '--task-revert', all we're doing here is collecting the paths of the
         // files that would be updated in a run, don't actually do the update
         //
-        if (options.taskRevert) {
+        if (recordEditOnly) {
             await addEdit(context, options.cProjectRcFile);
             return;
         }

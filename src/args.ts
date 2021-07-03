@@ -215,6 +215,16 @@ export const publishRcOpts =
         }
     ],
 
+    dryRunQuiet: [
+        true,
+        "boolean",
+        false,
+        [ "-dq", "--dry-run-quiet" ],
+        {
+            help: "Same as 'dryRun', but minus stdout logging in the release emulations."
+        }
+    ],
+
     emailHrefs: [
         false,
         "string|string[]",
@@ -943,20 +953,27 @@ export const publishRcOpts =
 
     taskTag: [
         true,
-        "string",
-        "auto",
+        "boolean",
+        false,
         [ "-tt", "--task-tag" ],
         {
             help: "Creates a tag using the 'vX.X.X' format for the tag name.\n" +
                   "The 'taskVersionUpdate' and 'taskVersionUpdateCommit' tasks should\n" +
-                  "always precede this task.\n" +
-                  "If 'auto' is specified as the positional argument, the version # used\n" +
-                  "will be the current version as calculated using the current state of\n" +
-                  "the workspace 'version' files (as defined in .publishrc).\n" +
-                  "Defaults to 'auto'",
+                  "always precede this task.\n"
+        }
+    ],
+
+    taskTagVersion: [
+        true,
+        "string",
+        "",
+        [ "-ttv", "--task-tag-version" ],
+        {
+            help: "Creates a tag using the specified positional parameter as the tag name.\n" +
+                  "The 'taskVersionUpdate' and 'taskVersionUpdateCommit' tasks should\n" +
+                  "always precede this task.\n",
             usage: [
-                "app-publisher --task-tag auto",
-                "app-publisher --task-tag v2.0.1"
+                "app-publisher --task-tag-version 2.0.0"
             ]
         }
     ],

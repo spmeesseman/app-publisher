@@ -245,7 +245,7 @@ export async function restorePackageJson(context: IContext)
                 type: "M",
                 path: "package.json"
             }]);
-            await setNpmVersion(context);
+            await setNpmVersion(context, false);
             return;
         }
     }

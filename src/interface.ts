@@ -310,6 +310,10 @@ export interface IOptions
      */
     dryRun: boolean;
     /**
+     * Same as 'dryRun', but minus stdout logging in the release emulations.
+     */
+    dryRunQuiet: boolean;
+    /**
      * A link or list of links to insert into an email notification in the form 'link|name'.
      */
     emailHrefs: string | string[];
@@ -714,12 +718,13 @@ export interface IOptions
     /**
      * Creates a tag using the 'vX.X.X' format for the tag name.
      * The 'taskVersionUpdate' and 'taskVersionUpdateCommit' tasks should always precede this task.
-     * If 'auto' is specified as the positional argument, the version # used will be the current
-     * version as calculated using the current state of  the workspace 'version' files (as defined
-     * in .publishrc).
-     * Defaults to 'auto',
      */
     taskTag: boolean;
+    /**
+     * Creates a tag using the specified positional parameter as the tag name.
+     * The 'taskVersionUpdate' and 'taskVersionUpdateCommit' tasks should always precede this task.
+     */
+    taskTagVersion: string;
     /**
      * Update version numbers either semantically or incrementally.
      * Versioned files are by default AssemblyInfo.cs, package.json, and app.json.
