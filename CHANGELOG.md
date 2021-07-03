@@ -1,5 +1,46 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.2.2 (July 2nd, 2021)
+
+### Bug Fixes
+
+- **Changelog:** commit messages with a 'fix' subject are converted to test 'bug fix', but are sorted using the text 'fix' when constructing a new changelog section.
+- **Commit:** files specified by the 'vcFiles' option cause commit stage to fail if the file was not already under version control.
+- vcs stdout output no longer shows.  turn vcs stdout on with --vc-std-out or --verbose switches.
+- versionFiles regex definitions with the word 'version' inside the regex causes the version to not be replced within the file.
+- incremental versioning
+- dist release not working, docs or base files
+- the --skip-version-edits command line flag has no effect
+- **Email:** log in email notification is using an invaid path
+- if no config file is found, a misleading error message is given.  the error should specify the missing config.
+- **Dry Run:** the git tag/push is not running in dry run mode
+- the unset env variables warning in options validation is not working
+- version validation fails when using --version-force-next
+
+### Documentation
+
+- **Readme:** update description
+
+### Refactoring
+
+- removed option 'versionReplaceTags', replaced by new 'versionFiles' definition.
+- add warning to logging when processing vcFiles and vcRevertFiles and file doesnt exist
+- add version tag replacement on files specified by the 'versionFiles' property.
+- preserve multi-spaces in json when writing version
+- **Changelogs:** add header specified by 'changelogHdrFile' to md type changelog
+- removed publishrc property/argument 'historyFile', use 'changelogFile'.
+- **Releases:** allow the tag $(VERSION)to be used  in an asset name for a Mantis or GitHub release, replaced with the version number upon runtime upload.
+
+### Tests
+
+- add dist fixtures
+- add full dry run, increase coverage
+- prepare for full tests
+
+### Continuous Integration
+
+- prepare for first test publish
+
 ## Version 3.2.1 (June 30th, 2021)
 
 ### Bug Fixes
