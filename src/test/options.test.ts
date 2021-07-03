@@ -60,7 +60,7 @@ suite("Options Tests", () =>
         expect(options.taskVersionPreReleaseId).to.equal(undefined, "taskVersionPreReleaseId");
         expect(options.taskVersionUpdate).to.equal(undefined, "taskVersionUpdate");
 
-        expect(options.taskMode).to.equal(undefined, "taskMode");
+        expect(options.taskMode).to.equal(false, "taskMode");
         expect(options.taskModeStdOut).to.equal(false, "taskModeStdOut");
 
         expect(options.changelogLineLen).to.equal(80, "changelogLineLen");

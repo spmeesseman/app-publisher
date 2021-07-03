@@ -431,7 +431,7 @@ async function runRelease(context: IContext)
     // If there were no commits that set the release level to 'patch', 'minor', or 'major',
     // then we're done
     //
-    if (!nextRelease.level && !needNoCommits && lastRelease.versionInfo.system === "semver")
+    if (!nextRelease.level && !needNoCommits && lastRelease.versionInfo.system === "semver" && !options.tests)
     {   //
         // There are certain tasks a user may want to run after a release is made.  e.g. re-send
         // a notification email, or redo a Mantis or GitHub release. In these cases, user must
@@ -442,6 +442,10 @@ async function runRelease(context: IContext)
         {
             if (options.taskVersionNext) {
                 context.stdout.write(lastRelease.version);
+                return true;
+            }
+            else if (options.taskVersionInfo) {
+                context.stdout.write(lastRelease.version + "|" + lastRelease.version + "|none");
                 return true;
             }
             logger.log("There are no relevant commits, no new version is released.");

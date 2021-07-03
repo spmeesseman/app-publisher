@@ -11,6 +11,7 @@ import { getAppPublisherVersion } from "./app-publisher";
 import { getExtJsVersion } from "./extjs";
 import { pathExists, readFile } from "../utils/fs";
 import { FIRST_RELEASE } from "../definitions/constants";
+import json5 from "json5";
 
 
 export = getCurrentVersion;
@@ -161,19 +162,30 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
             const tvFile = versionFileDef.path;
             if (!versionFileDef.setFiles && await pathExists(tvFile))
             {
+                let matched = false;
                 logger.log("Retrieving version from " + tvFile);
-                let match: RegExpExecArray,
-                    matched = false;
-                const content = await readFile(tvFile),
-                      rgxStr = versionFileDef.regex.replace(new RegExp("\\$\\(VERSION\\)", "g"), `(${versionFileDef.regexVersion})`)
-                                                   .replace(new RegExp(`\\(\\(${versionFileDef.regexVersion.replace(/\./g, "\\.")}\\)\\)`, "g"),
-                                                            `(${versionFileDef.regexVersion})`),
-                      regex = new RegExp(rgxStr, "gm");
-                while ((match = regex.exec(content)) !== null)
+                if (path.basename(tvFile) === "package.json" || path.basename(tvFile) === "app.json")
                 {
-                    if (match[1]) {
-                        logger.log("   Found version      : " + match[1]);
+                    const version = json5.parse(await readFile(path.join(process.cwd(), tvFile))).version;
+                    if (version) {
+                        logger.log("   Found version      : " + version);
                         matched = true;
+                    }
+                }
+                else
+                {
+                    let match: RegExpExecArray;
+                    const content = await readFile(tvFile),
+                        rgxStr = versionFileDef.regex.replace(new RegExp("\\$\\(VERSION\\)", "g"), `(${versionFileDef.regexVersion})`)
+                                                    .replace(new RegExp(`\\(\\(${versionFileDef.regexVersion.replace(/\./g, "\\.")}\\)\\)`, "g"),
+                                                                `(${versionFileDef.regexVersion})`),
+                        regex = new RegExp(rgxStr, "gm");
+                    while ((match = regex.exec(content)) !== null)
+                    {
+                        if (match[1]) {
+                            logger.log("   Found version      : " + match[1]);
+                            matched = true;
+                        }
                     }
                 }
                 if (!matched) {
