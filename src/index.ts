@@ -96,7 +96,7 @@ Detailed Help
     //
     // If user specified '--task-ci-env' then just display config and exit
     //
-    if (options.taskCiEnv|| options.verbosex)
+    if (options.taskCiEnv || options.verbosex)
     {
         const title =
 `----------------------------------------------------------------------------
@@ -333,16 +333,6 @@ async function runRelease(context: IContext)
     }
 
     //
-    // Some tasks we can just process and exit after authentication verification, without
-    // any other processing
-    //
-    taskDone = await processTasksLevel2(context);
-    if (taskDone) {
-        logTaskResult(taskDone, "level 2 tasks", logger);
-        return taskDone;
-    }
-
-    //
     // TODO - Plugins maybe?
     //
     // await plugins.verifyConditions(context);
@@ -401,9 +391,9 @@ async function runRelease(context: IContext)
     // Some tasks we can just process and exit after authentication verification, without
     // any other processing
     //
-    taskDone = await processTasksLevel3(context);
+    taskDone = await processTasksLevel2(context);
     if (taskDone) {
-        logTaskResult(taskDone, "level 3 tasks", logger);
+        logTaskResult(taskDone, "level 2 tasks", logger);
         return taskDone;
     }
 
@@ -530,9 +520,9 @@ async function runRelease(context: IContext)
     // If a level2 stdout/fileout task is processed, we'll be done.  taskDone returns `true` if
     // a task ran auccessfully, `false` if no task ran, and a `string` if there was an error
     //
-    taskDone = await processTasksLevel4(context);
+    taskDone = await processTasksLevel3(context);
     if (taskDone) {
-        logTaskResult(taskDone, "level 4 tasks", logger);
+        logTaskResult(taskDone, "level 3 tasks", logger);
         return taskDone;
     }
 
@@ -950,38 +940,11 @@ async function processTasksLevel1(context: IContext): Promise<string | boolean>
 
 
 /**
- * Tasks that can be processed before version info is obtained, but after authentication
- * is verified with the VCS.
- *
- * @param context The run context object.
- */
-async function processTasksLevel2(context: IContext): Promise<string | boolean>
-{
-    const options = context.options;
-
-    //
-    // Use setVersions() will recognize the task and only populate a list of files that
-    // 'would be' or 'have been' edited by a run.  Files that the run doesnt touch that
-    // have been edited by the user wont get reverted (or someone be in trouble)
-    //
-    if (options.taskRevert)
-    {
-        await addEdit(context, options.changelogFile);
-        await setVersions(context, true);
-        await revert(context);
-        return true;
-    }
-
-    return false;
-}
-
-
-/**
  * Tasks that can be processed once version info is obtained
  *
  * @param context The run context object.
  */
-async function processTasksLevel3(context: IContext): Promise<string | boolean>
+async function processTasksLevel2(context: IContext): Promise<string | boolean>
 {
     const { options, lastRelease, nextRelease } = context;
 
@@ -993,6 +956,19 @@ async function processTasksLevel3(context: IContext): Promise<string | boolean>
     {
         context.stdout.write(lastRelease.version || FIRST_RELEASE);
         // logTaskResult(true, "task version current", logger);
+        return true;
+    }
+
+    //
+    // Use setVersions() will recognize the task and only populate a list of files that
+    // 'would be' or 'have been' edited by a run.  Files that the run doesnt touch that
+    // have been edited by the user wont get reverted (or someone be in trouble)
+    //
+    if (options.taskRevert)
+    {
+        await addEdit(context, options.changelogFile);
+        await setVersions(context, true);
+        await revert(context);
         return true;
     }
 
@@ -1030,7 +1006,7 @@ async function processTasksLevel3(context: IContext): Promise<string | boolean>
  *
  * @param context The run context object.
  */
-async function processTasksLevel4(context: IContext): Promise<string | boolean>
+async function processTasksLevel3(context: IContext): Promise<string | boolean>
 {
     const options = context.options,
           logger = context.logger,

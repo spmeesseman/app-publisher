@@ -43,7 +43,7 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
                         v.version = fv;
                     }
                 }
-                if (v.version !== versionInfo.version && !options.republish)
+                if (v.version !== versionInfo.version && !options.taskRevert)
                 {
                     const logFn = throwError ? logger.error : logger.warn;
                     logFn("There is a version mismatch in one or more of the version files:");
