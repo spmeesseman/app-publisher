@@ -110,6 +110,9 @@ export async function commit(context: IContext)
                 }
                 ++vcRcFileCt;
             }
+            else {
+                logger.warn(`   The file ${vcFile} specified in 'vcFiles' does not exist`);
+            }
         }
     }
 
@@ -803,6 +806,9 @@ export async function revert(context: IContext, files?: IEdit[])
                     changeListAdd.push({ path: vcFile, type: "A" });
                 }
                 ++vcRcFileCt;
+            }
+            else {
+                logger.warn(`   The file ${vcFile} specified in 'vcRevertFiles' does not exist`);
             }
         }
     }
