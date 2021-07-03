@@ -1,5 +1,16 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.2.5 (July 3rd, 2021)
+
+### Bug Fixes
+
+- **Tasks:** regression - the '--task-revert' task no longer works as of v3.2.3.
+- **Tasks:** the --task-commit and --task-tag tasks are failing to find edits that were made in a task distributed publish run.
+
+### Refactoring
+
+- add additional verbose option for a third level of verbosity.
+
 ## Version 3.2.4 (July 3rd, 2021)
 
 ### Bug Fixes
