@@ -334,8 +334,11 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     //
     // Email configuratin
     //
+    if (options.taskEmail) {
+        options.emailNotification = "Y";
+    }
     if (options.emailNotification === "Y") {
-        if (!options.emailRecip || !options.emailSender || !options.emailServer || (!options.emailRecip && !options.testEmailRecip)) {
+        if (!options.emailMode || !options.emailSender || !options.emailServer || (!options.emailRecip && !options.testEmailRecip)) {
             logger.error("Email step is specified Y, but email is not configured in .publishrc");
             logger.error("Configure related email properties in .publishrc");
             return false;
@@ -835,15 +838,6 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
             logger.error("   task*XYZ*Release, taskEmail");
             return false;
         }
-    }
-
-    //
-    // Task email must have email configured
-    //
-    if (options.taskEmail && options.emailNotification !== "Y") {
-        logger.error("Email task specified, but email is not configured in .publishrc");
-        logger.error("Configure email with 'emailNotification' flag and related properties");
-        return false;
     }
 
     //

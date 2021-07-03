@@ -20,7 +20,7 @@ export = getCurrentVersion;
 async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
 {
     let warn = false;
-    const {logger, options} = context;
+    const {logger, options, cwd} = context;
 
     const versionInfo: IVersionInfo = {
         version: undefined,
@@ -166,7 +166,7 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
                 logger.log("Retrieving version from " + tvFile);
                 if (path.basename(tvFile) === "package.json" || path.basename(tvFile) === "app.json")
                 {
-                    const version = json5.parse(await readFile(path.join(process.cwd(), tvFile))).version;
+                    const version = json5.parse(await readFile(path.join(cwd, tvFile))).version;
                     if (version) {
                         logger.log("   Found version      : " + version);
                         matched = true;
