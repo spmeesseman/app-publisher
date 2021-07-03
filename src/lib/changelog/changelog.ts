@@ -40,26 +40,30 @@ export abstract class Changelog implements IChangelog
             return;
         }
 
-        const getFileNotesLast = options.taskEmail,
+        logger.log("Get release changelogs");
+
+        const nextVersion = !options.tests || !options.taskMode ? nextRelease.version : "3.1.1",
+              lastVersion = !options.tests || !options.taskMode ? lastRelease.version : "3.1.0",
+              getFileNotesLast = options.taskEmail,
               getHtmlLog = !options.taskMode && (options.githubRelease === "Y" || options.mantisbtRelease === "Y"),
               getHtmlLogLast = context.options.taskGithubRelease || context.options.taskMantisbtRelease,
               getFileLog = context.options.taskEmail || (!options.taskMode && options.emailNotification === "Y");
 
-        logger.log("Get release changelogs");
-
-        this.entries = nextVersionChangelogWritten ? await this.getSectionEntries(context, nextRelease.version) : undefined;
-        this.entriesLast = getHtmlLogLast ? await this.getSectionEntries(context, lastRelease.version) : undefined;
+        this.entries = nextVersionChangelogWritten ? await this.getSectionEntries(context, nextVersion) : undefined;
+        this.entriesLast = getHtmlLogLast ? await this.getSectionEntries(context, lastVersion) : undefined;
 
         if (this.entries) {
             this.htmlNotes = getHtmlLog ? await this.createHtmlChangelog(context, this.entries) : undefined;
+        }
+        if (this.entriesLast) {
             this.htmlNotesLast = getHtmlLogLast ? await this.createHtmlChangelog(context, this.entriesLast) : undefined;
         }
 
-        this.fileNotes = getFileLog && nextVersionChangelogWritten ? await this.getSections(context, nextRelease.version) : undefined;
-        this.fileNotesLast = getFileNotesLast ? await this.getSections(context, lastRelease.version) : undefined;
+        this.fileNotes = getFileLog && nextVersionChangelogWritten ? await this.getSections(context, nextVersion) : undefined;
+        this.fileNotesLast = getFileNotesLast ? await this.getSections(context, lastVersion) : undefined;
 
         this.notes = this.notes || this.createSectionFromCommits(context);
-        this.notesLast = undefined; //  await this.getSections(context, lastRelease.version)
+        this.notesLast = undefined; //  await this.getSections(context, nextVersion)
     }
 
 

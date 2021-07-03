@@ -75,19 +75,64 @@ suite("Tasks Tests", () =>
         expect(await runApTest(options)).to.equal(0, "task: github release");
         sleep(500);
 
-        options = await getApOptions([ "--task-mantis-release", "--version-force-current", "--dry-run", "--config-name", "svn" ]);
+        options = await getApOptions([ "--task-mantisbt-release", "--version-force-current", "--dry-run", "--config-name", "svn" ]);
         expect(await runApTest(options)).to.equal(0, "task: mantisbt release");
         sleep(500);
     });
 
-    test("email tasks", async () =>
+
+    test("file update tasks", async () =>
     {
-        let options = await getApOptions([ "--task-email", "--version-force-current", "--dry-run", "--config-name", "svn" ]);
-        expect(await runApTest(options)).to.equal(0, "task: email (dry run)");
+        let options = await getApOptions([ "--task-version-update"]);
+        expect(await runApTest(options)).to.equal(0, "task: file update: version-update");
+        // expect(await stdout_runApTest(options)).to.be.a("string", "task: version-current").and.not.be.empty;
         sleep(500);
 
-        options = await getApOptions([ "--task-email", "--version-force-current", "--config-name", "svn" ]);
-        expect(await runApTest(options)).to.equal(0, "task: email (dry run)");
+        options = await getApOptions([ "--task-commit", "--dry-run" ]);
+        expect(await runApTest(options)).to.equal(0, "task: file update: commit");
+        sleep(500);
+
+        options = await getApOptions([ "--task-version-update"]);
+        expect(await runApTest(options)).to.equal(0, "task: file update: version-update");
+        // expect(await stdout_runApTest(options)).to.be.a("string", "task: version-current").and.not.be.empty;
+        sleep(500);
+
+        options = await getApOptions([ "--task-commit", "--task-tag", "--dry-run" ]);
+        expect(await runApTest(options)).to.equal(0, "task: file update: commit");
+        sleep(500);
+
+        options = await getApOptions([ "--task-version-update"]);
+        expect(await runApTest(options)).to.equal(0, "task: file update: version-update");
+        // expect(await stdout_runApTest(options)).to.be.a("string", "task: version-current").and.not.be.empty;
+        sleep(500);
+
+        options = await getApOptions([ "--task-changelog" ]);
+        expect(await runApTest(options)).to.equal(0, "task: file update: changelog");
+        sleep(500);
+
+        options = await getApOptions([ "--task-revert" ]);
+        expect(await runApTest(options)).to.equal(0, "task: file update: revert");
+        sleep(500);
+    });
+
+
+    test("email tasks", async () =>
+    {
+
+        let options = await getApOptions([ "--task-email", "--version-force-current", "--config-name", "svn" ]);
+        expect(await runApTest(options)).to.equal(0, "task: email (std)");
+        sleep(500);
+
+        options = await getApOptions([ "--task-email", "--version-force-current" ]);
+        expect(await runApTest(options)).to.equal(0, "task: email (ssl)");
+        sleep(500);
+
+        options = await getApOptions([ "--task-email", "--version-force-current", "--dry-run", "--config-name", "svn" ]);
+        expect(await runApTest(options)).to.equal(0, "task: email (std dry run)");
+        sleep(500);
+
+        options = await getApOptions([ "--task-email", "--version-force-current", "--dry-run" ]);
+        expect(await runApTest(options)).to.equal(0, "task: email (ssl dry run)");
         sleep(500);
     });
 
