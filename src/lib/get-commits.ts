@@ -149,17 +149,28 @@ async function getCommits(context: IContext): Promise<ICommit[]>
     }
     commits.sort((c1: ICommit, c2: ICommit) =>
     {
-        if (c1.subject === "build") {
+        const c1subj = c1.subject !== "fix" ? c1.subject : "bug fix",
+              c2subj = c2.subject !== "fix" ? c2.subject : "bug fix";
+        if (c1subj === "build") {
             return 1;
         }
-        else if (c2.subject === "build") {
+        else if (c1subj === "build") {
             return -1;
         }
-        else if (c1.subject === "ci") {
-            return c2.subject === "build" ? -1 : 1;
+        else if (c1subj === "ci") {
+            return c2subj === "build" ? -1 : 1;
         }
-        else if (c2.subject === "ci") {
-            return c1.subject === "build" ? 1 : -1;
+        else if (c2subj === "ci") {
+            return c1subj === "build" ? 1 : -1;
+        }
+        else if (c1subj && c2subj) {
+            return c1subj.localeCompare(c2subj);
+        }
+        else if (c1subj) {
+            return -1;
+        }
+        else if (c2subj) {
+            return 1;
         }
         const a = c1.message,
               b = c2.message;
