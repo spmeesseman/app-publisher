@@ -476,7 +476,8 @@ export async function getTags(context: IContext)
                     for (const p of logEntry.paths)
                     {
                         const pathObj = p.path[0],
-                              regex = new RegExp(".*/tags/(v[0-9\.]+)"),
+                              regex = !options.versionPreReleaseId ? new RegExp(".*/tags/(v[0-9\.]+$)") :
+                                            new RegExp(`.*/tags/(v[0-9\.]+\-${options.versionPreReleaseId}\.[0-9]+)`),
                               match = regex.exec(pathObj._);
                         if (pathObj.$ && pathObj.$.action === "A" && pathObj.$.kind === "dir" && match)
                         {
@@ -622,7 +623,7 @@ export async function isIgnored(context: IContext, objectPath: string)
  */
 export async function isRefInHistory(context: IContext, ref: any, isTags = false)
 {
-    const { options: {repo, branch, repoType}, cwd, env, logger } = context;
+    const { options: {repo, branch, repoType}, logger } = context;
     try
     {
         if (repoType === "git") {
