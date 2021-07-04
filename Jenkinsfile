@@ -272,10 +272,6 @@ pipeline {
           // Populate and open history.txt in Notepad, then will wait for user intervention
           //
           nodejs("Node 12") {
-            //
-            // If we don't use --version-force-next option then ap will bump the version again
-            // since we ran the --task-version-update command already
-            //
             bat "app-publisher --config-name pja --task-changelog --version-force-next ${env.NEXTVERSION}" 
             historyEntry = bat(returnStdout: true,
                                 script: """
@@ -327,10 +323,6 @@ pipeline {
           if (inputAppend == "Yes") {
             bat "svn revert .\\doc\\history.txt"
             nodejs("Node 12") {
-              //
-              // If we don't use --version-force-next option then ap will bump the version again
-              // since we ran the --task-version-update command already
-              //
               historyHeader = bat(returnStdout: true,
                                     script: """
                                     @echo off
