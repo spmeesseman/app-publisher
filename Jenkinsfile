@@ -53,6 +53,7 @@ pipeline {
             [
                 cancelProcessOnExternalsFail: true,
                 credentialsId: "6ff47a32-994c-4ac2-9016-edb075a98e5b", // jenkins.tr.pjats.com
+                // credentialsId: "31b92f3c-80ee-4cfa-887f-61c9937d4fe2", // jenkins.tr.pjats.com system acct
                 // credentialsId: "9168a4c0-47d2-423b-b676-3df3adc0d9df",    // Local Dev
                 depthOption: "infinity",
                 ignoreExternalsOption: true,
@@ -172,6 +173,8 @@ pipeline {
         //
         nodejs("Node 12") {
           script {
+            env.NEXTVERSION  = ""
+            env.CURRENTVERSION  = ""
             //
             // app-publisher is used so check for .publishrc file
             //
@@ -194,7 +197,7 @@ pipeline {
                                        app-publisher --config-name pja --task-version-current
                                      """)
             if (env.TAG_NAME == null) {
-              echo "No tag found, trunk/branch build set version"
+              echo "This is not /tags - update version files"
               env.NEXTVERSION = bat(returnStdout: true,
                                     script: """
                                       @echo off
@@ -203,24 +206,32 @@ pipeline {
               if (env.CURRENTVERSION != env.NEXTVERSION) {
                 echo "Version bumped, a release will be performed"
                 env.RELEASE_PRODUCTION = "true"
-                //
-                // Update version files
-                //
-                echo "Update version files"
-                bat "app-publisher --config-name pja --task-version-update"
               }
             }
             else {
               echo "This is /tags/${env.TAG_NAME}, set next version to current"
               env.NEXTVERSION = env.CURRENTVERSION
             }
+            echo "Current version is ${env.CURRENTVERSION}"
+            echo "Next proposed version is ${env.NEXTVERSION}"
+            //
+            // If the version didnt change, there'll be no release and we dont need to run --task-version-update
+            //
             if (env.NEXTVERSION == "" || env.CURRENTVERSION == "") {
               echo "The current or next version could not be found, fail"
               env.RELEASE_PRODUCTION = "false"
               sh "exit 1" // fail!! does it work???
             }
-            echo "Current version is ${env.CURRENTVERSION}"
-            echo "Next proposed version is ${env.NEXTVERSION}"
+            if (env.NEXTVERSION == env.CURRENTVERSION) {
+              echo "The current version is equal to the next version, unset release flags"
+              env.RELEASE_PRODUCTION = "false"
+            }
+            else { //
+                  // Update version files
+                //
+                echo "Update version files"
+                bat "app-publisher --task-version-update --version-pre-release-id ${env.PRERELEASEID}"
+            }
           }
         }
       }
@@ -254,7 +265,8 @@ pipeline {
       }
       steps {
         script {
-          historyEntry = ""
+          def historyEntry = ""
+          def historyHeader = ""
           echo "Approval needed for Version ${env.NEXTVERSION} History File Changelog"
           //
           // Populate and open history.txt in Notepad, then will wait for user intervention
@@ -314,11 +326,25 @@ pipeline {
           env.NEXTVERSION = inputVersion
           if (inputAppend == "Yes") {
             bat "svn revert .\\doc\\history.txt"
-            def status = powershell(returnStatus: true,
-                                    script: 'out-file -filepath doc/history.txt -Append -inputobject historyEntry')
-            if (status != 0) {
-              error("Could not find history file entry")
+            nodejs("Node 12") {
+              //
+              // If we don't use --version-force-next option then ap will bump the version again
+              // since we ran the --task-version-update command already
+              //
+              historyHeader = bat(returnStdout: true,
+                                    script: """
+                                    @echo off
+                                    app-publisher --config-name pja --task-changelog-hdr-print
+                                  """)
             }
+            // def status = powershell(returnStatus: true,
+            //                         script: 'out-file -filepath doc/history.txt -Append -inputobject historyEntry')
+            // if (status != 0) {
+            //   error("Could not find history file entry")
+            // }
+            // bat "echo Version ${env.NEXTVERSION} >> .\\doc\\history.txt"
+            bat "echo Version ${historyHeader} >> .\\doc\\history.txt"
+            bat "echo Version ${historyEntry} >> .\\doc\\history.txt"
           }
         }
       }
@@ -386,7 +412,7 @@ pipeline {
     always { 
       script {
         if (env.SKIP_CI == "false") {
-          // mantisIssueAdd keepTicketPrivate: false, threshold: 'failureOrUnstable'
+          mantisIssueAdd keepTicketPrivate: false, threshold: 'failureOrUnstable'
           mantisIssueUpdate keepNotePrivate: false, recordChangelog: true, setStatusResolved: true, threshold: 'failureOrUnstable'
           //
           // send email
