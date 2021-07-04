@@ -107,6 +107,23 @@ suite("Options Tests", () =>
 
         options = await getApOptions([ "--task-ci-env-info", "--task-mantisbt-release", "--dry-run" ]);
         expect(await runApTest(options, "options: stdout: fail 4")).to.equal(1, "options: stdout: fail 4");
+        sleep(500);
+
+        options = await getApOptions([ "--version-pre-release-id" ]); // missing positional
+        expect(await runApTest(options, "options: stdout: fail 5")).to.equal(1, "options: stdout: fail 5");
+        sleep(500);
+
+        options = await getApOptions([ "--task-changelog-print-version" ]); // missing positional
+        expect(await runApTest(options, "options: stdout: fail 6")).to.equal(1, "options: stdout: fail 6");
+        sleep(500);
+
+        options = await getApOptions([ "--chanelog-line-len" ]); // missing positional
+        expect(await runApTest(options, "options: stdout: fail 6")).to.equal(1, "options: stdout: fail 7");
+        sleep(500);
+
+        options = await getApOptions([ "--chanelog-line-len", "70o" ]); // non-numeric positional
+        expect(await runApTest(options, "options: stdout: fail 8")).to.equal(1, "options: stdout: fail 8");
+        sleep(500);
     });
 
 });
