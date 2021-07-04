@@ -520,6 +520,9 @@ export class ChangelogTxt extends Changelog
                     tmpCommits = await this.createHtmlChangelog(context, entries, true, false);
                 }
             }
+            if (!tmpCommits || tmpCommits.trim() === "") {
+                tmpCommits = "1.  No relevant changes." + EOL + EOL;
+            }
 
             //
             // New file

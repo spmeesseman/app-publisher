@@ -336,6 +336,9 @@ export class ChangelogMd extends Changelog
                 const changeLogParts = await this.getSectionEntries(context, version);
                 tmpCommits = await this.createHtmlChangelog(context, changeLogParts, false, false);
             }
+            if (!tmpCommits || tmpCommits.trim() === "") {
+                tmpCommits = "- No relevant changes.";
+            }
 
             if (options.taskChangelogPrint || options.taskChangelogPrintVersion)
             {
