@@ -444,7 +444,11 @@ export interface IOptions
      */
     noCi: boolean;
     /**
-     * Copy the NPM package to the directory specified by 'distReleasePathSrc'.,
+     * Copy the NPM package to the directory specified by 'distReleasePathSrc'.
+     * File is renamed from what is output by NPM, it is named as:
+     *     projectname.tgz ().
+     * If the --config-name option is used, the file is named as:
+     *     projectname-configname.tgz
      * Ignored if npmRelease = N.
      */
     npmPackDist: "Y" | "N";
