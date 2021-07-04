@@ -1,5 +1,33 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.3.0 (July 4th, 2021)
+
+### Bug Fixes
+
+- **VCS:** the svn environment credentials are not working for verifying a tag ref in the repository.  All other commands appear to be working.
+- **Tasks:** the '--task-changelog' task fails local file version validation if it is ran after '--task-version-update' in a task distributed publish run.
+- **Versioning:** version compare on first release should use coerced semantic versions in the case of a project with incremental versioning
+- **Tasks:** the '--get-version-next and '--get-verrsion-info' tasks fail if the project is semantically versioned and no relevant commits exist that would bump the version.
+
+### Features
+
+- **Tasks:** add two new tasks for dynamically building the changelog in a distributed task publish run:
+	
+		--task-changelog-hdr-print
+		--task-changelog-hdr-print
+	
+	To be used in a CI environment where executin of a desktop application is not possible.
+
+### Refactoring
+
+- **General:** add validation for task switches that should be ran alone without other tasks.
+- **Changelog:** desktop and gui application launching is unachievable in a Windows CI.  Do not attempt to open any changelogs during a publish run or a distributed task run using a desktop application when a CI is detected.
+
+### Tests
+
+- add additional, increase coverage
+- npm version is read incorrectly from package.json after first test (used require)
+
 ## Version 3.2.5 (July 3rd, 2021)
 
 ### Bug Fixes
