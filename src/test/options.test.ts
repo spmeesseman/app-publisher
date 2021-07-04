@@ -8,7 +8,7 @@ import getOptions = require("../lib/get-options");
 import validateOptions = require("../lib/validate-options");
 import { AsyncResource } from "async_hooks";
 import getConfig = require("../lib/get-config");
-import { getApOptions } from "./helper";
+import { getApOptions, runApTest, sleep } from "./helper";
 
 
 suite("Options Tests", () =>
@@ -88,6 +88,25 @@ suite("Options Tests", () =>
         options = await getApOptions([ "--task-version-next" ]);
         expect(options.taskMode).to.equal(true, "taskMode");
         expect(options.taskModeStdOut).to.equal(true, "taskModeStdOut");
+    });
+
+
+    test("check option fail checks", async () =>
+    {
+        let options = await getApOptions([ "--task-changelog-print", "--task-commit", "--dry-run" ]);
+        expect(await runApTest(options, "options: stdout: fail 1")).to.equal(1, "options: stdout: fail 1");
+        sleep(500);
+
+        options = await getApOptions([ "--task-version-current", "--task-tag", "--dry-run" ]);
+        expect(await runApTest(options, "options: stdout: fail 2")).to.equal(1, "options: stdout: fail 2");
+        sleep(500);
+
+        options = await getApOptions([ "--task-version-next", "--task-npm-release", "--dry-run" ]);
+        expect(await runApTest(options, "options: stdout: fail 3")).to.equal(1, "options: stdout: fail 3");
+        sleep(500);
+
+        options = await getApOptions([ "--task-ci-env-info", "--task-mantisbt-release", "--dry-run" ]);
+        expect(await runApTest(options, "options: stdout: fail 4")).to.equal(1, "options: stdout: fail 4");
     });
 
 });

@@ -54,7 +54,7 @@ async function runStart(context: IContext)
     {
         const title =
 `----------------------------------------------------------------------------
-Detailed Help
+ Detailed Help
 ----------------------------------------------------------------------------
 `;
         context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(title, {interpolation: "hsv"})));

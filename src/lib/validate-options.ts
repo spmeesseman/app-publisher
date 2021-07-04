@@ -794,7 +794,6 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     if (options.taskTagVersion && isString(options.taskTagVersion)) {
         options.taskTag = true;
     }
-
     if (options.taskCommit || options.taskTag || options.taskTagVersion) {
         for (const o in options) {
             if (o.startsWith("task") && options[o] === true && o !== "taskCommit" && o !== "taskTag" &&
@@ -849,7 +848,7 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
             if (o.startsWith("task")) {
                 if (options[o] === true) {
                     if (o !== "taskVersionCurrent" && o !== "taskVersionNext" && o !== "taskVersionInfo" &&
-                        o !== "taskChangelogPrint" && o !== "taskCiEvInfo" && o !== "taskVersionPreReleaseId" &&
+                        o !== "taskChangelogPrint" && o !== "taskCiEnvInfo" && o !== "taskVersionPreReleaseId" &&
                         o !== "taskReleaseLevel" && o !== "taskMode" && o !== "taskModeStdOut")
                     {
                         logger.error("The specified task cannot be used with a 'stdout' type task:");

@@ -9,6 +9,8 @@ import validateOptions from "../lib/validate-options";
 import getConfig from "../lib/get-config";
 import getContext from "../lib/get-context";
 import { setCwd } from "../lib/utils/fs";
+import chalk from "chalk";
+import gradient from "gradient-string";
 const envCi = require("@spmeesseman/env-ci");
 
 
@@ -26,9 +28,21 @@ export async function sleep(ms: number)
 }
 
 
-export async function runApTest(options: IOptions): Promise<number>
+function logTestStart(taskDesc: string)
 {
+    const msg = `
+----------------------------------------------------------------------------
+ ${taskDesc}
+----------------------------------------------------------------------------
+`;
+    // console.log(msg);
+    context.stdout.write(chalk.bold(gradient("cyan", "pink").multiline(msg, {interpolation: "hsv"})));
+}
 
+
+export async function runApTest(options: IOptions, taskDesc: string): Promise<number>
+{
+    logTestStart(taskDesc);
     try {
         const rc = await require("../.")(options, { cwd });
         return rc ? 1 : 0;
