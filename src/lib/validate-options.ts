@@ -338,7 +338,10 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
         options.emailNotification = "Y";
     }
     if (options.emailNotification === "Y") {
-        if (!options.emailMode || !options.emailSender || !options.emailServer || (!options.emailRecip && !options.testEmailRecip)) {
+        if (!options.emailMode) {
+            options.emailMode = "std";
+        }
+        if (!options.emailSender || !options.emailServer || (!options.emailRecip && !options.testEmailRecip)) {
             logger.error("Email step is specified Y, but email is not configured in .publishrc");
             logger.error("Configure related email properties in .publishrc");
             return false;

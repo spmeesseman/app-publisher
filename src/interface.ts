@@ -323,7 +323,7 @@ export interface IOptions
      * std (Standard / Non-Secure),
      * The delivery method to use when sending an email notification.
      */
-    emailMode: string;  // enum(std|ssl)
+    emailMode: "std" | "ssl";
     /**
      * The smtp server port to use when sending an email notification.
      */

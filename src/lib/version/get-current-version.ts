@@ -16,6 +16,8 @@ import json5 from "json5";
 
 export = getCurrentVersion;
 
+let lastType: string;
+
 
 async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
 {
@@ -50,6 +52,7 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
                     logFn("There is a version mismatch in one or more of the version files:");
                     logFn("   Type             : " + type);
                     logFn("   Parsed version   : " + v.version);
+                    logFn("   Recorded type    : " + lastType);
                     logFn("   Recorded version : " + versionInfo.version);
                     if (throwError) {
                         if (!options.republish) {
@@ -75,6 +78,8 @@ async function getCurrentVersion(context: IContext): Promise<IVersionInfo>
                     versionInfo.system = v.system;
                 }
             }
+
+            lastType = type;
         }
     }
 
