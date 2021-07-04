@@ -20,7 +20,7 @@
     "deployCommand":     "",
     "distRelease":       "N",
     "distReleasePath":   "",
-    "distReleasePathSrc":"",
+    "distReleasePathSrc":"install\\dist",
     "distDocPathSrc":    "",
     "distDocPath":       "",
     "distReleasePreCommand": [],
