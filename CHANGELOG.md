@@ -1,5 +1,35 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.3.1 (July 4th, 2021)
+
+### Bug Fixes
+
+- **Logging:** when verbose logging is enabled, an occassional warning of a possible memory leak is output to stdout by the NodeJs process.
+- **Tasks:** the changelog view/print tasks fail if there are no relevant commits for a pending release.
+- **Config:** a publish run or tasks fail if email is configured in publishrc but the 'emailMode' property is unset.  This should default to 'std' if left unset.
+- **General:** for a project in an existing pre-release stage, the pre-release tag is not found, and a publish run or any task proceeds as if the current version is that of the last production version.
+
+### Refactoring
+
+- **Versioning:** projects that use incremental versioning should always use a 'patch' release level if no relevant commits are found, as opposed to exiting the run as does a semantically versioned project.
+
+### Continuous Integration
+
+- remove commented lines from testing
+
+## Version 3.3.1 (July 4th, 2021)
+
+### Bug Fixes
+
+- **Logging:** when verbose logging is enabled, an occassional warning of a possible memory leak is output to stdout by the NodeJs process.
+- **Tasks:** the changelog view/print tasks fail if there are no relevant commits for a pending release.
+- **Config:** a publish run or tasks fail if email is configured in publishrc but the 'emailMode' property is unset.  This should default to 'std' if left unset.
+- **General:** for a project in an existing pre-release stage, the pre-release tag is not found, and a publish run or any task proceeds as if the current version is that of the last production version.
+
+### Refactoring
+
+- **Versioning:** projects that use incremental versioning should always use a 'patch' release level if no relevant commits are found, as opposed to exiting the run as does a semantically versioned project.
+
 ## Version 3.3.0 (July 4th, 2021)
 
 ### Bug Fixes
