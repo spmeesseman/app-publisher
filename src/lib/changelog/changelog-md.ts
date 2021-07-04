@@ -279,9 +279,9 @@ export class ChangelogMd extends Changelog
     {
         let newChangelog = false;
         const { options, logger, lastRelease, nextRelease } = context,
-            originalFile = options.changelogFile,
-            taskSpecVersion = options.taskChangelogPrintVersion || options.taskChangelogViewVersion,
-            version = !taskSpecVersion ? nextRelease.version : taskSpecVersion;
+              originalFile = options.changelogFile,
+              taskSpecVersion = options.taskChangelogPrintVersion || options.taskChangelogViewVersion,
+              version = !taskSpecVersion ? nextRelease.version : taskSpecVersion;
 
         logger.log("Start changelog file edit");
 
@@ -321,8 +321,7 @@ export class ChangelogMd extends Changelog
 
         if (lastRelease.version !== nextRelease.version || newChangelog || options.taskMode)
         {
-            const changelogTitle = `# ${options.projectName} Change Log`.toUpperCase(),
-                fmtDate = this.getFormattedDate();
+            const changelogTitle = `# ${options.projectName} Change Log`.toUpperCase();
 
             let tmpCommits: string,
                 changeLogFinal = "";
@@ -346,34 +345,17 @@ export class ChangelogMd extends Changelog
 
             if (options.taskChangelog || !options.taskMode)
             {
-                let titleVersion = nextRelease.version;
-                if (options.vcWebPath) {
-                    titleVersion = nextRelease.version;
-                    //
-                    // TODO - links in changelog (but not in title, or redo version parser)
-                    //
-                    // titleVersion = options.repoType === "git" ?
-                    //                     `[${nextRelease.version}](${options.vcWebPath}/compare/v${lastRelease.version}...v${nextRelease.version})` :
-                    //                     nextRelease.version;
-                }
                 if (!newChangelog && !tmpCommits.endsWith(EOL)) {
                     tmpCommits += EOL;
                 }
 
-                let header: string;
-                if (await pathExists(options.changelogHdrFile)) {
-                    header = await readFile(options.changelogHdrFile);
-                }
-
-                tmpCommits = `## ${options.versionText} ${titleVersion} (${fmtDate})${EOL}${EOL}${tmpCommits}`.trimRight();
+                const header = await this.getHeader(context, version);
+                tmpCommits = `${header}${EOL}${EOL}${tmpCommits}`.trimRight();
 
                 let changeLogContents = await readFile(options.changelogFile);
                 changeLogContents = changeLogContents.replace(new RegExp(changelogTitle, "i"), "").trim();
 
                 changeLogFinal = `${changelogTitle}${EOL}${EOL}`;
-                if (header) {
-                    changeLogFinal += `${header}${EOL}${EOL}`;
-                }
                 if (tmpCommits) {
                     changeLogFinal = `${changeLogFinal}${tmpCommits}${EOL}${EOL}`;
                 }
@@ -404,6 +386,34 @@ export class ChangelogMd extends Changelog
         // Reset
         //
         options.changelogFile = originalFile;
+    }
+
+
+    async getHeader(context: IContext, version?: string)
+    {
+        let header = "", hdrFinal = "", titleVersion = version;;
+        const {options} = context,
+              fmtDate = this.getFormattedDate();
+        if (!version) {
+            version = context.nextRelease.version;
+        }
+        if (options.vcWebPath) {
+            titleVersion = version;
+            //
+            // TODO - links in changelog (but not in title, or redo version parser)
+            //
+            // titleVersion = options.repoType === "git" ?
+            //                     `[${nextRelease.version}](${options.vcWebPath}/compare/v${lastRelease.version}...v${nextRelease.version})` :
+            //                     nextRelease.version;
+        }
+        if (await pathExists(options.changelogHdrFile)) {
+            header = await readFile(options.changelogHdrFile);
+        }
+        hdrFinal = `## ${options.versionText} ${titleVersion} (${fmtDate})`;
+        if (header) {
+            hdrFinal = hdrFinal + EOL + EOL + header;
+        }
+        return hdrFinal;
     }
 
 

@@ -20,6 +20,7 @@ export interface IChangelog
     notesLast: string;
     createSectionFromCommits(context: IContext): string;
     doEdit(context: IContext): Promise<void>;
+    getHeader(context: IContext, version?: string): Promise<string>;
     getVersion(context: IContext): Promise<string>;
     populate(context: IContext, nextVersionChangelogWritten?: boolean): Promise<void>;
 }
@@ -594,13 +595,21 @@ export interface IOptions
      */
     taskChangelogHtmlView: boolean;
     /**
-     * Export the next release's current changelog and output to stdout.
+     * Export the next release's pending changelog and output to stdout.
      */
     taskChangelogPrint: boolean;
+    /**
+     * Read the changelog's header from disk and output to stdout.
+     */
+    taskChangelogHdrPrint: boolean;
     /**
      * Export the specified release's current changelog and output to stdout.
      */
     taskChangelogPrintVersion: string;
+    /**
+     * Read the changelog's header from disk and output to stdout, using the specified version number.
+     */
+    taskChangelogHdrPrintVersion: string;
     /**
      * Export the next release's current changelog and view using the editor specified in the
      * .publishrc file. The created file is a copy stored in a temporary directory specified by

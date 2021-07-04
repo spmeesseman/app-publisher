@@ -6,6 +6,7 @@ export abstract class Changelog implements IChangelog
     abstract doEdit(context: IContext): Promise<void>;
     abstract getSections(context: IContext, version?: string, numSections?: number, htmlFormat?: boolean, inputFile?: string): Promise<string>;
     abstract getSectionEntries(context: IContext, version?: string): Promise<IChangelogEntry[]>;
+    abstract getHeader(context: IContext, version?: string): Promise<string>;
     abstract getVersion(context: IContext): Promise<string>;
     abstract createSectionFromCommits(context: IContext): string;
 

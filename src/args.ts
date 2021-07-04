@@ -720,7 +720,17 @@ export const publishRcOpts =
         false,
         [ "-tcp", "--task-changelog-print" ],
         {
-            help: "Export the next release's current changelog and output to stdout."
+            help: "Export the next release's pending changelog and output to stdout."
+        }
+    ],
+
+    taskChangelogHdrPrint: [
+        true,
+        "boolean",
+        false,
+        [ "-tchp", "--task-changelog-hdr-print" ],
+        {
+            help: "Read the changelog's header from disk and output to stdout."
         }
     ],
 
@@ -735,6 +745,17 @@ export const publishRcOpts =
                 "app-publisher --no-ci -tcpv 1.2.4",
                 "app-publisher --task-changelog-print-version 3.0.1"
             ]
+        }
+    ],
+
+    taskChangelogHdrPrintVersion: [
+        true,
+        "string",
+        "",
+        [ "-tchpv", "--task-changelog-hdr-print-version" ],
+        {
+            help: "Read the changelog's header from disk and output to stdout, using the\n" +
+                  "specified version number."
         }
     ],
 

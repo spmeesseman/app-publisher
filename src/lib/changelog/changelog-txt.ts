@@ -429,11 +429,10 @@ export class ChangelogTxt extends Changelog
     {
         let isNewHistoryFile = false,
             isNewHistoryFileHasContent = false;
-        const fmtDate = this.getFormattedDate(),
-            { options, logger, lastRelease, nextRelease} = context,
-            originalFile = options.changelogFile,
-            taskSpecVersion = options.taskChangelogPrintVersion || options.taskChangelogViewVersion,
-            version = !taskSpecVersion ? nextRelease.version : taskSpecVersion;
+        const { options, logger, lastRelease, nextRelease} = context,
+              originalFile = options.changelogFile,
+              taskSpecVersion = options.taskChangelogPrintVersion || options.taskChangelogViewVersion,
+              version = !taskSpecVersion ? nextRelease.version : taskSpecVersion;
 
         logger.log("Start changelog txt file edit");
 
@@ -543,16 +542,8 @@ export class ChangelogTxt extends Changelog
             //
             if (options.taskChangelog || !options.taskMode)
             {
-                let header = "";
-                if (await pathExists(options.changelogHdrFile)) {
-                    header = await readFile(options.changelogHdrFile);
-                }
-                else {
-                    for (let i = 0; i < options.changelogLineLen; i++) {
-                        header += "-";
-                    }
-                }
-                await appendFile(options.changelogFile, `${EOL}${options.versionText} ${version}${EOL}${fmtDate}${EOL}${header}${EOL}${tmpCommits}`);
+                const header = await this.getHeader(context, version);
+                await appendFile(options.changelogFile, `${EOL}${header}${EOL}${tmpCommits}`);
             }
             else if (options.taskChangelogPrint || options.taskChangelogPrintVersion) {
                 context.stdout.write(tmpCommits.trim());
@@ -578,6 +569,26 @@ export class ChangelogTxt extends Changelog
         // Reset
         //
         options.changelogFile = originalFile;
+    }
+
+
+    async getHeader(context: IContext, version?: string)
+    {
+        let header = "";
+        const {options} = context,
+              fmtDate = this.getFormattedDate();
+        if (!version) {
+            version = context.nextRelease.version;
+        }
+        if (await pathExists(options.changelogHdrFile)) {
+            header = await readFile(options.changelogHdrFile);
+        }
+        else {
+            for (let i = 0; i < options.changelogLineLen; i++) {
+                header += "-";
+            }
+        }
+        return `${options.versionText} ${version}${EOL}${fmtDate}${EOL}${header}`;
     }
 
 
