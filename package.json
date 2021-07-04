@@ -116,8 +116,8 @@
     },
     "files": [
         "build/*.js",
-        "build/lib",
-        "build/bin",
+        "build/lib/**/*.js",
+        "build/bin/*.js",
         "script",
         "res"
     ],

@@ -26,8 +26,12 @@ pipeline {
     stage("Prepare Environment") {
       steps {
         //
-        // Subversion Checkout
+        // Subversion Checkout.  Delay 5 seconds first since someone decided it was a good idea
+        // to grab the SVN changes by timestamp even though the HEAD commit id is known.  If the
+        // server clock is off by even one half of a second, the last change will not be grabbed
         //
+        echo "Subversion checkout delay 5 seconds..."
+        sleep(time:5, unit:"SECONDS")
         echo "Subversion checkout..."
         checkout(
           poll: false,
@@ -68,23 +72,12 @@ pipeline {
           env.SKIP_CI = "false"
           //
           // Set variables to use throughout build process by examining the commit messages.
+          // For SVN, its once commit per changeset (whereas Got could have multiple commits per changeset)
           // Overrides build parameters.
           //
           def changeLogSets = currentBuild.changeSets
           for (int i = 0; i < changeLogSets.size(); i++) {
             def entries = changeLogSets[i].items
-            //
-            // If the [skip ci] tag is found in the last commit, then exit
-            //
-            if (i == 0 && entries.length > 0) {
-              def entry = entries[0]
-              if (entry.msg.indexOf("[skip-ci]") != -1 || entry.msg.indexOf("[skip ci]") != -1) {
-                echo "THE 'skip ci' TAG WAS FOUND IN COMMIT"
-                echo "Set build statis to NOT_BUILT"
-                currentBuild.result = 'NOT_BUILT'
-                env.SKIP_CI = "true"
-              }
-            }
             //
             // Set environment control flags and log commit messages
             //
@@ -92,14 +85,25 @@ pipeline {
             for (int j = 0; j < entries.length; j++) {
                 def entry = entries[j]
                 echo "${entry.commitId} by ${entry.author} on ${new Date(entry.timestamp)}: ${entry.msg}"
+                echo "   ${entry.msg}"
+                //
+                // If the [skip ci] tag is found in the last commit, then exit
+                //
+                if (i == 0 && j == 0) {
+                  if (entry.msg.indexOf("[skip-ci]") != -1 || entry.msg.indexOf("[skip ci]") != -1 || entry.msg.indexOf("[skipci]") != -1) {
+                    echo "The 'skip ci' tag was found in the last commit"
+                    echo "Set build statis to NOT_BUILT"
+                    currentBuild.result = 'NOT_BUILT'
+                    env.SKIP_CI = "true"
+                  }
+                }
+                //
+                // List files in this commit
+                //
                 def files = new ArrayList(entry.affectedFiles)
                 for (int k = 0; k < files.size(); k++) {
                     def file = files[k]
                     echo "  ${file.editType.name} ${file.path}"
-                }
-                if (entry.msg.indexOf("[production-release]") != -1) {
-                  echo "THIS IS A PRODUCTION RELEASE"
-                  env.RELEASE_PRODUCTION = "true"
                 }
             }
           }
@@ -114,7 +118,7 @@ pipeline {
             env.RELEASE_PRODUCTION = "false"
           }
           echo "Release Parameters:"
-          echo "   Production release  : ${env.RELEASE_PRODUCTION}"
+          echo "   Production release  : ${env.RELEASE_PRODUCTION} (tbd)"
           echo "Build Environment:"
           echo "   Skip CI             : ${env.SKIP_CI}" 
           if (env.BRANCH_NAME != null) {
@@ -124,7 +128,35 @@ pipeline {
             echo "   Tag                 : ${env.TAG_NAME}"
           }
         }
+        //
+        // NPM Install
+        //
+        nodejs("Node 12") {
+          bat "npm install"
+        }
       } 
+    }
+
+    //
+    // TESTS
+    //
+    stage("Tests") {
+      when {
+        expression { env.SKIP_CI == "false" }
+      }
+      // environment {
+      //   CODECOV_TOKEN = env.CODEDOV_TOKEN_AP
+      // }
+      steps {
+        echo "Run tests"
+        // nodejs("Node 12") {
+        //   bat "npm run clean-build"
+        //   bat "npm run build"
+        //   bat "npm run test"
+        //   echo "Publish test results"
+        //   // sh "tools/codecov.sh"
+        // }
+      }
     }
 
     //
@@ -139,11 +171,6 @@ pipeline {
         // If the [skip ci] tag is found in the last commit, then exit
         //
         nodejs("Node 12") {
-          //
-          // NPM Install
-          //
-          bat "npm install"
-          bat "npm run clean-build"
           script {
             //
             // app-publisher is used so check for .publishrc file
@@ -173,15 +200,24 @@ pipeline {
                                       @echo off
                                       app-publisher --config-name pja --task-version-next
                                     """)
-              //
-              // Update version files
-              //
-              echo "Update version files"
-              bat "app-publisher --config-name pja --task-version-update"
+              if (env.CURRENTVERSION != env.NEXTVERSION) {
+                echo "Version bumped, a release will be performed"
+                env.RELEASE_PRODUCTION = "true"
+                //
+                // Update version files
+                //
+                echo "Update version files"
+                bat "app-publisher --config-name pja --task-version-update"
+              }
             }
             else {
-              echo "Tag found: ${env.TAG_NAME}, set next version to current"
+              echo "This is /tags/${env.TAG_NAME}, set next version to current"
               env.NEXTVERSION = env.CURRENTVERSION
+            }
+            if (env.NEXTVERSION == "" || env.CURRENTVERSION == "") {
+              echo "The current or next version could not be found, fail"
+              env.RELEASE_PRODUCTION = "false"
+              sh "exit 1" // fail!! does it work???
             }
             echo "Current version is ${env.CURRENTVERSION}"
             echo "Next proposed version is ${env.NEXTVERSION}"
@@ -199,27 +235,8 @@ pipeline {
       }
       steps {
         nodejs("Node 12") {
+          bat "npm run clean-build"
           bat "npm run build"
-        }
-      }
-    }
-
-    //
-    // TESTS
-    //
-    stage("Tests") {
-      when {
-        expression { env.SKIP_CI == "false" }
-      }
-      // environment {
-      //   CODECOV_TOKEN = env.CODEDOV_TOKEN_AP
-      // }
-      steps {
-        echo "Run tests"
-        nodejs("Node 12") {
-          bat "npm run test"
-          echo "Publish test results"
-          // sh "tools/codecov.sh"
         }
       }
     }
@@ -242,19 +259,17 @@ pipeline {
           //
           // Populate and open history.txt in Notepad, then will wait for user intervention
           //
-          dir("src/ui") {
-            nodejs("Node 12") {
-              //
-              // If we don't use --version-force-next option then ap will bump the version again
-              // since we ran the --task-version-update command already
-              //
-              bat "app-publisher --config-name pja --task-changelog --version-force-next ${env.NEXTVERSION}" 
-              historyEntry = bat(returnStdout: true,
-                                 script: """
-                                   @echo off
-                                   app-publisher --config-name pja --task-changelog-print --version-force-next ${env.NEXTVERSION}
-                                 """)
-            }
+          nodejs("Node 12") {
+            //
+            // If we don't use --version-force-next option then ap will bump the version again
+            // since we ran the --task-version-update command already
+            //
+            bat "app-publisher --config-name pja --task-changelog --version-force-next ${env.NEXTVERSION}" 
+            historyEntry = bat(returnStdout: true,
+                                script: """
+                                  @echo off
+                                  app-publisher --config-name pja --task-changelog-print --version-force-next ${env.NEXTVERSION}
+                                """)
           }
           //
           // Notify of input required
@@ -339,6 +354,29 @@ pipeline {
         }
       }
     }
+
+    //
+    // COMMIT / TAG
+    //
+    stage("Commit") {
+      when {
+        expression { env.RELEASE_PRODUCTION == "true" && env.SKIP_CI == "false"  }
+      }
+      steps {
+        echo "Perform production build post-build tasks"
+        echo "    1. Commit modified files to SVN."
+        echo "    2. Tag version ${env.NEXTVERSION} in SVN."
+        nodejs("Node 12") {
+          script {
+            bat "app-publisher --config-name pja --task-commit --task-tag"
+          }
+        }
+      }
+    }
+
+  //
+  // END STAGES
+  //
   }
 
   post { 
@@ -348,7 +386,7 @@ pipeline {
     always { 
       script {
         if (env.SKIP_CI == "false") {
-          mantisIssueAdd keepTicketPrivate: false, threshold: 'failureOrUnstable'
+          // mantisIssueAdd keepTicketPrivate: false, threshold: 'failureOrUnstable'
           mantisIssueUpdate keepNotePrivate: false, recordChangelog: true, setStatusResolved: true, threshold: 'failureOrUnstable'
           //
           // send email
@@ -374,10 +412,11 @@ pipeline {
           //
           if (env.RELEASE_PRODUCTION == "true") {
             echo "Successful build"
-            echo "    1. Commit modified files to SVN."
-            echo "    2. Tag version in SVN."
-            echo "    3. Send release email."
-            bat "app-publisher --config-name pja --task-commit --task-tag --task-email --version-force-next ${env.NEXTVERSION}"
+            echo "    1. Send release email."
+            nodejs("Node 12") {
+              // bat "app-publisher --config-name pja --task-email"
+              bat "app-publisher --config-name pja --task-email --version-force-current"
+            }
           }
         }
       }

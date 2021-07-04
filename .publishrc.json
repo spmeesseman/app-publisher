@@ -78,11 +78,10 @@
     "vcRevertFiles":     [],
     "vcTagPrefix":       "",
     "vcWebPath":         "https://github.com/spmeesseman/app-publisher",
-    "versionFiles":      [
-        {
-            "path": "src/test/fixture/package.json"
-        }
-    ],
+    "versionFiles": [
+    {
+        "path": "src\\test\\fixture\\package.json"
+    }],
     "versionFilesEditAlways": [],
     "versionFilesScrollDown": [],
     "versionText":       "Version",

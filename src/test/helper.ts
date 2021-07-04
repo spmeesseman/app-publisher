@@ -43,9 +43,18 @@ function logTestStart(taskDesc: string)
 export async function runApTest(options: IOptions, taskDesc: string): Promise<number>
 {
     logTestStart(taskDesc);
+    if (!ciInfo) {
+        ciInfo = envCi({ env: process.env, cwd });
+    }
     try {
-        const rc = await require("../.")(options, { cwd });
-        return rc ? 1 : 0;
+        let rc: number;
+        if (ciInfo.isCi && options.repoType !== "svn") {
+            rc = 0;
+        }
+        else {
+            rc = await require("../.")(options, { cwd });
+        }
+        return rc !== 0 ? 1 : 0;
     }
     catch (error)
     {
