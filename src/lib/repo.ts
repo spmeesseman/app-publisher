@@ -14,7 +14,7 @@ export async function addEdit(context: IContext, pathToAdd: string | string[])
         return;
     }
 
-    const {nextRelease} = context;
+    const {nextRelease, logger} = context;
 
     async function doAdd(p: string) // , isDir = false)
     {
@@ -47,6 +47,7 @@ export async function addEdit(context: IContext, pathToAdd: string | string[])
         //
         // Save the edit
         //
+        logger.log(`Add edit to modified files list: ${editType} - ${pathResolved}`);
         nextRelease.edits.push({
             path: pathResolved,
             type: editType

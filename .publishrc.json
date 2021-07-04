@@ -37,8 +37,7 @@
     ],
     "githubRelease":     "Y",
     "githubAssets":      [
-        "CHANGELOG.md|Changelog File",
-        "install\\dist\\app-publisher.tgz|NPM Tarball"
+        "CHANGELOG.md|Changelog File"
     ],
     "githubChglogEdit":  "N",
     "githubUser":        "spmeesseman",

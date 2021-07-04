@@ -180,7 +180,7 @@ export function execaEx(context: IContext, scriptPrg: string, scriptPArgs: strin
         //
         // Some commands just dont log, they could have hundreds of lines
         //
-        if (scriptPArgs && scriptPArgs[0] === "ls") {
+        if (scriptPArgs && (scriptPArgs[0] === "ls" || scriptPArgs[0] === "ls-files")) {
             return procPromise;
         }
         procPromise.stdout.pipe(stdout);

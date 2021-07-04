@@ -1,10 +1,10 @@
 
-import { pick } from "lodash";
 import * as path from "path";
+import { pick } from "lodash";
 import { IContext } from "../../interface";
 import { addEdit, revert } from "../repo";
 import { createDir, pathExists, readFile, writeFile } from "../utils/fs";
-import { timeout, checkExitCode } from "../utils/utils";
+import { checkExitCode } from "../utils/utils";
 import { getNpmFile, setNpmVersion } from "../version/npm";
 const execa = require("execa");
 
@@ -20,9 +20,7 @@ export let defaultNameWoScope: string;
 
 export async function doNpmRelease(context: IContext)
 {
-    const options = context.options,
-          logger = context.logger,
-          nextRelease = context.nextRelease,
+    const {options, logger, nextRelease, cwd, env} = context,
           file = await getNpmFile(context);
 
     logger.log("Starting NPM release");
@@ -33,32 +31,37 @@ export async function doNpmRelease(context: IContext)
         //
         // Pack tarball and mvoe to dist dir if specified
         //
-        if (options.npmPackDist === "Y")
+        if (options.npmPackDist === "Y" && defaultName && defaultNameWoScope)
         {
-            let tmpPkgFile: string, doAddEdit = true;
-            let proc = await execa("npm", ["pack"], pick(context, [ "cwd", "env"]));
+            let tmpPkgFile: string, destPackedFile: string, doAddEdit = true;
+
+            logger.log("Performing NPM pack, npmPackDist=Y");
+            let proc = await execa("npm", ["pack"], {cwd, env});
             checkExitCode(proc.code, logger);
 
-            if (!options.distReleasePathSrc)
+            if (!(await pathExists(options.distReleasePathSrc)))
             {
-                logger.log("Creating tarball file directory and adding to version control");
+                logger.log("Creating local dist directory and adding to version control");
                 await createDir(options.distReleasePathSrc);
                 await addEdit(context, options.distReleasePathSrc);
                 doAddEdit = false;
             }
 
-            const destPackedFile = path.join(options.distReleasePathSrc, `${options.projectName}.tgz`);
-            timeout(100);
-            if (options.npmScope) {
-                tmpPkgFile = `${options.npmScope}-${options.projectName}-${nextRelease.version}.tgz`.substring(1);
+            if (options.configName) {
+                destPackedFile = path.join(options.distReleasePathSrc, `${defaultNameWoScope}.tgz`);
             }
             else {
-                tmpPkgFile = `${options.projectName}-${nextRelease.version}.tgz`;
+                destPackedFile = path.join(options.distReleasePathSrc, `${defaultNameWoScope}-${options.configName}.tgz`);
+            }
+            if (options.npmScope || defaultScope) {
+                tmpPkgFile = `${options.npmScope || defaultScope}-${defaultNameWoScope}-${nextRelease.version}.tgz`.substring(1);
+            }
+            else {
+                tmpPkgFile = `${defaultName}-${nextRelease.version}.tgz`;
             }
             //
             // Move file
             //
-            timeout(500);
             logger.log("Moving package:");
             logger.log("   " + tmpPkgFile);
             logger.log("To:");
@@ -77,6 +80,9 @@ export async function doNpmRelease(context: IContext)
             if (doAddEdit) {
                 await addEdit(context, destPackedFile);
             }
+        }
+        else if (!defaultName || !defaultNameWoScope) {
+            logger.warn("The npmPackDist step failed, default names not set by NPM setJson step");
         }
         //
         // Publish to npm server
@@ -182,6 +188,9 @@ export async function setPackageJson(context: IContext)
     if (defaultName.startsWith("@") && defaultName.includes("/")) {
         defaultScope = defaultName.substring(0, defaultName.indexOf("/"));
         defaultNameWoScope = defaultName.substring(defaultName.indexOf("/") + 1);
+    }
+    else {
+        defaultNameWoScope = defaultName;
     }
 
     if (options.npmScope && defaultScope && defaultNameWoScope)

@@ -83,17 +83,21 @@ suite("Tasks Tests", () =>
 
     test("release tasks", async () =>
     {
-        let options = await getApOptions([ "--task-dist-release", "--version-force-current", "--dry-run", "--config-name", "svn" ]);
+        // let options = await getApOptions([ "--task-dist-release", "--version-force-current", "--dry-run", "--config-name", "svn" ]);
+        // expect(await runApTest(options, "task: dist release")).to.equal(0, "task: dist release");
+        // sleep(500);
+
+        let options = await getApOptions([ "--task-npm-release", "--version-force-current", "--dry-run", "--config-name", "svn" ]);
         expect(await runApTest(options, "task: dist release")).to.equal(0, "task: dist release");
         sleep(500);
 
-        options = await getApOptions([ "--task-github-release", "--version-force-current", "--dry-run" ]);
-        expect(await runApTest(options, "task: github release")).to.equal(0, "task: github release");
-        sleep(500);
-
-        options = await getApOptions([ "--task-mantisbt-release", "--version-force-current", "--dry-run", "--config-name", "svn" ]);
-        expect(await runApTest(options, "task: mantisbt release")).to.equal(0, "task: mantisbt release");
-        sleep(500);
+        // options = await getApOptions([ "--task-github-release", "--version-force-current", "--dry-run" ]);
+        // expect(await runApTest(options, "task: github release")).to.equal(0, "task: github release");
+        // sleep(500);
+// 
+        // options = await getApOptions([ "--task-mantisbt-release", "--version-force-current", "--dry-run", "--config-name", "svn" ]);
+        // expect(await runApTest(options, "task: mantisbt release")).to.equal(0, "task: mantisbt release");
+        // sleep(500);
     });
 
 
