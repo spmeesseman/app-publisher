@@ -1,5 +1,17 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.3.2 (July 4th, 2021)
+
+### Bug Fixes
+
+- **Dry Run:** vcs revert is not performed on a task dry run
+- **Release:** the npmPackDist stage fails if the target dist source directory does not exist yet.
+- **Release:** running multiple release tasks in one run when performing a distributed task release is not woking, can only perform one release per run.
+
+### Documentation
+
+- **Help:** add arg help for npmPackDist
+
 ## Version 3.3.1 (July 4th, 2021)
 
 ### Bug Fixes
