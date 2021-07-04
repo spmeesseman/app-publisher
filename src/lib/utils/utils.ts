@@ -163,10 +163,28 @@ export function escapeRegExp(text: string)
  */
 export function execaEx(context: IContext, scriptPrg: string, scriptPArgs: string[])
 {
-    const {options, cwd, env, stdout} = context;
+    const {options, cwd, env, stdout, stderr, logger} = context;
+
+    if (!scriptPrg || !scriptPArgs) {
+        logger.error("Arguments to execa are invalid, no script/program was executed");
+        return new Promise((resolve) => { resolve(false); });
+    }
+
+
+    logger.log(`Executing command ${scriptPrg}`);
+    logger.log(`${scriptPrg} ${scriptPArgs.join(" ")}`);
+
     const procPromise = execa(scriptPrg, scriptPArgs, {cwd, env});
-    if (options.verbose || options.vcStdOut) {
+    if (options.verbose || options.vcStdOut)
+    {
+        //
+        // Some commands just dont log, they could have hundreds of lines
+        //
+        if (scriptPArgs && scriptPArgs[0] === "ls") {
+            return procPromise;
+        }
         procPromise.stdout.pipe(stdout);
+        procPromise.stderr.pipe(stderr);
     }
     return procPromise;
 }
