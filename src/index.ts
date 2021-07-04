@@ -616,9 +616,6 @@ async function runRelease(context: IContext)
             //
             if (options.taskNpmJsonUpdate) {
                 logTaskResult(true, "npm json update", logger);
-                if (!options.taskVersionUpdate) { // && !options.taskBuild) {
-                    return true;
-                }
             }
             else if (options.taskNpmRelease) {
                 logger.log("The package.json file has been updated for 'NPM release' task");
@@ -636,13 +633,10 @@ async function runRelease(context: IContext)
         //
         await setVersions(context);
         //
-        // If this is task mode, we're done maybe
+        // If this is task mode, log it
         //
         if (options.taskVersionUpdate) {
             logTaskResult(true, "version update", logger);
-            // if (!options.taskBuild) {
-                return true;
-            // }
         }
     }
 
@@ -657,7 +651,7 @@ async function runRelease(context: IContext)
         //
         await util.runScripts(context, "postBuild", options.postBuildCommand, options.taskBuild);
         //
-        // If this is task mode, lof this task's result
+        // If this is task mode, log it
         //
         if (options.taskBuild) {
             logTaskResult(true, "build", logger);
@@ -681,11 +675,10 @@ async function runRelease(context: IContext)
         //
         await util.runScripts(context, "postNpmRelease", options.npmReleasePostCommand, options.taskNpmRelease);
         //
-        // If this is task mode, we're done maybe
+        // If this is task mode, log it
         //
         if (options.taskNpmRelease) {
             logTaskResult(true, "npm release", logger);
-            return true;
         }
     }
 
@@ -708,11 +701,10 @@ async function runRelease(context: IContext)
         //
         await util.runScripts(context, "postDistRelease", options.distReleasePostCommand, options.taskDistRelease);
         //
-        // If this is task mode, we're done maybe
+        // If this is task mode, log it
         //
         if (options.taskDistRelease) {
             logTaskResult(true, "dist release", logger);
-            return true;
         }
     }
 
@@ -742,7 +734,9 @@ async function runRelease(context: IContext)
         await util.runScripts(context, "postGithubRelease", options.githubReleasePostCommand, options.taskGithubRelease);
         if (options.taskMode && ghRc.error) {
             logTaskResult(ghRc.error, "github release", logger);
-            return false;
+            // return false;
+            logger.error("Re-try the GitHub release using the ap task --task-mantisbt-release");
+            logger.warn("Proceeding with release");
         }
         else if (options.taskGithubRelease) {
             logTaskResult(true, "github release", logger);
@@ -772,9 +766,11 @@ async function runRelease(context: IContext)
         // Post-mantis release scripts (.publishrc).
         //
         await util.runScripts(context, "postMantisRelease", options.mantisbtReleasePostCommand, options.taskMantisbtRelease);
-        if (options.taskMode && mantisRc.error) {
+        if (options.taskMantisbtRelease && mantisRc.error) {
             logTaskResult(mantisRc.error, "mantisbt release", logger);
-            return false;
+            // return false;
+            logger.error("Re-try the MantisBT release using the ap task --task-mantisbt-release");
+            logger.warn("Proceeding with release");
         }
         if (options.taskMantisbtRelease) {
             logTaskResult(true, "mantisbt release", logger);
