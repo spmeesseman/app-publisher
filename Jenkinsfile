@@ -230,7 +230,7 @@ pipeline {
                   // Update version files
                 //
                 echo "Update version files"
-                bat "app-publisher --task-version-update --version-pre-release-id ${env.PRERELEASEID}"
+                bat "app-publisher --config-name pja --task-version-update"
             }
           }
         }
@@ -296,7 +296,8 @@ pipeline {
           // Wait for user intervention, approval of new version # and history entry
           //
           echo "Waiting for user approval..."
-          def inputMessage = "Approve Version ${env.NEXTVERSION} History File Changelog"
+          def changelogLoc = "c:\\Users\\administrator.TR\\AppData\\Local\\Jenkins\\.jenkins\\workspace\\app-publisher_trunk\\doc\\history.txt"
+          def inputMessage = "Approve Version ${env.NEXTVERSION} History File Changelog\n${changelogLoc}"
           def userInput = input id: 'history_file_approval',
                                 message: inputMessage,
                                 ok: 'Approve', 
@@ -326,7 +327,7 @@ pipeline {
               historyHeader = bat(returnStdout: true,
                                     script: """
                                     @echo off
-                                    app-publisher --config-name pja --task-changelog-hdr-print
+                                    app-publisher --config-name pja --task-changelog-hdr-print-version ${env.NEXTVERSION}
                                   """)
             }
             // def status = powershell(returnStatus: true,

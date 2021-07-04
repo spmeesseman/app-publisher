@@ -456,6 +456,9 @@ async function runRelease(context: IContext)
             logger.log("There are no relevant commits, no new version is released.");
             return false;
         }
+        else if (options.verbose) {
+            logger.log("Skip no relevant commit constraint, versionForceCurrent||tasksCanPass");
+        }
     }
 
     //
