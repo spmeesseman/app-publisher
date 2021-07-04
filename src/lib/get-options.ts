@@ -44,7 +44,8 @@ function getOptions(useBanner = true): IOptions
     //
     opts.taskModeStdOut = !!(opts.taskVersionCurrent || opts.taskVersionNext || opts.taskVersionInfo ||
                              opts.taskCiEnvInfo || opts.taskVersionPreReleaseId || opts.taskChangelogPrint ||
-                             opts.taskChangelogPrintVersion || opts.taskReleaseLevel);
+                             opts.taskChangelogPrintVersion || opts.taskReleaseLevel || opts.taskChangelogHdrPrint ||
+                             opts.taskChangelogHdrPrintVersion);
 
     //
     // Set some additional options

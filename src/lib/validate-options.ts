@@ -599,6 +599,16 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     }
 
     //
+    // Paths
+    //
+    if (options.changelogHdrFile) {
+        if (!(await pathExists(options.changelogHdrFile))) {
+            logger.error("Invalid value for changelogHdrFile, non-existent file specified");
+            return false;
+        }
+    }
+
+    //
     // C Projects
     //
     if (options.cProjectRcFile) {
@@ -697,27 +707,15 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     //
     if (!options.noCi)
     {
-        options.skipChangelogEdits = "Y";
+        // options.skipChangelogEdits = "Y";
         options.skipVersionEdits = "Y";
         options.versionFilesEditAlways = [];
         options.promptVersion = "N";
         logger.warn("CI environment detected, the following flags/properties have been set:");
-        logger.warn("   skipChangelogEdits     : Y");
+        // logger.warn("   skipChangelogEdits     : Y");
         logger.warn("   skipVersionEdits       : Y");
         logger.warn("   promptVersion          : N");
         logger.warn("   versionFilesEditAlways : []");
-    }
-
-    //
-    // DRY RUN
-    //
-    if (options.dryRun)
-    {
-        options.skipChangelogEdits = "N";
-        options.skipVersionEdits = "N";
-        logger.warn("Dry run, the following flags have been set set:");
-        logger.warn("   skipChangelogEdits  : N");
-        logger.warn("   skipVersionEdits    : N");
     }
 
     //
@@ -794,6 +792,7 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     if (options.taskTagVersion && isString(options.taskTagVersion)) {
         options.taskTag = true;
     }
+
     if (options.taskCommit || options.taskTag || options.taskTagVersion) {
         for (const o in options) {
             if (o.startsWith("task") && options[o] === true && o !== "taskCommit" && o !== "taskTag" &&
@@ -806,6 +805,28 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
             }
         }
     }
+
+    function enforceingleTask(task: string)
+    {
+        if (options[task]) {
+            for (const o in options) {
+                if (o.startsWith("task") && options[o] === true && o !== "taskMode" && o !== "taskModeStdOut" && o !== task)
+                {
+                    logger.error("Invalid options specified:");
+                    logger.error(`   The '${task}' option cannot be used together with other task options`);
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    if (!enforceingleTask("taskChangelogView"))         { return false; };
+    if (!enforceingleTask("taskChangelogViewVersion"))  { return false; };
+    if (!enforceingleTask("taskChangelogPrint"))        { return false; };
+    if (!enforceingleTask("taskChangelogPrintVersion")) { return false; };
+    if (!enforceingleTask("taskChangelogHdrPrint"))     { return false; };
+    if (!enforceingleTask("taskChangelogHdrPrintVersion"))     { return false; };
 
     //
     // Only certain tasks are allowed with --version-force-current.  e.g. re-send a notification
@@ -849,7 +870,8 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
                 if (options[o] === true) {
                     if (o !== "taskVersionCurrent" && o !== "taskVersionNext" && o !== "taskVersionInfo" &&
                         o !== "taskChangelogPrint" && o !== "taskCiEnvInfo" && o !== "taskVersionPreReleaseId" &&
-                        o !== "taskReleaseLevel" && o !== "taskMode" && o !== "taskModeStdOut")
+                        o !== "taskReleaseLevel" && o !== "taskMode" && o !== "taskModeStdOut" &&
+                        o !== "taskChangelogHdrPrint" && o !== "taskChangelogHdrPrintVersion")
                     {
                         logger.error("The specified task cannot be used with a 'stdout' type task:");
                         logger.error("   " + o);

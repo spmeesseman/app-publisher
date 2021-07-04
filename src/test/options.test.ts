@@ -117,12 +117,20 @@ suite("Options Tests", () =>
         expect(await runApTest(options, "options: stdout: fail 6")).to.equal(1, "options: stdout: fail 6");
         sleep(500);
 
-        options = await getApOptions([ "--chanelog-line-len" ]); // missing positional
+        options = await getApOptions([ "--changelog-line-len" ]); // missing positional
         expect(await runApTest(options, "options: stdout: fail 6")).to.equal(1, "options: stdout: fail 7");
         sleep(500);
 
-        options = await getApOptions([ "--chanelog-line-len", "70o" ]); // non-numeric positional
+        options = await getApOptions([ "--changelog-line-len", "70o" ]); // non-numeric positional
         expect(await runApTest(options, "options: stdout: fail 8")).to.equal(1, "options: stdout: fail 8");
+        sleep(500);
+
+        options = await getApOptions([ "--task-changelog-print", "--task-changelog-print-version" ]);
+        expect(await runApTest(options, "options: stdout: fail 9")).to.equal(1, "options: stdout: fail 9");
+        sleep(500);
+
+        options = await getApOptions([ "--this-is-invalid" ]);
+        expect(await runApTest(options, "options: stdout: fail 10")).to.equal(1, "options: stdout: fail 10");
         sleep(500);
     });
 
