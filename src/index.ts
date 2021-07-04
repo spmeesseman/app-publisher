@@ -482,7 +482,7 @@ async function runRelease(context: IContext)
             // Note that in the case of firstRelease == true, nextRelease.version == FIRST_RELEASE,
             // lastRelease.version == undefined, and lastRelease.versionInfo.version == current_file_version
             //
-            const firstReleaseMismatch = firstRelease && semver.gt(lastRelease.versionInfo.version, nextRelease.version);
+            const firstReleaseMismatch = firstRelease && semver.gt(semver.coerce(lastRelease.versionInfo.version), semver.coerce(nextRelease.version));
             if (options.promptVersion === "Y" || (options.noCi && firstReleaseMismatch))
             {
                 if (firstRelease && options.promptVersion !== "Y") {
