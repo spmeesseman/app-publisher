@@ -72,14 +72,16 @@ export function checkExitCode(code: number, logger: any, throwOnError = false)
 }
 
 
-export async function editFile({ options, nextRelease, logger, cwd, env }: IContext, editFile: string, isChangelog = false, seekToEnd = false)
+export async function editFile(context: IContext, editFile: string, isChangelog = false, seekToEnd = false)
 {
+    const { options, nextRelease, logger, cwd, env } = context;
+
     if (editFile && await pathExists(editFile))
     {
         let recordEdit = !options.taskMode;
         const fSkipEdits = !isChangelog ? options.skipVersionEdits === "Y" : options.skipChangelogEdits === "Y";
-        let skipEdit = (fSkipEdits || options.taskVersionUpdate || options.taskChangelogFile) &&
-                        !options.taskChangelogView && !options.taskChangelogHtmlView && !options.taskChangelogPrint;
+        let skipEdit = !!((fSkipEdits || options.taskVersionUpdate || options.taskChangelogFile) &&
+                          !options.taskChangelogView && !options.taskChangelogHtmlView && !options.taskChangelogPrint);
         if (!options.taskMode && options.versionFilesEditAlways && options.versionFilesEditAlways.includes(editFile)) {
             skipEdit = false;
         }
@@ -99,13 +101,13 @@ export async function editFile({ options, nextRelease, logger, cwd, env }: ICont
             recordEdit = options.taskCommit;
         }
 
-        if (!skipEdit)
+        if (!skipEdit && !options.ciInfo.isCi)
         {
             logger.log("Open/edit " + editFile);
             //
             // Start Notepad process to edit specified file
             // If this is win32, and we're told to do do, then use the super cool but painfully slow
-            // powershell script that will scroll the content in the editor to the end
+            // powershell script that will "attempt to" scroll the content in the editor to the end
             //
             if (process.platform === "win32" && seekToEnd && !options.taskMode)
             {
@@ -129,6 +131,10 @@ export async function editFile({ options, nextRelease, logger, cwd, env }: ICont
                 }
             }
         }
+        else if (!skipEdit && options.ciInfo.isCi) {
+            logger.log("File edit skipped due to CI environment detected");
+        }
+
         //
         // Track modified files during a publish run (non-task mode)
         //
