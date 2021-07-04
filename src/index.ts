@@ -27,7 +27,7 @@ import { doGithubRelease, publishGithubRelease } from "./lib/releases/github";
 import { last, template } from "lodash";
 import { COMMIT_NAME, COMMIT_EMAIL, FIRST_RELEASE } from "./lib/definitions/constants";
 import { sendNotificationEmail } from "./lib/email";
-import { writeFile } from "./lib/utils/fs";
+import { pathExists, readFile, writeFile } from "./lib/utils/fs";
 import { commit, fetch, verifyAuth, getHead, tag, push, revert, addEdit } from "./lib/repo";
 import { EOL } from "os";
 import { IContext, INextRelease, IOptions } from "./interface";
@@ -927,7 +927,8 @@ async function processTasksLevel1(context: IContext): Promise<string | boolean>
         runDevCodeTests(context);
         return true;
     }
-    else if (options.taskVersionPreReleaseId && util.isString(options.taskVersionPreReleaseId))
+
+    if (options.taskVersionPreReleaseId && util.isString(options.taskVersionPreReleaseId))
     {
         let preRelId = "error",
             match: RegExpExecArray;
@@ -939,12 +940,22 @@ async function processTasksLevel1(context: IContext): Promise<string | boolean>
         return true;
     }
 
+    //
+    // Task '--task-changelog-hdr-print-version'
+    //
+    if (options.taskChangelogHdrPrintVersion)
+    {
+        const hdr = await context.changelog.getHeader(context, options.taskChangelogHdrPrintVersion);
+        context.stdout.write(hdr ?? "Error");
+        return true;
+    }
+
     return false;
 }
 
 
 /**
- * Tasks that can be processed once version info is obtained
+ * Tasks that can be processed once version info is obtained (but not nextRelease object)
  *
  * @param context The run context object.
  */
@@ -1056,6 +1067,16 @@ async function processTasksLevel3(context: IContext): Promise<string | boolean>
     if (options.taskReleaseLevel)
     {
         context.stdout.write(nextRelease.level ?? "none");
+        return true;
+    }
+
+    //
+    // Task '--task-changelog-hdr-print'
+    //
+    if (options.taskChangelogHdrPrint)
+    {
+        const hdr = await context.changelog.getHeader(context);
+        context.stdout.write(hdr ?? "Error");
         return true;
     }
 
