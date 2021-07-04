@@ -821,6 +821,12 @@ async function runRelease(context: IContext)
     }
 
     //
+    // Revert
+    // The call to revertChanges() only reverts if dry run, and configured to do so
+    //
+    await revertChanges(context);
+
+    //
     // TODO - Plugins maybe?
     //
     // context.releases = await plugins.publish(context);
@@ -909,10 +915,6 @@ async function commitAndTag(context: IContext, githubReleaseId: string)
             }
         }
     }
-    //
-    // Revert all changes - only reverts if dry run, and configured to do so
-    //
-    await revertChanges(context);
 }
 
 
@@ -1010,6 +1012,7 @@ async function processTasksLevel2(context: IContext): Promise<string | boolean>
         await addEdit(context, options.changelogFile);
         await setVersions(context, true);
         await commitAndTag(context, undefined);
+        await revertChanges(context); // only reverts if dry run, and configured to do so
         return true;
     }
 

@@ -37,7 +37,8 @@
     ],
     "githubRelease":     "Y",
     "githubAssets":      [
-        "CHANGELOG.md|Changelog File"
+        "CHANGELOG.md|Changelog File",
+        "install\\dist\\app-publisher.tgz|NPM Tarball"
     ],
     "githubChglogEdit":  "N",
     "githubUser":        "spmeesseman",
@@ -53,7 +54,7 @@
     "mantisbtAssets":    [],
     "mantisReleasePreCommand": [],
     "mantisReleasePostCommand": [],
-    "npmPackDist":       "N",
+    "npmPackDist":       "Y",
     "npmRelease":        "Y",
     "npmRegistry":       "https://registry.npmjs.org",
     "npmReleasePreCommand": [],

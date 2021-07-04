@@ -47,7 +47,7 @@ export async function doNpmRelease(context: IContext)
                 doAddEdit = false;
             }
 
-            if (options.configName) {
+            if (!options.configName) {
                 destPackedFile = path.join(options.distReleasePathSrc, `${defaultNameWoScope}.tgz`);
             }
             else {
@@ -68,10 +68,10 @@ export async function doNpmRelease(context: IContext)
             logger.log("   " + destPackedFile);
 
             if (process.platform === "win32") {
-                proc = await execa.shell(`move /Y "${tmpPkgFile}" "${destPackedFile}`);
+                proc = await execa.shell(`move /Y "${tmpPkgFile}" "${destPackedFile}"`, {cwd, env});
             }
             else {
-                proc = await execa.shell(`mv -f "${tmpPkgFile}" "${destPackedFile}`);
+                proc = await execa.shell(`mv -f "${tmpPkgFile}" "${destPackedFile}"`, {cwd, env});
             }
             checkExitCode(proc.code, logger);
             //
@@ -214,9 +214,11 @@ export async function setPackageJson(context: IContext)
 
     if (modified) {
         await writeFile(file, JSON.stringify(packageJson, undefined, 4));
+        await addEdit(context, file);
         if (packageLockFileExists)
         {
             await writeFile(packageLockFile, JSON.stringify(packageLockJson, undefined, 4));
+            await addEdit(context, packageLockFile);
         }
     }
 

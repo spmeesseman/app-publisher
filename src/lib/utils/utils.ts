@@ -169,18 +169,15 @@ export function execaEx(context: IContext, scriptPrg: string, scriptPArgs: strin
         logger.error("Arguments to execa are invalid, no script/program was executed");
         return new Promise((resolve) => { resolve(false); });
     }
-
-
-    logger.log(`Executing command ${scriptPrg}`);
-    logger.log(`${scriptPrg} ${scriptPArgs.join(" ")}`);
-
     const procPromise = execa(scriptPrg, scriptPArgs, {cwd, env});
-    if (options.verbose || options.vcStdOut)
+    if (options.verbose || (options.vcStdOut && (scriptPrg === "git" || scriptPrg === "svn")))
     {
+        logger.log(`Executing command ${scriptPrg}`);
+        logger.log(`${scriptPrg} ${scriptPArgs.join(" ")}`);
         //
         // Some commands just dont log, they could have hundreds of lines
         //
-        if (scriptPArgs && (scriptPArgs[0] === "ls" || scriptPArgs[0] === "ls-files")) {
+        if (!options.verbosex && scriptPArgs && (scriptPArgs[0] === "ls" || scriptPArgs[0] === "ls-files")) {
             return procPromise;
         }
         procPromise.stdout.pipe(stdout);
