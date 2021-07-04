@@ -431,14 +431,19 @@ async function runRelease(context: IContext)
     // If there were no commits that set the release level to 'patch', 'minor', or 'major',
     // then we're done
     //
-    if (!nextRelease.level && !needNoCommits && lastRelease.versionInfo.system === "semver" && !options.tests)
+    if (!nextRelease.level && !needNoCommits && !options.tests)
     {   //
+        // Certain tasks don't need this check...
+        //
+        const tasksCanPass = options.taskChangelogPrint || options.taskChangelogPrintVersion || options.taskChangelogHdrPrint ||
+                             options.taskChangelogHdrPrintVersion || options.taskChangelogView || options.taskChangelogViewVersion;
+        //
         // There are certain tasks a user may want to run after a release is made.  e.g. re-send
         // a notification email, or redo a Mantis or GitHub release. In these cases, user must
         // pass the --version-force-current switch on the command line.
         // validateOptions() willhave made sure that only certin tasks are run with this switch
         //
-        if (!options.versionForceCurrent)
+        if (!tasksCanPass && !options.versionForceCurrent)
         {
             if (options.taskVersionNext) {
                 context.stdout.write(lastRelease.version);
