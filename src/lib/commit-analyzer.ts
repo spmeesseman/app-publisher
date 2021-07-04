@@ -3,9 +3,10 @@ import { IContext } from "../interface";
 export = getReleaseLevel;
 
 
-async function getReleaseLevel({ options, commits, logger }: IContext)
+async function getReleaseLevel(context: IContext)
 {
     let level: "major" | "premajor" | "minor" | "preminor" | "patch" | "prepatch" | "prerelease";
+    const { options, commits, logger, lastRelease } = context;
 
     logger.log(`Analyze ${commits.length} commit messages for release level`);
 
@@ -94,10 +95,10 @@ async function getReleaseLevel({ options, commits, logger }: IContext)
         }
     }
 
-    // if (!level) {
-    //     logger.warn("There were no commits found that set the release level, forcing to 'patch'");
-    //     level = "patch";
-    // }
+    if (!level && lastRelease.versionInfo.system === "incremental") {
+        logger.warn("Incremental versining, forcing to 'patch' with 0 release levelcommits found");
+        level = "patch";
+    }
 
     return level;
 }
