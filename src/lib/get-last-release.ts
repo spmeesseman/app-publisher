@@ -34,7 +34,7 @@ async function getLastRelease(context: IContext, lastVersionInfo: IVersionInfo):
     const isValid = (v: string) => {
         if (!v) { return false; }
         if (lastVersionInfo.system !== "incremental") {
-            return semver.valid(semver.clean(v)) && !semver.prerelease(semver.clean(v));
+            return semver.valid(semver.clean(v)) && (options.versionPreReleaseId || !semver.prerelease(semver.clean(v)));
         }
         return isNumeric(v);
     };
@@ -51,13 +51,11 @@ async function getLastRelease(context: IContext, lastVersionInfo: IVersionInfo):
     // so it's guaranteed to not be present in the `tagFormat`.
     //
     const tagRegexp = `^${escapeRegExp(template(options.tagFormat)({ version: " " })).replace(" ", "(.+)")}`,
-          tagsRaw = await getTags({ env, options, logger } as IContext);
-
-    const tags = tagsRaw
+          tagsRaw = await getTags({ env, options, logger } as IContext),
+          tags = tagsRaw
                  .map((tag: any) => ({ tag, version: (tag.match(tagRegexp) || new Array(2))[1] }))
                  .filter((tag: any) => isValid(tag.version))
                  .sort(doSort);
-
     if (options.verbose) {
         context.stdout.write("Tags:" + EOL + JSON.stringify(tags, undefined, 2) + EOL);
     }
