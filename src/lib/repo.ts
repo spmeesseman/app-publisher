@@ -365,16 +365,16 @@ export async function fetch(context: IContext)
  *
  * @returns The sha of the HEAD commit.
  */
-export async function getHead({options, logger, cwd, env}: IContext)
+export async function getHead(context: IContext)
 {
-    const execaOpts = { cwd, env };
+    const {options, logger, cwd, env} = context;
     try {
         if (options.repoType === "git") {
-            return await execa.stdout("git", ["rev-parse", "HEAD"], execaOpts);
+            return await execa.stdout("git", ["rev-parse", "HEAD"], { cwd, env });
         }
         else if (options.repoType === "svn")
         {
-            const head = await execa.stdout("svn", ["info", "-r", "HEAD"], execaOpts);
+            const head = await execSvn(context, ["info", "-r", "HEAD"], true);
             let match: RegExpExecArray;
             if ((match = /^Revision: ([0-9]+)$/m.exec(head)) !== null)
             {
@@ -410,18 +410,18 @@ function getSvnTagLocation({options, logger})
  *
  * @returns The commit sha of the tag in parameter or `null`.
  */
-export async function getTagHead({options, logger, cwd, env}: IContext, tagName: any): Promise<string>
+export async function getTagHead(context: IContext, tagName: any): Promise<string>
 {
-    const execaOpts = { cwd, env };
+    const {options, logger, cwd, env} = context;
     try {
         if (options.repoType === "git")
         {
-            return await execa.stdout("git", ["rev-list", "-1", tagName], execaOpts);
+            return await execa.stdout("git", ["rev-list", "-1", tagName], { cwd, env });
         }
         else if (options.repoType === "svn")
         {
             const tagLocation = options.repo.replace(options.branch, "tags"),
-                  head = await execa.stdout("svn", ["log", tagLocation + "/" + tagName, "-v", "--stop-on-copy"], execaOpts);
+                  head = await execSvn(context, ["log", tagLocation + "/" + tagName, "-v", "--stop-on-copy"], true);
             let match: RegExpExecArray;
             if ((match = /^r([0-9]+) \|/m.exec(head)) !== null)
             {
@@ -630,7 +630,7 @@ export async function isRefInHistory(context: IContext, ref: any, isTags = false
         }
         else if (repoType === "svn") {
             const tagLoc = !isTags ? repo : repo.replace(branch, "tags");
-            await execaEx(context, "svn", ["ls", tagLoc + "/" + ref]);
+            await execSvn(context, ["ls", tagLoc + "/" + ref]);
         }
         else {
             throw new Error("Invalid repository type");
@@ -656,10 +656,10 @@ export async function isRefInHistory(context: IContext, ref: any, isTags = false
  */
 export async function isSvnRepo(context: IContext)
 {
-    const { logger, cwd, env } = context;
+    const {logger} = context;
     try
     {
-        return (await execa("svn", ["info"], {cwd, env })).code === 0;
+        return (await execSvn(context, ["info"])).code === 0;
     }
     catch (error) {
         logger.error("Exception in isSvnRepo: " + error.toString());

@@ -44,7 +44,7 @@ export = {
         pipelineConfig: ({ generateNotes }) => ({
             getNextInput: async context =>
             {
-                const newGitHead = await getHead({ cwd: context.cwd });
+                const newGitHead = await getHead(context);
                 // If previous prepare plugin has created a commit (head changed)
                 if (context.nextRelease.head !== newGitHead)
                 {
