@@ -1,7 +1,9 @@
 
+import { EOL } from "os";
+import * as path from "path";
 import * as semver from "semver";
 import { IChangelog, IChangelogEntry, IContext } from "../../interface";
-import { readFile, writeFile } from "../utils/fs";
+import { pathExists, readFile, writeFile } from "../utils/fs";
 import { properCase } from "../utils/utils";
 
 export abstract class Changelog implements IChangelog
@@ -338,6 +340,13 @@ export abstract class Changelog implements IChangelog
     }
 
 
+    /**
+     * Remove pre-release sections for a production release
+     *
+     * @since 3.4.0
+     * @param context The run context object.
+     * @param version The version to match pre-releases to, and remove the sections
+     */
     async removePreReleaseSections(context: IContext, version: string, regex: RegExp)
     {
         const { options, logger } = context;
@@ -345,14 +354,18 @@ export abstract class Changelog implements IChangelog
         logger.log("Check for pre-release -> production-release change");
 
         if (context.lastRelease.versionInfo.system === "semver" &&
-            semver.prerelease(version) === null && semver.prerelease(context.lastRelease.version) !== null)
+            semver.prerelease(version) === null && semver.prerelease("3.3.3-pre.2") !== null)
         {
-            const fileContents = await readFile(this.file);
+            const fileContents = await readFile(this.file),
+                  major = semver.major(version),
+                  minor = semver.minor(version),
+                  patch = semver.patch(version);
             let match: RegExpExecArray,
                 contents = fileContents;
 
             logger.log("This is a production release with prior pre-releases");
             logger.log("   Remove pre-release sections from changelog");
+
             //
             // Note that [\s\S]*? isnt working here, had to use [^]*? for a non-greedy grab, which isnt
             // supported in anything other than a JS regex.  Also, /Z doesnt work for 'end of string' in
@@ -360,18 +373,50 @@ export abstract class Changelog implements IChangelog
             //
             while ((match = regex.exec(fileContents + "###END###")) !== null)
             {
-                if (options.verbose) {
-                    logger.log(`   Parsing changelog - found ${options.versionText} ${match[1]}`);
-                }
-                if (match[1].startsWith(version) && match[1] !== version)
+                if (match[1].startsWith(version) && match[1] !== version && semver.prerelease(match[1]) !== null)
                 {
-                    contents = contents.replace(match[0], "").trim();
+                    if (options.verbose) {
+                        logger.log(`   Pre-release removal - removing ${options.versionText} ${match[1]}`);
+                    }
+                    contents = contents.replace(match[0], "");
                     ++bFound;
+                }
+                //
+                // If patch level is 0, the pre-reelase version can have a minor version of one less
+                //
+                if (patch === 0 && minor > 0)
+                {
+                    const matchVersion = `${major}.${minor - 1}.${semver.patch(context.lastRelease.version) + 1}`;
+                    if (match[1].startsWith(matchVersion) && semver.prerelease(match[1]) !== null) {
+                        if (options.verbose) {
+                            logger.log(`   Pre-release removal - removing ${options.versionText} ${match[1]}`);
+                        }
+                        contents = contents.replace(match[0], "");
+                        ++bFound;
+                    }
+                }
+                //
+                // If minor level is 0, the pre-reelase version can have a major version of one less
+                //
+                if (minor === 0 && patch === 0)
+                {
+                    const matchVersion = `${major - 1}.${semver.minor(context.lastRelease.version)}.${semver.patch(context.lastRelease.version) + 1}`;
+                    if (match[1].startsWith(matchVersion) && semver.prerelease(match[1]) !== null) {
+                        if (options.verbose) {
+                            logger.log(`   Pre-release removal - removing ${options.versionText} ${match[1]}`);
+                        }
+                        contents = contents.replace(match[0], "");
+                        ++bFound;
+                    }
                 }
             }
 
             if (bFound > 0) {
-                await writeFile(this.file, contents);
+                contents = contents.trim();
+                if (path.extname(this.file) === ".txt") {
+                    contents += EOL;
+                }
+                await writeFile(this.file, contents + EOL);
             }
 
             logger.log(`   Removed ${bFound} sections`);
