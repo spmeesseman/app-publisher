@@ -33,6 +33,7 @@ import { EOL } from "os";
 import { IContext, INextRelease, IOptions } from "./interface";
 import { ChangelogMd } from "./lib/changelog/changelog-md";
 import { ChangelogTxt } from "./lib/changelog/changelog-txt";
+import generateHelp = require("./help/generate-help");
 const displayHelp = require("@spmeesseman/arg-parser").displayHelp;
 
 
@@ -141,7 +142,9 @@ async function runStart(context: IContext)
     //
     // Check CI environment
     //
-    if (!isCi && !options.dryRun && !options.noCi)
+    const tasksPassCiCheck = options.taskGenerateHelp || options.taskDevTest || options.taskChangelogHdrPrint ||
+                             options.taskChangelogHdrPrintVersion || options.taskVersionPreReleaseId;
+    if (!isCi && !options.dryRun && !options.noCi && !tasksPassCiCheck)
     {
         logger.error("This run was not triggered in a known CI environment, use --no-ci flag for local publish.");
         return 1;
@@ -932,6 +935,11 @@ async function processTasksLevel1(context: IContext): Promise<string | boolean>
     {
         runDevCodeTests(context);
         return true;
+    }
+
+    if (options.taskGenerateHelp)
+    {
+        return generateHelp(context);
     }
 
     if (options.taskVersionPreReleaseId && util.isString(options.taskVersionPreReleaseId))
