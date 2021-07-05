@@ -448,7 +448,7 @@ export class ChangelogTxt extends Changelog
             }
             else if (options.taskMode && !options.taskChangelog)
             {
-                options.changelogFile = path.join(os.tmpdir(), `history.${version}.txt`);
+                options.changelogFile = path.join(os.tmpdir(), `changelog.${version}.txt`);
                 if (await pathExists(options.changelogFile))
                 {
                     await deleteFile(options.changelogFile);
@@ -515,9 +515,22 @@ export class ChangelogTxt extends Changelog
                 if (context.changelog.htmlNotes) {
                     tmpCommits = context.changelog.htmlNotes;
                 }
-                else {
-                    const entries = await this.getSectionEntries(context, version);
-                    tmpCommits = await this.createHtmlChangelog(context, entries, true, false);
+                else { //
+                      // Check 'next' version, on a full publish w/ changelog already written, so that
+                     // the notes are formatted by user (non-ci)
+                    //
+                    let entries = await this.getSectionEntries(context, version);
+                    if (entries && entries.length > 0) {
+                        tmpCommits = await this.createHtmlChangelog(context, entries, options.mantisbtRelease === "Y");
+                    }     //
+                    else // Get the section from the commits, these are unformatted by user
+                    {   //
+                        logger.log("Generate dynamic section for HTML changelog generation");
+                        tmpCommits = await this.getHeader(context, version) + // add the header since getPartsFromSection() expects it
+                                      EOL + (context.changelog.notes || this.createSectionFromCommits(context));
+                        entries = this.getPartsFromSection(context, tmpCommits);
+                        tmpCommits = await this.createHtmlChangelog(context, entries, options.mantisbtRelease === "Y");
+                    }
                 }
             }
             if (!tmpCommits || tmpCommits.trim() === "") {
@@ -680,8 +693,8 @@ export class ChangelogTxt extends Changelog
         //
         const idx = fileContents.indexOf(`${options.versionText} ${version}`);
         if (idx === -1) {
-            logger.error("   Changelog txt section could not be found, exit");
-            throw new Error("161");
+            logger.warn("   Changelog txt section could not be found");
+            return "";
         }
         fileContents = fileContents.substring(idx);
 
@@ -722,8 +735,8 @@ export class ChangelogTxt extends Changelog
         //
         if (!bFound)
         {
-            logger.error("History file section could not be found");
-            throw new Error("162");
+            logger.warn("Changelog txt file section could not be found");
+            return "";
         }
         logger.log("   Found changelog txt file section(s)");
 

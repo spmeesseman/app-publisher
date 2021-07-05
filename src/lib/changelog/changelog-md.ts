@@ -331,10 +331,29 @@ export class ChangelogMd extends Changelog
             }
             else if (!options.taskChangelogHtmlView && !options.taskChangelogHtmlFile) {
                 tmpCommits = context.changelog.notes || this.createSectionFromCommits(context);
-            }
-            else {
-                const changeLogParts = await this.getSectionEntries(context, version);
-                tmpCommits = await this.createHtmlChangelog(context, changeLogParts, false, false);
+            }       //
+            else { // HTML
+                  //
+                if (context.changelog.htmlNotes) {
+                    tmpCommits = context.changelog.htmlNotes;
+                }
+                else { //
+                    // Check 'next' version, on a full publish w/ changelog already written, so that
+                   // the notes are formatted by user (non-ci)
+                  //
+                  let entries = await this.getSectionEntries(context, version);
+                  if (entries && entries.length > 0) {
+                      tmpCommits = await this.createHtmlChangelog(context, entries, options.mantisbtRelease === "Y");
+                  }     //
+                  else // Get the section from the commits, these are unformatted by user
+                  {   //
+                      logger.log("Generate dynamic section for HTML changelog generation");
+                      tmpCommits = await this.getHeader(context, version) + // add the header since getPartsFromSection() expects it
+                                    EOL + (context.changelog.notes || this.createSectionFromCommits(context));
+                      entries = await this.getSectionEntries(context, tmpCommits, true);
+                      tmpCommits = await this.createHtmlChangelog(context, entries, options.mantisbtRelease === "Y");
+                  }
+              }
             }
             if (!tmpCommits || tmpCommits.trim() === "") {
                 tmpCommits = "- No relevant changes.";
@@ -394,7 +413,7 @@ export class ChangelogMd extends Changelog
 
     async getHeader(context: IContext, version?: string)
     {
-        let header = "", hdrFinal = "", titleVersion = version;;
+        let header = "", hdrFinal = "", titleVersion = version;
         const {options} = context,
               fmtDate = this.getFormattedDate();
         if (!version) {
@@ -420,10 +439,10 @@ export class ChangelogMd extends Changelog
     }
 
 
-    async getSectionEntries(context: IContext, version?: string): Promise<IChangelogEntry[]>
+    async getSectionEntries(context: IContext, version?: string, versionIsContent = false): Promise<IChangelogEntry[]>
     {
         const { logger } = context;
-        let contents = await this.getSections(context, version, 1, false);
+        let contents = !versionIsContent ? await this.getSections(context, version, 1, false) : version;
 
         const typeParts = [],
                 msgParts = [],
@@ -458,7 +477,8 @@ export class ChangelogMd extends Changelog
         //
         typeParts.push(...this.getSubjectsFromHtml(contents));
         if (typeParts.length === 0) {
-            throw new Error("166");
+            logger.warn("   Changelog md parts could not be found in section");
+            return entries;
         }
 
         //
@@ -625,8 +645,8 @@ export class ChangelogMd extends Changelog
         if (index1 === -1) {
             index1 = contents.indexOf(`## ${options.versionText} [${version}`);
             if (index1 === -1) {
-                logger.log("Section could not be found, exit");
-                throw new Error("161");
+                logger.warn("Changelog section could not be found");
+                return "";
             }
         }
 
