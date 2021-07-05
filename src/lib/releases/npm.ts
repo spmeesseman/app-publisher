@@ -235,12 +235,11 @@ export async function restorePackageJson(context: IContext)
     }
 
     let modified = false;
-    const packageJsonExists = await pathExists("package.json"),
-          packageLockFileExists = packageJsonExists ? await pathExists("package-lock.json") : undefined;
-
-    if (!packageJsonExists) {
+    const file = await getNpmFile(context);
+    if (!file) {
         return;
     }
+
 
     //
     // If 'restore' task, we probably need to use vcs revert and then re-update the version
@@ -261,8 +260,11 @@ export async function restorePackageJson(context: IContext)
         }
     }
 
-    const packageJson = packageJsonExists ? require(path.join(cwd, "package.json")) : undefined,
-          packageLockJson = packageLockFileExists ? require(path.join(cwd, "package-lock.json")) : undefined;
+    const packageJson = JSON.parse(await readFile(path.join(cwd, file))),
+          packageJsonDir = path.dirname(path.join(cwd, file)),
+          packageLockFile = path.join(packageJsonDir, "package-lock.json"),
+          packageLockFileExists = await pathExists(packageLockFile),
+          packageLockJson = packageLockFileExists ? JSON.parse(await readFile(packageLockFile)) : undefined;
     //
     // Set repo
     //
@@ -272,6 +274,7 @@ export async function restorePackageJson(context: IContext)
         packageJson.repository.url = defaultRepo;
         modified = true;
     }
+
     //
     // Set repo type
     //
@@ -281,6 +284,7 @@ export async function restorePackageJson(context: IContext)
         packageJson.repository.type = defaultRepoType;
         modified = true;
     }
+
     //
     // Set bugs
     //
@@ -290,6 +294,7 @@ export async function restorePackageJson(context: IContext)
         packageJson.bugs.url = defaultBugs;
         modified = true;
     }
+
     //
     // Set homepage
     //
@@ -299,6 +304,7 @@ export async function restorePackageJson(context: IContext)
         packageJson.homepage = defaultHomePage;
         modified = true;
     }
+
     //
     // Scope/name - package.json
     //
@@ -319,10 +325,12 @@ export async function restorePackageJson(context: IContext)
     }
 
     if (modified) {
-        await writeFile("package.json", JSON.stringify(packageJson, undefined, 4));
+        await writeFile(file, JSON.stringify(packageJson, undefined, 4));
+        // await addEdit(context, file);
         if (packageLockFileExists)
         {
-            await writeFile("package-lock.json", JSON.stringify(packageLockJson, undefined, 4));
+            await writeFile(packageLockFile, JSON.stringify(packageLockJson, undefined, 4));
+            // await addEdit(context, packageLockFile);
         }
     }
 }
