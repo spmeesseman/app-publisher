@@ -54,10 +54,10 @@ export abstract class Changelog implements IChangelog
         this.entriesLast = getHtmlLogLast ? await this.getSectionEntries(context, lastVersion) : undefined;
 
         if (this.entries) {
-            this.htmlNotes = getHtmlLog ? await this.createHtmlChangelog(context, this.entries) : undefined;
+            this.htmlNotes = getHtmlLog ? await this.createHtmlChangelog(context, this.entries, options.taskMantisbtRelease) : undefined;
         }
         if (this.entriesLast) {
-            this.htmlNotesLast = getHtmlLogLast ? await this.createHtmlChangelog(context, this.entriesLast) : undefined;
+            this.htmlNotesLast = getHtmlLogLast ? await this.createHtmlChangelog(context, this.entriesLast, options.taskMantisbtRelease) : undefined;
         }
 
         this.fileNotes = getFileLog && nextVersionChangelogWritten ? await this.getSections(context, nextVersion) : undefined;
@@ -307,13 +307,15 @@ export abstract class Changelog implements IChangelog
                             .replace(/^[ ]{3,4}[\w]+/gm, (m) => { return m.trimLeft(); }).trim()
                             .replace(/\r\n +\r\n/gm, "\r\n\r\n").replace(/\n +\n/gm, "\n\n")
                             .replace(/\r\n/gm, "<br>").replace(/\n/gm, "<br>")
-                            .replace(/ /gm, "&nbsp;");
+                            .replace(/ /gm, "&nbsp;")
+                            .replace(/[a-z]{1}&nbsp;[a-z]{1}/gmi, (s) => { return s.replace("&nbsp;", " "); });
         }
         else {
             message = message.replace(new RegExp(`<br>(?:${sc}){10,}[\\w]+`, "gm"), (m) => { return `<br>${sc}${sc}${sc}${sc}${sc}${sc}${sc}${sc}` + m.substring(4).replace(/&nbsp;/g, ""); })
                             .replace(new RegExp(`<br>(?:${sc}){5,9}[\\w]+`, "gm"), (m) => { return `<br>${sc}${sc}${sc}${sc}` + m.substring(4).replace(/&nbsp;/g, ""); })
                             .replace(new RegExp(`<br>(?:${sc}){3,4}[\\w]+`, "gm"), (m) => { return m.replace(/&nbsp;/g, ""); })
-                            .replace(/<br>(?:&nbsp;)+<br>/gm, "<br><br>");
+                            .replace(/<br>(?:&nbsp;)+<br>/gm, "<br><br>")
+                            .replace(/[a-z]{1}&nbsp;[a-z]{1}/gmi, (s) => { return s.replace("&nbsp;", " "); });
         }
         return message;
     }
