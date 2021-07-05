@@ -62,7 +62,7 @@ suite("Tasks Tests", () =>
         options = await getApOptions([ "--task-version-info"]);
         expect(await runApTest(options, "task: version-next")).to.equal(0, "task: version-next");
         sleep(500);
-    });
+    }).timeout(40000);
 
 
     test("changelog tasks", async () =>
@@ -78,7 +78,7 @@ suite("Tasks Tests", () =>
         options = await getApOptions([ "--task-changelog-print-version"]); // fail (no positional parameter)
         expect(await runApTest(options, "task: changelog print version (fail)")).to.equal(1, "task: changelog print version (fail)");
         sleep(500);
-    });
+    }).timeout(45000);
 
 
     test("release tasks", async () =>
@@ -98,7 +98,7 @@ suite("Tasks Tests", () =>
         options = await getApOptions([ "--task-mantisbt-release", "--version-force-current", "--dry-run", "--config-name", "svn" ]);
         expect(await runApTest(options, "task: mantisbt release")).to.equal(0, "task: mantisbt release");
         sleep(500);
-    });
+    }).timeout(60000);
 
 
     test("file update tasks", async () =>
