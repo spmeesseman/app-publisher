@@ -54,10 +54,10 @@ export abstract class Changelog implements IChangelog
         this.entriesLast = getHtmlLogLast ? await this.getSectionEntries(context, lastVersion) : undefined;
 
         if (this.entries) {
-            this.htmlNotes = getHtmlLog ? await this.createHtmlChangelog(context, this.entries, options.taskMantisbtRelease) : undefined;
+            this.htmlNotes = getHtmlLog ? await this.createHtmlChangelog(context, this.entries, options.mantisbtRelease === "Y") : undefined;
         }
         if (this.entriesLast) {
-            this.htmlNotesLast = getHtmlLogLast ? await this.createHtmlChangelog(context, this.entriesLast, options.taskMantisbtRelease) : undefined;
+            this.htmlNotesLast = getHtmlLogLast ? await this.createHtmlChangelog(context, this.entriesLast, options.mantisbtRelease === "Y") : undefined;
         }
 
         this.fileNotes = getFileLog && nextVersionChangelogWritten ? await this.getSections(context, nextVersion) : undefined;
