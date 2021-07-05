@@ -109,7 +109,7 @@ export async function editFile(context: IContext, editFile: string, isChangelog 
             // If this is win32, and we're told to do do, then use the super cool but painfully slow
             // powershell script that will "attempt to" scroll the content in the editor to the end
             //
-            if (process.platform === "win32" && seekToEnd && !options.taskMode)
+            if (process.platform === "win32" && seekToEnd && (!options.taskMode || options.taskChangelog))
             {
                 const ps1Script = await getPsScriptLocation("edit-file", {cwd, env});
                 if (ps1Script) {
