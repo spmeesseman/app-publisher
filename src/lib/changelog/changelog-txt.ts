@@ -1,5 +1,8 @@
+
 import * as path from "path";
+import * as semver from "semver";
 import { IChangelogEntry, IContext } from "../../interface";
+import { REGEX_CHANGELOG_TXT_VERSION_SECTION } from "../definitions/regexes";
 import { appendFile, createDir, deleteFile, pathExists, readFile, writeFile } from "../utils/fs";
 import { editFile, properCase } from "../utils/utils";
 import { Changelog } from "./changelog";
@@ -557,17 +560,32 @@ export class ChangelogTxt extends Changelog
             // with newlines only
             //
             if (options.taskChangelog || !options.taskMode)
-            {
+            {   //
+                // Main edit.  For full run or --task-changelog
+                // Check to see if this is aproduction version, and if there are pre-release sections
+                // for this version, remove them, removePreReleaseSections() will only remove under the
+                // case where the lastRelease.version is a pre-release, and nextReleae.version is not
+                //
+                await this.removePreReleaseSections(context, version, REGEX_CHANGELOG_TXT_VERSION_SECTION(options.versionText));
                 const header = await this.getHeader(context, version);
                 await appendFile(options.changelogFile, `${EOL}${header}${EOL}${tmpCommits}`);
             }
-            else if (options.taskChangelogPrint || options.taskChangelogPrintVersion) {
+            else if (options.taskChangelogPrint || options.taskChangelogPrintVersion)
+            {   //
+                // Tasks --task-changelog-print and --task-changelog-print-version
+                //
                 context.stdout.write(tmpCommits.trim());
                 return;
             }
+            //
+            // Write to file, with title
+            //
             else if (!options.taskChangelogFile && !options.taskChangelogHtmlFile && !options.taskChangelogHtmlView) {
                 await appendFile(options.changelogFile, `${EOL}${!taskSpecVersion ? "Pending " : ""}${options.versionText} ${version} Changelog:${EOL}${EOL}${EOL}${tmpCommits}`);
             }
+            //
+            // Write to file, without title
+            //
             else {
                 await appendFile(options.changelogFile, tmpCommits.trim());
             }
@@ -705,13 +723,14 @@ export class ChangelogTxt extends Changelog
             bFound = 0;
         //
         // Note that [\s\S]*? isnt working here, had to use [^]*? for a non-greedy grab, which isnt
-        // supported in anything other than a JS regex
+        // supported in anything other than a JS regex.  Also, /Z doesnt work for 'end of string' in
+        // a multi-line regex in JS, so we use the ###END### temp tag to mark it
         //
-        const regex = new RegExp(`(?:^${options.versionText} ([0-9a-zA-Z\-\.]{3,})[\r\n]+.+[\r\n]+[\-]{20,}[\r\n]+[\*]{20,}[^]+?(?=[\*]{20,})[\*]{20,}[\r\n]+)([^]*?)(?=^${options.versionText}|###END###)`, "gm");
+        const regex = REGEX_CHANGELOG_TXT_VERSION_SECTION(options.versionText);
         while ((match = regex.exec(fileContents + "###END###")) !== null)
         {
             if (options.verbose) {
-                logger.log(`   Parsing file - found ${options.versionText} ${match[1]}`);
+                logger.log(`   Parsing changelog - found ${options.versionText} ${match[1]}`);
             }
             if (match[1] === version)
             {

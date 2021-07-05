@@ -1,5 +1,6 @@
 // import { properCase } from "./lib/utils/utils";
-
+// import * as path from "path";
+// import * as semver from "semver";
 import { IContext } from "./interface";
 // import { setNpmVersion } from "./lib/version/npm";
 
@@ -10,6 +11,7 @@ export = runDevCodeTests;
 //
 function runDevCodeTests(context: IContext)
 {
+    // console.log(semver.prerelease("2.0.2-pre.0"));
     // setNpmVersion(context);
     // console.log(properCase("fixes"));
     // let msg = "ApiExtend is an Api[skip ci] that [skip ci] ApiUser [prod-release] the with [sandbox release] Api ExtendApi. [nightly-release]";

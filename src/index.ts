@@ -936,13 +936,8 @@ async function processTasksLevel1(context: IContext): Promise<string | boolean>
 
     if (options.taskVersionPreReleaseId && util.isString(options.taskVersionPreReleaseId))
     {
-        let preRelId = "error",
-            match: RegExpExecArray;
-        if ((match = /^(?:v|V){0,1}[0-9.]+\-([a-z]+)\.{0,1}[0-9]*$/m.exec(options.taskVersionPreReleaseId)) !== null)
-        {
-            preRelId = match[1];
-        }
-        context.stdout.write(preRelId);
+        const rc = semver.prerelease(semver.clean(options.taskVersionPreReleaseId));
+        context.stdout.write(rc !== null ? rc[0] : "error");
         return true;
     }
 

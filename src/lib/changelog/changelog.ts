@@ -1,4 +1,7 @@
+
+import * as semver from "semver";
 import { IChangelog, IChangelogEntry, IContext } from "../../interface";
+import { readFile, writeFile } from "../utils/fs";
 import { properCase } from "../utils/utils";
 
 export abstract class Changelog implements IChangelog
@@ -330,8 +333,54 @@ export abstract class Changelog implements IChangelog
      */
     isSkippedCommitMessage(msg: string)
     {
-    const m = msg.trimLeft().toLowerCase();
-    return m.startsWith("chore") || m.startsWith("progress") || m.startsWith("style") || m.startsWith("project");
+        const m = msg.trimLeft().toLowerCase();
+        return m.startsWith("chore") || m.startsWith("progress") || m.startsWith("style") || m.startsWith("project");
+    }
+
+
+    async removePreReleaseSections(context: IContext, version: string, regex: RegExp)
+    {
+        const { options, logger } = context;
+        let bFound = 0;
+        logger.log("Check for pre-release -> production-release change");
+
+        if (context.lastRelease.versionInfo.system === "semver" &&
+            semver.prerelease(version) === null && semver.prerelease(context.lastRelease.version) !== null)
+        {
+            const fileContents = await readFile(this.file);
+            let match: RegExpExecArray,
+                contents = fileContents;
+
+            logger.log("This is a production release with prior pre-releases");
+            logger.log("   Remove pre-release sections from changelog");
+            //
+            // Note that [\s\S]*? isnt working here, had to use [^]*? for a non-greedy grab, which isnt
+            // supported in anything other than a JS regex.  Also, /Z doesnt work for 'end of string' in
+            // a multi-line regex in JS, so we use the ###END### temp tag to mark it
+            //
+            while ((match = regex.exec(fileContents + "###END###")) !== null)
+            {
+                if (options.verbose) {
+                    logger.log(`   Parsing changelog - found ${options.versionText} ${match[1]}`);
+                }
+                if (match[1].startsWith(version) && match[1] !== version)
+                {
+                    contents = contents.replace(match[0], "").trim();
+                    ++bFound;
+                }
+            }
+
+            if (bFound > 0) {
+                await writeFile(this.file, contents);
+            }
+
+            logger.log(`   Removed ${bFound} sections`);
+        }
+        else if (options.verbose) {
+            logger.log("   No prior pre-releases found");
+        }
+
+        return bFound;
     }
 
 }

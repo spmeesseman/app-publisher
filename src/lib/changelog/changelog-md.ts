@@ -1,6 +1,7 @@
 
 import * as path from "path";
 import { IChangelogEntry, IContext } from "../../interface";
+import { REGEX_CHANGELOG_MD_MSG_TICKET_TAGS, REGEX_CHANGELOG_MD_VERSION_SECTION } from "../definitions/regexes";
 import { createDir, deleteFile, pathExists, readFile, writeFile } from "../utils/fs";
 import { editFile, properCase } from "../utils/utils";
 import { Changelog } from "./changelog";
@@ -365,11 +366,21 @@ export class ChangelogMd extends Changelog
                 return;
             }
 
+            //
+            // Main edit.  For full run or --task-changelog
+            //
             if (options.taskChangelog || !options.taskMode)
             {
                 if (!newChangelog && !tmpCommits.endsWith(EOL)) {
                     tmpCommits += EOL;
                 }
+
+                //
+                // Check to see if this is aproduction version, and if there are pre-release sections
+                // for this version, remove them, removePreReleaseSections() will only remove under the
+                // case where the lastRelease.version is a pre-release, and nextReleae.version is not
+                //
+                await this.removePreReleaseSections(context, version, REGEX_CHANGELOG_MD_VERSION_SECTION(options.versionText));
 
                 const header = await this.getHeader(context, version);
                 tmpCommits = `${header}${EOL}${EOL}${tmpCommits}`.trimRight();
@@ -385,8 +396,14 @@ export class ChangelogMd extends Changelog
                     changeLogFinal = `${changeLogFinal}${changeLogContents}${EOL}`;
                 }
             }
+            //
+            // Task edit, or view. or print / non-main edit
+            //
             else {
-                if (!options.taskChangelogFile && !options.taskChangelogHtmlFile && !options.taskChangelogHtmlView) {
+                if (!options.taskChangelogFile && !options.taskChangelogHtmlFile && !options.taskChangelogHtmlView)
+                {   //
+                    // Write title
+                    //
                     changeLogFinal += `${EOL}${!taskSpecVersion ? "Pending " : ""}${options.versionText} ${version} Changelog:${EOL}${EOL}${EOL}`;
                 }
                 changeLogFinal += tmpCommits;
@@ -521,7 +538,7 @@ export class ChangelogMd extends Changelog
             //
             // Extract message and ticket tags
             //
-            regex = new RegExp(/\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/gi);
+            regex = REGEX_CHANGELOG_MD_MSG_TICKET_TAGS;
             while ((match = regex.exec(msgParts[i])) !== null)
             {
                 tickets = match[0].replace(/\[/, "").replace("]", "");
