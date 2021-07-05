@@ -1,4 +1,16 @@
 
+export interface IArgument
+{
+    name: string;
+    argument: string | string[];
+    default: any;
+    help?: string;
+    helpPrivate?: boolean;
+    isCmdLine?: boolean;
+    type: string;
+}
+
+
 export interface IAuthor
 {
     name: string;
@@ -669,6 +681,12 @@ export interface IOptions
      * Re-send the latest notification email.
      */
     taskEmail: boolean;
+    /**
+     * Generate help markdown from help output.
+     *
+     * @private
+     */
+    taskGenerateHelp: boolean;
     /**
      * Perform a 'Github' release.
      * The changelog produced for the Github release will be created from the most recent entry

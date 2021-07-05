@@ -76,7 +76,6 @@ export const publishRcOpts =
         true,
         "boolean",
         false,
-        [ "-c", "--config" ],
         "Displays the configuration object and exits, for debugging.",
         "Note that the default publishrc file is '.publishrc.*'.  A config file can",
         "be one of four different formats:",
@@ -92,8 +91,7 @@ export const publishRcOpts =
         true,
         "string",
         "",
-        [ "-cn", "--config-name" ],
-        "Use config name.",
+        "Use specified config name.",
         "Note that the default publishrc file is '.publishrc.*'.  A config name can",
         "dyanimically modify the file used.  For example, a config name of 'cst' will",
         "yield a search for the following config files:",
@@ -868,6 +866,17 @@ export const publishRcOpts =
         [ "-te", "--task-email" ],
         {
             help: "Re-send the latest notification email."
+        }
+    ],
+
+    taskGenerateHelp: [
+        true,
+        "boolean",
+        false,
+        [ "--tgh", "--generate-help" ],
+        {
+            help: "Generate help markdown from help output.  Private.",
+            helpPrivate: true
         }
     ],
 
