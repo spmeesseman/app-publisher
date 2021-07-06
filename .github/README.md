@@ -420,7 +420,7 @@ The following command line aguments and publishrc options are supported.
 ### branch
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |*__trunk__*|
 |**Command Line Arg**|*__-b \| --branch__*|
 
