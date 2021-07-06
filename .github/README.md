@@ -29,6 +29,12 @@
     - [Usage - Configuration File](#usage---configuration-file)
   - [How the Next Version is Determined](#how-the-next-version-is-determined)
   - [Commit Messages](#commit-messages)
+  - [VSCode Integration](#vscode-integration)
+  - [CI Integration](#ci-integration)
+  - [Release Tokens](#release-tokens)
+    - [MantisBT Token](#mantisbt-token)
+    - [NPM Token](#npm-token)
+    - [Jenkins Token](#jenkins-token)
   - [Command Line and Options](#command-line-and-options)
     - [branch](#branch)
     - [buildCommand](#buildcommand)
@@ -157,11 +163,6 @@
     - [versionSystem](#versionsystem)
     - [versionText](#versiontext)
     - [writeLog](#writelog)
-  - [VSCode Integration](#vscode-integration)
-  - [Development Notes](#development-notes)
-    - [MantisBT Token](#mantisbt-token)
-    - [NPM Token](#npm-token)
-    - [Jenkins Token](#jenkins-token)
 
 ## Description
 
@@ -269,36 +270,11 @@ To output it locally on the command line in your development environment, the --
 
     app-publisher --no-ci --task-changelog-print
 
-Existing tasks:
-
-- --task-build
-- --task-changelog
-- --task-changelog-file
-- --task-changelog-html-file
-- --task-changelog-html-view
-- --task-changelog-print
-- --task-changelog-view
-- --task-ci-env
-- --task-ci-env-info
-- --task-ci-env-set
-- --task-commit
-- --task-dist-release
-- --task-email
-- --task-github-release
-- --task-mantisbt-release
-- --task-npm-release
-- --task-tag
-- --task-touch-versions
-- --task-version-current
-- --task-version-info
-- --task-version-next
-- --task-version-pre-release-id
-
-For complete details on command line arguments and switches, run app-publisher help:
+See [Command Line and Options](#command-line-and-options) for details.  You can also view details on command line arguments and switches by running app-publisher console help:
 
     app-publisher --help
 
-Tasks are influenced by the configuration set in the [.publishrc configuration file](#usage---configuration-file-and-parameters)
+Tasks are influenced by the configuration set in the [.publishrc configuration file](#usage---configuration-file-and-parameters).
 
 ## Usage
 
@@ -412,6 +388,64 @@ References:
 - [Commit Message Standards](https://app1.development.pjats.com/doc/developernotes.md#Commit-Messages)
 - [GitHub Commit Message Standards](https://gist.github.com/stephenparish/9941e89d80e2bc58a153)
 - [Angular Commenting Standards Updated](https://github.com/angular/angular/blob/master/CONTRIBUTING.md#type)
+
+## VSCode Integration
+
+Integrates with the [vscode-taskexplorer](https://github.com/spmeesseman/task-explorer) VSCode extension.
+
+## CI Integration
+
+Prior to Version 3, App-Publisher was originally intended to be used as a release mechanism to be done from the local development environment, without the need for a CI system.  Version 3 employes a complete pure NodeJS based overhaul, and has been adapted to be used as a tool in a CI environment to perform various tasks or release stages within a pipeline script.  Some useful tasks include:
+
+1. Retrieving the current version number
+2. Retrieving the next version number (based on commit messages since the last release)
+3. Setting the version in multiple files that contain the application version number (highly configurable).
+4. Outputting a changelog
+5. Performing an NPM release
+6. Performing a GitHub release
+7. Performing a MantisBT release ([Releases Plugin](https://github.com/mantisbt-plugins/Releases) required)
+8. Handle pre-releases
+9. Group scripts for various release stages and execute with a simple command.
+
+Several other tasks are supported.  See the [Command Line and Options](#command-line-and-options) section for details
+
+An example pipeline script written for Jenkins can be found in the `Jenkinsfile` at the root of the project.
+
+## Release Tokens
+
+### MantisBT Token
+
+A MantsBT release requires the MANTISBT_API_TOKEN to be set in the system environment.  To create a MantisBT token, perform the following steps:
+
+1. Log into the MantisBT website
+2. Go to User Preferences
+3. Select the `Tokens` tab
+4. Name the token `RESTAPI`
+5. Click `Create`.
+6. Copy the displayed token
+7. Create a system environment variable named `MANTISBT_API_TOKEN`, where the token is it's value.
+
+### NPM Token
+
+An NPM release requires the NPM_TOKEN to be set in the system environment.  To create a PJ NPM token, perform the following steps:
+
+To create an npm user if you dont have one, run the following command and follow the prompts:
+
+    npm adduser --registry=npm.development.pjats.com --scope=@spmeesseman
+
+After a period of time, the session token created with this command will expire.  When the token expires, run the login command:
+
+    npm login --registry=npm.development.pjats.com --scope=@spmeesseman
+
+For more details, see the [Internal NPM Registry](https://app1.development.pjats.com/doc/developernotes.md#Internal-NPM-Registry) section of the Perry Johnson Developer Notes document.
+
+### Jenkins Token
+
+In order to run the VSCode task *Validate Jenkinsfile*, the following environment variable must be set:
+
+    JENKINS_TOKEN
+
+This *token* is the base64 encoded version of http basic auth using an API token, i.e. username:token
 
 ## Command Line and Options
 
@@ -815,7 +849,7 @@ Overrides the `homePage` property of package.json when an NPM release is made, w
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
-The MantisBT token or list of tokens to make a MantisBT release with.  Represents the user that the release is made under on the 'Releases' page.
+The MantisBT token or list of tokens to make a MantisBT release with.  Represents the user that the release is made under on the 'Releases' page ([Releases Plugin](https://github.com/mantisbt-plugins/Releases) required).
 
 ### mantisbtAssets
 
@@ -1758,43 +1792,3 @@ The text tag to use in the history file for preceding the version number.  It sh
 |**Command Line Arg**|*__-wr \| --write-log__*  |
 
 In addition to stdout, writes a log to LOCALAPPDATA/app-publisher/log
-
-## VSCode Integration
-
-Integrates with the [vscode-taskexplorer](https://github.com/spmeesseman/task-explorer) VSCode extension.
-
-## Development Notes
-
-### MantisBT Token
-
-A MantsBT release requires the MANTISBT_API_TOKEN to be set in the system environment.  To create a MantisBT token, perform the following steps:
-
-1. Log into the MantisBT website
-2. Go to User Preferences
-3. Select the `Tokens` tab
-4. Name the token `RESTAPI`
-5. Click `Create`.
-6. Copy the displayed token
-7. Create a system environment variable named `MANTISBT_API_TOKEN`, where the token is it's value.
-
-### NPM Token
-
-An NPM release requires the NPM_TOKEN to be set in the system environment.  To create a PJ NPM token, perform the following steps:
-
-To create an npm user if you dont have one, run the following command and follow the prompts:
-
-    npm adduser --registry=npm.development.pjats.com --scope=@spmeesseman
-
-After a period of time, the session token created with this command will expire.  When the token expires, run the login command:
-
-    npm login --registry=npm.development.pjats.com --scope=@spmeesseman
-
-For more details, see the [Internal NPM Registry](https://app1.development.pjats.com/doc/developernotes.md#Internal-NPM-Registry) section of the Perry Johnson Developer Notes document.
-
-### Jenkins Token
-
-In order to run the VSCode task *Validate Jenkinsfile*, the following environment variable must be set:
-
-    JENKINS_TOKEN
-
-This *token* is the base64 encoded version of http basic auth using an API token, i.e. username:token

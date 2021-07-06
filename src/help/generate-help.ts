@@ -82,7 +82,7 @@ async function generateHelp(context: IContext): Promise<string | boolean>
     // supported in anything other than a JS regex.  Also, /Z doesnt work for 'end of string' in
     // a multi-line regex in JS, so we use the ###END### temp tag to mark it
     //
-    if ((match = new RegExp(REGEX_HELP_EXTRACT_FROM_README).exec(readmeContent)) !== null)
+    if ((match = new RegExp(REGEX_HELP_EXTRACT_FROM_README).exec(readmeContent + "###END###")) !== null)
     {
         readmeHelp = match[0];
         while ((match = REGEX_HELP_EXTRACT_OPTION.exec(readmeHelp + "###END###")) !== null)
