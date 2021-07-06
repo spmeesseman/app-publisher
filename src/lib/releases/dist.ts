@@ -26,7 +26,7 @@ async function doDistRelease(context: IContext)
     //
     // Copy changelog file to dist directory
     //
-    if (options.changelogFile)
+    if (options.changelogFile && options.distReleasePathSrc)
     {
         logger.log("Copying changlog file to dist dir");
         logger.log("   Source : " + options.changelogFile);
