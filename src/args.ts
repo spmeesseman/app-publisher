@@ -503,7 +503,8 @@ export const publishRcOpts =
         {
             help: "The MantisBT token or list of tokens to make a MantisBT release with.\n" +
                   " Represents the user that the release is made under on the 'Releases'\n" +
-                  "page.",
+                  "page ([Releases Plugin](https://github.com/mantisbt-plugins/Releases)\n" +
+                  "required).",
             helpPrivate: false
         }
     ],

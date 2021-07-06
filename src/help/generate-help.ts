@@ -91,7 +91,9 @@ async function generateHelp(context: IContext): Promise<string | boolean>
         }
     }
 
-    logger.log(`Found ${helpSections.length} option help sections`);
+    if (helpSections.length === 0) {
+        return `Found ${helpSections.length} option help sections`;
+    }
 
     for (const h of helpSections)
     {
