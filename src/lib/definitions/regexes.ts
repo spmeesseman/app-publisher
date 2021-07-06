@@ -3,6 +3,12 @@
 // TODO - add all regexes in app here
 //
 
+//
+// Note that [\s\S]*? isnt working in JS, had to use [^]*? for a non-greedy grab, which isnt
+// supported in anything other than a JS regex.  Also, /Z doesnt work for 'end of string' in
+// a multi-line regex in JS, so we use the ###END### temp tag to mark it
+//
+
 const REGEX_CHANGELOG_MD_MSG_TICKET_TAGS = /\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/gi;
 
 const REGEX_CHANGELOG_TXT_VERSION_SECTION = (versionText: string) => {

@@ -643,7 +643,7 @@ export const publishRcOpts =
     npmRegistry: [
         true,
         "string",
-        "https",
+        "",
         [ "-nrg", "--npm-registry" ],
         {
             help: "The URL of the NPM registry to use for making an NPM release.  This needs to\n" +

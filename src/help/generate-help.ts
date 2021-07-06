@@ -49,12 +49,14 @@ async function generateHelp(context: IContext): Promise<string | boolean>
 
     const argsFile = "src/args.ts",
           interfaceFile = "src/interface.ts",
+          readmeFile = "README.md",
           readme2File = ".github/README.md",
           args: IArgument[] = [],
           helpSections: string[] = [],
-          readmeContent = await readFile("README.md"),
+          readmeContent = await readFile(readmeFile),
+          readme2Content = await readFile(readme2File),
           S1 = "    ", S2 = S1 + S1, S3 = S2 + S1, S4 = S3 + S1, SHELP = S4 + "  ";
-    let readme2Content = await readFile(readme2File);
+    let readmeHelp = "";
 
     if (!readmeContent || !readme2Content) {
         return "Readme file not found";
@@ -69,9 +71,9 @@ async function generateHelp(context: IContext): Promise<string | boolean>
     // supported in anything other than a JS regex.  Also, /Z doesnt work for 'end of string' in
     // a multi-line regex in JS, so we use the ###END### temp tag to mark it
     //
-    if ((match = REGEX_HELP_EXTRACT_FROM_README.exec(readmeContent)) !== null)
+    if ((match = new RegExp(REGEX_HELP_EXTRACT_FROM_README).exec(readmeContent)) !== null)
     {
-        const readmeHelp = match[0];
+        readmeHelp = match[0];
         while ((match = REGEX_HELP_EXTRACT_OPTION.exec(readmeHelp + "###END###")) !== null)
         {
             helpSections.push(match[0]);
@@ -146,10 +148,9 @@ async function generateHelp(context: IContext): Promise<string | boolean>
     interfaceContent += "\n}\n";
     interfaceContent = argsContent.replace(/\n/gm, EOL);
 
-    if ((match = REGEX_HELP_EXTRACT_FROM_README.exec(readme2Content)) !== null)
+    if ((match = new RegExp(REGEX_HELP_EXTRACT_FROM_README).exec(readme2Content)) !== null)
     {
-        readme2Content = readme2Content.replace(match[0], readme2Content);
-        writeFile(readme2File, readme2Content);
+        writeFile(readme2File, readme2Content.replace(match[0], readmeHelp));
     }
 
     if (pathExists(argsFile)) {

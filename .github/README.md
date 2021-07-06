@@ -931,7 +931,7 @@ Ignored if `npmRelease` = "N".
 
 |**Value Type**      |*__string__*|
 | :----------------- | :--------- |
-|**Value Default**   |https://registry.npmjs.org|
+|**Value Default**   |<https://registry.npmjs.org>|
 |**Command Line Arg**|*__-nrg \| --npm-registry__*|
 
 The URL of the NPM registry to use for making an NPM release.  This needs to be set if this is a privately hosted repository.  Should be in the form:
