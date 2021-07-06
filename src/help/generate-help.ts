@@ -145,7 +145,7 @@ async function generateHelp(context: IContext): Promise<string | boolean>
             type = "\"Y\" | \"N\"";
         }
         else if (type.startsWith("enum")) {
-            type = "\"" + type.replace("enum(", "").replace(")", "").replace("|", "\" | \"") + "\"";
+            type = "\"" + type.replace("enum(", "").replace(")", "").replace(/\|/g, "\" | \"") + "\"";
         }
         interfaceContent += `${S1}/**\n${S1} `;
         interfaceContent += buildHelp(a.help, 90, S1, false, " * ");
