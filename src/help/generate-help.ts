@@ -1,10 +1,7 @@
 import { IArgument, IContext } from "../interface";
 import { pathExists, readFile, writeFile } from "../lib/utils/fs";
 import { EOL } from "os";
-import {
-    REGEX_HELP_ARG, REGEX_HELP_DEFAULT_VALUE, REGEX_HELP_EXTRACT_FROM_INTERFACE, REGEX_HELP_EXTRACT_FROM_README,
-    REGEX_HELP_EXTRACT_OPTION, REGEX_HELP_NAME, REGEX_HELP_SECTION, REGEX_HELP_TYPE
-} from "../lib/definitions/regexes";
+import regexes from "../lib/definitions/regexes";
 
 export = generateHelp;
 
@@ -82,12 +79,21 @@ async function generateHelp(context: IContext): Promise<string | boolean>
     // supported in anything other than a JS regex.  Also, /Z doesnt work for 'end of string' in
     // a multi-line regex in JS, so we use the ###END### temp tag to mark it
     //
-    if ((match = new RegExp(REGEX_HELP_EXTRACT_FROM_README).exec(readmeContent + "###END###")) !== null)
+    if ((match = new RegExp(regexes.HELP_EXTRACT_FROM_README).exec(readmeContent + "###END###")) !== null)
     {
         readmeHelp = match[0];
-        while ((match = REGEX_HELP_EXTRACT_OPTION.exec(readmeHelp + "###END###")) !== null)
+        //
+        // Replace MD style links with a broken representation, i.e. [Link](https://www.domain.com)
+        // should be converted to Link (https://www.domain.com).
+        //
+        while ((match = regexes.HELP_EXTRACT_OPTION.exec(readmeHelp + "###END###")) !== null)
         {
-            helpSections.push(match[0]);
+            let helpSection = match[0];
+            while ((match = regexes.HELP_LINK.exec(match[0])) !== null)
+            {
+                helpSection = helpSection.replace(match[0], `${match[1]} (${match[2]})`);
+            }
+            helpSections.push(helpSection);
         }
     }
 
@@ -98,11 +104,11 @@ async function generateHelp(context: IContext): Promise<string | boolean>
     for (const h of helpSections)
     {
         logger.log(`Extracting properties for option # ${++ct}`);
-        const name = h.match(REGEX_HELP_NAME)[1],
-              type = h.match(REGEX_HELP_TYPE)[1].replace("\\|", "|"),
-              dft = h.match(REGEX_HELP_DEFAULT_VALUE)[1] ?? "",
-              argument = "\"" + h.match(REGEX_HELP_ARG)[1].replace(" \\| ", "\", \"") + "\"",
-              help = h.match(REGEX_HELP_SECTION)[0].trim();
+        const name = h.match(regexes.HELP_NAME)[1],
+              type = h.match(regexes.HELP_TYPE)[1].replace("\\|", "|"),
+              dft = h.match(regexes.HELP_DEFAULT_VALUE)[1] ?? "",
+              argument = "\"" + h.match(regexes.HELP_ARG)[1].replace(" \\| ", "\", \"") + "\"",
+              help = h.match(regexes.HELP_SECTION)[0].trim();
         args.push({  name, type, default: dft, argument, help });
     }
 
@@ -166,7 +172,7 @@ async function generateHelp(context: IContext): Promise<string | boolean>
     //
     // GitHub README
     //
-    if ((match = new RegExp(REGEX_HELP_EXTRACT_FROM_README).exec(readme2Content)) !== null) {
+    if ((match = new RegExp(regexes.HELP_EXTRACT_FROM_README).exec(readme2Content + "###END###")) !== null) {
         writeFile(readme2File, readme2Content.replace(match[0], readmeHelp));
     }
 
@@ -185,7 +191,7 @@ async function generateHelp(context: IContext): Promise<string | boolean>
     //
     if (pathExists(interfaceFile)) {
         const interfaceFileContent = await readFile(interfaceFile);
-        if ((match = new RegExp(REGEX_HELP_EXTRACT_FROM_INTERFACE).exec(interfaceFileContent + "###END###")) !== null) {
+        if ((match = new RegExp(regexes.HELP_EXTRACT_FROM_INTERFACE).exec(interfaceFileContent + "###END###")) !== null) {
             writeFile(interfaceFile, interfaceFileContent.replace(match[0], interfaceContent));
         }
     }

@@ -849,7 +849,7 @@ Overrides the `homePage` property of package.json when an NPM release is made, w
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
-The MantisBT token or list of tokens to make a MantisBT release with.  Represents the user that the release is made under on the 'Releases' page ([Releases Plugin](https://github.com/mantisbt-plugins/Releases) required).
+The MantisBT token or list of tokens to make a MantisBT release with.  Represents the user that the release is made under on the 'Releases' page - [Releases Plugin](https://github.com/mantisbt-plugins/Releases) required.
 
 ### mantisbtAssets
 

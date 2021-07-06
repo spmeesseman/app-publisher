@@ -1,8 +1,8 @@
 
 import * as path from "path";
 import * as semver from "semver";
+import regexes from "../definitions/regexes";
 import { IChangelogEntry, IContext } from "../../interface";
-import { REGEX_CHANGELOG_TXT_VERSION_SECTION } from "../definitions/regexes";
 import { appendFile, createDir, deleteFile, pathExists, readFile, writeFile } from "../utils/fs";
 import { editFile, properCase } from "../utils/utils";
 import { Changelog } from "./changelog";
@@ -566,7 +566,7 @@ export class ChangelogTxt extends Changelog
                 // for this version, remove them, removePreReleaseSections() will only remove under the
                 // case where the lastRelease.version is a pre-release, and nextReleae.version is not
                 //
-                await this.removePreReleaseSections(context, version, REGEX_CHANGELOG_TXT_VERSION_SECTION(options.versionText));
+                await this.removePreReleaseSections(context, version, regexes.CHANGELOG_TXT_VERSION_SECTION(options.versionText));
                 const header = await this.getHeader(context, version);
                 await appendFile(options.changelogFile, `${EOL}${header}${EOL}${tmpCommits}`);
             }
@@ -726,7 +726,7 @@ export class ChangelogTxt extends Changelog
         // supported in anything other than a JS regex.  Also, /Z doesnt work for 'end of string' in
         // a multi-line regex in JS, so we use the ###END### temp tag to mark it
         //
-        const regex = REGEX_CHANGELOG_TXT_VERSION_SECTION(options.versionText);
+        const regex = regexes.CHANGELOG_TXT_VERSION_SECTION(options.versionText);
         while ((match = regex.exec(fileContents + "###END###")) !== null)
         {
             if (options.verbose) {

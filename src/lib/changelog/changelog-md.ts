@@ -1,7 +1,7 @@
 
 import * as path from "path";
+import regexes from "../definitions/regexes";
 import { IChangelogEntry, IContext } from "../../interface";
-import { REGEX_CHANGELOG_MD_MSG_TICKET_TAGS, REGEX_CHANGELOG_MD_VERSION_SECTION } from "../definitions/regexes";
 import { createDir, deleteFile, pathExists, readFile, writeFile } from "../utils/fs";
 import { editFile, properCase } from "../utils/utils";
 import { Changelog } from "./changelog";
@@ -380,7 +380,7 @@ export class ChangelogMd extends Changelog
                 // for this version, remove them, removePreReleaseSections() will only remove under the
                 // case where the lastRelease.version is a pre-release, and nextReleae.version is not
                 //
-                await this.removePreReleaseSections(context, version, REGEX_CHANGELOG_MD_VERSION_SECTION(options.versionText));
+                await this.removePreReleaseSections(context, version, regexes.CHANGELOG_MD_VERSION_SECTION(options.versionText));
 
                 const header = await this.getHeader(context, version);
                 tmpCommits = `${header}${EOL}${EOL}${tmpCommits}`.trimRight();
@@ -538,7 +538,7 @@ export class ChangelogMd extends Changelog
             //
             // Extract message and ticket tags
             //
-            regex = REGEX_CHANGELOG_MD_MSG_TICKET_TAGS;
+            regex = regexes.CHANGELOG_MD_MSG_TICKET_TAGS;
             while ((match = regex.exec(msgParts[i])) !== null)
             {
                 tickets = match[0].replace(/\[/, "").replace("]", "");

@@ -456,8 +456,8 @@ export interface IArgs
     homePage: string;
     /**
      * The MantisBT token or list of tokens to make a MantisBT release with.  Represents the user
-     * that the release is made under on the 'Releases' page ([Releases Plugin](https://github.com/mantisbt-plugins/Releases)
-     * required).
+     * that the release is made under on the 'Releases' page - Releases Plugin (https://github.com/mantisbt-plugins/Releases)
+     * required.
      */
     mantisbtApiToken: string;
     /**
