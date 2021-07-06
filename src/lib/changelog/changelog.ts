@@ -114,11 +114,7 @@ export abstract class Changelog implements IChangelog
      */
     cleanMessage(msg: string)
     {
-        return msg.replace(/(?<!\w)(?:Api|Npm|Sso|Svn|Html?|Crud|Readme)(?= |$|\.)/gm, (m): string =>
-        {
-            return m.toUpperCase();
-        })
-        .replace(/[ ]*\[(?:skip[ \-]{1}ci|[a-z]+[ \-]{1}release)\]/gmi, (m): string =>
+        let fmtMsg = msg.replace(/[ ]*\[(?:skip[ \-]*ci|[a-z]+[ \-]*release)\]/gmi, (m): string =>
         {
             return "";
         })
@@ -134,8 +130,26 @@ export abstract class Changelog implements IChangelog
             // if (/(?:s|ss|sh|x|z)$/.test(m)) { fm += "e"; }
             // fm += "s";
             return "[" + properCase(m.replace(/[\[\]]/g, "").trim()) + "]";
-        })
-        .replace("Mantisbt", "MantisBT").replace("Github", "GitHub").replace("App-publisher", "App-Publisher");
+        });
+
+        if (this.isTextChangelog())
+        {
+            fmtMsg = fmtMsg.replace(/[ ]+api[ \r\n]+/gmi, (s) => { return s.replace(/api/i, "API"); })
+                           .replace(/[ ]+crud[ \r\n]+/gmi, (s) => { return s.replace(/crud/i, "CRUD"); })
+                           .replace(/[ ]+npm[ \r\n]+/gmi, (s) => { return s.replace(/npm/i, "NPM"); })
+                           .replace(/[ ]+sso[ \r\n]+/gmi, (s) => { return s.replace(/sso/i, "SSO"); })
+                           .replace(/[ ]+svn[ \r\n]+/gmi, (s) => { return s.replace(/SVN/i, "SVN"); })
+                           .replace(/[ ]+html[ \r\n]+/gmi, (s) => { return s.replace(/html/i, "HTML"); })
+                           .replace(/[ ]+mantisbt[ \r\n]+/gmi, (s) => { return s.replace(/mantisbt/i, "MantisBT"); })
+                           .replace(/[ ]+github[ \r\n]+/gmi, (s) => { return s.replace(/github/i, "GitHub"); })
+                           .replace(/[ ]+app\-publisher[ \r\n]+/gmi, (s) => { return s.replace(/app\-publisher/i, "App-Publisher"); });
+        }
+
+        //
+        // TODO - Run spell check.  Any API's for Node?
+        //
+
+        return fmtMsg;
     }
 
 
@@ -326,6 +340,11 @@ export abstract class Changelog implements IChangelog
     }
 
 
+    isTextChangelog()
+    {
+        return path.extname(this.file) === ".txt";
+    }
+
     /**
      * Gets whether or not a commit message should be included in a changelog file section.
      *
@@ -413,7 +432,7 @@ export abstract class Changelog implements IChangelog
 
             if (bFound > 0) {
                 contents = contents.trim();
-                if (path.extname(this.file) === ".txt") {
+                if (this.isTextChangelog()) {
                     contents += EOL;
                 }
                 await writeFile(this.file, contents + EOL);
