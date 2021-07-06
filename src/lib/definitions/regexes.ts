@@ -16,12 +16,23 @@ const REGEX_CHANGELOG_MD_VERSION_SECTION = (versionText: string) => {
 const REGEX_HELP_EXTRACT_FROM_README = /(?:^## Command Line and Options[\r\n]+)([^]*?)(?=^## VSCode Integration)/gm;
 const REGEX_HELP_EXTRACT_OPTION = /(?:^### ([\w]+[\r\n]+))([^]*?)(?=^### [\w]+|^## [\w]+|###END###)/gm;
 
+const REGEX_HELP_SECTION = /^[\w\-\*\. ]+[^]*/mi;
+const REGEX_HELP_NAME = /### (\w+)/m;
+const REGEX_HELP_TYPE = /\*\*Value Type\*\* *\|(?:\*__)([\\\w| \[\]\(\)]+)(?:__\*)/m;
+const REGEX_HELP_DEFAULT_VALUE = /\*\*Value Default\*\* *\|(?:([\w,\[\]]*))*/m;
+const REGEX_HELP_ARG = /\*\*Command Line Arg\*\* *\|(?:\*__)([\\\w\-| \/]+)(?:__\*)/m;
+
 const regexes = {
   REGEX_CHANGELOG_MD_MSG_TICKET_TAGS,
   REGEX_CHANGELOG_MD_VERSION_SECTION,
   REGEX_CHANGELOG_TXT_VERSION_SECTION,
   REGEX_HELP_EXTRACT_FROM_README,
-  REGEX_HELP_EXTRACT_OPTION
+  REGEX_HELP_EXTRACT_OPTION,
+  REGEX_HELP_ARG,
+  REGEX_HELP_NAME,
+  REGEX_HELP_SECTION,
+  REGEX_HELP_TYPE,
+  REGEX_HELP_DEFAULT_VALUE
 };
 
 export = regexes;

@@ -1,24 +1,54 @@
-import { escapeRegExp, max, template } from "lodash";
-import semver from "semver";
-import pLocate from "p-locate";
-import { getTags, isRefInHistory, getTagHead } from "../lib/repo";
-import { IArgument, IContext, IRelease, IVersionInfo } from "../interface";
-import { EOL } from "os";
-import { readFile, writeFile } from "../lib/utils/fs";
-import { REGEX_HELP_EXTRACT_FROM_README, REGEX_HELP_EXTRACT_OPTION } from "../lib/definitions/regexes";
+import { IArgument, IContext } from "../interface";
+import { pathExists, readFile, writeFile } from "../lib/utils/fs";
+import { REGEX_HELP_ARG, REGEX_HELP_DEFAULT_VALUE, REGEX_HELP_EXTRACT_FROM_README, REGEX_HELP_EXTRACT_OPTION, REGEX_HELP_NAME, REGEX_HELP_SECTION, REGEX_HELP_TYPE } from "../lib/definitions/regexes";
 
 export = generateHelp;
 
 
+function buildHelp(readmeHelp: string, maxHelpLineLen: number, space: string, lineStart = "", lineEnd = "")
+{
+    const helpLines = readmeHelp.split("\n");
+
+    let helpSection = "";
+
+    for (const line of helpLines)
+    {
+        if (line)
+        {
+            let cutLine = "";
+            const help = line.split(" ");
+            for (const word of help)
+            {
+                if (cutLine.length < maxHelpLineLen)
+                {
+                    cutLine += (word + " ");
+                }
+                else {
+                    helpSection += `${space}${lineStart}${cutLine.trimRight()}${lineEnd}\r\n`;
+                    cutLine = (word + " ");
+                }
+            }
+            if (cutLine) {
+                helpSection += `${space}${lineStart}${cutLine.trimRight()}${lineEnd}\r\n`;
+            }
+        }
+        else {
+            helpSection += `${space}${lineStart}${lineEnd}\r\n`;
+        }
+    }
+
+    return helpSection.substring(0, helpSection.length - 5) + "\",";
+}
+
+
 async function generateHelp(context: IContext): Promise<string | boolean>
 {
-    const {logger} = context,
-          maxHelpLineLen = 80;
+    const {logger} = context;
 
     logger.log("Start update interface.ts and args.ts files with readme help");
 
-    const argsFile = "../args.ts",
-          interfaceFile = "../interface.ts",
+    const argsFile = "src/args.ts",
+          interfaceFile = "src/interface.ts",
           args: IArgument[] = [],
           helpSections: string[] = [],
           readmeContent = await readFile("README.md"),
@@ -50,166 +80,59 @@ async function generateHelp(context: IContext): Promise<string | boolean>
 
     for (const h of helpSections)
     {
-        logger.log(`Extracting properties option # ${++ct}`);
-        const name = h.match(/### (\w+)/m)[1],
-              type = h.match(/\*\*Value Type\*\* *\|(?:\*__)([\\\w| \[\]]+)(?:__\*)/m)[1].replace("\\|", "|"),
-              dft = h.match(/\*\*Value Default\*\* *\|(?:(?:\*__)([\w,\[\]]*)(?:__\*))*/m)[1] ?? "",
-              argument = h.match(/\*\*Command Line Arg\*\* *\|(?:\*__)([\\\w\-| ]+)(?:__\*)/m)[1].replace(" \\|", ","),
-              help = h.match(/^[\w\-\* ]+[^]*/mi)[0].trim();
+        logger.log(`Extracting properties for option # ${++ct}`);
+        const name = h.match(REGEX_HELP_NAME)[1],
+              type = h.match(REGEX_HELP_TYPE)[1].replace("\\|", "|"),
+              dft = h.match(REGEX_HELP_DEFAULT_VALUE)[1] ?? "",
+              argument = "\"" + h.match(REGEX_HELP_ARG)[1].replace(" \\| ", "\", \"") + "\"",
+              help = h.match(REGEX_HELP_SECTION)[0].trim();
         args.push({  name, type, default: dft, argument, help });
     }
 
+    ct = 0;
     let argsContent = "export const publishRcOpts =\r\n{\r\n    ",
         interfaceContent = "export interface IOptions\r\n{\r\n";
 
     for (const a of args)
     {
-        logger.log(`Processing option '${a.name}'`);
+        logger.log(`Processing option # ${++ct}: '${a.name}'`);
         logger.log(`   Type     : ${a.type}`);
         logger.log(`   Default  : ${a.default}`);
         logger.log(`   Cmd Line : ${a.isCmdLine}`);
         logger.log(`   Private  : ${a.helpPrivate}`);
         logger.log(`   Argument : ${a.argument.toString()}`);
 
+        let def = a.default,
+            type = a.type;
+        if (a.type !== "number" && a.type !== "boolean") {
+            def = `"${a.default}"`;
+        }
+        else if (def) {
+            def = a.default.toString().toLowerCase();
+        }
+
         argsContent += `
     ${a.name}: [
-        true,
+        ${a.argument !== "n/a" ? "true" : "false"},
         "${a.type}",
-        ${a.type === "string" ? `"${a.default}"` : a.default ?? "\"\""},
-        [ ${a.argument} ],
+        ${def},
+        [${a.argument !== "\"n/a\"" ? ` ${a.argument} ` : ""}],
         {
 `;
-        let helpLine = "", helpLines = "";
-        let help = a.help.split(" ");
-        argsContent += helpLine;
-        for (const word of help)
-        {
-            if (word.includes("\r\n"))
-            {
-                const splitWord = word.split("\r\n");
-                for (const sword of splitWord)
-                {
-                    if (sword) {
-                        if (helpLines.endsWith("\r\n")) {
-                            helpLines += SHELP;
-                            helpLine = "";
-                        }
-                        else if (helpLine.trim() === "") {
-                            helpLines = helpLines.trimRight() + "\r\n";
-                            helpLines += `${SHELP}"${helpLine}`;
-                        }
-                        if (helpLines.endsWith(`\r\n${SHELP}`)) {
-                            helpLines += "\"";
-                            helpLine = "";
-                        }
-                        if (helpLine.length + sword.length + 1 < maxHelpLineLen) {
-                            helpLine += (sword + " ");
-                            helpLines += (sword + " ");
-                        }
-                        else {
-                            helpLines = `${helpLines.trimRight()}\\n" +\r\n${SHELP}`;
-                            helpLine = `"${sword} `;
-                            helpLines += `"${sword} `;
-                        }
-                    }
-                    else {
-                        if (helpLine) {
-                            helpLines = `${helpLines.trimRight()}\\n" +\r\n${SHELP}"\\n" +\r\n`;
-                        }
-                        else {
-                            if (helpLines.trimRight().endsWith("\"\\n\" +")) {
-                                helpLines = `${helpLines.trimRight()}\r\n`;
-                            }
-                            else {
-                                helpLines = `${helpLines.trimRight()}\r\n${SHELP}"\\n" +\r\n`;
-                            }
-                        }
-                        helpLine = "";
-                    }
-                }
-            }
-            else if (helpLine.length + word.length + 1 < maxHelpLineLen) {
-                helpLine += (word + " ");
-                helpLines += (word + " ");
-            }
-            else {
-                helpLines = `${helpLines.trimRight()}\\n" +\r\n${SHELP}`;
-                helpLine = `"${word} `;
-                helpLines += `"${word} `;
-            }
-        }
-
-        argsContent += `${S3}help: "${helpLines.trim()}",`;
+        argsContent += `${S3}help: `;
+        argsContent += buildHelp(a.help, 75, SHELP, "\"", "\\n\" +").trimLeft();
         argsContent += `
-            helpPrivate: ${a.name === "taskGenerateHelp"}
+            helpPrivate: ${a.name === "taskGenerateHelp" || a.name === "taskDevTest" || a.name.includes("Private.") ? "true" : "false"}
         }
     ],
-
-`;
-
-        interfaceContent += `${S1}/**\r\n${S1} * `;
-
-        helpLine = "";
-        helpLines = "";
-        help = a.help.split(" ");
-        argsContent += helpLine;
-        for (const word of help)
-        {
-            if (word.includes("\r\n"))
-            {
-                const splitWord = word.split("\r\n");
-                for (const sword of splitWord)
-                {
-                    if (sword) {
-                        if (helpLines.endsWith("\r\n")) {
-                            helpLines += `${S1} * `;
-                            helpLine = "";
-                        }
-                        else if (helpLine.trim() === "") {
-                            helpLines = helpLines.trimRight() + "\r\n";
-                            helpLines += `${S1} * ${helpLine}`;
-                        }
-                        if (helpLines.endsWith(`\r\n${S1} * `)) {
-                            helpLine = "";
-                        }
-                        if (helpLine.length + sword.length + 1 < maxHelpLineLen) {
-                            helpLine += (sword + " ");
-                            helpLines += (sword + " ");
-                        }
-                        else {
-                            helpLines = `${helpLines.trimRight()}\r\n${S1} * `;
-                            helpLine = `${sword} `;
-                            helpLines += `${sword} `;
-                        }
-                    }
-                    else {
-                        if (helpLine) {
-                            helpLines = `${helpLines.trimRight()}\r\n${S1} *\r\n`;
-                        }
-                        else {
-                            if (helpLines.endsWith(`${S1} *\r\n`)) {
-                                helpLines = `${helpLines.trimRight()}\r\n`;
-                            }
-                            else {
-                                helpLines = `${helpLines.trimRight()}\r\n${S1} *\r\n`;
-                            }
-                        }
-                        helpLine = "";
-                    }
-                }
-            }
-            else if (helpLine.length + word.length + 1 < maxHelpLineLen) {
-                helpLine += (word + " ");
-                helpLines += (word + " ");
-            }
-            else {
-                helpLines = `${helpLines.trimRight()}\r\n${S1} * `;
-                helpLine = `${word} `;
-                helpLines += `${word} `;
-            }
+ 
+ `;
+        if (type.startsWith("enum")) {
+            type = "\"" + type.replace("enum(", "").replace(")", "").replace("|", "\" | \"") + "\"";
         }
-
-        interfaceContent += `${helpLines}\r\n${S1} */\r\n${S1}${a.name}: ${a.type};\r\n`;
+        interfaceContent += `${S1}/**\r\n${S1} `;
+        interfaceContent += buildHelp(a.help, 100, S1, " * ").trimLeft();
+        interfaceContent += `\r\n${S1} */\r\n${S1}${a.name}: ${type};\r\n`;
     }
 
     argsContent = argsContent.trim();
@@ -217,14 +140,23 @@ async function generateHelp(context: IContext): Promise<string | boolean>
     argsContent += "\r\n\r\n};\r\n";
 
     interfaceContent = interfaceContent.trim();
-    interfaceContent = interfaceContent.substr(0, argsContent.length - 1);
+    // interfaceContent = interfaceContent.substr(0, argsContent.length - 1);
     interfaceContent += "\r\n}\r\n";
 
-    console.log("-------------------------------------");
-    console.log(argsContent);
-    console.log("-------------------------------------");
-    console.log(interfaceContent);
-    console.log("-------------------------------------");
+    if (pathExists(argsFile)) {
+        await writeFile(argsFile, argsContent);
+    }
+    else {
+        return "Args file not found";
+    }
+
+    if (pathExists(argsFile)) {
+        const interfaceFileContent = await readFile(interfaceFile);
+        // await writeFile(interfaceFile, interfaceContent);
+    }
+    else {
+        return "Interface file not found";
+    }
 
     return true;
 }
