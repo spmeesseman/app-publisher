@@ -394,12 +394,12 @@ export async function runScripts(context: IContext, scriptType: string, scripts:
 }
 
 
-export function validateVersion(version: string, system?: "auto" | "manual" | "incremental" | "semver", lastVersion?: string, logger?: any)
+export function validateVersion(version: string, system?: "auto" | "incremental" | "semver", lastVersion?: string, logger?: any)
 {
     if (logger) {
         logger.log("Validate version : " + version);
     }
-    if (!system || system === "auto" || system === "manual") {
+    if (!system || system === "auto") {
         return semver.valid(version) && (!lastVersion || semver.gt(version, lastVersion)) ||
                (isNumeric(version) && (!lastVersion || !isNumeric(lastVersion) || parseInt(version, 10) > parseInt(lastVersion)));
     }

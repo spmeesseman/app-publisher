@@ -1095,7 +1095,7 @@ async function processTasksLevel3(context: IContext): Promise<string | boolean>
 
 
 
-async function promptForVersion(lastVersion: string, versionSystem: "auto" | "manual" | "semver" | "incremental", proposedNextVersion: string, logger: any)
+async function promptForVersion(lastVersion: string, versionSystem: "auto" | "semver" | "incremental", proposedNextVersion: string, logger: any)
 {
     let version = proposedNextVersion;
     const promptSchema = {

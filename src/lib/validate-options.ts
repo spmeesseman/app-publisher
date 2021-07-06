@@ -624,7 +624,7 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     // Version System
     //
     if (!options.versionSystem) {
-        options.versionSystem = "auto";
+        options.versionSystem = "semver";
     }
 
     //

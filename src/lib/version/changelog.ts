@@ -5,12 +5,12 @@ import { IContext, IVersionInfo } from "../../interface";
 
 export async function getChangelogVersion(context: IContext): Promise<IVersionInfo>
 {
-    let versionSystem: "auto" | "manual" | "semver" | "incremental";
+    let versionSystem: "auto" | "semver" | "incremental";
     const version = await context.changelog.getVersion(context);
 
     if (!version)
     {
-        versionSystem = "manual";
+        versionSystem = "semver";
     }
     else if (semver.valid(semver.clean(version)))
     {

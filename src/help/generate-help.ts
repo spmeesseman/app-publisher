@@ -9,9 +9,14 @@ import {
 export = generateHelp;
 
 
-function buildHelp(readmeHelp: string, maxHelpLineLen: number, space: string, lineStart = "", lineEnd = "", sectionEnd = "")
+function buildHelp(readmeHelp: string, maxHelpLineLen: number, space: string, escapeQuotes: boolean, lineStart = "", lineEnd = "", sectionEnd = "")
 {
-    const helpLines = readmeHelp.replace(/"/gm, "\\\"").split(EOL);
+    let helpLines: string | string[] = readmeHelp;
+    if (escapeQuotes) {
+        helpLines = helpLines.replace(/"/gm, "\\\"");
+    }
+    helpLines = helpLines.split(EOL);
+
     let helpSection = "";
 
     for (const line of helpLines)
@@ -37,6 +42,9 @@ function buildHelp(readmeHelp: string, maxHelpLineLen: number, space: string, li
         }
         else {
             helpSection += `${space}${lineStart}${lineEnd}\n`;
+            if (helpSection.endsWith(" \n")) {
+                helpSection = helpSection.trimRight() + "\n";
+            }
         }
     }
 
@@ -127,7 +135,7 @@ async function generateHelp(context: IContext): Promise<string | boolean>
         {
 `;
         argsContent += `${S3}help: `;
-        argsContent += buildHelp(a.help, 70, SHELP, "\"", "\\n\" +", "\",");
+        argsContent += buildHelp(a.help, 70, SHELP, true, "\"", "\\n\" +", "\",");
         argsContent += `
             helpPrivate: ${a.name === "taskGenerateHelp" || a.name === "taskDevTest" || a.name.includes("Private.") ? "true" : "false"}
         }
@@ -140,7 +148,7 @@ async function generateHelp(context: IContext): Promise<string | boolean>
             type = "\"" + type.replace("enum(", "").replace(")", "").replace("|", "\" | \"") + "\"";
         }
         interfaceContent += `${S1}/**\n${S1} `;
-        interfaceContent += buildHelp(a.help, 90, S1, " * ");
+        interfaceContent += buildHelp(a.help, 90, S1, false, " * ");
         interfaceContent += `\n${S1} */\n${S1}${a.name}: ${type};\n`;
     }
 

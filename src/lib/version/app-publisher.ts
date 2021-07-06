@@ -29,7 +29,7 @@ async function getFiles(cwd: string, logger: any)
 
 export function getAppPublisherVersion({options, logger}: IContext): IVersionInfo
 {
-    let versionSystem: "auto" | "manual" | "semver" | "incremental";
+    let versionSystem: "auto" | "semver" | "incremental";
     const version = options.projectVersion;
 
     if (version)
@@ -38,7 +38,7 @@ export function getAppPublisherVersion({options, logger}: IContext): IVersionInf
 
         if (!version)
         {
-            versionSystem = "manual";
+            versionSystem = "semver";
         }
         else if (semver.valid(semver.clean(version)))
         {
