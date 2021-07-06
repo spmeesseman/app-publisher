@@ -81,7 +81,7 @@ export const publishRcOpts =
 
     commitMsgMap: [
         true,
-        "ICommitMessageMap",
+        "ICommitMessageMap[]",
         "",
         [],
         {
