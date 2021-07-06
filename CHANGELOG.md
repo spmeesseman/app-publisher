@@ -1,5 +1,37 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.4.0 (July 6th, 2021)
+
+### Bug Fixes
+
+- **Changelogs:** the html changelog for mantisbt releases are no longer showing the font awesome icons when displayed on the Mantis Releases page.
+- **Changelogs:** the html changelog for mantisbt releases are not wrapping text when displayed on the Mantis Releases page.
+- **Releases:** a dynamically scoped npm release sets the version in package.json back to the original version just before the commit stage, although the package is built with correct version.
+
+### Documentation
+
+- **Readme:** add options section
+- **Readme:** left align table headers
+
+### Features
+
+- **Changelogs:** for a production release, scan the changelog for pre-releases of the new version, and remove them before adding the full section.
+
+### Refactoring
+
+- **Tasks:** allow the following tasks to be ran without a CI environment check:
+	
+		--task-dev-test
+		--task-generte-help
+		--task-changelog-hdr-print
+		--task-changelog-hdr-print-version
+		--task-version-pre-release-id
+- **Tasks:** When run in a non-CI environment, the --task-changelog task should use the powershell script to scroll the content to the bottom when opening a text changelog file.
+
+### Tests
+
+- increase timeouts for some longer running test stages
+
 ## Version 3.3.2 (July 4th, 2021)
 
 ### Bug Fixes
