@@ -21,6 +21,7 @@ const REGEX_CHANGELOG_MD_VERSION_SECTION = (versionText: string) => {
 
 const REGEX_HELP_EXTRACT_FROM_README = /(?:^## Command Line and Options[\r\n]+)([^]*?)(?=^## VSCode Integration)/gm;
 const REGEX_HELP_EXTRACT_OPTION = /(?:^### ([\w]+[\r\n]+))([^]*?)(?=^### [\w]+|^## [\w]+|###END###)/gm;
+const REGEX_HELP_EXTRACT_FROM_INTERFACE = /(?:^export interface IOptions[\r\n]+\{[\r\n]+)([^]*?)(?=^\}[\r\n]*###END###)/gm;
 
 const REGEX_HELP_SECTION = /^[\w\-\*\. ]+[^]*/mi;
 const REGEX_HELP_NAME = /### (\w+)/m;
@@ -32,6 +33,7 @@ const regexes = {
   REGEX_CHANGELOG_MD_MSG_TICKET_TAGS,
   REGEX_CHANGELOG_MD_VERSION_SECTION,
   REGEX_CHANGELOG_TXT_VERSION_SECTION,
+  REGEX_HELP_EXTRACT_FROM_INTERFACE,
   REGEX_HELP_EXTRACT_FROM_README,
   REGEX_HELP_EXTRACT_OPTION,
   REGEX_HELP_ARG,

@@ -1,12 +1,15 @@
 import { IArgument, IContext } from "../interface";
 import { pathExists, readFile, writeFile } from "../lib/utils/fs";
-import { REGEX_HELP_ARG, REGEX_HELP_DEFAULT_VALUE, REGEX_HELP_EXTRACT_FROM_README, REGEX_HELP_EXTRACT_OPTION, REGEX_HELP_NAME, REGEX_HELP_SECTION, REGEX_HELP_TYPE } from "../lib/definitions/regexes";
 import { EOL } from "os";
+import {
+    REGEX_HELP_ARG, REGEX_HELP_DEFAULT_VALUE, REGEX_HELP_EXTRACT_FROM_INTERFACE, REGEX_HELP_EXTRACT_FROM_README,
+    REGEX_HELP_EXTRACT_OPTION, REGEX_HELP_NAME, REGEX_HELP_SECTION, REGEX_HELP_TYPE
+} from "../lib/definitions/regexes";
 
 export = generateHelp;
 
 
-function buildHelp(readmeHelp: string, maxHelpLineLen: number, space: string, lineStart = "", lineEnd = "")
+function buildHelp(readmeHelp: string, maxHelpLineLen: number, space: string, lineStart = "", lineEnd = "", sectionEnd = "")
 {
     const helpLines = readmeHelp.replace(/"/gm, "\\\"").split(EOL);
     let helpSection = "";
@@ -37,7 +40,7 @@ function buildHelp(readmeHelp: string, maxHelpLineLen: number, space: string, li
         }
     }
 
-    return helpSection.substring(0, helpSection.length - lineEnd.length - 1).trimLeft() + "\",";
+    return helpSection.substring(0, helpSection.length - lineEnd.length - 1).trimLeft() + sectionEnd;
 }
 
 
@@ -124,17 +127,20 @@ async function generateHelp(context: IContext): Promise<string | boolean>
         {
 `;
         argsContent += `${S3}help: `;
-        argsContent += buildHelp(a.help, 75, SHELP, "\"", "\\n\" +");
+        argsContent += buildHelp(a.help, 70, SHELP, "\"", "\\n\" +", "\",");
         argsContent += `
             helpPrivate: ${a.name === "taskGenerateHelp" || a.name === "taskDevTest" || a.name.includes("Private.") ? "true" : "false"}
         }
     ],
 `;
-        if (type.startsWith("enum")) {
+        if (type === "flag") {
+            type = "\"Y\" | \"N\"";
+        }
+        else if (type.startsWith("enum")) {
             type = "\"" + type.replace("enum(", "").replace(")", "").replace("|", "\" | \"") + "\"";
         }
         interfaceContent += `${S1}/**\n${S1} `;
-        interfaceContent += buildHelp(a.help, 100, S1, " * ");
+        interfaceContent += buildHelp(a.help, 90, S1, " * ");
         interfaceContent += `\n${S1} */\n${S1}${a.name}: ${type};\n`;
     }
 
@@ -144,15 +150,20 @@ async function generateHelp(context: IContext): Promise<string | boolean>
     argsContent = argsContent.replace(/\n/gm, EOL);
 
     interfaceContent = interfaceContent.trim();
-    // interfaceContent = interfaceContent.substr(0, argsContent.length - 1);
+    // interfaceContent = interfaceContent.substr(0, interfaceContent.length - 1);
     interfaceContent += "\n}\n";
-    interfaceContent = argsContent.replace(/\n/gm, EOL);
+    interfaceContent = interfaceContent.replace(/\n/gm, EOL);
 
-    if ((match = new RegExp(REGEX_HELP_EXTRACT_FROM_README).exec(readme2Content)) !== null)
-    {
+    //
+    // GitHub README
+    //
+    if ((match = new RegExp(REGEX_HELP_EXTRACT_FROM_README).exec(readme2Content)) !== null) {
         writeFile(readme2File, readme2Content.replace(match[0], readmeHelp));
     }
 
+    //
+    // src/args.ts
+    //
     if (pathExists(argsFile)) {
         await writeFile(argsFile, argsContent);
     }
@@ -160,9 +171,14 @@ async function generateHelp(context: IContext): Promise<string | boolean>
         return "Args file not found";
     }
 
-    if (pathExists(argsFile)) {
+    //
+    // src/interface.ts
+    //
+    if (pathExists(interfaceFile)) {
         const interfaceFileContent = await readFile(interfaceFile);
-        // await writeFile(interfaceFile, interfaceContent);
+        if ((match = new RegExp(REGEX_HELP_EXTRACT_FROM_INTERFACE).exec(interfaceFileContent + "###END###")) !== null) {
+            writeFile(interfaceFile, interfaceFileContent.replace(match[0], interfaceContent));
+        }
     }
     else {
         return "Interface file not found";

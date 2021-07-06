@@ -173,12 +173,45 @@ export interface IVersionInfo
 }
 
 
-export interface IOptions
+export interface IOptions extends IArgs
 {
     /**
      * @readonly
      */
     appPublisherVersion: string;
+    /**
+     * Continous Integration Info
+     */
+    ciInfo: ICiEnvironmentInfo;
+    /**
+     * Gets set by get-config
+     *
+     * @readonly
+     */
+    configFilePath: string;
+    /**
+     * A list of argument validation errors populated by arg-parser, if any.
+     *
+     * @readonly
+     */
+    errors: string[];
+    /**
+     * @readonly
+     */
+    isNodeJsEnv: boolean;
+    /**
+     * @readonly
+     */
+    taskMode: boolean;
+    /**
+     * @readonly
+     */
+    taskModeStdOut: boolean;
+}
+
+
+export interface IArgs
+{
     /**
      * The branch to use
      */
@@ -205,10 +238,6 @@ export interface IOptions
      * Defaults to 80
      */
     changelogLineLen: number;
-    /**
-     * Continous Integration Info
-     */
-    ciInfo: ICiEnvironmentInfo;
     /**
      * A map of additional subject tags used in commits that will be used to, increment the
      * version and be included in the changelog, for example:,
@@ -245,12 +274,6 @@ export interface IOptions
      *     package.json { publishrc.spm: { ... } }
      */
     configName: string;
-    /**
-     * Gets set by get-config
-     *
-     * @readonly
-     */
-    configFilePath: string;
     /**
      * The RC file name in a C Make project.
      */
@@ -357,12 +380,6 @@ export interface IOptions
      */
     emailServer: string;
     /**
-     * A list of argument validation errors populated by arg-parser, if any.
-     *
-     * @readonly
-     */
-    errors: string[];
-    /**
      * A path to a file resource or list of file resource paths to upload as assets of the Github release.
      * Ignored if githubRelease = N.
      */
@@ -404,10 +421,6 @@ export interface IOptions
      * is extracted for display on the project page of the NPM repository.
      */
     homePage: string;
-    /**
-     * @readonly
-     */
-    isNodeJsEnv: boolean;
     /**
      * The MantisBT token or list of tokens to make a MantisBT release with.
      * Represents the user that the release is made under on the 'Releases' page.
@@ -699,14 +712,6 @@ export interface IOptions
      * of the changelog/history file.
      */
     taskMantisbtRelease: boolean;
-    /**
-     * @readonly
-     */
-    taskMode: boolean;
-    /**
-     * @readonly
-     */
-    taskModeStdOut: boolean;
     /**
      * Perform an 'NPM' release (publish).
      */
