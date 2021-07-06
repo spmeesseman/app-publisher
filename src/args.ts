@@ -9,13 +9,14 @@ export const publishRcOpts =
         {
             help: "The branch to use.\n" +
                   "\n" +
-                  "For SVN, this should include the path to the branches directory, e.g.:\n" +
+                  "For SVN, this should include the path to the branches directory,\n" +
+                  "e.g.:\n" +
                   "\n" +
                   "    branches/branch-name\n" +
                   "\n" +
-                  "SVN branch support can only work if there is a 'per project' branching\n" +
-                  "folder / structure.  It is assumed that the 'tags' folders is named by\n" +
-                  "convention, i.e. '/tags'",
+                  "SVN branch support can only work if there is a 'per project'\n" +
+                  "branching folder / structure.  It is assumed that the 'tags' folders\n" +
+                  "is named by convention, i.e. '/tags'",
             helpPrivate: false
         }
     ],
@@ -37,8 +38,9 @@ export const publishRcOpts =
         "",
         [ "--bugs" ],
         {
-            help: "Overrides the 'bugs' property of package.json when an NPM release is made,\n" +
-                  "which is extracted for display on the project page of the NPM repository.",
+            help: "Overrides the 'bugs' property of package.json when an NPM release is\n" +
+                  "made, which is extracted for display on the project page of the NPM\n" +
+                  "repository.",
             helpPrivate: false
         }
     ],
@@ -61,8 +63,8 @@ export const publishRcOpts =
         "",
         [ "-chf", "--changelog-hdr-file" ],
         {
-            help: "The location of this history header file, should be a path relative to\n" +
-                  "the project's root.",
+            help: "The location of this history header file, should be a path relative\n" +
+                  "to the project's root.",
             helpPrivate: false
         }
     ],
@@ -73,8 +75,8 @@ export const publishRcOpts =
         80,
         [ "-cll", "--changelog-line-len" ],
         {
-            help: "The maximum line lenth to use when parsing commits to populate the changelog\n" +
-                  "file.",
+            help: "The maximum line lenth to use when parsing commits to populate the\n" +
+                  "changelog file.",
             helpPrivate: false
         }
     ],
@@ -106,9 +108,9 @@ export const publishRcOpts =
         false,
         [ "-c", "--config" ],
         {
-            help: "Displays the configuration object and exits, for debugging.  Note that\n" +
-                  "the default publishrc file is '.publishrc.*'.  A config file can be one\n" +
-                  "of four different formats:\n" +
+            help: "Displays the configuration object and exits, for debugging.  Note\n" +
+                  "that the default publishrc file is '.publishrc.*'.  A config file can\n" +
+                  "be one of four different formats:\n" +
                   "\n" +
                   "    .publishrc.json\n" +
                   "    .publishrc.js\n" +
@@ -125,9 +127,10 @@ export const publishRcOpts =
         "",
         [ "-cn", "--config-name" ],
         {
-            help: "Use config name.  Note that the default publishrc file is '.publishrc.*'.\n" +
-                  " A config name can dyanimically modify the file used.  For example, a\n" +
-                  "config name of 'cst' will yield a search for the following config files:\n" +
+            help: "Use config name.  Note that the default publishrc file is\n" +
+                  "'.publishrc.*'.  A config name can dyanimically modify the file used.\n" +
+                  " For example, a config name of 'cst' will yield a search for the\n" +
+                  "following config files:\n" +
                   "\n" +
                   "    .publishrc.cst.json\n" +
                   "    .publishrc.cst.js\n" +
@@ -180,10 +183,10 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "The network path to use as the destination directory for a standard `dist`\n" +
-                  "release's documentation directory.  All PDF files found within the doc\n" +
-                  "directory specified by the 'distDocPathSrc' property will be uploaded/copied\n" +
-                  "to this directory.\n" +
+            help: "The network path to use as the destination directory for a standard\n" +
+                  "`dist` release's documentation directory.  All PDF files found within\n" +
+                  "the doc directory specified by the 'distDocPathSrc' property will be\n" +
+                  "uploaded/copied to this directory.\n" +
                   "\n" +
                   "Ignored if `distRelease` = \"N\" or `distDocPathSrc` is empty.",
             helpPrivate: false
@@ -196,9 +199,10 @@ export const publishRcOpts =
         "",
         [ "-ddps", "--dist-doc-path-src" ],
         {
-            help: "The local path to use as the source directory for a standard 'dist' release's\n" +
-                  "documentation directory.  All PDF files found within this directory are\n" +
-                  "uploaded/copied to the directory specified by the 'distDocPath' property.\n" +
+            help: "The local path to use as the source directory for a standard 'dist'\n" +
+                  "release's documentation directory.  All PDF files found within this\n" +
+                  "directory are uploaded/copied to the directory specified by the\n" +
+                  "'distDocPath' property.\n" +
                   "\n" +
                   "Ignored if `distRelease` = \"N\" or `distDocPath` is empty.",
             helpPrivate: false
@@ -222,8 +226,9 @@ export const publishRcOpts =
         "",
         [ "-drp", "--dist-release-path" ],
         {
-            help: "The network path to use as the destination directory for a standard `dist`\n" +
-                  "directory release.  Will be renamed to 'distDestPath' in a future release.\n" +
+            help: "The network path to use as the destination directory for a standard\n" +
+                  "`dist` directory release.  Will be renamed to 'distDestPath' in a\n" +
+                  "future release.\n" +
                   "\n" +
                   "The final directory created for the release will be:\n" +
                   "\n" +
@@ -240,8 +245,8 @@ export const publishRcOpts =
         "install",
         [ "-drps", "--dist-release-path-src" ],
         {
-            help: "The local path to use as the source directory for a standard 'dist' release.\n" +
-                  " Will be renamed to 'distSrcPath' in a future release.\n" +
+            help: "The local path to use as the source directory for a standard 'dist'\n" +
+                  "release.  Will be renamed to 'distSrcPath' in a future release.\n" +
                   "\n" +
                   "Ignored if `distRelease` = \"N\".",
             helpPrivate: false
@@ -254,8 +259,8 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "A script or list of scripts to run for the build stage, after building\n" +
-                  "a standard `dist` release.\n" +
+            help: "A script or list of scripts to run for the build stage, after\n" +
+                  "building a standard `dist` release.\n" +
                   "\n" +
                   "Ignored if `distRelease` = \"N\".",
             helpPrivate: false
@@ -268,8 +273,8 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "A script or list of scripts to run for the build stage, before building\n" +
-                  "a standard `dist` release.\n" +
+            help: "A script or list of scripts to run for the build stage, before\n" +
+                  "building a standard `dist` release.\n" +
                   "\n" +
                   "Ignored if `distRelease` = \"N\".",
             helpPrivate: false
@@ -291,9 +296,9 @@ export const publishRcOpts =
                   "3) Commit package/build file changes (svn) are not made\n" +
                   "4) Version tag (svn) is not made\n" +
                   "\n" +
-                  "Some local files may be changed in test mode (i.e. updated version numbers\n" +
-                  "in build and package files).  These changes should be reverted to original\n" +
-                  "state via SCM.",
+                  "Some local files may be changed in test mode (i.e. updated version\n" +
+                  "numbers in build and package files).  These changes should be\n" +
+                  "reverted to original state via SCM.",
             helpPrivate: false
         }
     ],
@@ -315,8 +320,8 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "A link or list of links to insert into an email notification in the form\n" +
-                  "'link|name'.",
+            help: "A link or list of links to insert into an email notification in the\n" +
+                  "form 'link|name'.",
             helpPrivate: false
         }
     ],
@@ -327,8 +332,8 @@ export const publishRcOpts =
         "std",
         [],
         {
-            help: "The delivery method to use when sending an email notification, possible\n" +
-                  "values are:\n" +
+            help: "The delivery method to use when sending an email notification,\n" +
+                  "possible values are:\n" +
                   "\n" +
                   "    ssl (Secure)\n" +
                   "    std (Standard / Non-Secure)",
@@ -364,7 +369,8 @@ export const publishRcOpts =
         "",
         [ "-er", "--email-recip" ],
         {
-            help: "The email address to use as the 'To' address when sending an email notification.",
+            help: "The email address to use as the 'To' address when sending an email\n" +
+                  "notification.",
             helpPrivate: false
         }
     ],
@@ -375,7 +381,8 @@ export const publishRcOpts =
         "",
         [ "-ef", "--email-sender" ],
         {
-            help: "The email address to use as the 'From' address when sending an email notification.",
+            help: "The email address to use as the 'From' address when sending an email\n" +
+                  "notification.",
             helpPrivate: false
         }
     ],
@@ -435,8 +442,8 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "A script or list of scripts to run for the release stage, after creating\n" +
-                  "a Github release.\n" +
+            help: "A script or list of scripts to run for the release stage, after\n" +
+                  "creating a Github release.\n" +
                   "\n" +
                   "Ignored if `githubRelease` = \"N\".",
             helpPrivate: false
@@ -449,8 +456,8 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "A script or list of scripts to run for the release stage, before creating\n" +
-                  "a Github release.\n" +
+            help: "A script or list of scripts to run for the release stage, before\n" +
+                  "creating a Github release.\n" +
                   "\n" +
                   "Ignored if `githubRelease` = \"N\".",
             helpPrivate: false
@@ -463,8 +470,9 @@ export const publishRcOpts =
         "",
         [ "-gu", "--github-user" ],
         {
-            help: "The Github username that owns the project the Github release will be made\n" +
-                  "under.  Used to construct the Github project path i.e. github.com/username.\n" +
+            help: "The Github username that owns the project the Github release will be\n" +
+                  "made under.  Used to construct the Github project path i.e.\n" +
+                  "github.com/username.\n" +
                   "\n" +
                   "Ignored if `githubRelease` = \"N\".",
             helpPrivate: false
@@ -489,8 +497,8 @@ export const publishRcOpts =
         [ "--home-page" ],
         {
             help: "Overrides the `homePage` property of package.json when an NPM release\n" +
-                  "is made, which is extracted for display on the project page of the NPM\n" +
-                  "repository.",
+                  "is made, which is extracted for display on the project page of the\n" +
+                  "NPM repository.",
             helpPrivate: false
         }
     ],
@@ -542,8 +550,8 @@ export const publishRcOpts =
         "",
         [ "-mp", "--mantisbt-plugin" ],
         {
-            help: "Specifies the main project file for a MantisBT plugin project.  The file\n" +
-                  "extension must be '.php'\"",
+            help: "Specifies the main project file for a MantisBT plugin project.  The\n" +
+                  "file extension must be '.php'\"",
             helpPrivate: false
         }
     ],
@@ -554,8 +562,8 @@ export const publishRcOpts =
         "",
         [ "-mpn", "--mantisbt-project" ],
         {
-            help: "The MantisBT project name, if different than the main project name specified\n" +
-                  "by `projectName`.",
+            help: "The MantisBT project name, if different than the main project name\n" +
+                  "specified by `projectName`.",
             helpPrivate: false
         }
     ],
@@ -577,8 +585,8 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "A script or list of scripts to run for the release stage, after creating\n" +
-                  "a MantisBT release.\n" +
+            help: "A script or list of scripts to run for the release stage, after\n" +
+                  "creating a MantisBT release.\n" +
                   "\n" +
                   "Ignored if `mantisbtRelease` = \"N\".",
             helpPrivate: false
@@ -591,8 +599,8 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "A script or list of scripts to run for the release stage, before creating\n" +
-                  "a MantisBT release.\n" +
+            help: "A script or list of scripts to run for the release stage, before\n" +
+                  "creating a MantisBT release.\n" +
                   "\n" +
                   "Ignored if `mantisbtRelease` = \"N\".",
             helpPrivate: false
@@ -629,7 +637,8 @@ export const publishRcOpts =
         "N",
         [ "-npd", "--npm-pack-dist" ],
         {
-            help: "Copy the NPM package to the directory specified by `distReleasePathSrc`.\n" +
+            help: "Copy the NPM package to the directory specified by\n" +
+                  "`distReleasePathSrc`.\n" +
                   "\n" +
                   "File is renamed from what is output by NPM, it is named as:\n" +
                   "\n" +
@@ -650,9 +659,9 @@ export const publishRcOpts =
         "",
         [ "-nrg", "--npm-registry" ],
         {
-            help: "The URL of the NPM registry to use for making an NPM release.  This needs\n" +
-                  "to be set if this is a privately hosted repository.  Should be in the\n" +
-                  "form:\n" +
+            help: "The URL of the NPM registry to use for making an NPM release.  This\n" +
+                  "needs to be set if this is a privately hosted repository.  Should be\n" +
+                  "in the form:\n" +
                   "\n" +
                   "    https://npm.mydomain.com\n" +
                   "\n" +
@@ -678,8 +687,8 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "A script or list of scripts to run for the release stage, after creating\n" +
-                  "an NPM release.\n" +
+            help: "A script or list of scripts to run for the release stage, after\n" +
+                  "creating an NPM release.\n" +
                   "\n" +
                   "Ignored if `npmRelease` = \"N\".",
             helpPrivate: false
@@ -692,8 +701,8 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "A script or list of scripts to run for the release stage, before creating\n" +
-                  "an NPM release.\n" +
+            help: "A script or list of scripts to run for the release stage, before\n" +
+                  "creating an NPM release.\n" +
                   "\n" +
                   "Ignored if `npmRelease` = \"N\".",
             helpPrivate: false
@@ -730,8 +739,8 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "A script or list of scripts to run for the build stage, after the build\n" +
-                  "process is started.",
+            help: "A script or list of scripts to run for the build stage, after the\n" +
+                  "build process is started.",
             helpPrivate: false
         }
     ],
@@ -742,8 +751,8 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "A script or list of scripts to run for the build stage, before the build\n" +
-                  "process is started.",
+            help: "A script or list of scripts to run for the build stage, before the\n" +
+                  "build process is started.",
             helpPrivate: false
         }
     ],
@@ -754,8 +763,8 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "A script or list of scripts to run for the commit stage, after the commit\n" +
-                  "process is started.",
+            help: "A script or list of scripts to run for the commit stage, after the\n" +
+                  "commit process is started.",
             helpPrivate: false
         }
     ],
@@ -766,8 +775,8 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "A script or list of scripts to run for the commit stage, before the commit\n" +
-                  "process is started.",
+            help: "A script or list of scripts to run for the commit stage, before the\n" +
+                  "commit process is started.",
             helpPrivate: false
         }
     ],
@@ -778,8 +787,8 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "A script or list of scripts to run for the final release stage, before\n" +
-                  "the final release process is started.",
+            help: "A script or list of scripts to run for the final release stage,\n" +
+                  "before the final release process is started.",
             helpPrivate: false
         }
     ],
@@ -802,9 +811,10 @@ export const publishRcOpts =
         "",
         [ "-pfdn", "--project-file-dot-net" ],
         {
-            help: "Relative path to the .NET project version file (AssemblyInfo.cs).  Any\n" +
-                  ".NET assemblyinfo.cs files are attempted to be loaded and matched to a\n" +
-                  "project, but in the case where it cannot, this property can be set.\"",
+            help: "Relative path to the .NET project version file (AssemblyInfo.cs).\n" +
+                  "Any .NET assemblyinfo.cs files are attempted to be loaded and matched\n" +
+                  "to a project, but in the case where it cannot, this property can be\n" +
+                  "set.\"",
             helpPrivate: false
         }
     ],
@@ -828,9 +838,9 @@ export const publishRcOpts =
         "",
         [ "-pfn", "--project-file-npm" ],
         {
-            help: "Relative path to the NPM project version file (package.json).  Any NPM\n" +
-                  "package.json files are attempted to be loaded and matched to a project,\n" +
-                  "but in the case where it cannot, this property can be set.",
+            help: "Relative path to the NPM project version file (package.json).  Any\n" +
+                  "NPM package.json files are attempted to be loaded and matched to a\n" +
+                  "project, but in the case where it cannot, this property can be set.",
             helpPrivate: false
         }
     ],
@@ -841,8 +851,8 @@ export const publishRcOpts =
         "",
         [ "-pn", "--project-name" ],
         {
-            help: "Name of the project.  This must match throughout the build files and the\n" +
-                  "VCS project name.",
+            help: "Name of the project.  This must match throughout the build files and\n" +
+                  "the VCS project name.",
             helpPrivate: false
         }
     ],
@@ -853,7 +863,8 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "Utility field for tracking version if no other mechanism is available.",
+            help: "Utility field for tracking version if no other mechanism is\n" +
+                  "available.",
             helpPrivate: false
         }
     ],
@@ -904,8 +915,9 @@ export const publishRcOpts =
         "N",
         [ "-sce", "--skip-changelog-edits" ],
         {
-            help: "Skip manual editing of the changelog file(s).  Note the changelog used\n" +
-                  "for a release will be that of which is output by the internal commit parser.",
+            help: "Skip manual editing of the changelog file(s).  Note the changelog\n" +
+                  "used for a release will be that of which is output by the internal\n" +
+                  "commit parser.",
             helpPrivate: false
         }
     ],
@@ -916,8 +928,8 @@ export const publishRcOpts =
         "N",
         [ "-sc", "--skip-commit" ],
         {
-            help: "Skip committing changes to version control when the final release stage\n" +
-                  "is finished (commit stage).",
+            help: "Skip committing changes to version control when the final release\n" +
+                  "stage is finished (commit stage).",
             helpPrivate: false
         }
     ],
@@ -928,8 +940,8 @@ export const publishRcOpts =
         "N",
         [ "-st", "--skip-tag" ],
         {
-            help: "Skip tagging version in version control when the final release stage is\n" +
-                  "finished (commit stage).",
+            help: "Skip tagging version in version control when the final release stage\n" +
+                  "is finished (commit stage).",
             helpPrivate: false
         }
     ],
@@ -963,8 +975,8 @@ export const publishRcOpts =
         [ "-tc", "--task-changelog" ],
         {
             help: "Export the next release's current changelog and view using the editor\n" +
-                  "specified in the .publishrc file.  Note that this opens the actual versioned\n" +
-                  "changelog/history file.",
+                  "specified in the .publishrc file.  Note that this opens the actual\n" +
+                  "versioned changelog/history file.",
             helpPrivate: false
         }
     ],
@@ -975,9 +987,9 @@ export const publishRcOpts =
         "",
         [ "-tcf", "--task-changelog-file" ],
         {
-            help: "Export the next release's current changelog to the specified file, can\n" +
-                  "be a relative or an absolute path.  Ignored if the option '--task-changelog-view'\n" +
-                  "is used.\n" +
+            help: "Export the next release's current changelog to the specified file,\n" +
+                  "can be a relative or an absolute path.  Ignored if the option\n" +
+                  "'--task-changelog-view' is used.\n" +
                   "\n" +
                   "Usage:\n" +
                   "\n" +
@@ -996,12 +1008,13 @@ export const publishRcOpts =
         [ "-tchf", "--task-changelog-html-file" ],
         {
             help: "Export the next release's current changelog in HTML release format to\n" +
-                  "the specified file, can be a relative or an absolute path.  Ignored if\n" +
-                  "the option '--task-changelog-view' is used.\n" +
+                  "the specified file, can be a relative or an absolute path.  Ignored\n" +
+                  "if the option '--task-changelog-view' is used.\n" +
                   "\n" +
                   "Usage:\n" +
                   "\n" +
-                  "    app-publisher --task-changelog-html-file install/tmp/version_notes.html",
+                  "    app-publisher --task-changelog-html-file\n" +
+                  "install/tmp/version_notes.html",
             helpPrivate: false
         }
     ],
@@ -1012,9 +1025,10 @@ export const publishRcOpts =
         false,
         [ "-tchv", "--task-changelog-html-view" ],
         {
-            help: "Export the next release's current changelog in HTML release format and\n" +
-                  "view using the editor specified in the .publishrc file. The created file\n" +
-                  "is a copy stored in a temporary directory specified by the OS.",
+            help: "Export the next release's current changelog in HTML release format\n" +
+                  "and view using the editor specified in the .publishrc file. The\n" +
+                  "created file is a copy stored in a temporary directory specified by\n" +
+                  "the OS.",
             helpPrivate: false
         }
     ],
@@ -1047,7 +1061,8 @@ export const publishRcOpts =
         "",
         [ "-tcpv", "--task-changelog-print-version" ],
         {
-            help: "Export the specified release's current changelog and output to stdout.\n" +
+            help: "Export the specified release's current changelog and output to\n" +
+                  "stdout.\n" +
                   "\n" +
                   "Usage:\n" +
                   "\n" +
@@ -1076,8 +1091,8 @@ export const publishRcOpts =
         [ "-tcv", "--task-changelog-view" ],
         {
             help: "Export the next release's current changelog and view using the editor\n" +
-                  "specified in the .publishrc file. The created file is a copy stored in\n" +
-                  "a temporary directory specified by the OS.",
+                  "specified in the .publishrc file. The created file is a copy stored\n" +
+                  "in a temporary directory specified by the OS.",
             helpPrivate: false
         }
     ],
@@ -1088,9 +1103,9 @@ export const publishRcOpts =
         "",
         [ "-tcvv", "--task-changelog-view-version" ],
         {
-            help: "Export the specified release's current changelog and view using the editor\n" +
-                  "specified in the .publishrc file. The created file is a copy stored in\n" +
-                  "a temporary directory specified by the OS.",
+            help: "Export the specified release's current changelog and view using the\n" +
+                  "editor specified in the .publishrc file. The created file is a copy\n" +
+                  "stored in a temporary directory specified by the OS.",
             helpPrivate: false
         }
     ],
@@ -1112,8 +1127,8 @@ export const publishRcOpts =
         false,
         [ "-tcei", "--task-ci-env-info" ],
         {
-            help: "Finds CI related build information, and outputs the info to stdout using\n" +
-                  "a concatenated string in the form 'current|next|changelogpath'.",
+            help: "Finds CI related build information, and outputs the info to stdout\n" +
+                  "using a concatenated string in the form 'current|next|changelogpath'.",
             helpPrivate: false
         }
     ],
@@ -1124,8 +1139,8 @@ export const publishRcOpts =
         false,
         [ "-tces", "--task-ci-env-set" ],
         {
-            help: "Finds CI related build information, and outputs the info to the file 'ap.env'\n" +
-                  "in the root workspace directory.",
+            help: "Finds CI related build information, and outputs the info to the file\n" +
+                  "'ap.env' in the root workspace directory.",
             helpPrivate: false
         }
     ],
@@ -1136,8 +1151,8 @@ export const publishRcOpts =
         false,
         [ "-tcm", "--task-commit" ],
         {
-            help: "Commits the changes made when using the --touch-versions option, using\n" +
-                  "the 'chore: vX.X.X' format for the commit message.",
+            help: "Commits the changes made when using the --touch-versions option,\n" +
+                  "using the 'chore: vX.X.X' format for the commit message.",
             helpPrivate: false
         }
     ],
@@ -1159,8 +1174,8 @@ export const publishRcOpts =
         false,
         [ "-tdt", "--task-dev-test" ],
         {
-            help: "Run temporary tests in the local dev environment.  Note that this does\n" +
-                  "nothing when ran in a production build.",
+            help: "Run temporary tests in the local dev environment.  Note that this\n" +
+                  "does nothing when ran in a production build.",
             helpPrivate: true
         }
     ],
@@ -1204,8 +1219,9 @@ export const publishRcOpts =
         false,
         [ "-tgr", "--task-github-release" ],
         {
-            help: "Perform a 'Github' release.  The changelog produced for the Github release\n" +
-                  "will be created from the most recent entry of the changelog/history file.",
+            help: "Perform a 'Github' release.  The changelog produced for the Github\n" +
+                  "release will be created from the most recent entry of the\n" +
+                  "changelog/history file.",
             helpPrivate: false
         }
     ],
@@ -1216,8 +1232,9 @@ export const publishRcOpts =
         false,
         [ "-tmr", "--task-mantisbt-release" ],
         {
-            help: "Perform a 'Mantis' release.  The changelog produced for the Mantis release\n" +
-                  "will be created from the most recent entry of the changelog/history file.",
+            help: "Perform a 'Mantis' release.  The changelog produced for the Mantis\n" +
+                  "release will be created from the most recent entry of the\n" +
+                  "changelog/history file.",
             helpPrivate: false
         }
     ],
@@ -1228,13 +1245,13 @@ export const publishRcOpts =
         false,
         [ "-tnjr", "--task-npm-json-restore" ],
         {
-            help: "Restores changes made to the package.json file as a result of using the\n" +
-                  "--task-npm-json-update task.  Properties include:\n" +
+            help: "Restores changes made to the package.json file as a result of using\n" +
+                  "the --task-npm-json-update task.  Properties include:\n" +
                   "\n" +
                   "    bugs, homepage, repo, repoType\n" +
                   "\n" +
-                  "Note that this task should in most cases always be ran following the use\n" +
-                  "of the --task-npm-json-update task.",
+                  "Note that this task should in most cases always be ran following the\n" +
+                  "use of the --task-npm-json-update task.",
             helpPrivate: false
         }
     ],
@@ -1245,13 +1262,14 @@ export const publishRcOpts =
         false,
         [ "-tnju", "--task-npm-json-update" ],
         {
-            help: "Updates package.json with .publishrc defined properties.  Properties include:\n" +
+            help: "Updates package.json with .publishrc defined properties.  Properties\n" +
+                  "include:\n" +
                   "\n" +
                   "    bugs, homepage, repo, repoType\n" +
                   "\n" +
-                  "Can be used for publishing to multiple npm repositories.  Note that this\n" +
-                  "task should in most cases always be followed up with a --task-npm-json-restore\n" +
-                  "task.",
+                  "Can be used for publishing to multiple npm repositories.  Note that\n" +
+                  "this task should in most cases always be followed up with a\n" +
+                  "--task-npm-json-restore task.",
             helpPrivate: false
         }
     ],
@@ -1307,8 +1325,9 @@ export const publishRcOpts =
         false,
         [ "-tt", "--task-tag" ],
         {
-            help: "Creates a tag using the 'vX.X.X' format for the tag name.  The 'taskVersionUpdate'\n" +
-                  "and 'taskVersionUpdateCommit' tasks should always precede this task.",
+            help: "Creates a tag using the 'vX.X.X' format for the tag name.  The\n" +
+                  "'taskVersionUpdate' and 'taskVersionUpdateCommit' tasks should always\n" +
+                  "precede this task.",
             helpPrivate: false
         }
     ],
@@ -1319,9 +1338,9 @@ export const publishRcOpts =
         "",
         [ "-ttv", "--task-tag-version" ],
         {
-            help: "Creates a tag using the specified positional parameter as the tag name.\n" +
-                  " The 'taskVersionUpdate' and 'taskVersionUpdateCommit' tasks should always\n" +
-                  "precede this task.\n" +
+            help: "Creates a tag using the specified positional parameter as the tag\n" +
+                  "name.  The 'taskVersionUpdate' and 'taskVersionUpdateCommit' tasks\n" +
+                  "should always precede this task.\n" +
                   "\n" +
                   "Usage:\n" +
                   "\n" +
@@ -1336,8 +1355,8 @@ export const publishRcOpts =
         false,
         [ "-tvc", "--task-version-current" ],
         {
-            help: "Finds the current/latest version released and outputs that version string\n" +
-                  "to stdout.\n" +
+            help: "Finds the current/latest version released and outputs that version\n" +
+                  "string to stdout.\n" +
                   "\n" +
                   "Ignored if the `--task-version-info` switch is used.",
             helpPrivate: false
@@ -1350,8 +1369,8 @@ export const publishRcOpts =
         false,
         [ "-tvi", "--task-version-info" ],
         {
-            help: "Finds the current/latest and next version released, and outputs the info\n" +
-                  "to stdout using a concatenated string in the form:\n" +
+            help: "Finds the current/latest and next version released, and outputs the\n" +
+                  "info to stdout using a concatenated string in the form:\n" +
                   "\n" +
                   "    current_version|next_version|release_level\n" +
                   "\n" +
@@ -1367,8 +1386,8 @@ export const publishRcOpts =
         false,
         [ "-tvn", "--task-version-next" ],
         {
-            help: "Calculates the next version to be released based on versioned files and\n" +
-                  "commit messages. and outputs that version string to stdout.\n" +
+            help: "Calculates the next version to be released based on versioned files\n" +
+                  "and commit messages. and outputs that version string to stdout.\n" +
                   "\n" +
                   "Ignored if the `--task-version-info` switch is used.",
             helpPrivate: false
@@ -1381,9 +1400,9 @@ export const publishRcOpts =
         "",
         [ "-tvprid", "--task-version-pre-release-id" ],
         {
-            help: "Gets the identifier denoting a pre-release from a version string.  For\n" +
-                  "example, the version string 2.20.11-alpha.3 has a pre-release identifier\n" +
-                  "of 'alpha'.\n" +
+            help: "Gets the identifier denoting a pre-release from a version string.\n" +
+                  "For example, the version string 2.20.11-alpha.3 has a pre-release\n" +
+                  "identifier of 'alpha'.\n" +
                   "\n" +
                   "Usage:\n" +
                   "\n" +
@@ -1399,10 +1418,10 @@ export const publishRcOpts =
         false,
         [ "-tvu", "--task-version-update" ],
         {
-            help: "Update version numbers either semantically or incrementally.  Versioned\n" +
-                  "files are by default AssemblyInfo.cs, package.json, and app.json. Additional\n" +
-                  "versioned files are specified in the .publishrc file using the 'versionFiles'\n" +
-                  "and cProjectRcFile' properties.",
+            help: "Update version numbers either semantically or incrementally.\n" +
+                  "Versioned files are by default AssemblyInfo.cs, package.json, and\n" +
+                  "app.json. Additional versioned files are specified in the .publishrc\n" +
+                  "file using the 'versionFiles' and cProjectRcFile' properties.",
             helpPrivate: false
         }
     ],
@@ -1413,8 +1432,8 @@ export const publishRcOpts =
         "",
         [ "-ter", "--task-email-recip" ],
         {
-            help: "The email address to use as the 'To' address when sending an email notification\n" +
-                  "while running in dry run mode.\"",
+            help: "The email address to use as the 'To' address when sending an email\n" +
+                  "notification while running in dry run mode.\"",
             helpPrivate: false
         }
     ],
@@ -1436,7 +1455,8 @@ export const publishRcOpts =
         "notepad",
         [ "-tedr", "--text-editor" ],
         {
-            help: "The editor program to use when opening version files for manual editing.\"",
+            help: "The editor program to use when opening version files for manual\n" +
+                  "editing.\"",
             helpPrivate: false
         }
     ],
@@ -1447,9 +1467,10 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "A list of files that should be checked into version control in the commit\n" +
-                  "phase.  These would include files generated/moved/modified by any of the\n" +
-                  "hook scripts that are to be included in the version commit/tag\"",
+            help: "A list of files that should be checked into version control in the\n" +
+                  "commit phase.  These would include files generated/moved/modified by\n" +
+                  "any of the hook scripts that are to be included in the version\n" +
+                  "commit/tag\"",
             helpPrivate: false
         }
     ],
@@ -1460,8 +1481,8 @@ export const publishRcOpts =
         "Y",
         [ "-vr", "--vc-revert" ],
         {
-            help: "Reverts all file modifications made if a publish failes, or, after a dry\n" +
-                  "run is completed.  Uses version control.",
+            help: "Reverts all file modifications made if a publish failes, or, after a\n" +
+                  "dry run is completed.  Uses version control.",
             helpPrivate: false
         }
     ],
@@ -1472,8 +1493,8 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "Additional files to be reverted if a publish run fails, or, after a dry\n" +
-                  "run completes.  Uses version control.\n" +
+            help: "Additional files to be reverted if a publish run fails, or, after a\n" +
+                  "dry run completes.  Uses version control.\n" +
                   "\n" +
                   "Ignored if `vcRevert` = \"N\".",
             helpPrivate: false
@@ -1489,7 +1510,8 @@ export const publishRcOpts =
             help: "true,\n" +
                   "boolean\n" +
                   "false,\n" +
-                  "Outputs stdout from the vc process (git or svn) and pipes it to the current\n" +
+                  "Outputs stdout from the vc process (git or svn) and pipes it to the\n" +
+                  "current\n" +
                   "runs stdout.  Use for debugging version control issues.\"",
             helpPrivate: false
         }
@@ -1501,7 +1523,8 @@ export const publishRcOpts =
         "",
         [ "-vtp", "--vc-tag-prefix" ],
         {
-            help: "Tag prefix for the version tag.  Labels the created tag in the form prefix-vX.X.X.\"",
+            help: "Tag prefix for the version tag.  Labels the created tag in the form\n" +
+                  "prefix-vX.X.X.\"",
             helpPrivate: false
         }
     ],
@@ -1512,10 +1535,10 @@ export const publishRcOpts =
         "",
         [ "-vwp", "--vc-web-path" ],
         {
-            help: "Web path to the version control repository e.g. the project's home page\n" +
-                  "on GitHub, or for a Subversion project the project root in a web viewer\n" +
-                  "such as WebSVN.  Primarily used for dynamically creating links in the\n" +
-                  "changelogs and/or email notifications.",
+            help: "Web path to the version control repository e.g. the project's home\n" +
+                  "page on GitHub, or for a Subversion project the project root in a web\n" +
+                  "viewer such as WebSVN.  Primarily used for dynamically creating links\n" +
+                  "in the changelogs and/or email notifications.",
             helpPrivate: false
         }
     ],
@@ -1537,8 +1560,8 @@ export const publishRcOpts =
         false,
         [ "-vbsx", "--verbosex" ],
         {
-            help: "Enables additional log output, including stringified objects.  Pronounced\n" +
-                  "'ver-bose ecks' ;)",
+            help: "Enables additional log output, including stringified objects.\n" +
+                  "Pronounced 'ver-bose ecks' ;)",
             helpPrivate: false
         }
     ],
@@ -1560,8 +1583,9 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "A file path or list of file paths to perform version string replacement\n" +
-                  "in.  A source/target pair can lso be specified using the 'setFiles' property.\n" +
+            help: "A file path or list of file paths to perform version string\n" +
+                  "replacement in.  A source/target pair can lso be specified using the\n" +
+                  "'setFiles' property.\n" +
                   "\n" +
                   "Example:\n" +
                   "\n" +
@@ -1572,7 +1596,8 @@ export const publishRcOpts =
                   "         \"regexWrite\": \"!define BUILD_LEVEL      \"VERSION\"\n" +
                   "     },\n" +
                   "     {\n" +
-                  "         \"path\": \"node_modules\\@pja\\extjs-pkg-server\\package.json\",\n" +
+                  "         \"path\":\n" +
+                  "\"node_modules\\@pja\\extjs-pkg-server\\package.json\",\n" +
                   "         \"setFiles\": [{\n" +
                   "             \"path\": \"app.json\",\n" +
                   "             \"regex\": \"svrVersion\" \*: \*\"VERSION\",\n" +
@@ -1587,12 +1612,12 @@ export const publishRcOpts =
                   "         }]\n" +
                   "     }]\n" +
                   "\n" +
-                  "The regex must contain the text 'VERSION' which translates to the capturing\n" +
-                  "group used to obtain the actual version number, and it must be the first\n" +
-                  "group if more than one capturing groups exist in the regex.   The 'regexVersion'\n" +
-                  "property is the regex that will match the version, and defaults to the\n" +
-                  "regex `[0-9a-zA-Z\\.\\-]{5,}` if not specified.  This property is optional\n" +
-                  "and defualts to system:semver.",
+                  "The regex must contain the text 'VERSION' which translates to the\n" +
+                  "capturing group used to obtain the actual version number, and it must\n" +
+                  "be the first group if more than one capturing groups exist in the\n" +
+                  "regex.   The 'regexVersion' property is the regex that will match the\n" +
+                  "version, and defaults to the regex `[0-9a-zA-Z\\.\\-]{5,}` if not\n" +
+                  "specified.  This property is optional and defualts to system:semver.",
             helpPrivate: false
         }
     ],
@@ -1603,9 +1628,9 @@ export const publishRcOpts =
         false,
         [ "-vfc", "--version-force-current" ],
         {
-            help: "Force current version, for use with post release tasks such as re-sending\n" +
-                  "an email notification or performing a GitHub release if for whever reason\n" +
-                  "it failed on the publish run.\n" +
+            help: "Force current version, for use with post release tasks such as\n" +
+                  "re-sending an email notification or performing a GitHub release if\n" +
+                  "for whever reason it failed on the publish run.\n" +
                   "\n" +
                   "Usage:\n" +
                   "\n" +
@@ -1620,9 +1645,9 @@ export const publishRcOpts =
         "",
         [ "-vfn", "--version-force-next" ],
         {
-            help: "A version number to use as the 'next version'.  Version calculation will\n" +
-                  "not be performed other than for reading in the current version, skipping\n" +
-                  "an SCM step.\n" +
+            help: "A version number to use as the 'next version'.  Version calculation\n" +
+                  "will not be performed other than for reading in the current version,\n" +
+                  "skipping an SCM step.\n" +
                   "\n" +
                   "Usage:\n" +
                   "\n" +
@@ -1638,8 +1663,9 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "A file path or list of file paths to always perform version string replacement\n" +
-                  "in, regardless of whether the `skipVersionEdits` flag is set.",
+            help: "A file path or list of file paths to always perform version string\n" +
+                  "replacement in, regardless of whether the `skipVersionEdits` flag is\n" +
+                  "set.",
             helpPrivate: false
         }
     ],
@@ -1650,8 +1676,8 @@ export const publishRcOpts =
         "",
         [],
         {
-            help: "A file path or list of file paths where sroll-down is perfoemed when opened\n" +
-                  "for editing.",
+            help: "A file path or list of file paths where sroll-down is perfoemed when\n" +
+                  "opened for editing.",
             helpPrivate: false
         }
     ],
@@ -1663,8 +1689,8 @@ export const publishRcOpts =
         [ "-vpri", "--version-pre-release-id" ],
         {
             help: "An identifier denoting a pre-release can to be appenended to the next\n" +
-                  "version number to produce the final version string, e.g. 'alpha' produces\n" +
-                  "the final version string of x.y.z-alpha.\n" +
+                  "version number to produce the final version string, e.g. 'alpha'\n" +
+                  "produces the final version string of x.y.z-alpha.\n" +
                   "\n" +
                   "Usage:\n" +
                   "\n" +
@@ -1680,7 +1706,8 @@ export const publishRcOpts =
         "auto",
         [ "-vs", "--version-system" ],
         {
-            help: "Specify the versioning system to be used if it cannot be determined automatically:\n" +
+            help: "Specify the versioning system to be used if it cannot be determined\n" +
+                  "automatically:\n" +
                   "\n" +
                   " 1. semver       Ex. 1.0.0, 1.0.1, 1.0.2\n" +
                   " 2. incremental  Ex. 100, 101, 102\"",
@@ -1694,8 +1721,8 @@ export const publishRcOpts =
         "Version",
         [ "-vt", "--version-text" ],
         {
-            help: "The text tag to use in the history file for preceding the version number.\n" +
-                  " It should be one of the following:\n" +
+            help: "The text tag to use in the history file for preceding the version\n" +
+                  "number.  It should be one of the following:\n" +
                   "\n" +
                   " 1. Version\n" +
                   " 2. Build\n" +

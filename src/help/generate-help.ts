@@ -24,7 +24,7 @@ function buildHelp(readmeHelp: string, maxHelpLineLen: number, space: string, es
             const help = line.trimRight().split(" ");
             for (const word of help)
             {
-                if (cutLine.length < maxHelpLineLen)
+                if (cutLine.length + word.length < maxHelpLineLen)
                 {
                     cutLine += (word + " ");
                 }

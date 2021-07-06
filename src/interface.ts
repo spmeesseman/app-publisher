@@ -231,8 +231,8 @@ export interface IArgs
      *
      *     branches/branch-name
      *
-     * SVN branch support can only work if there is a 'per project' branching folder / structure.
-     *  It is assumed that the 'tags' folders is named by convention, i.e. '/tags'
+     * SVN branch support can only work if there is a 'per project' branching folder /
+     * structure.  It is assumed that the 'tags' folders is named by convention, i.e. '/tags'
      */
     branch: string;
     /**
@@ -240,17 +240,18 @@ export interface IArgs
      */
     buildCommand: string | string[];
     /**
-     * Overrides the 'bugs' property of package.json when an NPM release is made, which is extracted
-     * for display on the project page of the NPM repository.
+     * Overrides the 'bugs' property of package.json when an NPM release is made, which is
+     * extracted for display on the project page of the NPM repository.
      */
     bugs: string;
     /**
-     * The location of this changelog file (markdown or text format), should be a path relative to
-     * the project's root.
+     * The location of this changelog file (markdown or text format), should be a path relative
+     * to the project's root.
      */
     changelogFile: string;
     /**
-     * The location of this history header file, should be a path relative to the project's root.
+     * The location of this history header file, should be a path relative to the project's
+     * root.
      */
     changelogHdrFile: string;
     /**
@@ -258,8 +259,8 @@ export interface IArgs
      */
     changelogLineLen: number;
     /**
-     * A map of additional subject tags used in commits that will be used to increment the version
-     * and be included in the changelog, for example:
+     * A map of additional subject tags used in commits that will be used to increment the
+     * version and be included in the changelog, for example:
      *
      *     "commitMsgMap": {
      *         "internal": {
@@ -272,8 +273,8 @@ export interface IArgs
      */
     commitMsgMap: ICommitMessageMap[];
     /**
-     * Displays the configuration object and exits, for debugging.  Note that the default publishrc
-     * file is '.publishrc.*'.  A config file can be one of four different formats:
+     * Displays the configuration object and exits, for debugging.  Note that the default
+     * publishrc file is '.publishrc.*'.  A config file can be one of four different formats:
      *
      *     .publishrc.json
      *     .publishrc.js
@@ -283,9 +284,9 @@ export interface IArgs
      */
     config: boolean;
     /**
-     * Use config name.  Note that the default publishrc file is '.publishrc.*'.  A config name can
-     * dyanimically modify the file used.  For example, a config name of 'cst' will yield a search
-     * for the following config files:
+     * Use config name.  Note that the default publishrc file is '.publishrc.*'.  A config name
+     * can dyanimically modify the file used.  For example, a config name of 'cst' will yield a
+     * search for the following config files:
      *
      *     .publishrc.cst.json
      *     .publishrc.cst.js
@@ -310,17 +311,17 @@ export interface IArgs
      */
     distAddAllToVC: "Y" | "N";
     /**
-     * The network path to use as the destination directory for a standard `dist` release's documentation
-     * directory.  All PDF files found within the doc directory specified by the 'distDocPathSrc'
-     * property will be uploaded/copied to this directory.
+     * The network path to use as the destination directory for a standard `dist` release's
+     * documentation directory.  All PDF files found within the doc directory specified by the
+     * 'distDocPathSrc' property will be uploaded/copied to this directory.
      *
      * Ignored if `distRelease` = "N" or `distDocPathSrc` is empty.
      */
     distDocPath: string;
     /**
-     * The local path to use as the source directory for a standard 'dist' release's documentation
-     * directory.  All PDF files found within this directory are uploaded/copied to the directory
-     * specified by the 'distDocPath' property.
+     * The local path to use as the source directory for a standard 'dist' release's
+     * documentation directory.  All PDF files found within this directory are uploaded/copied
+     * to the directory specified by the 'distDocPath' property.
      *
      * Ignored if `distRelease` = "N" or `distDocPath` is empty.
      */
@@ -330,8 +331,8 @@ export interface IArgs
      */
     distRelease: "Y" | "N";
     /**
-     * The network path to use as the destination directory for a standard `dist` directory release.
-     *  Will be renamed to 'distDestPath' in a future release.
+     * The network path to use as the destination directory for a standard `dist` directory
+     * release.  Will be renamed to 'distDestPath' in a future release.
      *
      * The final directory created for the release will be:
      *
@@ -341,14 +342,15 @@ export interface IArgs
      */
     distReleasePath: string;
     /**
-     * The local path to use as the source directory for a standard 'dist' release.  Will be renamed
-     * to 'distSrcPath' in a future release.
+     * The local path to use as the source directory for a standard 'dist' release.  Will be
+     * renamed to 'distSrcPath' in a future release.
      *
      * Ignored if `distRelease` = "N".
      */
     distReleasePathSrc: string;
     /**
-     * A script or list of scripts to run for the build stage, after building a standard `dist` release.
+     * A script or list of scripts to run for the build stage, after building a standard `dist`
+     * release.
      *
      * Ignored if `distRelease` = "N".
      */
@@ -370,8 +372,8 @@ export interface IArgs
      * 3) Commit package/build file changes (svn) are not made
      * 4) Version tag (svn) is not made
      *
-     * Some local files may be changed in test mode (i.e. updated version numbers in build and package
-     * files).  These changes should be reverted to original state via SCM.
+     * Some local files may be changed in test mode (i.e. updated version numbers in build and
+     * package files).  These changes should be reverted to original state via SCM.
      */
     dryRun: boolean;
     /**
@@ -410,8 +412,8 @@ export interface IArgs
      */
     emailServer: string;
     /**
-     * A path to a file resource or list of file resource paths to upload as assets of the Github
-     * release.
+     * A path to a file resource or list of file resource paths to upload as assets of the
+     * Github release.
      *
      * Ignored if `githubRelease` = "N".
      */
@@ -427,13 +429,15 @@ export interface IArgs
      */
     githubRelease: "Y" | "N";
     /**
-     * A script or list of scripts to run for the release stage, after creating a Github release.
+     * A script or list of scripts to run for the release stage, after creating a Github
+     * release.
      *
      * Ignored if `githubRelease` = "N".
      */
     githubReleasePostCommand: string | string[];
     /**
-     * A script or list of scripts to run for the release stage, before creating a Github release.
+     * A script or list of scripts to run for the release stage, before creating a Github
+     * release.
      *
      * Ignored if `githubRelease` = "N".
      */
@@ -450,19 +454,19 @@ export interface IArgs
      */
     help: boolean;
     /**
-     * Overrides the `homePage` property of package.json when an NPM release is made, which is extracted
-     * for display on the project page of the NPM repository.
+     * Overrides the `homePage` property of package.json when an NPM release is made, which is
+     * extracted for display on the project page of the NPM repository.
      */
     homePage: string;
     /**
-     * The MantisBT token or list of tokens to make a MantisBT release with.  Represents the user
-     * that the release is made under on the 'Releases' page - Releases Plugin (https://github.com/mantisbt-plugins/Releases)
-     * required.
+     * The MantisBT token or list of tokens to make a MantisBT release with.  Represents the
+     * user that the release is made under on the 'Releases' page - Releases Plugin
+     * (https://github.com/mantisbt-plugins/Releases) required.
      */
     mantisbtApiToken: string;
     /**
-     * A path to a file resource or list of file resource paths to upload as assets of the MantisBT
-     * release.
+     * A path to a file resource or list of file resource paths to upload as assets of the
+     * MantisBT release.
      *
      * Ignored if `mantisbtRelease` = "N".
      */
@@ -474,12 +478,13 @@ export interface IArgs
      */
     mantisbtChglogEdit: "Y" | "N";
     /**
-     * Specifies the main project file for a MantisBT plugin project.  The file extension must be
-     * '.php'"
+     * Specifies the main project file for a MantisBT plugin project.  The file extension must
+     * be '.php'"
      */
     mantisbtPlugin: string;
     /**
-     * The MantisBT project name, if different than the main project name specified by `projectName`.
+     * The MantisBT project name, if different than the main project name specified by
+     * `projectName`.
      */
     mantisbtProject: string;
     /**
@@ -487,13 +492,15 @@ export interface IArgs
      */
     mantisbtRelease: "Y" | "N";
     /**
-     * A script or list of scripts to run for the release stage, after creating a MantisBT release.
+     * A script or list of scripts to run for the release stage, after creating a MantisBT
+     * release.
      *
      * Ignored if `mantisbtRelease` = "N".
      */
     mantisbtReleasePostCommand: string | string[];
     /**
-     * A script or list of scripts to run for the release stage, before creating a MantisBT release.
+     * A script or list of scripts to run for the release stage, before creating a MantisBT
+     * release.
      *
      * Ignored if `mantisbtRelease` = "N".
      */
@@ -523,8 +530,8 @@ export interface IArgs
      */
     npmPackDist: "Y" | "N";
     /**
-     * The URL of the NPM registry to use for making an NPM release.  This needs to be set if this
-     * is a privately hosted repository.  Should be in the form:
+     * The URL of the NPM registry to use for making an NPM release.  This needs to be set if
+     * this is a privately hosted repository.  Should be in the form:
      *
      *     https://npm.mydomain.com
      *
@@ -558,24 +565,28 @@ export interface IArgs
      */
     nugetRelease: "Y" | "N";
     /**
-     * A script or list of scripts to run for the build stage, after the build process is started.
+     * A script or list of scripts to run for the build stage, after the build process is
+     * started.
      */
     postBuildCommand: string | string[];
     /**
-     * A script or list of scripts to run for the build stage, before the build process is started.
+     * A script or list of scripts to run for the build stage, before the build process is
+     * started.
      */
     preBuildCommand: string | string[];
     /**
-     * A script or list of scripts to run for the commit stage, after the commit process is started.
+     * A script or list of scripts to run for the commit stage, after the commit process is
+     * started.
      */
     postCommitCommand: string | string[];
     /**
-     * A script or list of scripts to run for the commit stage, before the commit process is started.
+     * A script or list of scripts to run for the commit stage, before the commit process is
+     * started.
      */
     preCommitCommand: string | string[];
     /**
-     * A script or list of scripts to run for the final release stage, before the final release process
-     * is started.
+     * A script or list of scripts to run for the final release stage, before the final release
+     * process is started.
      */
     postReleaseCommand: string | string[];
     /**
@@ -583,9 +594,9 @@ export interface IArgs
      */
     promptVersion: "Y" | "N";
     /**
-     * Relative path to the .NET project version file (AssemblyInfo.cs).  Any .NET assemblyinfo.cs
-     * files are attempted to be loaded and matched to a project, but in the case where it cannot,
-     * this property can be set."
+     * Relative path to the .NET project version file (AssemblyInfo.cs).  Any .NET
+     * assemblyinfo.cs files are attempted to be loaded and matched to a project, but in the
+     * case where it cannot, this property can be set."
      */
     projectFileDotNet: string;
     /**
@@ -596,12 +607,13 @@ export interface IArgs
     projectFileExtJs: string;
     /**
      * Relative path to the NPM project version file (package.json).  Any NPM package.json files
-     * are attempted to be loaded and matched to a project, but in the case where it cannot, this
-     * property can be set.
+     * are attempted to be loaded and matched to a project, but in the case where it cannot,
+     * this property can be set.
      */
     projectFileNpm: string;
     /**
-     * Name of the project.  This must match throughout the build files and the VCS project name.
+     * Name of the project.  This must match throughout the build files and the VCS project
+     * name.
      */
     projectName: string;
     /**
@@ -623,8 +635,8 @@ export interface IArgs
      */
     repoType: "git" | "svn";
     /**
-     * Re-publish the current/latest release.  Can be used for multi-publish configurations to bypass
-     * local version file validation.
+     * Re-publish the current/latest release.  Can be used for multi-publish configurations to
+     * bypass local version file validation.
      */
     republish: boolean;
     /**
@@ -633,12 +645,13 @@ export interface IArgs
      */
     skipChangelogEdits: "Y" | "N";
     /**
-     * Skip committing changes to version control when the final release stage is finished (commit
-     * stage).
+     * Skip committing changes to version control when the final release stage is finished
+     * (commit stage).
      */
     skipCommit: "Y" | "N";
     /**
-     * Skip tagging version in version control when the final release stage is finished (commit stage).
+     * Skip tagging version in version control when the final release stage is finished (commit
+     * stage).
      */
     skipTag: string;
     /**
@@ -650,13 +663,13 @@ export interface IArgs
      */
     taskBuild: boolean;
     /**
-     * Export the next release's current changelog and view using the editor specified in the .publishrc
-     * file.  Note that this opens the actual versioned changelog/history file.
+     * Export the next release's current changelog and view using the editor specified in the
+     * .publishrc file.  Note that this opens the actual versioned changelog/history file.
      */
     taskChangelog: boolean;
     /**
-     * Export the next release's current changelog to the specified file, can be a relative or an
-     * absolute path.  Ignored if the option '--task-changelog-view' is used.
+     * Export the next release's current changelog to the specified file, can be a relative or
+     * an absolute path.  Ignored if the option '--task-changelog-view' is used.
      *
      * Usage:
      *
@@ -668,7 +681,8 @@ export interface IArgs
     taskChangelogFile: string;
     /**
      * Export the next release's current changelog in HTML release format to the specified file,
-     * can be a relative or an absolute path.  Ignored if the option '--task-changelog-view' is used.
+     * can be a relative or an absolute path.  Ignored if the option '--task-changelog-view' is
+     * used.
      *
      * Usage:
      *
@@ -676,9 +690,9 @@ export interface IArgs
      */
     taskChangelogHtmlFile: string;
     /**
-     * Export the next release's current changelog in HTML release format and view using the editor
-     * specified in the .publishrc file. The created file is a copy stored in a temporary directory
-     * specified by the OS.
+     * Export the next release's current changelog in HTML release format and view using the
+     * editor specified in the .publishrc file. The created file is a copy stored in a temporary
+     * directory specified by the OS.
      */
     taskChangelogHtmlView: boolean;
     /**
@@ -699,18 +713,20 @@ export interface IArgs
      */
     taskChangelogPrintVersion: string;
     /**
-     * Read the changelog's header from disk and output to stdout, using the specified version number.
+     * Read the changelog's header from disk and output to stdout, using the specified version
+     * number.
      */
     taskChangelogHdrPrintVersion: string;
     /**
-     * Export the next release's current changelog and view using the editor specified in the .publishrc
-     * file. The created file is a copy stored in a temporary directory specified by the OS.
+     * Export the next release's current changelog and view using the editor specified in the
+     * .publishrc file. The created file is a copy stored in a temporary directory specified by
+     * the OS.
      */
     taskChangelogView: boolean;
     /**
-     * Export the specified release's current changelog and view using the editor specified in the
-     * .publishrc file. The created file is a copy stored in a temporary directory specified by the
-     * OS.
+     * Export the specified release's current changelog and view using the editor specified in
+     * the .publishrc file. The created file is a copy stored in a temporary directory specified
+     * by the OS.
      */
     taskChangelogViewVersion: string;
     /**
@@ -718,8 +734,8 @@ export interface IArgs
      */
     taskCiEnv: boolean;
     /**
-     * Finds CI related build information, and outputs the info to stdout using a concatenated string
-     * in the form 'current|next|changelogpath'.
+     * Finds CI related build information, and outputs the info to stdout using a concatenated
+     * string in the form 'current|next|changelogpath'.
      */
     taskCiEnvInfo: boolean;
     /**
@@ -728,8 +744,8 @@ export interface IArgs
      */
     taskCiEnvSet: boolean;
     /**
-     * Commits the changes made when using the --touch-versions option, using the 'chore: vX.X.X'
-     * format for the commit message.
+     * Commits the changes made when using the --touch-versions option, using the 'chore:
+     * vX.X.X' format for the commit message.
      */
     taskCommit: boolean;
     /**
@@ -737,8 +753,8 @@ export interface IArgs
      */
     taskDeploy: boolean;
     /**
-     * Run temporary tests in the local dev environment.  Note that this does nothing when ran in
-     * a production build.
+     * Run temporary tests in the local dev environment.  Note that this does nothing when ran
+     * in a production build.
      */
     taskDevTest: boolean;
     /**
@@ -754,23 +770,23 @@ export interface IArgs
      */
     taskGenerateHelp: boolean;
     /**
-     * Perform a 'Github' release.  The changelog produced for the Github release will be created
-     * from the most recent entry of the changelog/history file.
+     * Perform a 'Github' release.  The changelog produced for the Github release will be
+     * created from the most recent entry of the changelog/history file.
      */
     taskGithubRelease: boolean;
     /**
-     * Perform a 'Mantis' release.  The changelog produced for the Mantis release will be created
-     * from the most recent entry of the changelog/history file.
+     * Perform a 'Mantis' release.  The changelog produced for the Mantis release will be
+     * created from the most recent entry of the changelog/history file.
      */
     taskMantisbtRelease: boolean;
     /**
-     * Restores changes made to the package.json file as a result of using the --task-npm-json-update
-     * task.  Properties include:
+     * Restores changes made to the package.json file as a result of using the
+     * --task-npm-json-update task.  Properties include:
      *
      *     bugs, homepage, repo, repoType
      *
-     * Note that this task should in most cases always be ran following the use of the --task-npm-json-update
-     * task.
+     * Note that this task should in most cases always be ran following the use of the
+     * --task-npm-json-update task.
      */
     taskNpmJsonRestore: boolean;
     /**
@@ -778,8 +794,8 @@ export interface IArgs
      *
      *     bugs, homepage, repo, repoType
      *
-     * Can be used for publishing to multiple npm repositories.  Note that this task should in most
-     * cases always be followed up with a --task-npm-json-restore task.
+     * Can be used for publishing to multiple npm repositories.  Note that this task should in
+     * most cases always be followed up with a --task-npm-json-restore task.
      */
     taskNpmJsonUpdate: boolean;
     /**
@@ -800,13 +816,13 @@ export interface IArgs
      */
     taskRevert: boolean;
     /**
-     * Creates a tag using the 'vX.X.X' format for the tag name.  The 'taskVersionUpdate' and 'taskVersionUpdateCommit'
-     * tasks should always precede this task.
+     * Creates a tag using the 'vX.X.X' format for the tag name.  The 'taskVersionUpdate' and
+     * 'taskVersionUpdateCommit' tasks should always precede this task.
      */
     taskTag: boolean;
     /**
-     * Creates a tag using the specified positional parameter as the tag name.  The 'taskVersionUpdate'
-     * and 'taskVersionUpdateCommit' tasks should always precede this task.
+     * Creates a tag using the specified positional parameter as the tag name.  The
+     * 'taskVersionUpdate' and 'taskVersionUpdateCommit' tasks should always precede this task.
      *
      * Usage:
      *
@@ -820,25 +836,25 @@ export interface IArgs
      */
     taskVersionCurrent: boolean;
     /**
-     * Finds the current/latest and next version released, and outputs the info to stdout using a
-     * concatenated string in the form:
+     * Finds the current/latest and next version released, and outputs the info to stdout using
+     * a concatenated string in the form:
      *
      *     current_version|next_version|release_level
      *
-     * Note that this switch overrides both the `--task-version-current` and the `--task-version-current`
-     * switches.
+     * Note that this switch overrides both the `--task-version-current` and the
+     * `--task-version-current` switches.
      */
     taskVersionInfo: boolean;
     /**
-     * Calculates the next version to be released based on versioned files and commit messages. and
-     * outputs that version string to stdout.
+     * Calculates the next version to be released based on versioned files and commit messages.
+     * and outputs that version string to stdout.
      *
      * Ignored if the `--task-version-info` switch is used.
      */
     taskVersionNext: boolean;
     /**
-     * Gets the identifier denoting a pre-release from a version string.  For example, the version
-     * string 2.20.11-alpha.3 has a pre-release identifier of 'alpha'.
+     * Gets the identifier denoting a pre-release from a version string.  For example, the
+     * version string 2.20.11-alpha.3 has a pre-release identifier of 'alpha'.
      *
      * Usage:
      *
@@ -847,14 +863,14 @@ export interface IArgs
      */
     taskVersionPreReleaseId: string;
     /**
-     * Update version numbers either semantically or incrementally.  Versioned files are by default
-     * AssemblyInfo.cs, package.json, and app.json. Additional versioned files are specified in the
-     * .publishrc file using the 'versionFiles' and cProjectRcFile' properties.
+     * Update version numbers either semantically or incrementally.  Versioned files are by
+     * default AssemblyInfo.cs, package.json, and app.json. Additional versioned files are
+     * specified in the .publishrc file using the 'versionFiles' and cProjectRcFile' properties.
      */
     taskVersionUpdate: boolean;
     /**
-     * The email address to use as the 'To' address when sending an email notification while running
-     * in dry run mode."
+     * The email address to use as the 'To' address when sending an email notification while
+     * running in dry run mode."
      */
     testEmailRecip: string | string[];
     /**
@@ -866,19 +882,19 @@ export interface IArgs
      */
     textEditor: string;
     /**
-     * A list of files that should be checked into version control in the commit phase.  These would
-     * include files generated/moved/modified by any of the hook scripts that are to be included
-     * in the version commit/tag"
+     * A list of files that should be checked into version control in the commit phase.  These
+     * would include files generated/moved/modified by any of the hook scripts that are to be
+     * included in the version commit/tag"
      */
     vcFiles: string[];
     /**
-     * Reverts all file modifications made if a publish failes, or, after a dry run is completed.
-     *  Uses version control.
+     * Reverts all file modifications made if a publish failes, or, after a dry run is
+     * completed.  Uses version control.
      */
     vcRevert: "Y" | "N";
     /**
-     * Additional files to be reverted if a publish run fails, or, after a dry run completes.  Uses
-     * version control.
+     * Additional files to be reverted if a publish run fails, or, after a dry run completes.
+     * Uses version control.
      *
      * Ignored if `vcRevert` = "N".
      */
@@ -915,8 +931,8 @@ export interface IArgs
      */
     version: boolean;
     /**
-     * A file path or list of file paths to perform version string replacement in.  A source/target
-     * pair can lso be specified using the 'setFiles' property.
+     * A file path or list of file paths to perform version string replacement in.  A
+     * source/target pair can lso be specified using the 'setFiles' property.
      *
      * Example:
      *
@@ -943,15 +959,16 @@ export interface IArgs
      *      }]
      *
      * The regex must contain the text 'VERSION' which translates to the capturing group used to
-     * obtain the actual version number, and it must be the first group if more than one capturing
-     * groups exist in the regex.   The 'regexVersion' property is the regex that will match the
-     * version, and defaults to the regex `[0-9a-zA-Z\\.\\-]{5,}` if not specified.  This property
-     * is optional and defualts to system:semver.
+     * obtain the actual version number, and it must be the first group if more than one
+     * capturing groups exist in the regex.   The 'regexVersion' property is the regex that will
+     * match the version, and defaults to the regex `[0-9a-zA-Z\\.\\-]{5,}` if not specified.
+     * This property is optional and defualts to system:semver.
      */
     versionFiles: IVersionFile[];
     /**
-     * Force current version, for use with post release tasks such as re-sending an email notification
-     * or performing a GitHub release if for whever reason it failed on the publish run.
+     * Force current version, for use with post release tasks such as re-sending an email
+     * notification or performing a GitHub release if for whever reason it failed on the publish
+     * run.
      *
      * Usage:
      *
@@ -969,8 +986,8 @@ export interface IArgs
      */
     versionForceNext: string;
     /**
-     * A file path or list of file paths to always perform version string replacement in, regardless
-     * of whether the `skipVersionEdits` flag is set.
+     * A file path or list of file paths to always perform version string replacement in,
+     * regardless of whether the `skipVersionEdits` flag is set.
      */
     versionFilesEditAlways: string | string[];
     /**
@@ -978,8 +995,9 @@ export interface IArgs
      */
     versionFilesScrollDown: string | string[];
     /**
-     * An identifier denoting a pre-release can to be appenended to the next version number to produce
-     * the final version string, e.g. 'alpha' produces the final version string of x.y.z-alpha.
+     * An identifier denoting a pre-release can to be appenended to the next version number to
+     * produce the final version string, e.g. 'alpha' produces the final version string of
+     * x.y.z-alpha.
      *
      * Usage:
      *
@@ -995,8 +1013,8 @@ export interface IArgs
      */
     versionSystem: "auto" | "semver" | "incremental";
     /**
-     * The text tag to use in the history file for preceding the version number.  It should be one
-     * of the following:
+     * The text tag to use in the history file for preceding the version number.  It should be
+     * one of the following:
      *
      *  1. Version
      *  2. Build
