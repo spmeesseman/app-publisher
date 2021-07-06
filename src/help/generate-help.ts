@@ -98,7 +98,7 @@ async function generateHelp(context: IContext): Promise<string | boolean>
 
     ct = 0;
     let argsContent = "export const publishRcOpts =\n{\n",
-        interfaceContent = "export interface IOptions\n{\n";
+        interfaceContent = "export interface IArgs\n{\n";
 
     for (const a of args)
     {
@@ -150,8 +150,7 @@ async function generateHelp(context: IContext): Promise<string | boolean>
     argsContent = argsContent.replace(/\n/gm, EOL);
 
     interfaceContent = interfaceContent.trim();
-    // interfaceContent = interfaceContent.substr(0, interfaceContent.length - 1);
-    interfaceContent += "\n}\n";
+    interfaceContent += "\n";
     interfaceContent = interfaceContent.replace(/\n/gm, EOL);
 
     //

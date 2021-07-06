@@ -479,7 +479,7 @@ The maximum line lenth to use when parsing commits to populate the changelog fil
 
 ### commitMsgMap
 
-|**Value Type**      |*__object__*|
+|**Value Type**      |*__ICommitMessageMap__*|
 | :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*  |

@@ -202,6 +202,18 @@ export interface IOptions extends IArgs
     /**
      * @readonly
      */
+    tagFormat: string;
+    /**
+     * Represents how many tasks are enabled for the current run.  Tasks are enabled using the
+     * --task-* command line options.
+     *
+     * @readonly
+     * @since 3.2.5
+     */
+    taskCount: number;
+    /**
+     * @readonly
+     */
     taskMode: boolean;
     /**
      * @readonly
