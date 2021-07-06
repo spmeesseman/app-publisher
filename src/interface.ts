@@ -437,7 +437,7 @@ export interface IArgs
      * The MantisBT token or list of tokens to make a MantisBT release with.
      * Represents the user that the release is made under on the 'Releases' page.
      */
-    mantisbtApiToken: string | string[];
+    mantisbtApiToken: string;
     /**
      * A path to a file resource or list of file resource paths to upload as assets of the MantisBT release.
      * Ignored if mantisbtRelease = N.
@@ -475,7 +475,7 @@ export interface IArgs
      * A URL or a list of URL's to use for creating a MantisBT release.
      * Ignored if mantisbtRelease = N.
      */
-    mantisbtUrl: string | string[];
+    mantisbtUrl: string;
     /**
      * Run in a local, non-CI environment.
      */

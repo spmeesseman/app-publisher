@@ -138,66 +138,64 @@ async function doMantisRelease(context: IContext): Promise<IReturnStatus>
         }
     }
 
-    for (let i = 0; i < options.mantisbtUrl.length; i++)
-    {   //
-        // Set up the request header, this will be used to both create the release and to upload
-        // any assets.  Note that for each asset, the content-type must be set appropriately
-        // according to the type of asset being uploaded
-        //
-        const headers = {
-            "Authorization": options.mantisbtApiToken[i],
-            "Content-Type": "application/json; charset=UTF-8",
-            "User-Agent": APP_NAME
-        };
-        //
-        // Encode url part
-        //
-        const encPrjName = (options.mantisbtProject || options.projectName).replace(/ /g, "%20");
-        //
-        // Send the REST POST to create the release w/ assets
-        //
-        const url = options.mantisbtUrl[i] + "/plugins/Releases/api/releases/" + encPrjName;
-        logger.log("Sending Add-Release REST request to " + url);
-        //
-        // Send it off
-        //
-        let response: any;
-        try {
-            response = await got(url, {
-                headers,
-                method: "POST",
-                responseType: "json",
-                json: request
-            });
-        }
-        catch (e) {
-            rc.error = `MantisBT release v${nextRelease.version} failure - ${e.toString()}`;
-            logger.error(rc.error);
-            return rc;
-        }
-        //
-        // Check response object for success
-        //
-        if (response)
+    //
+    // Set up the request header, this will be used to both create the release and to upload
+    // any assets.  Note that for each asset, the content-type must be set appropriately
+    // according to the type of asset being uploaded
+    //
+    const headers = {
+        "Authorization": options.mantisbtApiToken,
+        "Content-Type": "application/json; charset=UTF-8",
+        "User-Agent": APP_NAME
+    };
+    //
+    // Encode url part
+    //
+    const encPrjName = (options.mantisbtProject || options.projectName).replace(/ /g, "%20");
+    //
+    // Send the REST POST to create the release w/ assets
+    //
+    const url = options.mantisbtUrl + "/plugins/Releases/api/releases/" + encPrjName;
+    logger.log("Sending Add-Release REST request to " + url);
+    //
+    // Send it off
+    //
+    let response: any;
+    try {
+        response = await got(url, {
+            headers,
+            method: "POST",
+            responseType: "json",
+            json: request
+        });
+    }
+    catch (e) {
+        rc.error = `MantisBT release v${nextRelease.version} failure - ${e.toString()}`;
+        logger.error(rc.error);
+        return rc;
+    }
+    //
+    // Check response object for success
+    //
+    if (response)
+    {
+        if (isString(response))
         {
-            if (isString(response))
-            {
-                logger.error("Partial error creating MantisBT release vnextRelease.version");
-                logger.error(response);
-            }
-            else {
-                rc.id = response.body.id;
-                logger.success(`MantisBT release v${nextRelease.version} success`);
-                logger.log(`   ID         : ${rc.id}`);
-                logger.log(`   Message    : ${response.body.msg}`);
-                logger.log(`   URL        : ${options.mantisbtUrl[i]}`);
-            }
+            logger.error("Partial error creating MantisBT release vnextRelease.version");
+            logger.error(response);
         }
         else {
-            rc.error = `MantisBT release v${nextRelease.version} failure - no response`;
-            logger.error(rc.error);
-            return rc;
+            rc.id = response.body.id;
+            logger.success(`MantisBT release v${nextRelease.version} success`);
+            logger.log(`   ID         : ${rc.id}`);
+            logger.log(`   Message    : ${response.body.msg}`);
+            logger.log(`   URL        : ${options.mantisbtUrl}`);
         }
+    }
+    else {
+        rc.error = `MantisBT release v${nextRelease.version} failure - no response`;
+        logger.error(rc.error);
+        return rc;
     }
 
     rc.success = true;

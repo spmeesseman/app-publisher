@@ -121,14 +121,6 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     {
         options.githubReleasePostCommand = [ options.githubReleasePostCommand ]; // convert to array
     }
-    if (options.mantisbtUrl && isString(options.mantisbtUrl))
-    {
-        options.mantisbtUrl = [ options.mantisbtUrl ]; // convert to array
-    }
-    if (options.mantisbtApiToken && isString(options.mantisbtApiToken))
-    {
-        options.mantisbtApiToken = [ options.mantisbtApiToken ]; // convert to array
-    }
     if (options.mantisbtAssets && isString(options.mantisbtAssets))
     {
         options.mantisbtAssets = [ options.mantisbtAssets ]; // convert to array
@@ -572,19 +564,15 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     }
     if (options.mantisbtRelease === "Y")
     {
-        if (options.mantisbtUrl.length === 0) {
+        if (!options.mantisbtUrl) {
             logger.error("You must specify mantisbtUrl for a MantisBT release type");
             return false;
         }
-        if (options.mantisbtApiToken.length === 0) {
+        if (!options.mantisbtApiToken) {
             logger.error("You must have MANTISBT_API_TOKEN defined for a MantisBT release type");
             logger.error("-or- you must have mantisbtApiToken defined in publishrc");
             logger.error("Set the envvar MANTISBT_API_TOKEN or the config mantisApiToken with the token value created on the MantisBT website");
             logger.error("To create a token, see the \"Tokens\" section of your Mantis User Preferences page");
-            return false;
-        }
-        if (options.mantisbtUrl.length !== options.mantisbtApiToken.length) {
-            logger.error("You must specify the same number of MantisBT urls and API tokens");
             return false;
         }
     }
