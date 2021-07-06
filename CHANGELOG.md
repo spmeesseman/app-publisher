@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.4.1 (July 6th, 2021)
+
+### Bug Fixes
+
+- **General:** The previous release throws the following error when running: Cannot find module './help/generate-help'
+
 ## Version 3.4.0 (July 6th, 2021)
 
 ### Bug Fixes
