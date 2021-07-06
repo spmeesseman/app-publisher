@@ -435,7 +435,7 @@ SVN branch support can only work if there is a 'per project' branching folder / 
 ### buildCommand
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-bc \| --build-command__*|
 
@@ -444,7 +444,7 @@ A script or list of scripts to run for the build stage.
 ### bugs
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__--bugs__*|
 
@@ -453,7 +453,7 @@ Overrides the 'bugs' property of package.json when an NPM release is made, which
 ### changelogFile
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |CHANGELOG.md|
 |**Command Line Arg**|*__-cf \| --changelog-file__*|
 
@@ -462,7 +462,7 @@ The location of this changelog file (markdown or text format), should be a path 
 ### changelogHdrFile
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-chf \| --changelog-hdr-file__*|
 
@@ -471,7 +471,7 @@ The location of this history header file, should be a path relative to the proje
 ### changelogLineLen
 
 |**Value Type**      |*__number__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |80|
 |**Command Line Arg**|*__-cll \| --changelog-line-len__*|
 
@@ -480,7 +480,7 @@ The maximum line lenth to use when parsing commits to populate the changelog fil
 ### commitMsgMap
 
 |**Value Type**      |*__object__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*  |
 
@@ -498,7 +498,7 @@ A map of additional subject tags used in commits that will be used to increment 
 ### config
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-c \| --config__*  |
 
@@ -513,7 +513,7 @@ Displays the configuration object and exits, for debugging.  Note that the defau
 ### configName
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-cn \| --config-name__*  |
 
@@ -528,7 +528,7 @@ Use config name.  Note that the default publishrc file is '.publishrc.*'.  A con
 ### cProjectRcFile
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-cprf \| --c-project-rc-file__*  |
 
@@ -537,7 +537,7 @@ The RC file name in a C Make project.
 ### deployCommand
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -546,7 +546,7 @@ A script or list of scripts to run for the deploy stage.
 ### distAddAllToVC
 
 |**Value Type**      |*__flag__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |N|
 |**Command Line Arg**|*__-davc \| --dist-add-all-to-vc__*|
 
@@ -557,7 +557,7 @@ Ignored if `distRelease` = "N".
 ### distDocPath
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -568,7 +568,7 @@ Ignored if `distRelease` = "N" or `distDocPathSrc` is empty.
 ### distDocPathSrc
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-ddps \| --dist-doc-path-src__*|
 
@@ -579,7 +579,7 @@ Ignored if `distRelease` = "N" or `distDocPath` is empty.
 ### distRelease
 
 |**Value Type**      |*__flag__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |N|
 |**Command Line Arg**|*__-dr \| --dist-release__*|
 
@@ -588,7 +588,7 @@ Build a standard release to be uploaded to a network share.
 ### distReleasePath
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-drp \| --dist-release-path__*|
 
@@ -603,7 +603,7 @@ Ignored if `distRelease` = "N".
 ### distReleasePathSrc
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |install/dist|
 |**Command Line Arg**|*__-drps \| --dist-release-path-src__*|
 
@@ -614,7 +614,7 @@ Ignored if `distRelease` = "N".
 ### distReleasePostCommand
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -625,7 +625,7 @@ Ignored if `distRelease` = "N".
 ### distReleasePreCommand
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -636,7 +636,7 @@ Ignored if `distRelease` = "N".
 ### dryRun
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-dr \| --dry-run__*|
 
@@ -654,7 +654,7 @@ Some local files may be changed in test mode (i.e. updated version numbers in bu
 ### dryRunQuiet
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-drq \| --dry-run-quiet__*|
 
@@ -663,7 +663,7 @@ Same as 'dryRun', but minus stdout logging in the release emulations.
 ### emailHrefs
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -672,7 +672,7 @@ A link or list of links to insert into an email notification in the form 'link|n
 ### emailMode
 
 |**Value Type**      |*__enum(std|ssl)__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |std|
 |**Command Line Arg**|*__n/a__*|
 
@@ -684,7 +684,7 @@ The delivery method to use when sending an email notification, possible values a
 ### emailPort
 
 |**Value Type**      |*__number__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |25|
 |**Command Line Arg**|*__n/a__*|
 
@@ -693,7 +693,7 @@ The smtp server port to use when sending an email notification.
 ### emailNotification
 
 |**Value Type**      |*__flag__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |N|
 |**Command Line Arg**|*__-en \| --email-notification__*|
 
@@ -702,7 +702,7 @@ Send a release email notification.
 ### emailRecip
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-er \| --email-recip__*|
 
@@ -711,7 +711,7 @@ The email address to use as the 'To' address when sending an email notification.
 ### emailSender
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-ef \| --email-sender__*|
 
@@ -720,7 +720,7 @@ The email address to use as the 'From' address when sending an email notificatio
 ### emailServer
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-es \| --email-server__*|
 
@@ -729,7 +729,7 @@ The SMTP server to use when sending an email notification.
 ### githubAssets
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -740,7 +740,7 @@ Ignored if `githubRelease` = "N".
 ### githubChglogEdit
 
 |**Value Type**      |*__flag__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |N|
 |**Command Line Arg**|*__-gce \| --github-chglog-edit__*|
 
@@ -751,7 +751,7 @@ Ignored if `githubRelease` = "N".
 ### githubRelease
 
 |**Value Type**      |*__flag__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |N|
 |**Command Line Arg**|*__-gr \| --github-release__*|
 
@@ -760,7 +760,7 @@ Perform a Github releas.
 ### githubReleasePostCommand
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -771,7 +771,7 @@ Ignored if `githubRelease` = "N".
 ### githubReleasePreCommand
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -782,7 +782,7 @@ Ignored if `githubRelease` = "N".
 ### githubUser
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-gu \| --github-user__*|
 
@@ -793,7 +793,7 @@ Ignored if `githubRelease` = "N".
 ### help
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-h \| --help__*|
 
@@ -802,7 +802,7 @@ Display console help.
 ### homePage
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__--home-page__*|
 
@@ -811,7 +811,7 @@ Overrides the `homePage` property of package.json when an NPM release is made, w
 ### mantisbtApiToken
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -820,7 +820,7 @@ The MantisBT token or list of tokens to make a MantisBT release with.  Represent
 ### mantisbtAssets
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -831,7 +831,7 @@ Ignored if `mantisbtRelease` = "N".
 ### mantisbtChglogEdit
 
 |**Value Type**      |*__flag__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |N|
 |**Command Line Arg**|*__-mce \| --mantisbt-chglog-edit__*|
 
@@ -842,7 +842,7 @@ Ignored if `mantisbtRelease` = "N".
 ### mantisbtPlugin
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-mp \| --mantisbt-plugin__*|
 
@@ -851,7 +851,7 @@ Specifies the main project file for a MantisBT plugin project.  The file extensi
 ### mantisbtProject
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-mpn \| --mantisbt-project__*|
 
@@ -860,7 +860,7 @@ The MantisBT project name, if different than the main project name specified by 
 ### mantisbtRelease
 
 |**Value Type**      |*__flag__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |N|
 |**Command Line Arg**|*__-mr \| --mantisbt-release__*|
 
@@ -869,7 +869,7 @@ Perform a MantisBT release.
 ### mantisbtReleasePostCommand
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -880,7 +880,7 @@ Ignored if `mantisbtRelease` = "N".
 ### mantisbtReleasePreCommand
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -891,7 +891,7 @@ Ignored if `mantisbtRelease` = "N".
 ### mantisbtUrl
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__--amntisbt-url__*|
 
@@ -902,7 +902,7 @@ Ignored if `mantisbtRelease` = "N".
 ### noCi
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-nc \| --no-ci__*|
 
@@ -911,7 +911,7 @@ Run in a local, non-CI environment.
 ### npmPackDist
 
 |**Value Type**      |*__flag__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |N|
 |**Command Line Arg**|*__-npd \| --npm-pack-dist__*|
 
@@ -930,7 +930,7 @@ Ignored if `npmRelease` = "N".
 ### npmRegistry
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |https://registry.npmjs.org|
 |**Command Line Arg**|*__-nrg \| --npm-registry__*|
 
@@ -943,7 +943,7 @@ Ignored if `npmRelease` = "N".
 ### npmRelease
 
 |**Value Type**      |*__flag__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |N|
 |**Command Line Arg**|*__-nr \| --npm-release__*|
 
@@ -952,7 +952,7 @@ Build and make an NPM release.
 ### npmReleasePostCommand
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -963,7 +963,7 @@ Ignored if `npmRelease` = "N".
 ### npmReleasePreCommand
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -974,7 +974,7 @@ Ignored if `npmRelease` = "N".
 ### npmScope
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-ns \| --npm-scope__*|
 
@@ -985,7 +985,7 @@ Ignored if `npmRelease` = "N".
 ### nugetRelease
 
 |**Value Type**      |*__flag__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |N|
 |**Command Line Arg**|*__-ngr \| --nuget-release__*|
 
@@ -994,7 +994,7 @@ Build and make a Nuget release.  Not supported as of v3.
 ### postBuildCommand
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -1003,7 +1003,7 @@ A script or list of scripts to run for the build stage, after the build process 
 ### preBuildCommand
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -1012,7 +1012,7 @@ A script or list of scripts to run for the build stage, before the build process
 ### postCommitCommand
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -1021,7 +1021,7 @@ A script or list of scripts to run for the commit stage, after the commit proces
 ### preCommitCommand
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -1030,7 +1030,7 @@ A script or list of scripts to run for the commit stage, before the commit proce
 ### postReleaseCommand
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -1039,7 +1039,7 @@ A script or list of scripts to run for the final release stage, before the final
 ### promptVersion
 
 |**Value Type**      |*__flag__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |N|
 |**Command Line Arg**|*__-pv \| --prompt-version__*|
 
@@ -1048,7 +1048,7 @@ Prompt for version.  The recommended version will be displayed at the prompt.
 ### projectFileDotNet
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-pfdn \| --project-file-dot-net__*|
 
@@ -1057,7 +1057,7 @@ Relative path to the .NET project version file (AssemblyInfo.cs).  Any .NET asse
 ### projectFileExtJs
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-pfej \| --project-file-ext-js__*|
 
@@ -1068,7 +1068,7 @@ project, but in the case where it cannot, this property can be set."
 ### projectFileNpm
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-pfn \| --project-file-npm__*|
 
@@ -1077,7 +1077,7 @@ Relative path to the NPM project version file (package.json).  Any NPM package.j
 ### projectName
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-pn \| --project-name__*|
 
@@ -1086,7 +1086,7 @@ Name of the project.  This must match throughout the build files and the VCS pro
 ### projectVersion
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -1095,7 +1095,7 @@ Utility field for tracking version if no other mechanism is available.
 ### repo
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-rp \| --repo__*|
 
@@ -1107,7 +1107,7 @@ The repository URL.  In the form:
 ### repoType
 
 |**Value Type**      |*__enum(git|svn)__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |git|
 |**Command Line Arg**|*__-rpt \| --repo-type__*|
 
@@ -1119,7 +1119,7 @@ The repository type. It should be one of the following:
 ### republish
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-r \| --republish__*|
 
@@ -1128,7 +1128,7 @@ Re-publish the current/latest release.  Can be used for multi-publish configurat
 ### skipChangelogEdits
 
 |**Value Type**      |*__flag__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |N|
 |**Command Line Arg**|*__-sce \| --skip-changelog-edits__*|
 
@@ -1137,7 +1137,7 @@ Skip manual editing of the changelog file(s).  Note the changelog used for a rel
 ### skipCommit
 
 |**Value Type**      |*__flag__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |N|
 |**Command Line Arg**|*__-sc \| --skip-commit__*|
 
@@ -1146,7 +1146,7 @@ Skip committing changes to version control when the final release stage is finis
 ### skipTag
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |N|
 |**Command Line Arg**|*__-st \| --skip-tag__*|
 
@@ -1155,7 +1155,7 @@ Skip tagging version in version control when the final release stage is finished
 ### skipVersionEdits
 
 |**Value Type**      |*__flag__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |N|
 |**Command Line Arg**|*__-sve \| --skip-version-edits__*|
 
@@ -1164,7 +1164,7 @@ Skip all version edits in version files.
 ### taskBuild
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tb \| --task-build__*|
 
@@ -1173,7 +1173,7 @@ Runs all scripts defined by the publishrc property buildCommand`.
 ### taskChangelog
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tc \| --task-changelog__*|
 
@@ -1182,7 +1182,7 @@ Export the next release's current changelog and view using the editor specified 
 ### taskChangelogFile
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-tcf \| --task-changelog-file__*|
 
@@ -1198,7 +1198,7 @@ usage: [
 ### taskChangelogHtmlFile
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-tchf \| --task-changelog-html-file__*|
 
@@ -1211,7 +1211,7 @@ usage: [
 ### taskChangelogHtmlView
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tchv \| --task-changelog-html-view__*|
 
@@ -1220,7 +1220,7 @@ Export the next release's current changelog in HTML release format and view usin
 ### taskChangelogPrint
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tcp \| --task-changelog-print__*|
 
@@ -1229,7 +1229,7 @@ Export the next release's pending changelog and output to stdout.
 ### taskChangelogHdrPrint
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tchp \| --task-changelog-hdr-print__*|
 
@@ -1238,7 +1238,7 @@ Read the changelog's header from disk and output to stdout.
 ### taskChangelogPrintVersion
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-tcpv \| --task-changelog-print-version__*|
 
@@ -1252,7 +1252,7 @@ usage: [
 ### taskChangelogHdrPrintVersion
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-tchpv \| --task-changelog-hdr-print-version__*|
 
@@ -1261,7 +1261,7 @@ Read the changelog's header from disk and output to stdout, using the specified 
 ### taskChangelogView
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tcv \| --task-changelog-view__*|
 
@@ -1270,7 +1270,7 @@ Export the next release's current changelog and view using the editor specified 
 ### taskChangelogViewVersion
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-tcvv \| --task-changelog-view-version__*|
 
@@ -1279,7 +1279,7 @@ Export the specified release's current changelog and view using the editor speci
 ### taskCiEnv
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tce \| --task-ci-env__*|
 
@@ -1288,7 +1288,7 @@ Output the CI environment name to stdout.
 ### taskCiEnvInfo
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tcei \| --task-ci-env-info__*|
 
@@ -1297,7 +1297,7 @@ Finds CI related build information, and outputs the info to stdout using a conca
 ### taskCiEnvSet
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tces \| --task-ci-env-set__*|
 
@@ -1306,7 +1306,7 @@ Finds CI related build information, and outputs the info to the file 'ap.env' in
 ### taskCommit
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tcm \| --task-commit__*|
 
@@ -1315,7 +1315,7 @@ Commits the changes made when using the --touch-versions option, using the 'chor
 ### taskDeploy
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-td \| --task-deploy__*|
 
@@ -1324,7 +1324,7 @@ Runs the deployment scripts defined in the .publishrc configuration.
 ### taskDevTest
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tdt \| --task-dev-test__*|
 
@@ -1333,7 +1333,7 @@ Run temporary tests in the local dev environment.  Note that this does nothing w
 ### taskDistRelease
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tdr \| --task-dist-release__*|
 
@@ -1342,7 +1342,7 @@ Perform a `dist` release.
 ### taskEmail
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-te \| --task-email__*|
 
@@ -1351,7 +1351,7 @@ Re-send the latest notification email.
 ### taskGenerateHelp
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tgh \| --task-generate-help__*|
 
@@ -1360,7 +1360,7 @@ Generate help markdown from help output.  Internal tool.
 ### taskGithubRelease
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tgr \| --task-github-release__*|
 
@@ -1369,7 +1369,7 @@ Perform a 'Github' release.  The changelog produced for the Github release will 
 ### taskMantisbtRelease
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tmr \| --task-mantisbt-release__*|
 
@@ -1378,7 +1378,7 @@ Perform a 'Mantis' release.  The changelog produced for the Mantis release will 
 ### taskNpmJsonRestore
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tnjr \| --task-npm-json-restore__*|
 
@@ -1391,7 +1391,7 @@ Note that this task should in most cases always be ran following the use of the 
 ### taskNpmJsonUpdate
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tnju \| --task-npm-json-update__*|
 
@@ -1404,7 +1404,7 @@ Can be used for publishing to multiple npm repositories.  Note that this task sh
 ### taskNpmRelease
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tnr \| --task-npm-release__*|
 
@@ -1413,7 +1413,7 @@ Perform an 'NPM' release (publish).
 ### taskNugetRelease
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tngr \| --task-nuget-release__*|
 
@@ -1422,7 +1422,7 @@ Perform a 'Nuget' release (not implemented yet).
 ### taskReleaseLevel
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-trl \| --task-release-level__*|
 
@@ -1431,7 +1431,7 @@ Gets the release level for the next release and outputs it to stdout.  Release l
 ### taskRevert
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tr \| --task-revert__*|
 
@@ -1440,7 +1440,7 @@ Reverts all local changes made by the publish run.
 ### taskTag
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tt \| --task-tag__*|
 
@@ -1449,7 +1449,7 @@ Creates a tag using the 'vX.X.X' format for the tag name.  The 'taskVersionUpdat
 ### taskTagVersion
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-ttv \| --task-tag-version__*|
 
@@ -1462,7 +1462,7 @@ usage: [
 ### taskVersionCurrent
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tvc \| --task-version-current__*|
 
@@ -1473,7 +1473,7 @@ Ignored if the `--task-version-info` switch is used.
 ### taskVersionInfo
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tvi \| --task-version-info__*|
 
@@ -1487,7 +1487,7 @@ Note that this switch overrides both the `--task-version-current` and the `--tas
 ### taskVersionNext
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tvn \| --task-version-next__*|
 
@@ -1498,7 +1498,7 @@ Ignored if the `--task-version-info` switch is used.
 ### taskVersionPreReleaseId
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-tvprid \| --task-version-pre-release-id__*|
 
@@ -1512,7 +1512,7 @@ usage: [
 ### taskVersionUpdate
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-tvu \| --task-version-update__*|
 
@@ -1521,7 +1521,7 @@ Update version numbers either semantically or incrementally.  Versioned files ar
 ### testEmailRecip
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-ter \| --task-email-recip__*|
 
@@ -1530,7 +1530,7 @@ The email address to use as the 'To' address when sending an email notification 
 ### tests
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-t \| --tests_*|
 
@@ -1539,7 +1539,7 @@ Runs tests (development use).
 ### textEditor
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |notepad.exe|
 |**Command Line Arg**|*__-tedr \| --text-editor__*|
 
@@ -1548,7 +1548,7 @@ The editor program to use when opening version files for manual editing."
 ### vcFiles
 
 |**Value Type**      |*__string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -1557,7 +1557,7 @@ A list of files that should be checked into version control in the commit phase.
 ### vcRevert
 
 |**Value Type**      |*__flag__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |Y|
 |**Command Line Arg**|*__-vr \| --vc-revert__*|
 
@@ -1566,7 +1566,7 @@ Reverts all file modifications made if a publish failes, or, after a dry run is 
 ### vcRevertFiles
 
 |**Value Type**      |*__string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -1577,7 +1577,7 @@ Ignored if `vcRevert` = "N".
 ### vcStdOut
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-vso \| --vc-std-out_*|
 
@@ -1590,7 +1590,7 @@ runs stdout.  Use for debugging version control issues."
 ### vcTagPrefix
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-vtp \| --vc-tag-prefix__*|
 
@@ -1599,7 +1599,7 @@ Tag prefix for the version tag.  Labels the created tag in the form prefix-vX.X.
 ### vcWebPath
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-vwp \| --vc-web-path__*|
 
@@ -1608,7 +1608,7 @@ Web path to the version control repository e.g. the project's home page on GitHu
 ### verbose
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-vbs \| --verbose__*|
 
@@ -1617,7 +1617,7 @@ Enables additional log output.
 ### verbosex
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-vbsx \| --verbosex__*|
 
@@ -1626,7 +1626,7 @@ Enables additional log output, including stringified objects.  Pronounced 'ver-b
 ### version
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-v \| --version__*|
 
@@ -1635,7 +1635,7 @@ Display the current app-publisher version.
 ### versionFiles
 
 |**Value Type**      |*__IVersionFile[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -1670,7 +1670,7 @@ The regex must contain the text 'VERSION' which translates to the capturing grou
 ### versionForceCurrent
 
 |**Value Type**      |*__boolean__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |false|
 |**Command Line Arg**|*__-vfc \| --version-force-current__*|
 
@@ -1683,7 +1683,7 @@ usage: [
 ### versionForceNext
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-vfn \| --version-force-next__*|
 
@@ -1697,7 +1697,7 @@ usage: [
 ### versionFilesEditAlways
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -1706,7 +1706,7 @@ A file path or list of file paths to always perform version string replacement i
 ### versionFilesScrollDown
 
 |**Value Type**      |*__string \| string[]__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__n/a__*|
 
@@ -1715,7 +1715,7 @@ A file path or list of file paths where sroll-down is perfoemed when opened for 
 ### versionPreReleaseId
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   ||
 |**Command Line Arg**|*__-vpri \| --version-pre-release-id__*|
 
@@ -1728,7 +1728,7 @@ usage: [
 ### versionSystem
 
 |**Value Type**      |*__enum(auto|semver|incremental)__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |auto|
 |**Command Line Arg**|*__-vs \| --version-system__*|
 
@@ -1740,7 +1740,7 @@ Specify the versioning system to be used if it cannot be determined automaticall
 ### versionText
 
 |**Value Type**      |*__string__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |Version|
 |**Command Line Arg**|*__-vt \| --version-text__*|
 
@@ -1753,7 +1753,7 @@ The text tag to use in the history file for preceding the version number.  It sh
 ### writeLog
 
 |**Value Type**      |*__flag__*|
-|---|---|
+| :----------------- | :--------- |
 |**Value Default**   |N|
 |**Command Line Arg**|*__-wr \| --write-log__*  |
 
