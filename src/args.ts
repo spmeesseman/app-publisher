@@ -1,215 +1,300 @@
-
 export const publishRcOpts =
 {
+
     branch: [
-        true,                     // Can specify on command line
-        "string",                 // Value type
-        "trunk",                  // Default value
-        "The branch to use.",     // Help description (multi-line)
-        "For SVN, this shouldinclude the path to the branches directory, e.g.:",
+        true,
+        "string",
         "",
-        "   branches/branch-name",
-        "",
-        "SVN branch support can only work if there is a 'per project' branching",
-        "folder / structure.  It is assumed that the 'tags' folders is named by",
-        "convention, i.e. '/tags'"
+        [ "-b", "--branch" ],
+        {
+            help: "The branch to use.\n" +
+                  "\n" +
+                  "For SVN, this should include the path to the branches directory, e.g.:\n" +
+                  "\n" +
+                  "    branches/branch-name\n" +
+                  "\n" +
+                  "SVN branch support can only work if there is a 'per project' branching folder\n" +
+                  "/ structure.  It is assumed that the 'tags' folders is named by convention,\n" +
+                  "i.e. '/tags'",
+            helpPrivate: false
+        }
     ],
 
     buildCommand: [
-        false,
-        "string|string[]",
+        true,
+        "string | string[]",
         "",
-        "A script or list of scripts to run for the build stage."
+        [ "-bc", "--build-command" ],
+        {
+            help: "A script or list of scripts to run for the build stage.",
+            helpPrivate: false
+        }
     ],
 
     bugs: [
         true,
         "string",
         "",
-        "Overrides the 'bugs' property of package.json when an NPM release is",
-        "made, which is extracted for display on the project page of the NPM",
-        "repository."
+        [ "--bugs" ],
+        {
+            help: "Overrides the 'bugs' property of package.json when an NPM release is made,\n" +
+                  "which is extracted for display on the project page of the NPM repository.",
+            helpPrivate: false
+        }
     ],
 
     changelogFile: [
         true,
         "string",
-        "CHANGELOG.md",
-        "The location of this changelog file (markdown or text format), should be",
-        "a path relative to the project's root."
+        "CHANGELOG",
+        [ "-cf", "--changelog-file" ],
+        {
+            help: "The location of this changelog file (markdown or text format), should be a\n" +
+                  "path relative to the project's root.",
+            helpPrivate: false
+        }
     ],
 
     changelogHdrFile: [
         true,
         "string",
         "",
-        "The location of this history header file, should be a path relative to",
-        "the project's root."
+        [ "-chf", "--changelog-hdr-file" ],
+        {
+            help: "The location of this history header file, should be a path relative to the\n" +
+                  "project's root.",
+            helpPrivate: false
+        }
     ],
 
     changelogLineLen: [
         true,
         "number",
         80,
-        "The maximum line lenth to use when parsing commits to populate the",
-        "history.txt file"
+        [ "-cll", "--changelog-line-len" ],
+        {
+            help: "The maximum line lenth to use when parsing commits to populate the changelog\n" +
+                  "file.",
+            helpPrivate: false
+        }
     ],
 
     commitMsgMap: [
-        false,
+        true,
         "object",
-        "{ }",
-        "A map of additional subject tags used in commits that will be used to",
-        "increment the version and be included in the changelog, for example:",
         "",
-        "    \"commitMsgMap\": {",
-        "        \"internal\": {",
-        "            \"versionBump\": \"patch\",",
-        "            \"formatText\": \"Internal Change\",",
-        "            \"include\": false,",
-        "            \"iconCls\": \"fa-building\"",
-        "        }",
-        "    }"
+        [],
+        {
+            help: "A map of additional subject tags used in commits that will be used to increment\n" +
+                  "the version and be included in the changelog, for example:\n" +
+                  "\n" +
+                  "    \"commitMsgMap\": {\n" +
+                  "        \"internal\": {\n" +
+                  "            \"versionBump\": \"patch\n" +
+                  "            \"formatText\": \"Internal Change\n" +
+                  "            \"include\": false,\n" +
+                  "            \"iconCls\": \"fa-building\n" +
+                  "        }\n" +
+                  "    }",
+            helpPrivate: false
+        }
     ],
 
     config: [
         true,
         "boolean",
         false,
-        "Displays the configuration object and exits, for debugging.",
-        "Note that the default publishrc file is '.publishrc.*'.  A config file can",
-        "be one of four different formats:",
-        "",
-        "    .publishrc.json",
-        "    .publishrc.js",
-        "    .publishrc.yaml",
-        "    .publishrc.yml",
-        "    package.json { publishrc: { ... } }"
+        [ "-c", "--config" ],
+        {
+            help: "Displays the configuration object and exits, for debugging.  Note that the\n" +
+                  "default publishrc file is '.publishrc.*'.  A config file can be one of four\n" +
+                  "different formats:\n" +
+                  "\n" +
+                  "    .publishrc.json\n" +
+                  "    .publishrc.js\n" +
+                  "    .publishrc.yaml\n" +
+                  "    .publishrc.yml\n" +
+                  "    package.json { publish: { ... } }",
+            helpPrivate: false
+        }
     ],
 
     configName: [
         true,
         "string",
         "",
-        "Use specified config name.",
-        "Note that the default publishrc file is '.publishrc.*'.  A config name can",
-        "dyanimically modify the file used.  For example, a config name of 'cst' will",
-        "yield a search for the following config files:",
-        "",
-        "    .publishrc.cst.json",
-        "    .publishrc.cst.js",
-        "    .publishrc.cst.yaml",
-        "    .publishrc.cst.yml",
-        "    package.json { publishrc.cst: { ... } }"
+        [ "-cn", "--config-name" ],
+        {
+            help: "Use config name.  Note that the default publishrc file is '.publishrc.*'.\n" +
+                  "A config name can dyanimically modify the file used.  For example, a config\n" +
+                  "name of 'cst' will yield a search for the following config files:\n" +
+                  "\n" +
+                  "    .publishrc.cst.json\n" +
+                  "    .publishrc.cst.js\n" +
+                  "    .publishrc.cst.yaml\n" +
+                  "    .publishrc.cst.yml\n" +
+                  "    package.json { publish.cst: { ... } }",
+            helpPrivate: false
+        }
     ],
 
     cProjectRcFile: [
         true,
         "string",
         "",
-        "The RC file name in a C Make project."
+        [ "-cprf", "--c-project-rc-file" ],
+        {
+            help: "The RC file name in a C Make project.",
+            helpPrivate: false
+        }
     ],
 
     deployCommand: [
-        false,
-        "string|string[]",
+        true,
+        "string | string[]",
         "",
-        "A script or list of scripts to run for the deploy stage."
+        [],
+        {
+            help: "A script or list of scripts to run for the deploy stage.",
+            helpPrivate: false
+        }
     ],
 
     distAddAllToVC: [
         true,
         "flag",
         "N",
-        "Add the contents of the directory specified by the 'dist' property to",
-        "version control, if not already.",
-        "Ignored if distRelease = N."
+        [ "-davc", "--dist-add-all-to-vc" ],
+        {
+            help: "Add the contents of the directory specified by the 'dist' property to version\n" +
+                  "control, if not already.\n" +
+                  "\n" +
+                  "Ignored if `distRelease` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     distDocPath: [
         true,
         "string",
         "",
-        "The network path to use as the destination directory for a standard",
-        "'dist' release's documentation directory.  All PDF files found within",
-        "the doc directory specified by the 'distDocPathSrc' property will be",
-        "uploaded/copied to this directory.",
-        "Ignored if distRelease = N or distDocPathSrc is empty."
+        [],
+        {
+            help: "The network path to use as the destination directory for a standard `dist`\n" +
+                  "release's documentation directory.  All PDF files found within the doc directory\n" +
+                  "specified by the 'distDocPathSrc' property will be uploaded/copied to this\n" +
+                  "directory.\n" +
+                  "\n" +
+                  "Ignored if `distRelease` = \"N\" or `distDocPathSrc` is empty.",
+            helpPrivate: false
+        }
     ],
 
     distDocPathSrc: [
         true,
         "string",
         "",
-        "The local path to use as the source directory for a standard 'dist'",
-        "'release's documentation directory.  All PDF files found within this",
-        "directory are uploaded/copied to the directory specified by the 'distDocPath'",
-        "property.",
-        "Ignored if distRelease = N or distDocPath is empty."
+        [ "-ddps", "--dist-doc-path-src" ],
+        {
+            help: "The local path to use as the source directory for a standard 'dist' release's\n" +
+                  "documentation directory.  All PDF files found within this directory are uploaded/copied\n" +
+                  "to the directory specified by the 'distDocPath' property.\n" +
+                  "\n" +
+                  "Ignored if `distRelease` = \"N\" or `distDocPath` is empty.",
+            helpPrivate: false
+        }
     ],
 
     distRelease: [
         true,
         "flag",
         "N",
-        "Build a standard release to be uploaded to a network share."
+        [ "-dr", "--dist-release" ],
+        {
+            help: "Build a standard release to be uploaded to a network share.",
+            helpPrivate: false
+        }
     ],
 
     distReleasePath: [
         true,
         "string",
         "",
-        "The network path to use as the destination directory for a standard 'dist'",
-        "directory release.",
-        "Will be renamed to 'distDestPath' in a future release.",
-        "Ignored if distRelease = N.",
-        "The final directory created for the release will be:",
-        "   distReleasePath/projectName/nextVersion"
+        [ "-drp", "--dist-release-path" ],
+        {
+            help: "The network path to use as the destination directory for a standard `dist`\n" +
+                  "directory release.  Will be renamed to 'distDestPath' in a future release.\n" +
+                  "\n" +
+                  "The final directory created for the release will be:\n" +
+                  "\n" +
+                  "   distReleasePath/projectName/nextVersion\"\n" +
+                  "\n" +
+                  "Ignored if `distRelease` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     distReleasePathSrc: [
         true,
         "string",
-        "install\\dist",
-        "The local path to use as the source directory for a standard 'dist' release.",
-        "Will be renamed to 'distSrcPath' in a future release.",
-        "Path to DIST should be relative to PATHTOROOT",
-        "Ignored if distRelease = N."
+        "install",
+        [ "-drps", "--dist-release-path-src" ],
+        {
+            help: "The local path to use as the source directory for a standard 'dist' release.\n" +
+                  " Will be renamed to 'distSrcPath' in a future release.\n" +
+                  "\n" +
+                  "Ignored if `distRelease` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     distReleasePostCommand: [
-        false,
-        "string|string[]",
+        true,
+        "string | string[]",
         "",
-        "A script or list of scripts to run for the build stage, after building",
-        "a standard 'dist' release.",
-        "Ignored if distRelease = N."
+        [],
+        {
+            help: "A script or list of scripts to run for the build stage, after building a standard\n" +
+                  "`dist` release.\n" +
+                  "\n" +
+                  "Ignored if `distRelease` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     distReleasePreCommand: [
-        false,
-        "string|string[]",
+        true,
+        "string | string[]",
         "",
-        "A script or list of scripts to run for the build stage, before building",
-        "a standard 'dist' release.",
-        "Ignored if distRelease = N."
+        [],
+        {
+            help: "A script or list of scripts to run for the build stage, before building a standard\n" +
+                  "`dist` release.\n" +
+                  "\n" +
+                  "Ignored if `distRelease` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     dryRun: [
         true,
         "boolean",
         false,
-        [ "-d", "--dry-run" ],
+        [ "-dr", "--dry-run" ],
         {
             help: "Run in dry/test mode, all changes are reverted.\n" +
+                  "\n" +
                   "In dry-run mode, the following holds:\n" +
-                  "    1) Installer is not released/published\n" +
-                  "    2) Email notification will be sent only to $TESTEMAILRECIPIENT\n" +
-                  "    3) Commit package/build file changes (svn) are not made\n" +
-                  "    4) Version tag (svn) is not made\n" +
-                  "Some local files may be changed in test mode (i.e. updated version\n" +
-                  "numbers in build and package files).  These changes should be\n" +
-                  "reverted to original state via SCM"
+                  "\n" +
+                  "1) Installer is not released/published\n" +
+                  "2) Email notification will be sent only to $TESTEMAILRECIPIENT\n" +
+                  "3) Commit package/build file changes (svn) are not made\n" +
+                  "4) Version tag (svn) is not made\n" +
+                  "\n" +
+                  "Some local files may be changed in test mode (i.e. updated version numbers\n" +
+                  "in build and package files).  These changes should be reverted to original\n" +
+                  "state via SCM.",
+            helpPrivate: false
         }
     ],
 
@@ -217,113 +302,172 @@ export const publishRcOpts =
         true,
         "boolean",
         false,
-        [ "-dq", "--dry-run-quiet" ],
+        [ "-drq", "--dry-run-quiet" ],
         {
-            help: "Same as 'dryRun', but minus stdout logging in the release emulations."
+            help: "Same as 'dryRun', but minus stdout logging in the release emulations.",
+            helpPrivate: false
         }
     ],
 
     emailHrefs: [
-        false,
-        "string|string[]",
+        true,
+        "string | string[]",
         "",
-        "A link or list of links to insert into an email notification in the form",
-        "'link|name'."
+        [],
+        {
+            help: "A link or list of links to insert into an email notification in the form 'link|name'.",
+            helpPrivate: false
+        }
     ],
 
     emailMode: [
         true,
         "enum(std|ssl)",
-        "std (Standard / Non-Secure)",
-        "The delivery method to use when sending an email notification."
+        "std",
+        [],
+        {
+            help: "The delivery method to use when sending an email notification, possible values\n" +
+                  "are:\n" +
+                  "\n" +
+                  "    ssl (Secure)\n" +
+                  "    std (Standard / Non-Secure)",
+            helpPrivate: false
+        }
     ],
 
     emailPort: [
         true,
         "number",
         25,
-        "The smtp server port to use when sending an email notification."
+        [],
+        {
+            help: "The smtp server port to use when sending an email notification.",
+            helpPrivate: false
+        }
     ],
 
     emailNotification: [
         true,
         "flag",
         "N",
-        "Send a release email notification."
+        [ "-en", "--email-notification" ],
+        {
+            help: "Send a release email notification.",
+            helpPrivate: false
+        }
     ],
 
     emailRecip: [
         true,
-        "string|string[]",
+        "string | string[]",
         "",
-        "The email address to use as the 'To' address when sending an email",
-        "notification."
+        [ "-er", "--email-recip" ],
+        {
+            help: "The email address to use as the 'To' address when sending an email notification.",
+            helpPrivate: false
+        }
     ],
 
     emailSender: [
         true,
         "string",
         "",
-        "The email address to use as the 'From' address when sending an email",
-        "notification."
+        [ "-ef", "--email-sender" ],
+        {
+            help: "The email address to use as the 'From' address when sending an email notification.",
+            helpPrivate: false
+        }
     ],
 
     emailServer: [
         true,
         "string",
         "",
-        "The SMTP server to use when sending an email notification."
+        [ "-es", "--email-server" ],
+        {
+            help: "The SMTP server to use when sending an email notification.",
+            helpPrivate: false
+        }
     ],
 
     githubAssets: [
-        false,
-        "string|string[]",
+        true,
+        "string | string[]",
         "",
-        "A path to a file resource or list of file resource paths to upload as assets",
-        "of the Github release.",
-        "Ignored if githubRelease = N."
+        [],
+        {
+            help: "A path to a file resource or list of file resource paths to upload as assets\n" +
+                  "of the Github release.\n" +
+                  "\n" +
+                  "Ignored if `githubRelease` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     githubChglogEdit: [
         true,
         "flag",
         "N",
-        "Edit the manipulated changelog before creating the Github release.",
-        "Ignored if githubRelease = N."
+        [ "-gce", "--github-chglog-edit" ],
+        {
+            help: "Edit the manipulated changelog before creating the Github release.\n" +
+                  "\n" +
+                  "Ignored if `githubRelease` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     githubRelease: [
         true,
         "flag",
         "N",
-        "Perform a Github releas."
+        [ "-gr", "--github-release" ],
+        {
+            help: "Perform a Github releas.",
+            helpPrivate: false
+        }
     ],
 
     githubReleasePostCommand: [
-        false,
-        "string|string[]",
+        true,
+        "string | string[]",
         "",
-        "A script or list of scripts to run for the release stage, after creating",
-        "a Github release.",
-        "Ignored if githubRelease = N."
+        [],
+        {
+            help: "A script or list of scripts to run for the release stage, after creating a\n" +
+                  "Github release.\n" +
+                  "\n" +
+                  "Ignored if `githubRelease` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     githubReleasePreCommand: [
-        false,
-        "string|string[]",
+        true,
+        "string | string[]",
         "",
-        "A script or list of scripts to run for the release stage, before creating",
-        "a Github release.",
-        "Ignored if githubRelease = N."
+        [],
+        {
+            help: "A script or list of scripts to run for the release stage, before creating a\n" +
+                  "Github release.\n" +
+                  "\n" +
+                  "Ignored if `githubRelease` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     githubUser: [
         true,
         "string",
         "",
-        "The Github username that owns the project the Github release will be made",
-        "under.  Used to construct the Github project path i.e. github.com/username",
-        "Ignored if githubRelease = N."
+        [ "-gu", "--github-user" ],
+        {
+            help: "The Github username that owns the project the Github release will be made under.\n" +
+                  " Used to construct the Github project path i.e. github.com/username.\n" +
+                  "\n" +
+                  "Ignored if `githubRelease` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     help: [
@@ -332,7 +476,8 @@ export const publishRcOpts =
         false,
         [ "-h", "--help" ],
         {
-            help: "Display help."
+            help: "Display console help.",
+            helpPrivate: false
         }
     ],
 
@@ -340,92 +485,137 @@ export const publishRcOpts =
         true,
         "string",
         "",
-        "Overrides the 'homePage' property of package.json when an NPM release is",
-        "made, which is extracted for display on the project page of the NPM",
-        "repository."
+        [ "--home-page" ],
+        {
+            help: "Overrides the `homePage` property of package.json when an NPM release is made,\n" +
+                  "which is extracted for display on the project page of the NPM repository.",
+            helpPrivate: false
+        }
     ],
 
     mantisbtApiToken: [
         true,
-        "string|string[]",
+        "string",
         "",
-        "The MantisBT token or list of tokens to make a MantisBT release with.",
-        "Represents the user that the release is made under on the 'Releases' page."
+        [],
+        {
+            help: "The MantisBT token or list of tokens to make a MantisBT release with.  Represents\n" +
+                  "the user that the release is made under on the 'Releases' page.",
+            helpPrivate: false
+        }
     ],
 
     mantisbtAssets: [
-        false,
-        "string|string[]",
+        true,
+        "string | string[]",
         "",
-        "A path to a file resource or list of file resource paths to upload as assets",
-        "of the MantisBT release.",
-        "Ignored if mantisbtRelease = N."
+        [],
+        {
+            help: "A path to a file resource or list of file resource paths to upload as assets\n" +
+                  "of the MantisBT release.\n" +
+                  "\n" +
+                  "Ignored if `mantisbtRelease` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     mantisbtChglogEdit: [
         true,
         "flag",
         "N",
-        "Edit the manipulated changelog before creating the MantisBT release.",
-        "Ignored if mantisbtRelease = N."
+        [ "-mce", "--mantisbt-chglog-edit" ],
+        {
+            help: "Edit the manipulated changelog before creating the MantisBT release.\n" +
+                  "\n" +
+                  "Ignored if `mantisbtRelease` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     mantisbtPlugin: [
         true,
-        "flag",
+        "string",
         "",
-        "Specifies the main project file for a MantisBT plugin project.  The file",
-        "extension must be '.php'"
+        [ "-mp", "--mantisbt-plugin" ],
+        {
+            help: "Specifies the main project file for a MantisBT plugin project.  The file extension\n" +
+                  "must be '.php'\"",
+            helpPrivate: false
+        }
     ],
 
     mantisbtProject: [
         true,
         "string",
         "",
-        "The MantisBT project name, if different than the main project name specified",
-        "by 'projectName'."
+        [ "-mpn", "--mantisbt-project" ],
+        {
+            help: "The MantisBT project name, if different than the main project name specified\n" +
+                  "by `projectName`.",
+            helpPrivate: false
+        }
     ],
 
     mantisbtRelease: [
         true,
         "flag",
         "N",
-        "Perform a MantisBT release."
+        [ "-mr", "--mantisbt-release" ],
+        {
+            help: "Perform a MantisBT release.",
+            helpPrivate: false
+        }
     ],
 
     mantisbtReleasePostCommand: [
-        false,
-        "string|string[]",
+        true,
+        "string | string[]",
         "",
-        "A script or list of scripts to run for the release stage, after creating",
-        "a MantisBT release.",
-        "Ignored if mantisbtRelease = N."
+        [],
+        {
+            help: "A script or list of scripts to run for the release stage, after creating a\n" +
+                  "MantisBT release.\n" +
+                  "\n" +
+                  "Ignored if `mantisbtRelease` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     mantisbtReleasePreCommand: [
-        false,
-        "string|string[]",
+        true,
+        "string | string[]",
         "",
-        "A script or list of scripts to run for the release stage, before creating",
-        "a MantisBT release.",
-        "Ignored if mantisbtRelease = N."
+        [],
+        {
+            help: "A script or list of scripts to run for the release stage, before creating a\n" +
+                  "MantisBT release.\n" +
+                  "\n" +
+                  "Ignored if `mantisbtRelease` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     mantisbtUrl: [
-        false,
-        "string|string[]",
+        true,
+        "string",
         "",
-        "A URL or a list of URL's to use for creating a MantisBT release.",
-        "Ignored if mantisbtRelease = N."
+        [ "--amntisbt-url" ],
+        {
+            help: "The URL to use for creating a MantisBT release.\n" +
+                  "\n" +
+                  "Ignored if `mantisbtRelease` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     noCi: [
         true,
         "boolean",
         false,
-        [ "-nci", "--no-ci" ],
+        [ "-nc", "--no-ci" ],
         {
-            help: "Run in a local, non-CI environment."
+            help: "Run in a local, non-CI environment.",
+            helpPrivate: false
         }
     ],
 
@@ -433,177 +623,261 @@ export const publishRcOpts =
         true,
         "flag",
         "N",
-        "Copy the NPM package to the directory specified by 'distReleasePathSrc'.",
-        "File is renamed from what is output by NPM, it is named as:",
-        "    projectname.tgz ().",
-        "If the --config-name option is used, the file is named as:",
-        "    projectname-configname.tgz",
-        "Ignored if npmRelease = N."
+        [ "-npd", "--npm-pack-dist" ],
+        {
+            help: "Copy the NPM package to the directory specified by `distReleasePathSrc`.\n" +
+                  "\n" +
+                  "File is renamed from what is output by NPM, it is named as:\n" +
+                  "\n" +
+                  "    projectname.tgz\n" +
+                  "\n" +
+                  "If the --config-name option is used, the file is named as:\n" +
+                  "\n" +
+                  "    projectname-configname.tgz\n" +
+                  "\n" +
+                  "Ignored if `npmRelease` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     npmRegistry: [
         true,
         "string",
-        "https://registry.npmjs.org",
-        "The URL of the NPM registry to use for making an NPM release.  This needs",
-        "to be set if this is a privately hosted repository.  Should be in the form:",
-        "",
-        "    https://npm.mydomain.com",
-        "",
-        "Ignored if npmRelease = N."
+        "https",
+        [ "-nrg", "--npm-registry" ],
+        {
+            help: "The URL of the NPM registry to use for making an NPM release.  This needs to\n" +
+                  "be set if this is a privately hosted repository.  Should be in the form:\n" +
+                  "\n" +
+                  "    https://npm.mydomain.com\n" +
+                  "\n" +
+                  "Ignored if `npmRelease` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     npmRelease: [
         true,
         "flag",
         "N",
-        "Build the NPM release."
+        [ "-nr", "--npm-release" ],
+        {
+            help: "Build and make an NPM release.",
+            helpPrivate: false
+        }
     ],
 
     npmReleasePostCommand: [
-        false,
-        "string|string[]",
+        true,
+        "string | string[]",
         "",
-        "A script or list of scripts to run for the release stage, after creating",
-        "an NPM release.",
-        "Ignored if npmRelease = N."
+        [],
+        {
+            help: "A script or list of scripts to run for the release stage, after creating an\n" +
+                  "NPM release.\n" +
+                  "\n" +
+                  "Ignored if `npmRelease` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     npmReleasePreCommand: [
-        false,
-        "string|string[]",
+        true,
+        "string | string[]",
         "",
-        "A script or list of scripts to run for the release stage, before creating",
-        "am NPM release.",
-        "Ignored if npmRelease = N."
+        [],
+        {
+            help: "A script or list of scripts to run for the release stage, before creating an\n" +
+                  "NPM release.\n" +
+                  "\n" +
+                  "Ignored if `npmRelease` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     npmScope: [
         true,
         "string",
         "",
-        "The package scope to use for making an NPM release.",
-        "Overrides the scope set in package.json.",
-        "Ignored if npmRelease = N."
+        [ "-ns", "--npm-scope" ],
+        {
+            help: "The package scope to use for making an NPM release.\n" +
+                  "Overrides the scope set in package.json.\n" +
+                  "Ignored if `npmRelease` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     nugetRelease: [
         true,
         "flag",
         "N",
-        "Build the nuget release.",
-        "Not supported as of this version."
+        [ "-ngr", "--nuget-release" ],
+        {
+            help: "Build and make a Nuget release.  Not supported as of v3.",
+            helpPrivate: false
+        }
     ],
 
     postBuildCommand: [
-        false,
-        "string|string[]",
+        true,
+        "string | string[]",
         "",
-        "A script or list of scripts to run for the build stage, after the build ",
-        "process is started."
+        [],
+        {
+            help: "A script or list of scripts to run for the build stage, after the build process\n" +
+                  "is started.",
+            helpPrivate: false
+        }
     ],
 
     preBuildCommand: [
-        false,
-        "string|string[]",
+        true,
+        "string | string[]",
         "",
-        "A script or list of scripts to run for the build stage, before the build",
-        "process is started."
+        [],
+        {
+            help: "A script or list of scripts to run for the build stage, before the build process\n" +
+                  "is started.",
+            helpPrivate: false
+        }
     ],
 
     postCommitCommand: [
-        false,
-        "string|string[]",
+        true,
+        "string | string[]",
         "",
-        "A script or list of scripts to run for the commit stage, after the commit",
-        "process is started."
+        [],
+        {
+            help: "A script or list of scripts to run for the commit stage, after the commit process\n" +
+                  "is started.",
+            helpPrivate: false
+        }
     ],
 
     preCommitCommand: [
-        false,
-        "string|string[]",
+        true,
+        "string | string[]",
         "",
-        "A script or list of scripts to run for the commit stage, before the commit",
-        "process is started."
+        [],
+        {
+            help: "A script or list of scripts to run for the commit stage, before the commit\n" +
+                  "process is started.",
+            helpPrivate: false
+        }
     ],
 
     postReleaseCommand: [
-        false,
-        "string|string[]",
+        true,
+        "string | string[]",
         "",
-        "A script or list of scripts to run for the final release stage, before the",
-        "final release process is started."
+        [],
+        {
+            help: "A script or list of scripts to run for the final release stage, before the\n" +
+                  "final release process is started.",
+            helpPrivate: false
+        }
     ],
 
     promptVersion: [
         true,
         "flag",
         "N",
-        "Prompt for version.  The recommended version will be displayed at the prompt.",
+        [ "-pv", "--prompt-version" ],
+        {
+            help: "Prompt for version.  The recommended version will be displayed at the prompt.",
+            helpPrivate: false
+        }
     ],
 
     projectFileDotNet: [
         true,
         "string",
         "",
-        "Relative path to the .NET project version file (AssemblyInfo.cs).",
-        "Any .NET assemblyinfo.cs files are attempted to be loaded and matched to a",
-        "project, but in the case where it cannot, this property can be set."
+        [ "-pfdn", "--project-file-dot-net" ],
+        {
+            help: "Relative path to the .NET project version file (AssemblyInfo.cs).  Any .NET\n" +
+                  "assemblyinfo.cs files are attempted to be loaded and matched to a project,\n" +
+                  "but in the case where it cannot, this property can be set.\"",
+            helpPrivate: false
+        }
     ],
 
     projectFileExtJs: [
         true,
         "string",
         "",
-        "Relative path to the ExtJs project version file (app.json).",
-        "Any ExtJs app.json files are attempted to be loaded and matched to a",
-        "project, but in the case where it cannot, this property can be set."
+        [ "-pfej", "--project-file-ext-js" ],
+        {
+            help: "Relative path to the ExtJs project version file (app.json).\n" +
+                  "Any ExtJs app.json files are attempted to be loaded and matched to a\n" +
+                  "project, but in the case where it cannot, this property can be set.\"",
+            helpPrivate: false
+        }
     ],
 
     projectFileNpm: [
         true,
         "string",
         "",
-        "Relative path to the NPM project version file (package.json).",
-        "Any NPM package.json files are attempted to be loaded and matched to a",
-        "project, but in the case where it cannot, this property can be set."
+        [ "-pfn", "--project-file-npm" ],
+        {
+            help: "Relative path to the NPM project version file (package.json).  Any NPM package.json\n" +
+                  "files are attempted to be loaded and matched to a project, but in the case\n" +
+                  "where it cannot, this property can be set.",
+            helpPrivate: false
+        }
     ],
-
 
     projectName: [
         true,
         "string",
         "",
-        "Name of the project.  This must match throughout the build",
-        "files and the SVN project name."
+        [ "-pn", "--project-name" ],
+        {
+            help: "Name of the project.  This must match throughout the build files and the VCS\n" +
+                  "project name.",
+            helpPrivate: false
+        }
     ],
 
-
     projectVersion: [
-        false,
+        true,
         "string",
         "",
-        "Utility fieled for tarcking version if no other mechanism is available."
+        [],
+        {
+            help: "Utility field for tracking version if no other mechanism is available.",
+            helpPrivate: false
+        }
     ],
 
     repo: [
-        false,
+        true,
         "string",
         "",
-        "The repository URL.  In the form:",
-        "",
-        "    https://svn.mydomain.com/path/to/repo/projectname/trunk",
-        "    https://github.com/username/projectname"
+        [ "-rp", "--repo" ],
+        {
+            help: "The repository URL.  In the form:\n" +
+                  "\n" +
+                  "    https://svn.mydomain.com/path/to/repo/projectname/trunk\n" +
+                  "    https://github.com/username/projectname",
+            helpPrivate: false
+        }
     ],
 
     repoType: [
-        false,
+        true,
         "enum(git|svn)",
         "git",
-        "The repository type. It should be one of the following:",
-        "",
-        "    1. git",
-        "    2. svn"
+        [ "-rpt", "--repo-type" ],
+        {
+            help: "The repository type. It should be one of the following:\n" +
+                  "\n" +
+                  " 1. git\n" +
+                  " 2. svn",
+            helpPrivate: false
+        }
     ],
 
     republish: [
@@ -612,8 +886,9 @@ export const publishRcOpts =
         false,
         [ "-r", "--republish" ],
         {
-            help: "Re-publish the current/latest release.  Can be used for multi-publish\n" +
-                  "/ multi-publishrc configs to bypass local version file validation."
+            help: "Re-publish the current/latest release.  Can be used for multi-publish configurations\n" +
+                  "to bypass local version file validation.",
+            helpPrivate: false
         }
     ],
 
@@ -621,32 +896,47 @@ export const publishRcOpts =
         true,
         "flag",
         "N",
-        "Skip manual editing of the changelog file(s).",
-        "Note the changelog used for a release will be that of which is output by the",
-        "internal commit parser."
+        [ "-sce", "--skip-changelog-edits" ],
+        {
+            help: "Skip manual editing of the changelog file(s).  Note the changelog used for\n" +
+                  "a release will be that of which is output by the internal commit parser.",
+            helpPrivate: false
+        }
     ],
 
     skipCommit: [
         true,
         "flag",
         "N",
-        "Skip committing changes to version control when the final release stage is",
-        "finished (commit stage)."
+        [ "-sc", "--skip-commit" ],
+        {
+            help: "Skip committing changes to version control when the final release stage is\n" +
+                  "finished (commit stage).",
+            helpPrivate: false
+        }
     ],
 
     skipTag: [
         true,
-        "flag",
+        "string",
         "N",
-        "Skip tagging version in version control when the final release stage is",
-        "finished (commit stage)."
+        [ "-st", "--skip-tag" ],
+        {
+            help: "Skip tagging version in version control when the final release stage is finished\n" +
+                  "(commit stage).",
+            helpPrivate: false
+        }
     ],
 
     skipVersionEdits: [
         true,
         "flag",
-        "Y",
-        "Skip all version edits in version files."
+        "N",
+        [ "-sve", "--skip-version-edits" ],
+        {
+            help: "Skip all version edits in version files.",
+            helpPrivate: false
+        }
     ],
 
     taskBuild: [
@@ -655,7 +945,8 @@ export const publishRcOpts =
         false,
         [ "-tb", "--task-build" ],
         {
-            help: "Runs all scripts defined by the publishrc property 'buildCommand'"
+            help: "Runs all scripts defined by the publishrc property buildCommand`.",
+            helpPrivate: false
         }
     ],
 
@@ -665,9 +956,10 @@ export const publishRcOpts =
         false,
         [ "-tc", "--task-changelog" ],
         {
-            help: "Export the next release's current changelog and view using the editor\n" +
-                  "specified in the .publishrc file.\n" +
-                  "Note that this opens the actual versioned changelog/history file."
+            help: "Export the next release's current changelog and view using the editor specified\n" +
+                  "in the .publishrc file.  Note that this opens the actual versioned changelog/history\n" +
+                  "file.",
+            helpPrivate: false
         }
     ],
 
@@ -677,15 +969,17 @@ export const publishRcOpts =
         "",
         [ "-tcf", "--task-changelog-file" ],
         {
-            help: "Export the next release's current changelog to the specified file,\n" +
-                  "can be a relative or an absolute path.\n" +
-                  "Ignored if the option '--task-changelog-view' is used.",
-            usage: [
-                "app-publisher -tcf install/dist/history.txt",
-                "app-publisher -tcf build/doc/changelog/changelog.md",
-                "app-publisher -tcf c:\\projects\\changelogs\\projectname\\cl.md",
-                "app-publisher --task-changelog-file build/tmp/version_notes.txt"
-            ]
+            help: "Export the next release's current changelog to the specified file, can be a\n" +
+                  "relative or an absolute path.  Ignored if the option '--task-changelog-view'\n" +
+                  "is used.\n" +
+                  "\n" +
+                  "Usage:\n" +
+                  "\n" +
+                  "    app-publisher -tcf install/dist/history.txt\n" +
+                  "    app-publisher -tcf build/doc/changelog/changelog.md\n" +
+                  "    app-publisher -tcf c:\\projects\\changelogs\\projectname\\cl.md\n" +
+                  "    app-publisher --task-changelog-file build/tmp/version_notes.txt",
+            helpPrivate: false
         }
     ],
 
@@ -695,12 +989,14 @@ export const publishRcOpts =
         "",
         [ "-tchf", "--task-changelog-html-file" ],
         {
-            help: "Export the next release's current changelog in HTML release format to\n" +
-                  "the specified file, can be a relative or an absolute path.\n" +
-                  "Ignored if the option '--task-changelog-view' is used.",
-            usage: [
-                "app-publisher --task-changelog-html-file install/tmp/version_notes.html"
-            ]
+            help: "Export the next release's current changelog in HTML release format to the specified\n" +
+                  "file, can be a relative or an absolute path.  Ignored if the option '--task-changelog-view'\n" +
+                  "is used.\n" +
+                  "\n" +
+                  "Usage:\n" +
+                  "\n" +
+                  "    app-publisher --task-changelog-html-file install/tmp/version_notes.html",
+            helpPrivate: false
         }
     ],
 
@@ -710,9 +1006,10 @@ export const publishRcOpts =
         false,
         [ "-tchv", "--task-changelog-html-view" ],
         {
-            help: "Export the next release's current changelog in HTML release format and\n" +
-                  "view using the editor specified in the .publishrc file. The created file\n" +
-                  "is a copy stored in a temporary directory specified by the OS."
+            help: "Export the next release's current changelog in HTML release format and view\n" +
+                  "using the editor specified in the .publishrc file. The created file is a copy\n" +
+                  "stored in a temporary directory specified by the OS.",
+            helpPrivate: false
         }
     ],
 
@@ -722,7 +1019,8 @@ export const publishRcOpts =
         false,
         [ "-tcp", "--task-changelog-print" ],
         {
-            help: "Export the next release's pending changelog and output to stdout."
+            help: "Export the next release's pending changelog and output to stdout.",
+            helpPrivate: false
         }
     ],
 
@@ -732,7 +1030,8 @@ export const publishRcOpts =
         false,
         [ "-tchp", "--task-changelog-hdr-print" ],
         {
-            help: "Read the changelog's header from disk and output to stdout."
+            help: "Read the changelog's header from disk and output to stdout.",
+            helpPrivate: false
         }
     ],
 
@@ -742,11 +1041,13 @@ export const publishRcOpts =
         "",
         [ "-tcpv", "--task-changelog-print-version" ],
         {
-            help: "Export the specified release's current changelog and output to stdout.",
-            usage: [
-                "app-publisher --no-ci -tcpv 1.2.4",
-                "app-publisher --task-changelog-print-version 3.0.1"
-            ]
+            help: "Export the specified release's current changelog and output to stdout.\n" +
+                  "\n" +
+                  "Usage:\n" +
+                  "\n" +
+                  "    app-publisher --no-ci -tcpv 1.2.4\n" +
+                  "    app-publisher --task-changelog-print-version 3.0.1",
+            helpPrivate: false
         }
     ],
 
@@ -756,8 +1057,9 @@ export const publishRcOpts =
         "",
         [ "-tchpv", "--task-changelog-hdr-print-version" ],
         {
-            help: "Read the changelog's header from disk and output to stdout, using the\n" +
-                  "specified version number."
+            help: "Read the changelog's header from disk and output to stdout, using the specified\n" +
+                  "version number.",
+            helpPrivate: false
         }
     ],
 
@@ -767,9 +1069,10 @@ export const publishRcOpts =
         false,
         [ "-tcv", "--task-changelog-view" ],
         {
-            help: "Export the next release's current changelog and view using the editor\n" +
-                  "specified in the .publishrc file. The created file is a copy stored in\n" +
-                  "a temporary directory specified by the OS."
+            help: "Export the next release's current changelog and view using the editor specified\n" +
+                  "in the .publishrc file. The created file is a copy stored in a temporary directory\n" +
+                  "specified by the OS.",
+            helpPrivate: false
         }
     ],
 
@@ -780,8 +1083,9 @@ export const publishRcOpts =
         [ "-tcvv", "--task-changelog-view-version" ],
         {
             help: "Export the specified release's current changelog and view using the editor\n" +
-                  "specified in the .publishrc file. The created file is a copy stored in\n" +
-                  "a temporary directory specified by the OS."
+                  "specified in the .publishrc file. The created file is a copy stored in a temporary\n" +
+                  "directory specified by the OS.",
+            helpPrivate: false
         }
     ],
 
@@ -791,7 +1095,8 @@ export const publishRcOpts =
         false,
         [ "-tce", "--task-ci-env" ],
         {
-            help: "Output the CI environment name to stdout."
+            help: "Output the CI environment name to stdout.",
+            helpPrivate: false
         }
     ],
 
@@ -801,8 +1106,9 @@ export const publishRcOpts =
         false,
         [ "-tcei", "--task-ci-env-info" ],
         {
-            help: "Finds CI related build information, and outputs the info to stdout\n" +
-                  "using a concatenated string in the form 'current|next|changelogpath'."
+            help: "Finds CI related build information, and outputs the info to stdout using a\n" +
+                  "concatenated string in the form 'current|next|changelogpath'.",
+            helpPrivate: false
         }
     ],
 
@@ -812,8 +1118,9 @@ export const publishRcOpts =
         false,
         [ "-tces", "--task-ci-env-set" ],
         {
-            help: "Finds CI related build information, and outputs the info to the file\n" +
-                  "'ap.env' in the root workspace directory."
+            help: "Finds CI related build information, and outputs the info to the file 'ap.env'\n" +
+                  "in the root workspace directory.",
+            helpPrivate: false
         }
     ],
 
@@ -823,8 +1130,9 @@ export const publishRcOpts =
         false,
         [ "-tcm", "--task-commit" ],
         {
-            help: "Commits the changes made when using the --touch-versions option,\n" +
-                  "using the 'chore: vX.X.X' format for the commit message."
+            help: "Commits the changes made when using the --touch-versions option, using the\n" +
+                  "'chore: vX.X.X' format for the commit message.",
+            helpPrivate: false
         }
     ],
 
@@ -834,7 +1142,8 @@ export const publishRcOpts =
         false,
         [ "-td", "--task-deploy" ],
         {
-            help: "Runs the deployment scripts defined in the .publishrc configuration."
+            help: "Runs the deployment scripts defined in the .publishrc configuration.",
+            helpPrivate: false
         }
     ],
 
@@ -844,8 +1153,9 @@ export const publishRcOpts =
         false,
         [ "-tdt", "--task-dev-test" ],
         {
-            help: "Run temporary tests in the local dev environment.  Note that this\n" +
-                  "does nothing when ran in a production build"
+            help: "Run temporary tests in the local dev environment.  Note that this does nothing\n" +
+                  "when ran in a production build.",
+            helpPrivate: true
         }
     ],
 
@@ -855,7 +1165,8 @@ export const publishRcOpts =
         false,
         [ "-tdr", "--task-dist-release" ],
         {
-            help: "Perform a 'Dist' release."
+            help: "Perform a `dist` release.",
+            helpPrivate: false
         }
     ],
 
@@ -865,7 +1176,8 @@ export const publishRcOpts =
         false,
         [ "-te", "--task-email" ],
         {
-            help: "Re-send the latest notification email."
+            help: "Re-send the latest notification email.",
+            helpPrivate: false
         }
     ],
 
@@ -873,9 +1185,9 @@ export const publishRcOpts =
         true,
         "boolean",
         false,
-        [ "--tgh", "--generate-help" ],
+        [ "-tgh", "--task-generate-help" ],
         {
-            help: "Generate help markdown from help output.  Private.",
+            help: "Generate help markdown from help output.  Internal tool.",
             helpPrivate: true
         }
     ],
@@ -886,9 +1198,9 @@ export const publishRcOpts =
         false,
         [ "-tgr", "--task-github-release" ],
         {
-            help: "Perform a 'Github' release.\n" +
-                  "The changelog produced for the Github release will be created from the\n" +
-                  "most recent entry of the changelog/history file."
+            help: "Perform a 'Github' release.  The changelog produced for the Github release\n" +
+                  "will be created from the most recent entry of the changelog/history file.",
+            helpPrivate: false
         }
     ],
 
@@ -898,9 +1210,9 @@ export const publishRcOpts =
         false,
         [ "-tmr", "--task-mantisbt-release" ],
         {
-            help: "Perform a 'Mantis' release.\n" +
-                  "The changelog produced for the Mantis release will be created from the\n" +
-                  "most recent entry of the changelog/history file."
+            help: "Perform a 'Mantis' release.  The changelog produced for the Mantis release\n" +
+                  "will be created from the most recent entry of the changelog/history file.",
+            helpPrivate: false
         }
     ],
 
@@ -910,12 +1222,14 @@ export const publishRcOpts =
         false,
         [ "-tnjr", "--task-npm-json-restore" ],
         {
-            help: "Restores changes made to the package.json file as a result of using the\n" +
-                  "--task-npm-json-update task." +
-                  "Properties include:\n" +
-                  "    bugs, homepage, repo, repoType" +
-                  "Note that this task should in most cases always be ran following the use\n" +
-                  "of the --task-npm-json-update task."
+            help: "Restores changes made to the package.json file as a result of using the --task-npm-json-update\n" +
+                  "task.  Properties include:\n" +
+                  "\n" +
+                  "    bugs, homepage, repo, repoType\n" +
+                  "\n" +
+                  "Note that this task should in most cases always be ran following the use of\n" +
+                  "the --task-npm-json-update task.",
+            helpPrivate: false
         }
     ],
 
@@ -925,12 +1239,13 @@ export const publishRcOpts =
         false,
         [ "-tnju", "--task-npm-json-update" ],
         {
-            help: "Updates package.json with .publishrc defined properties.\n" +
-                  "Properties include:\n" +
+            help: "Updates package.json with .publishrc defined properties.  Properties include:\n" +
+                  "\n" +
                   "    bugs, homepage, repo, repoType\n" +
-                  "Can be used for publishing to multiple npm repositories.\n" +
-                  "Note that this task should in most cases always be followed up with a\n" +
-                  " --task-npm-json-restore task."
+                  "\n" +
+                  "Can be used for publishing to multiple npm repositories.  Note that this task\n" +
+                  "should in most cases always be followed up with a --task-npm-json-restore task.",
+            helpPrivate: false
         }
     ],
 
@@ -940,7 +1255,8 @@ export const publishRcOpts =
         false,
         [ "-tnr", "--task-npm-release" ],
         {
-            help: "Perform an 'NPM' release (publish)."
+            help: "Perform an 'NPM' release (publish).",
+            helpPrivate: false
         }
     ],
 
@@ -950,7 +1266,8 @@ export const publishRcOpts =
         false,
         [ "-tngr", "--task-nuget-release" ],
         {
-            help: "Perform a 'Nuget' release (not implemented yet)."
+            help: "Perform a 'Nuget' release (not implemented yet).",
+            helpPrivate: false
         }
     ],
 
@@ -960,8 +1277,9 @@ export const publishRcOpts =
         false,
         [ "-trl", "--task-release-level" ],
         {
-            help: "Gets the release level for the next release and outputs it to stdout.\n" +
-                  "Release level will be one of 'none', 'patch', 'minor', or 'major'"
+            help: "Gets the release level for the next release and outputs it to stdout.  Release\n" +
+                  "level will be one of 'none', 'patch', 'minor', or 'major'.",
+            helpPrivate: false
         }
     ],
 
@@ -971,7 +1289,8 @@ export const publishRcOpts =
         false,
         [ "-tr", "--task-revert" ],
         {
-            help: "Reverts all local changes."
+            help: "Reverts all local changes made by the publish run.",
+            helpPrivate: false
         }
     ],
 
@@ -981,9 +1300,9 @@ export const publishRcOpts =
         false,
         [ "-tt", "--task-tag" ],
         {
-            help: "Creates a tag using the 'vX.X.X' format for the tag name.\n" +
-                  "The 'taskVersionUpdate' and 'taskVersionUpdateCommit' tasks should\n" +
-                  "always precede this task.\n"
+            help: "Creates a tag using the 'vX.X.X' format for the tag name.  The 'taskVersionUpdate'\n" +
+                  "and 'taskVersionUpdateCommit' tasks should always precede this task.",
+            helpPrivate: false
         }
     ],
 
@@ -993,12 +1312,14 @@ export const publishRcOpts =
         "",
         [ "-ttv", "--task-tag-version" ],
         {
-            help: "Creates a tag using the specified positional parameter as the tag name.\n" +
-                  "The 'taskVersionUpdate' and 'taskVersionUpdateCommit' tasks should\n" +
-                  "always precede this task.\n",
-            usage: [
-                "app-publisher --task-tag-version 2.0.0"
-            ]
+            help: "Creates a tag using the specified positional parameter as the tag name.  The\n" +
+                  "'taskVersionUpdate' and 'taskVersionUpdateCommit' tasks should always precede\n" +
+                  "this task.\n" +
+                  "\n" +
+                  "Usage:\n" +
+                  "\n" +
+                  "    app-publisher --task-tag-version 2.0.0",
+            helpPrivate: false
         }
     ],
 
@@ -1008,9 +1329,11 @@ export const publishRcOpts =
         false,
         [ "-tvc", "--task-version-current" ],
         {
-            help: "Finds the current/latest version released and outputs that version\n" +
-                  "string to stdout.\n" +
-                  "Ignored if the --task-version-info switch is used."
+            help: "Finds the current/latest version released and outputs that version string to\n" +
+                  "stdout.\n" +
+                  "\n" +
+                  "Ignored if the `--task-version-info` switch is used.",
+            helpPrivate: false
         }
     ],
 
@@ -1020,11 +1343,14 @@ export const publishRcOpts =
         false,
         [ "-tvi", "--task-version-info" ],
         {
-            help: "Finds the current/latest and next version released, and outputs the\n" +
-                  "info to stdout using a concatenated string in the form:\n" +
+            help: "Finds the current/latest and next version released, and outputs the info to\n" +
+                  "stdout using a concatenated string in the form:\n" +
+                  "\n" +
                   "    current_version|next_version|release_level\n" +
-                  "Note that this switch overrides both the --task-version-current and the\n" +
-                  "--task-version-current switches."
+                  "\n" +
+                  "Note that this switch overrides both the `--task-version-current` and the `--task-version-current`\n" +
+                  "switches.",
+            helpPrivate: false
         }
     ],
 
@@ -1034,9 +1360,11 @@ export const publishRcOpts =
         false,
         [ "-tvn", "--task-version-next" ],
         {
-            help: "Calculates the next version to be released based on versioned files\n" +
-                  "and commit messages. and outputs that version string to stdout.\n" +
-                  "Ignored if the --task-version-info switch is used."
+            help: "Calculates the next version to be released based on versioned files and commit\n" +
+                  "messages. and outputs that version string to stdout.\n" +
+                  "\n" +
+                  "Ignored if the `--task-version-info` switch is used.",
+            helpPrivate: false
         }
     ],
 
@@ -1046,13 +1374,14 @@ export const publishRcOpts =
         "",
         [ "-tvprid", "--task-version-pre-release-id" ],
         {
-            help: "Gets the identifier denoting a pre-release from a version string.\n" +
-                  "For example, the version string 2.20.11-alpha.3 has a pre-release\n" +
-                  "identifier of 'alpha'.",
-            usage: [
-                "app-publisher --task-version-pre-release-id 2.0.1-alpha.1",
-                "app-publisher --task-version-pre-release-id 2.0.1-beta.3"
-            ]
+            help: "Gets the identifier denoting a pre-release from a version string.  For example,\n" +
+                  "the version string 2.20.11-alpha.3 has a pre-release identifier of 'alpha'.\n" +
+                  "\n" +
+                  "Usage:\n" +
+                  "\n" +
+                  "    app-publisher --task-version-pre-release-id 2.0.1-alpha.1\n" +
+                  "    app-publisher --task-version-pre-release-id 2.0.1-beta.3",
+            helpPrivate: false
         }
     ],
 
@@ -1062,103 +1391,135 @@ export const publishRcOpts =
         false,
         [ "-tvu", "--task-version-update" ],
         {
-            help: "Update version numbers either semantically or incrementally.\n" +
-                  "Versioned files are by default AssemblyInfo.cs, package.json, and\n" +
-                  "app.json.\n" +
-                  "Additional versioned files are specified in the .publishrc file\n" +
-                  "using the 'versionFiles' and cProjectRcFile' properties."
+            help: "Update version numbers either semantically or incrementally.  Versioned files\n" +
+                  "are by default AssemblyInfo.cs, package.json, and app.json. Additional versioned\n" +
+                  "files are specified in the .publishrc file using the 'versionFiles' and cProjectRcFile'\n" +
+                  "properties.",
+            helpPrivate: false
         }
     ],
 
     testEmailRecip: [
         true,
-        "string|string[]",
+        "string | string[]",
         "",
-        "The email address to use as the 'To' address when sending an email",
-        "notification while running in dry run mode."
+        [ "-ter", "--task-email-recip" ],
+        {
+            help: "The email address to use as the 'To' address when sending an email notification\n" +
+                  "while running in dry run mode.\"",
+            helpPrivate: false
+        }
     ],
 
     tests: [
         true,
         "boolean",
         false,
-        [ "--tests" ],
+        [ "-t", "--tests" ],
         {
-            help: "Internal tests use only."
+            help: "Runs tests (development use).",
+            helpPrivate: false
         }
     ],
 
     textEditor: [
         true,
         "string",
-        "notepad.exe",
-        "The editor program to use when opening version files for manual editing."
+        "notepad",
+        [ "-tedr", "--text-editor" ],
+        {
+            help: "The editor program to use when opening version files for manual editing.\"",
+            helpPrivate: false
+        }
     ],
 
-    /**
-     * A list of files that should be checked into version control in the commit phase.  These
-     * would include files generated/moved/modified by any of the hook scripts that are to be
-     * included in the version commit/tag.
-     */
     vcFiles: [
         true,
         "string[]",
-        "v",
-        "A list of files that should be checked into version control in the commit",
-        "phase.  These would include files generated/moved/modified by any of the",
-        "hook scripts that are to be included in the version commit/tag"
+        "",
+        [],
+        {
+            help: "A list of files that should be checked into version control in the commit phase.\n" +
+                  " These would include files generated/moved/modified by any of the hook scripts\n" +
+                  "that are to be included in the version commit/tag\"",
+            helpPrivate: false
+        }
     ],
 
     vcRevert: [
         true,
         "flag",
         "Y",
-        "Reverts all file modifications made if a publish failes, or, after a dry",
-        "run is completed.  Uses version control."
+        [ "-vr", "--vc-revert" ],
+        {
+            help: "Reverts all file modifications made if a publish failes, or, after a dry run\n" +
+                  "is completed.  Uses version control.",
+            helpPrivate: false
+        }
     ],
 
     vcRevertFiles: [
         true,
         "string[]",
-        "[]",
-        "Additional files to be reverted if a publish run fails, or, after a dry",
-        "run completes.  Uses version control.",
-        "Ignored if 'vcRevert' = 'N'"
+        "",
+        [],
+        {
+            help: "Additional files to be reverted if a publish run fails, or, after a dry run\n" +
+                  "completes.  Uses version control.\n" +
+                  "\n" +
+                  "Ignored if `vcRevert` = \"N\".",
+            helpPrivate: false
+        }
     ],
 
     vcStdOut: [
         true,
         "boolean",
         false,
-        "Outputs stdout from the vc process (git or svn) and pipes it to the current",
-        "runs stdout.  Use for debugging version control issues."
+        [ "-vso", "--vc-std-out" ],
+        {
+            help: "true,\n" +
+                  "boolean\n" +
+                  "false,\n" +
+                  "Outputs stdout from the vc process (git or svn) and pipes it to the current\n" +
+                  "runs stdout.  Use for debugging version control issues.\"",
+            helpPrivate: false
+        }
     ],
 
     vcTagPrefix: [
         true,
         "string",
-        "v",
-        "Tag prefix for the version tag.  Labels the created tag in the form",
-        "prefix-vX.X.X."
+        "",
+        [ "-vtp", "--vc-tag-prefix" ],
+        {
+            help: "Tag prefix for the version tag.  Labels the created tag in the form prefix-vX.X.X.\"",
+            helpPrivate: false
+        }
     ],
 
     vcWebPath: [
         true,
         "string",
         "",
-        "Web path to the version control repository e.g. the project's home page on GitHub,",
-        "or for a Subversion project the project root in a web viewer such as WebSVN.",
-        "Primarily used for dynamically creating links in the changelogs and/or email",
-        "notifications."
+        [ "-vwp", "--vc-web-path" ],
+        {
+            help: "Web path to the version control repository e.g. the project's home page on\n" +
+                  "GitHub, or for a Subversion project the project root in a web viewer such as\n" +
+                  "WebSVN.  Primarily used for dynamically creating links in the changelogs and/or\n" +
+                  "email notifications.",
+            helpPrivate: false
+        }
     ],
 
     verbose: [
         true,
         "boolean",
         false,
-        [ "--verbose" ],
+        [ "-vbs", "--verbose" ],
         {
-            help: "Enables additional log output."
+            help: "Enables additional log output.",
+            helpPrivate: false
         }
     ],
 
@@ -1166,10 +1527,11 @@ export const publishRcOpts =
         true,
         "boolean",
         false,
-        [ "--verbosex" ],
+        [ "-vbsx", "--verbosex" ],
         {
-            help: "Enables additional log output, including stringified objects.\n" +
-                  "Pronounced 'ver-bose ecks' ;)"
+            help: "Enables additional log output, including stringified objects.  Pronounced 'ver-bose\n" +
+                  "ecks' ;)",
+            helpPrivate: false
         }
     ],
 
@@ -1179,62 +1541,68 @@ export const publishRcOpts =
         false,
         [ "-v", "--version" ],
         {
-            help: "Display the current app-publisher version."
+            help: "Display the current app-publisher version.",
+            helpPrivate: false
         }
     ],
 
     versionFiles: [
-        false,
+        true,
         "IVersionFile[]",
+        "",
         [],
-        "A file path or list of file paths to perform version string replacement in.",
-        "A source/target pair can lso be specified using the 'setFiles' property.",
-        "",
-        "Example:",
-        "",
-        "     \"versionFiles\": [{",
-        "         \"path\": \"..\\..\\install\\GEMS2_64bit.nsi\",",
-        "         \"regex\": \"!define +BUILD_LEVEL +VERSION\"",
-        "         \"regexVersion\": \"[0-9a-zA-Z\\.\\-]{5,}\",",
-        "         \"regexWrite\": \"!define BUILD_LEVEL      \"VERSION\"",
-        "     },",
-        "     {",
-        "         \"path\": \"node_modules\\@pja\\extjs-pkg-server\\package.json\",",
-        "         \"setFiles\": [{",
-        "             \"path\": \"app.json\",",
-        "             \"regex\": \"svrVersion\" *: *\"VERSION\"",
-        "             \"regexVersion\": \"[0-9a-zA-Z\\.\\-]{5,}\",",
-        "             \"regexWrite\": \"svrVersion\": \"VERSION\"",
-        "         },",
-        "         {",
-        "             \"path\": \"..\\svr\\assemblyinfo.cs\",",
-        "             \"regex\": \"AssemblyVersion *\\(VERSION",
-        "             \"regexVersion\": \"[0-9]+\\.[0-9]+\\.[0-9]+\",",
-        "             \"regexWrite\": \"AssemblyVersion\\(VERSION",
-        "         }]",
-        "     }]",
-        "",
-        "The regex must contain the text 'VERSION' which translates to the capturing",
-        "group used to obtain the actual version number, and it must be the first group",
-        "if more than one capturing groups exist in the regex.   The 'regexVersion'",
-        "property is the regex that will match the version, and defaults to the regex",
-        " [0-9a-zA-Z\\.\\-]{5,} if not specified.",
-        "",
-        "The 'versionInfo' property is optional and defualts to system:semver."
+        {
+            help: "A file path or list of file paths to perform version string replacement in.\n" +
+                  " A source/target pair can lso be specified using the 'setFiles' property.\n" +
+                  "\n" +
+                  "Example:\n" +
+                  "\n" +
+                  "     \"versionFiles\": [{\n" +
+                  "         \"path\": \"..\\..\\install\\GEMS2_64bit.nsi\",\n" +
+                  "         \"regex\": \"!define +BUILD_LEVEL +VERSION\",\n" +
+                  "         \"regexVersion\": \"[0-9a-zA-Z\\.\\-]{5,}\",\n" +
+                  "         \"regexWrite\": \"!define BUILD_LEVEL      \"VERSION\"\n" +
+                  "     },\n" +
+                  "     {\n" +
+                  "         \"path\": \"node_modules\\@pja\\extjs-pkg-server\\package.json\",\n" +
+                  "         \"setFiles\": [{\n" +
+                  "             \"path\": \"app.json\",\n" +
+                  "             \"regex\": \"svrVersion\" \*: \*\"VERSION\",\n" +
+                  "             \"regexVersion\": \"[0-9a-zA-Z\\.\\-]{5,}\",\n" +
+                  "             \"regexWrite\": \"svrVersion\": \"VERSION\"\n" +
+                  "         },\n" +
+                  "         {\n" +
+                  "             \"path\": \"..\\svr\\assemblyinfo.cs\",\n" +
+                  "             \"regex\": \"AssemblyVersion *\\(VERSION\",\n" +
+                  "             \"regexVersion\": \"[0-9]+\\.[0-9]+\\.[0-9]+\",\n" +
+                  "             \"regexWrite\": \"AssemblyVersion\\(VERSION\"\n" +
+                  "         }]\n" +
+                  "     }]\n" +
+                  "\n" +
+                  "The regex must contain the text 'VERSION' which translates to the capturing\n" +
+                  "group used to obtain the actual version number, and it must be the first group\n" +
+                  "if more than one capturing groups exist in the regex.   The 'regexVersion'\n" +
+                  "property is the regex that will match the version, and defaults to the regex\n" +
+                  "`[0-9a-zA-Z\\.\\-]{5,}` if not specified.  This property is optional and defualts\n" +
+                  "to system:semver.",
+            helpPrivate: false
+        }
     ],
 
     versionForceCurrent: [
         true,
         "boolean",
-        "",
+        false,
         [ "-vfc", "--version-force-current" ],
         {
-            help: "Force current version, for use with post release tasks such as re-sending\n" +
-                  "an email notification or performing a GitHub release if for whever reason\n" +
-                  "it failed on the publish run.",
-            usage: [
-                "app-publisher --task-email --version-force-current"
-            ]
+            help: "Force current version, for use with post release tasks such as re-sending an\n" +
+                  "email notification or performing a GitHub release if for whever reason it failed\n" +
+                  "on the publish run.\n" +
+                  "\n" +
+                  "Usage:\n" +
+                  "\n" +
+                  "    app-publisher --task-email --version-force-current",
+            helpPrivate: false
         }
     ],
 
@@ -1244,43 +1612,57 @@ export const publishRcOpts =
         "",
         [ "-vfn", "--version-force-next" ],
         {
-            help: "A version number to use as the 'next version'.  Version calculation will\n" +
-                  "not be performed other than for reading in the current version, skipping\n" +
-                  "an SCM step.",
-            usage: [
-                "app-publisher --version-force-next 300", "app-publisher --version-force-next 2.0.0"
-            ]
+            help: "A version number to use as the 'next version'.  Version calculation will not\n" +
+                  "be performed other than for reading in the current version, skipping an SCM\n" +
+                  "step.\n" +
+                  "\n" +
+                  "Usage:\n" +
+                  "\n" +
+                  "    app-publisher --version-force-next 300\n" +
+                  "    app-publisher --version-force-next 2.0.0",
+            helpPrivate: false
         }
     ],
 
     versionFilesEditAlways: [
-        false,
-        "string|string[]",
+        true,
+        "string | string[]",
         "",
-        "A file path or list of file paths to always perform version string replacement",
-        "in, regardless of whether the 'skipVersionEdits' flag is set."
+        [],
+        {
+            help: "A file path or list of file paths to always perform version string replacement\n" +
+                  "in, regardless of whether the `skipVersionEdits` flag is set.",
+            helpPrivate: false
+        }
     ],
 
     versionFilesScrollDown: [
-        false,
-        "string|string[]",
+        true,
+        "string | string[]",
         "",
-        "A file path or list of file paths where sroll-down is perfoemed when opened",
-        "for editing."
+        [],
+        {
+            help: "A file path or list of file paths where sroll-down is perfoemed when opened\n" +
+                  "for editing.",
+            helpPrivate: false
+        }
     ],
 
     versionPreReleaseId: [
         true,
         "string",
         "",
-        [ "--version-pre-release-id" ],
+        [ "-vpri", "--version-pre-release-id" ],
         {
-            help: "An identifier denoting a pre-release can to be appenended to the next\n" +
-                  "version number to produce the final version string, e.g. 'alpha'\n" +
-                  "produces the final version string of x.y.z-alpha.",
-            usage: [
-                "app-publisher --version-pre-release-id alpha", "app-publisher --version-pre-release-id pre1"
-            ]
+            help: "An identifier denoting a pre-release can to be appenended to the next version\n" +
+                  "number to produce the final version string, e.g. 'alpha' produces the final\n" +
+                  "version string of x.y.z-alpha.\n" +
+                  "\n" +
+                  "Usage:\n" +
+                  "\n" +
+                  "    app-publisher --version-pre-release-id alpha\n" +
+                  "    app-publisher --version-pre-release-id pre1",
+            helpPrivate: false
         }
     ],
 
@@ -1288,29 +1670,41 @@ export const publishRcOpts =
         true,
         "enum(auto|semver|incremental)",
         "auto",
-        "Specify the versioning system to be used if it cannot be determined",
-        "automatically:",
-        "",
-        "    1. semver         Ex. 1.0.0, 1.0.1, 1.0.2",
-        "    2. incremental    Ex. 100, 101, 102"
+        [ "-vs", "--version-system" ],
+        {
+            help: "Specify the versioning system to be used if it cannot be determined automatically:\n" +
+                  "\n" +
+                  " 1. semver       Ex. 1.0.0, 1.0.1, 1.0.2\n" +
+                  " 2. incremental  Ex. 100, 101, 102\"",
+            helpPrivate: false
+        }
     ],
 
     versionText: [
         true,
         "string",
         "Version",
-        "The text tag to use in the history file for preceding the version number.  It",
-        "should be one of the following:",
-        "",
-        "    1. Version",
-        "    2. Build",
-        "    3. Release"
+        [ "-vt", "--version-text" ],
+        {
+            help: "The text tag to use in the history file for preceding the version number.\n" +
+                  "It should be one of the following:\n" +
+                  "\n" +
+                  " 1. Version\n" +
+                  " 2. Build\n" +
+                  " 3. Release",
+            helpPrivate: false
+        }
     ],
 
     writeLog: [
         true,
         "flag",
         "N",
-        "In addition to stdout, writes a log to LOCALAPPDATA\\app-publisher\\log"
+        [ "-wr", "--write-log" ],
+        {
+            help: "In addition to stdout, writes a log to LOCALAPPDATA/app-publisher/log",
+            helpPrivate: false
+        }
     ]
+
 };

@@ -1,14 +1,14 @@
 import { IArgument, IContext } from "../interface";
 import { pathExists, readFile, writeFile } from "../lib/utils/fs";
 import { REGEX_HELP_ARG, REGEX_HELP_DEFAULT_VALUE, REGEX_HELP_EXTRACT_FROM_README, REGEX_HELP_EXTRACT_OPTION, REGEX_HELP_NAME, REGEX_HELP_SECTION, REGEX_HELP_TYPE } from "../lib/definitions/regexes";
+import { EOL } from "os";
 
 export = generateHelp;
 
 
 function buildHelp(readmeHelp: string, maxHelpLineLen: number, space: string, lineStart = "", lineEnd = "")
 {
-    const helpLines = readmeHelp.split("\n");
-
+    const helpLines = readmeHelp.replace(/"/gm, "\\\"").split(EOL);
     let helpSection = "";
 
     for (const line of helpLines)
@@ -16,7 +16,7 @@ function buildHelp(readmeHelp: string, maxHelpLineLen: number, space: string, li
         if (line)
         {
             let cutLine = "";
-            const help = line.split(" ");
+            const help = line.trimRight().split(" ");
             for (const word of help)
             {
                 if (cutLine.length < maxHelpLineLen)
@@ -24,20 +24,20 @@ function buildHelp(readmeHelp: string, maxHelpLineLen: number, space: string, li
                     cutLine += (word + " ");
                 }
                 else {
-                    helpSection += `${space}${lineStart}${cutLine.trimRight()}${lineEnd}\r\n`;
+                    helpSection += `${space}${lineStart}${cutLine.trimRight()}${lineEnd}\n`;
                     cutLine = (word + " ");
                 }
             }
             if (cutLine) {
-                helpSection += `${space}${lineStart}${cutLine.trimRight()}${lineEnd}\r\n`;
+                helpSection += `${space}${lineStart}${cutLine.trimRight()}${lineEnd}\n`;
             }
         }
         else {
-            helpSection += `${space}${lineStart}${lineEnd}\r\n`;
+            helpSection += `${space}${lineStart}${lineEnd}\n`;
         }
     }
 
-    return helpSection.substring(0, helpSection.length - 5) + "\",";
+    return helpSection.substring(0, helpSection.length - lineEnd.length - 1).trimLeft() + "\",";
 }
 
 
@@ -49,12 +49,14 @@ async function generateHelp(context: IContext): Promise<string | boolean>
 
     const argsFile = "src/args.ts",
           interfaceFile = "src/interface.ts",
+          readme2File = ".github/README.md",
           args: IArgument[] = [],
           helpSections: string[] = [],
           readmeContent = await readFile("README.md"),
           S1 = "    ", S2 = S1 + S1, S3 = S2 + S1, S4 = S3 + S1, SHELP = S4 + "  ";
+    let readme2Content = await readFile(readme2File);
 
-    if (!readmeContent) {
+    if (!readmeContent || !readme2Content) {
         return "Readme file not found";
     }
 
@@ -90,8 +92,8 @@ async function generateHelp(context: IContext): Promise<string | boolean>
     }
 
     ct = 0;
-    let argsContent = "export const publishRcOpts =\r\n{\r\n    ",
-        interfaceContent = "export interface IOptions\r\n{\r\n";
+    let argsContent = "export const publishRcOpts =\n{\n",
+        interfaceContent = "export interface IOptions\n{\n";
 
     for (const a of args)
     {
@@ -120,28 +122,35 @@ async function generateHelp(context: IContext): Promise<string | boolean>
         {
 `;
         argsContent += `${S3}help: `;
-        argsContent += buildHelp(a.help, 75, SHELP, "\"", "\\n\" +").trimLeft();
+        argsContent += buildHelp(a.help, 75, SHELP, "\"", "\\n\" +");
         argsContent += `
             helpPrivate: ${a.name === "taskGenerateHelp" || a.name === "taskDevTest" || a.name.includes("Private.") ? "true" : "false"}
         }
     ],
- 
- `;
+`;
         if (type.startsWith("enum")) {
             type = "\"" + type.replace("enum(", "").replace(")", "").replace("|", "\" | \"") + "\"";
         }
-        interfaceContent += `${S1}/**\r\n${S1} `;
-        interfaceContent += buildHelp(a.help, 100, S1, " * ").trimLeft();
-        interfaceContent += `\r\n${S1} */\r\n${S1}${a.name}: ${type};\r\n`;
+        interfaceContent += `${S1}/**\n${S1} `;
+        interfaceContent += buildHelp(a.help, 100, S1, " * ");
+        interfaceContent += `\n${S1} */\n${S1}${a.name}: ${type};\n`;
     }
 
     argsContent = argsContent.trim();
     argsContent = argsContent.substr(0, argsContent.length - 1);
-    argsContent += "\r\n\r\n};\r\n";
+    argsContent += "\n\n};\n";
+    argsContent = argsContent.replace(/\n/gm, EOL);
 
     interfaceContent = interfaceContent.trim();
     // interfaceContent = interfaceContent.substr(0, argsContent.length - 1);
-    interfaceContent += "\r\n}\r\n";
+    interfaceContent += "\n}\n";
+    interfaceContent = argsContent.replace(/\n/gm, EOL);
+
+    if ((match = REGEX_HELP_EXTRACT_FROM_README.exec(readme2Content)) !== null)
+    {
+        readme2Content = readme2Content.replace(match[0], readme2Content);
+        writeFile(readme2File, readme2Content);
+    }
 
     if (pathExists(argsFile)) {
         await writeFile(argsFile, argsContent);

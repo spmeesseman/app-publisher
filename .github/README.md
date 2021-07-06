@@ -1188,12 +1188,12 @@ Export the next release's current changelog and view using the editor specified 
 
 Export the next release's current changelog to the specified file, can be a relative or an absolute path.  Ignored if the option '--task-changelog-view' is used.
 
-usage: [
-    "app-publisher -tcf install/dist/history.txt
-    "app-publisher -tcf build/doc/changelog/changelog.md
-    "app-publisher -tcf c:\\projects\\changelogs\\projectname\\cl.md
-    "app-publisher --task-changelog-file build/tmp/version_notes.txt"
-]
+Usage:
+
+    app-publisher -tcf install/dist/history.txt
+    app-publisher -tcf build/doc/changelog/changelog.md
+    app-publisher -tcf c:\\projects\\changelogs\\projectname\\cl.md
+    app-publisher --task-changelog-file build/tmp/version_notes.txt
 
 ### taskChangelogHtmlFile
 
@@ -1204,9 +1204,9 @@ usage: [
 
 Export the next release's current changelog in HTML release format to the specified file, can be a relative or an absolute path.  Ignored if the option '--task-changelog-view' is used.
 
-usage: [
-    "app-publisher --task-changelog-html-file install/tmp/version_notes.html"
-]
+Usage:
+
+    app-publisher --task-changelog-html-file install/tmp/version_notes.html
 
 ### taskChangelogHtmlView
 
@@ -1244,10 +1244,10 @@ Read the changelog's header from disk and output to stdout.
 
 Export the specified release's current changelog and output to stdout.
 
-usage: [
-    "app-publisher --no-ci -tcpv 1.2.4
-    "app-publisher --task-changelog-print-version 3.0.1"
-]
+Usage:
+
+    app-publisher --no-ci -tcpv 1.2.4
+    app-publisher --task-changelog-print-version 3.0.1
 
 ### taskChangelogHdrPrintVersion
 
@@ -1455,9 +1455,9 @@ Creates a tag using the 'vX.X.X' format for the tag name.  The 'taskVersionUpdat
 
 Creates a tag using the specified positional parameter as the tag name.  The 'taskVersionUpdate' and 'taskVersionUpdateCommit' tasks should always precede this task.
 
-usage: [
-    "app-publisher --task-tag-version 2.0.0"
-]
+Usage:
+
+    app-publisher --task-tag-version 2.0.0
 
 ### taskVersionCurrent
 
@@ -1482,7 +1482,6 @@ Finds the current/latest and next version released, and outputs the info to stdo
     current_version|next_version|release_level
 
 Note that this switch overrides both the `--task-version-current` and the `--task-version-current` switches.
-}
 
 ### taskVersionNext
 
@@ -1504,10 +1503,10 @@ Ignored if the `--task-version-info` switch is used.
 
 Gets the identifier denoting a pre-release from a version string.  For example, the version string 2.20.11-alpha.3 has a pre-release identifier of 'alpha'.
 
-usage: [
-    "app-publisher --task-version-pre-release-id 2.0.1-alpha.1
-    "app-publisher --task-version-pre-release-id 2.0.1-beta.3"
-]
+Usage:
+
+    app-publisher --task-version-pre-release-id 2.0.1-alpha.1
+    app-publisher --task-version-pre-release-id 2.0.1-beta.3
 
 ### taskVersionUpdate
 
@@ -1532,7 +1531,7 @@ The email address to use as the 'To' address when sending an email notification 
 |**Value Type**      |*__boolean__*|
 | :----------------- | :--------- |
 |**Value Default**   |false|
-|**Command Line Arg**|*__-t \| --tests_*|
+|**Command Line Arg**|*__-t \| --tests__*|
 
 Runs tests (development use).
 
@@ -1579,7 +1578,7 @@ Ignored if `vcRevert` = "N".
 |**Value Type**      |*__boolean__*|
 | :----------------- | :--------- |
 |**Value Default**   |false|
-|**Command Line Arg**|*__-vso \| --vc-std-out_*|
+|**Command Line Arg**|*__-vso \| --vc-std-out__*|
 
 true,
 boolean
@@ -1676,9 +1675,9 @@ The regex must contain the text 'VERSION' which translates to the capturing grou
 
 Force current version, for use with post release tasks such as re-sending an email notification or performing a GitHub release if for whever reason it failed on the publish run.
 
-usage: [
-    "app-publisher --task-email --version-force-current"
-]
+Usage:
+
+    app-publisher --task-email --version-force-current
 
 ### versionForceNext
 
@@ -1689,10 +1688,10 @@ usage: [
 
 A version number to use as the 'next version'.  Version calculation will not be performed other than for reading in the current version, skipping an SCM step.
 
-usage: [
-    "app-publisher --version-force-next 300",
-    "app-publisher --version-force-next 2.0.0"
-]
+Usage:
+
+    app-publisher --version-force-next 300
+    app-publisher --version-force-next 2.0.0
 
 ### versionFilesEditAlways
 
@@ -1721,9 +1720,10 @@ A file path or list of file paths where sroll-down is perfoemed when opened for 
 
 An identifier denoting a pre-release can to be appenended to the next version number to produce the final version string, e.g. 'alpha' produces the final version string of x.y.z-alpha.
 
-usage: [
-    "app-publisher --version-pre-release-id alpha", "app-publisher --version-pre-release-id pre1"
-]
+Usage:
+
+    app-publisher --version-pre-release-id alpha
+    app-publisher --version-pre-release-id pre1
 
 ### versionSystem
 
@@ -1748,7 +1748,7 @@ The text tag to use in the history file for preceding the version number.  It sh
 
  1. Version
  2. Build
- 3. Release"
+ 3. Release
 
 ### writeLog
 
