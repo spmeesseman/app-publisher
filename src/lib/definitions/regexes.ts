@@ -9,13 +9,16 @@
 // a multi-line regex in JS, so we use the ###END### temp tag to mark it
 //
 
+//
+// ISSUES: Example: ... [Fixes #444] ...
+// Group 1 = Fixes #444
+//
 const ISSUES = /\[{0,1}(?:&nbsp;| )*((?:bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(?:&nbsp;| )*#[0-9]+(?:(&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,})(&nbsp;| )*\]{0,1}/gmi;
 const ISSUE_TAG = /(?:bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?)/gmi;
-
+const CHANGELOG_SKIPPED_COMMIT = / *(?:chore?|progress?|style?|project?|ci|tests?) ?[:(]{1}/i;
 const CHANGELOG_TXT_VERSION_SECTION = (versionText: string) => {
     return new RegExp(`(?:^${versionText} ([0-9a-zA-Z\\-\\.]{3,})[\r\n]+.+[\r\n]+[\\-]{20,}[\r\n]+[\\*]{20,}[^]+?(?=[\\*]{20,})[\\*]{20,}[\r\n]+)([^]*?)(?=^${versionText}|###END###)`, "gm");
 };
-
 const CHANGELOG_MD_VERSION_SECTION = (versionText: string) => {
   return new RegExp(`(?:^## ${versionText} \\[([0-9a-zA-Z\\-\\.]{3,})\\] {0,1}\\([a-zA-Z0-9 ,:\\/\\.]+\\)[\r\n]+)([^]*?)(?=^${versionText}|###END###)`, "gm");
 };
@@ -37,6 +40,7 @@ const HELP_LINK = /\[([\w _-]+)\]\(((?:#|http)[\w\:\.\/\-\_]+)\)/gmi;
 
 const regexes = {
   CHANGELOG_MD_VERSION_SECTION,
+  CHANGELOG_SKIPPED_COMMIT,
   CHANGELOG_TXT_VERSION_SECTION,
   HELP_EXTRACT_FROM_INTERFACE,
   HELP_EXTRACT_FROM_README,

@@ -357,8 +357,7 @@ export abstract class Changelog implements IChangelog
      */
     isSkippedCommitMessage(msg: string)
     {
-        const m = msg.trimLeft().toLowerCase();
-        return m.startsWith("chore") || m.startsWith("progress") || m.startsWith("style") || m.startsWith("project");
+        return regexes.CHANGELOG_SKIPPED_COMMIT.test(msg);
     }
 
 
