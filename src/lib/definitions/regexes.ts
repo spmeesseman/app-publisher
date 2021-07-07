@@ -9,7 +9,8 @@
 // a multi-line regex in JS, so we use the ###END### temp tag to mark it
 //
 
-const CHANGELOG_MD_MSG_TICKET_TAGS = /\[(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]/gi;
+const ISSUES = /\[{0,1}(?:&nbsp;| )*((?:bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(?:&nbsp;| )*#[0-9]+(?:(&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,})(&nbsp;| )*\]{0,1}/gmi;
+const ISSUE_TAG = /(?:bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?)/gmi;
 
 const CHANGELOG_TXT_VERSION_SECTION = (versionText: string) => {
     return new RegExp(`(?:^${versionText} ([0-9a-zA-Z\\-\\.]{3,})[\r\n]+.+[\r\n]+[\\-]{20,}[\r\n]+[\\*]{20,}[^]+?(?=[\\*]{20,})[\\*]{20,}[\r\n]+)([^]*?)(?=^${versionText}|###END###)`, "gm");
@@ -35,7 +36,6 @@ const HELP_ARG = /\*\*Command Line Arg\*\* *\|(?:\*__)([\\\w\-| \/]+)(?:__\*)/m;
 const HELP_LINK = /\[([\w _-]+)\]\(((?:#|http)[\w\:\.\/\-\_]+)\)/gmi;
 
 const regexes = {
-  CHANGELOG_MD_MSG_TICKET_TAGS,
   CHANGELOG_MD_VERSION_SECTION,
   CHANGELOG_TXT_VERSION_SECTION,
   HELP_EXTRACT_FROM_INTERFACE,
@@ -46,7 +46,9 @@ const regexes = {
   HELP_NAME,
   HELP_SECTION,
   HELP_TYPE,
-  HELP_DEFAULT_VALUE
+  HELP_DEFAULT_VALUE,
+  ISSUE_TAG,
+  ISSUES
 };
 
 export = regexes;

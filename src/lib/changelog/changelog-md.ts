@@ -538,10 +538,9 @@ export class ChangelogMd extends Changelog
             //
             // Extract message and ticket tags
             //
-            regex = regexes.CHANGELOG_MD_MSG_TICKET_TAGS;
-            while ((match = regex.exec(msgParts[i])) !== null)
+            while ((match = new RegExp(regexes.ISSUES).exec(msgParts[i])) !== null)
             {
-                tickets = match[0].replace(/\[/, "").replace("]", "");
+                tickets = match[1].trim();
                 tickets = properCase(tickets.replace(/&nbsp;/g, " ")).trim();
                 message = message.replace(new RegExp("/<br><br>" + match[0], "g"), "")
                                 .replace(new RegExp("<br>" + match[0], "g"), "")

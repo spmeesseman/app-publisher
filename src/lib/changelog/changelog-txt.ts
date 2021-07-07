@@ -1,6 +1,5 @@
 
 import * as path from "path";
-import * as semver from "semver";
 import regexes from "../definitions/regexes";
 import { IChangelogEntry, IContext } from "../../interface";
 import { appendFile, createDir, deleteFile, pathExists, readFile, writeFile } from "../utils/fs";
@@ -401,11 +400,11 @@ export class ChangelogTxt extends Changelog
                 message = match[3]?.trim(),
                 tickets = "";
             let match2: RegExpExecArray;
-            const regex2 = /( *(?:bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1} #[0-9]+(?: *, *#[0-9]+)* *$)+/gmi;
-            if ((match2 = regex2.exec(message)) !== null)
+
+            if ((match2 = new RegExp(regexes.ISSUES).exec(message)) !== null)
             {
-                tickets = match2[1]?.trim();
-                message = message.replace(tickets, "");
+                tickets = match2[1].trim();
+                message = message.replace(match2[0], "");
             }
             if (!scope && !this.containsValidSubject(options, subject)) {
                 message = subject + EOL + message;
