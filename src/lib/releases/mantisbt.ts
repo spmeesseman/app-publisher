@@ -27,9 +27,7 @@ async function doMantisRelease(context: IContext): Promise<IReturnStatus>
 
     if (semver.prerelease(semver.clean(nextRelease.version)))
     {
-        rc.error = `MantisBT release v${nextRelease.version} failure - cannot pubish a pre-release`;
-        logger.error(rc.error);
-        return rc;
+        logger.log("   This is a pre-release");
     }
 
     let dryRun = 0;
