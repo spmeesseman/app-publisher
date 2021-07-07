@@ -392,8 +392,7 @@ export class ChangelogTxt extends Changelog
         //
         // Process entries with a subject (sorrounded by <b></b>)
         //
-        const regex = /(?:^[0-9]{1,2}\. +([\w+ ]+)+(?::  ([\w+ ]+))*([^]*?))(?=^[0-9]{1,2}\.|###END###)/gmi;
-        while ((match = regex.exec(contents + "###END###")) !== null)
+        while ((match = new RegExp(regexes.CHANGELOG_SUBJECT_SCOPE).exec(contents + "###END###")) !== null)
         {
             let subject = match[1]?.trim(),
                 scope = match[2]?.trim(),

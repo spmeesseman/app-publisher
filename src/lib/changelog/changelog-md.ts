@@ -15,7 +15,7 @@ export class ChangelogMd extends Changelog
     createSectionFromCommits(context: IContext)
     {
         let tmpCommits = "",
-            lastSection = "";
+            lastSubject = "";
         const sectionless: string[] = [],
               { options, commits, logger } = context;
 
@@ -26,21 +26,21 @@ export class ChangelogMd extends Changelog
 
         logger.log(`Build changelog file section from ${commits.length} commits`);
 
-        const formatCommitPart = (section: string, scope: string, commitMsg: string): string =>
+        const formatCommitPart = (subject: string, scope: string, commitMsg: string): string =>
         {
             let fmtCommitMsg = "- ";
 
-            if (!section) {
+            if (!subject) {
                 return fmtCommitMsg + commitMsg;
             }
 
-            section = section.toLowerCase().trim();
+            subject = subject.toLowerCase().trim();
             scope = scope ? properCase(scope.toLowerCase().trim()) : undefined;
 
             //
             // Ignore chores, progress, and custom specified psubjects to ignore
             //
-            if (this.isSkippedCommitMessage(section)) {
+            if (this.isSkippedCommitMessage(`${subject}: `)) {
                 return "";
             }
 
@@ -49,7 +49,7 @@ export class ChangelogMd extends Changelog
             {
                 for (const map of options.commitMsgMap)
                 {
-                    if (section.toLowerCase() === map.type && !map.include) {
+                    if (subject.toLowerCase() === map.type && !map.include) {
                         doContinue = true;
                     }
                 }
@@ -96,11 +96,11 @@ export class ChangelogMd extends Changelog
             // Print out the subject as a title if it is different than the previous sections
             // title.  Comments are alphabetized.
             //
-            if (section !== lastSection) {
-                const tmpSection = this.getFormattedSubject(context, section);
+            if (subject !== lastSubject) {
+                const tmpSection = this.getFormattedSubject(context, subject);
                 fmtCommitMsg = `${EOL}### ${tmpSection}${EOL}${EOL}${fmtCommitMsg}`;
             }
-            lastSection = section;
+            lastSubject = subject;
             return this.cleanMessage(fmtCommitMsg);
         };
 
