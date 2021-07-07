@@ -184,11 +184,11 @@ There are two modes to run app-publisher in:
 
 To install app-publisher globally for convenience, run the following command:
 
-    npm install -g @perryjohnson/app-publisher
+    npm install -g @spmeesseman/app-publisher
 
 To install locally per project, run the following command from the directory containing the projects package.json file:
 
-    npm install @perryjohnson/app-publisher
+    npm install @spmeesseman/app-publisher
 
 Currently, a powershell script is the backbone to the multi-release publish.  The powershell execution policy needs to be set with the following command if it has not been already done so on the computer app-publisher is executing on at some point in the past:
 
@@ -210,7 +210,7 @@ The download link for NodeJS above installs the version of NodeJS and NPM includ
 
 With NodeJS and NPM installed, open a command line terminal and install App-Publisher globally using the command:
 
-    npm install -g @perryjohnson/app-publisher`
+    npm install -g @spmeesseman/app-publisher`
 
 Note that to install the package with the above command, you must login to the registry first as described in the [previous section](#npm-token).
 
@@ -427,17 +427,11 @@ A MantsBT release requires the MANTISBT_API_TOKEN to be set in the system enviro
 
 ### NPM Token
 
-An NPM release requires the NPM_TOKEN to be set in the system environment.  To create a PJ NPM token, perform the following steps:
+An NPM release may require the NPM_TOKEN to be set in the system environment.  To create an NPM token, perform the following steps:
 
 To create an npm user if you dont have one, run the following command and follow the prompts:
 
-    npm adduser --registry=npm.development.pjats.com --scope=@spmeesseman
-
-After a period of time, the session token created with this command will expire.  When the token expires, run the login command:
-
-    npm login --registry=npm.development.pjats.com --scope=@spmeesseman
-
-For more details, see the [Internal NPM Registry](https://app1.development.pjats.com/doc/developernotes.md#Internal-NPM-Registry) section of the Perry Johnson Developer Notes document.
+    npm login --registry=https://npm.yourregistry.com --scope=@yourscope
 
 ### Jenkins Token
 
