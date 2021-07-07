@@ -2,6 +2,7 @@
 import { EOL } from "os";
 import * as path from "path";
 import * as semver from "semver";
+import regexes from "../definitions/regexes";
 import { IChangelog, IChangelogEntry, IContext } from "../../interface";
 import { pathExists, readFile, writeFile } from "../utils/fs";
 import { properCase } from "../utils/utils";
@@ -118,13 +119,15 @@ export abstract class Changelog implements IChangelog
         {
             return "";
         })
-        .replace(/\[{0,1}(&nbsp;| )*(bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(&nbsp;| )*#[0-9]+((&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,}(&nbsp;| )*\]{0,1}/gmi, (m): string =>
+        .replace(regexes.ISSUES, (m): string =>
         {
-            m = m.replace(/(?:bug|issue|close|fix|resolve|ref|reference)/gmi, (m2): string =>
+            m = m.replace(regexes.ISSUE_TAG, (m2): string =>
             {
                 let fm2 = m2;
-                if (/(?:s|ss|sh|x|z)$/.test(m2)) { fm2 += "e"; }
-                fm2 += "s";
+                if (/(?:ss|sh|x|z)$/.test(m2)) { fm2 += "es"; }
+                if (fm2 === "fix") { fm2 += "es"; }
+                else if (fm2 === "close" || fm2 === "resolve") { fm2 += "s"; }
+                else if (fm2 === "fixed" || fm2 === "closed" || fm2 === "resolved") { fm2 = fm2.replace("d", "s"); }
                 return fm2;
             });
             // if (/(?:s|ss|sh|x|z)$/.test(m)) { fm += "e"; }
