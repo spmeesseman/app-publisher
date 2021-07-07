@@ -71,13 +71,13 @@ export async function getExtJsVersion(context: IContext): Promise<IVersionInfo>
         if (version) {
             logger.log("   Found version      : " + version);
             //
-            // Sencha Cmd doesnt support a dash in the filename, development builds succeed but production
+            // Sencha Cmd doesnt support a dash in the version, development builds succeed but production
             // builds fail with the error in page-impl.xml (e.g. for a version named 2.0.2-pre.0):
             //
             //     java.lang.NumberFormatException: For input string: "2-"
             //
             // So, we always write a pre-release version of x.y.z-tag.0 as x.y.z.tag.0 to app.json
-            // Check if we need to convery bac to a valid pre-release id
+            // Check if we need to convert bac to a valid pre-release id
             //
             let match: RegExpExecArray;
             const regex = /^[0-9]+\.[0-9]+\.[0-9]+(\.[a-z]+\.[0-9]+)$/gi;
