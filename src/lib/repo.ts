@@ -160,10 +160,10 @@ export async function commit(context: IContext)
                 context.stdout.write("   " + chgListPaths.join(EOL + "   ") + EOL);
             }
             if (!options.dryRun) {
-                proc = await execaEx(context, "git", [ "commit", "-m", `"chore(release): v${nextRelease.version} [skip ci]"`, "--", ...chgListPaths ]);
+                proc = await execaEx(context, "git", [ "commit", "-m", `chore(release): v${nextRelease.version} [skip ci]`, "--", ...chgListPaths ]);
             }
             else {
-                proc = await execaEx(context, "git", [ "commit", "--dry-run", "-m", `"chore(release): v${nextRelease.version} [skip ci]"`, "--", ...chgListPaths  ]);
+                proc = await execaEx(context, "git", [ "commit", "--dry-run", "-m", `chore(release): v${nextRelease.version} [skip ci]`, "--", ...chgListPaths  ]);
             }
             if (proc.code === 0) {
                 logger.info("Pushing touched files to git version control");
@@ -203,7 +203,7 @@ export async function commit(context: IContext)
                 context.stdout.write("   " + chgListPaths.join(EOL + "   ") + EOL);
             }
             if (!options.dryRun) {
-                await execSvn(context, ["commit", ...chgListPaths, "-m", `"chore: v${nextRelease.version} [skip ci]"` ]);
+                await execSvn(context, ["commit", ...chgListPaths, "-m", `chore: v${nextRelease.version} [skip ci]` ]);
             }
             else {
                 await execSvn(context, ["merge", "--dry-run", "-r", "BASE:HEAD", "." ]);
