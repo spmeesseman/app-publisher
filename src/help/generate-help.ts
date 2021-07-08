@@ -16,10 +16,13 @@ function buildHelp(readmeHelp: string, maxHelpLineLen: number, space: string, es
 
     let helpSection = "";
 
-    for (const line of helpLines)
+    for (let line of helpLines)
     {
         if (line)
         {
+            if (/^[0-9]{1,2}\. \w+/.test(line.trimLeft())) {
+                line = "   " + line;
+            }
             let cutLine = "";
             const help = line.trimRight().split(" ");
             for (const word of help)

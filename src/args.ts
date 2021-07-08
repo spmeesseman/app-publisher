@@ -891,8 +891,8 @@ export const publishRcOpts =
         {
             help: "The repository type. It should be one of the following:\n" +
                   "\n" +
-                  " 1. git\n" +
-                  " 2. svn",
+                  "    1. git\n" +
+                  "    2. svn",
             helpPrivate: false
         }
     ],
@@ -1709,8 +1709,8 @@ export const publishRcOpts =
             help: "Specify the versioning system to be used if it cannot be determined\n" +
                   "automatically:\n" +
                   "\n" +
-                  " 1. semver       Ex. 1.0.0, 1.0.1, 1.0.2\n" +
-                  " 2. incremental  Ex. 100, 101, 102\"",
+                  "    1. semver       Ex. 1.0.0, 1.0.1, 1.0.2\n" +
+                  "    2. incremental  Ex. 100, 101, 102\"",
             helpPrivate: false
         }
     ],
@@ -1724,9 +1724,9 @@ export const publishRcOpts =
             help: "The text tag to use in the history file for preceding the version\n" +
                   "number.  It should be one of the following:\n" +
                   "\n" +
-                  " 1. Version\n" +
-                  " 2. Build\n" +
-                  " 3. Release",
+                  "    1. Version\n" +
+                  "    2. Build\n" +
+                  "    3. Release",
             helpPrivate: false
         }
     ],

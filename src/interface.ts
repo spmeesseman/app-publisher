@@ -630,8 +630,8 @@ export interface IArgs
     /**
      * The repository type. It should be one of the following:
      *
-     *  1. git
-     *  2. svn
+     *     1. git
+     *     2. svn
      */
     repoType: "git" | "svn";
     /**
@@ -1008,17 +1008,17 @@ export interface IArgs
     /**
      * Specify the versioning system to be used if it cannot be determined automatically:
      *
-     *  1. semver       Ex. 1.0.0, 1.0.1, 1.0.2
-     *  2. incremental  Ex. 100, 101, 102"
+     *     1. semver       Ex. 1.0.0, 1.0.1, 1.0.2
+     *     2. incremental  Ex. 100, 101, 102"
      */
     versionSystem: "auto" | "semver" | "incremental";
     /**
      * The text tag to use in the history file for preceding the version number.  It should be
      * one of the following:
      *
-     *  1. Version
-     *  2. Build
-     *  3. Release
+     *     1. Version
+     *     2. Build
+     *     3. Release
      */
     versionText: string;
     /**
