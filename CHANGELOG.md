@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.4.4 (July 8th, 2021)
+
+### Bug Fixes
+
+- **Releases:** when performing a task distributed publish run, the MantisBT release is still populating the Mantis Releases changelog with the previous version's entry from the history file
+
 ## Version 3.4.3 (July 8th, 2021)
 
 ### Bug Fixes
