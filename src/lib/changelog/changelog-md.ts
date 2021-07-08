@@ -538,7 +538,8 @@ export class ChangelogMd extends Changelog
             //
             // Extract message and ticket tags
             //
-            while ((match = new RegExp(regexes.ISSUES).exec(msgParts[i])) !== null)
+            const regex = new RegExp(regexes.ISSUES);
+            while ((match = regex.exec(msgParts[i])) !== null)
             {
                 tickets = match[1].trim();
                 tickets = properCase(tickets.replace(/&nbsp;/g, " ")).trim();

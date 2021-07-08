@@ -386,13 +386,14 @@ export class ChangelogTxt extends Changelog
     private getPartsFromSection({options, logger}, contents: string)
     {
         let match: RegExpExecArray;
-        const entries: IChangelogEntry[] = [];
+        const entries: IChangelogEntry[] = [],
+        regex = new RegExp(regexes.CHANGELOG_SUBJECT_SCOPE);
 
         logger.log("   Extracting parts from changelog txt file section");
         //
         // Process entries with a subject (sorrounded by <b></b>)
         //
-        while ((match = new RegExp(regexes.CHANGELOG_SUBJECT_SCOPE).exec(contents + "###END###")) !== null)
+        while ((match = regex.exec(contents + "###END###")) !== null)
         {
             let subject = match[1]?.trim(),
                 scope = match[2]?.trim(),
