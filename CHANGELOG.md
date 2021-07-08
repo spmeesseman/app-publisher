@@ -1,5 +1,25 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.4.2 (July 7th, 2021)
+
+### Bug Fixes
+
+- **Changelogs:** When parsing a commit message, if a dash '-' character exists in the scope, the part to the left of the dash character is incorrectly parsed as the scope, and the part to the right is included with the body.
+- **Changelogs:** the MantisBT release changelog is no longer corrrectly extracting ticket numbers into the 4th column.
+- **Changelogs:** the formatted ticket tags are being written with additional "e" and "s" characters.
+- **Releases:** performing a 'dist' release copies files from sub-folders within the local dist folder, but they are copied to the base destination directory, and the destination sub-folder is not created.
+- **Releases:** performing a 'dist' release is throwing an error trying to copy the changelog file to the local dist folder if the publishrc property 'distReleasePathSrc' is not set.  If not set, no copy should be attempted.
+
+### Documentation
+
+- **Readme:** add initial section for CI integration
+
+### Refactoring
+
+- **Versioning:** do not include commit messagess with a subject of "ci" in the changelog.
+- **Releases:** allow pre-release versions for MantisBT releases.
+- **Changelogs:** do not perform auto proper casing and upper casing on a md type changelog.
+
 ## Version 3.4.1 (July 6th, 2021)
 
 ### Bug Fixes
