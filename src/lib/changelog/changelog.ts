@@ -11,7 +11,7 @@ export abstract class Changelog implements IChangelog
 {
     abstract doEdit(context: IContext): Promise<void>;
     abstract getSections(context: IContext, version?: string, numSections?: number, htmlFormat?: boolean, inputFile?: string): Promise<string>;
-    abstract getSectionEntries(context: IContext, version?: string): Promise<IChangelogEntry[]>;
+    abstract getSectionEntries(context: IContext, version?: string): Promise<IChangelogEntry[] | undefined>;
     abstract getHeader(context: IContext, version?: string): Promise<string>;
     abstract getVersion(context: IContext): Promise<string>;
     abstract createSectionFromCommits(context: IContext): string;
@@ -51,12 +51,12 @@ export abstract class Changelog implements IChangelog
 
         const nextVersion = !options.tests || !options.taskMode ? nextRelease.version : "3.1.1",
               lastVersion = !options.tests || !options.taskMode ? lastRelease.version : "3.1.0",
-              getFileNotesLast = options.taskEmail,
+              getFileNotesLast = options.taskEmail && !nextVersionChangelogWritten,
               getHtmlLog = !options.taskMode && (options.githubRelease === "Y" || options.mantisbtRelease === "Y"),
-              getHtmlLogLast = context.options.taskGithubRelease || context.options.taskMantisbtRelease,
-              getFileLog = context.options.taskEmail || (!options.taskMode && options.emailNotification === "Y");
+              getHtmlLogLast = (options.taskGithubRelease || options.taskMantisbtRelease) && !nextVersionChangelogWritten,
+              getFileLog = options.taskEmail || (!options.taskMode && options.emailNotification === "Y");
 
-        this.entries = nextVersionChangelogWritten ? await this.getSectionEntries(context, nextVersion) : undefined;
+        this.entries = await this.getSectionEntries(context, nextVersion);
         this.entriesLast = getHtmlLogLast ? await this.getSectionEntries(context, lastVersion) : undefined;
 
         if (this.entries) {
@@ -66,7 +66,7 @@ export abstract class Changelog implements IChangelog
             this.htmlNotesLast = getHtmlLogLast ? await this.createHtmlChangelog(context, this.entriesLast, options.mantisbtRelease === "Y") : undefined;
         }
 
-        this.fileNotes = getFileLog && nextVersionChangelogWritten ? await this.getSections(context, nextVersion) : undefined;
+        this.fileNotes = getFileLog ? await this.getSections(context, nextVersion) : undefined;
         this.fileNotesLast = getFileNotesLast ? await this.getSections(context, lastVersion) : undefined;
 
         this.notes = this.notes || this.createSectionFromCommits(context);

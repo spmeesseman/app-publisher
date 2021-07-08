@@ -33,6 +33,7 @@ export interface IChangelog
     createSectionFromCommits(context: IContext): string;
     doEdit(context: IContext): Promise<void>;
     getHeader(context: IContext, version?: string): Promise<string>;
+    getSectionEntries(context: IContext, version?: string): Promise<IChangelogEntry[] | undefined>;
     getVersion(context: IContext): Promise<string>;
     populate(context: IContext, nextVersionChangelogWritten?: boolean): Promise<void>;
 }

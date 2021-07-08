@@ -383,13 +383,20 @@ export class ChangelogTxt extends Changelog
     }
 
 
-    private getPartsFromSection({options, logger}, contents: string)
+    private getPartsFromSection(context: IContext, contents: string): IChangelogEntry[] | undefined
     {
+        const {options, logger} = context;
+
+        logger.log("Extracting change entries from changelog txt file section");
+        if (!contents) {
+            logger.warn("   Content is empty, no change entries to extract");
+            return undefined;
+        }
+
         let match: RegExpExecArray;
         const entries: IChangelogEntry[] = [],
         regex = new RegExp(regexes.CHANGELOG_SUBJECT_SCOPE);
 
-        logger.log("   Extracting parts from changelog txt file section");
         //
         // Process entries with a subject (sorrounded by <b></b>)
         //
@@ -407,9 +414,9 @@ export class ChangelogTxt extends Changelog
                 message = message.replace(match2[0], "");
             }
             if (!scope && !this.containsValidSubject(options, subject)) {
-                message = subject + EOL + message;
-                subject = "General";
                 scope = "";
+                subject = "General";
+                // message = subject + EOL + message;
             }
             entries.push({ subject, scope, message, tickets });
             if (options.verbose) {
@@ -828,7 +835,7 @@ export class ChangelogTxt extends Changelog
     }
 
 
-    async getSectionEntries(context: IContext, version?: string): Promise<IChangelogEntry[]>
+    async getSectionEntries(context: IContext, version?: string): Promise<IChangelogEntry[] | undefined>
     {
         const contents = await this.getSections(context, version, 1, false);
         return this.getPartsFromSection(context, contents);

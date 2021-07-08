@@ -196,6 +196,11 @@ async function doMantisRelease(context: IContext): Promise<IReturnStatus>
         return rc;
     }
 
+    //
+    // TODO - For production releases - delete all pre-releases from Mantis 'Releases'
+    // Need new REST API /delete for 'Releases' Plugin
+    //
+
     rc.success = true;
     return rc;
 }

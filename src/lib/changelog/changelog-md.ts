@@ -352,7 +352,9 @@ export class ChangelogMd extends Changelog
                       tmpCommits = await this.getHeader(context, version) + // add the header since getPartsFromSection() expects it
                                     EOL + (context.changelog.notes || this.createSectionFromCommits(context));
                       entries = await this.getSectionEntries(context, tmpCommits, true);
-                      tmpCommits = await this.createHtmlChangelog(context, entries, options.mantisbtRelease === "Y");
+                      if (entries && entries.length > 0) {
+                        tmpCommits = await this.createHtmlChangelog(context, entries, options.mantisbtRelease === "Y");
+                      }
                   }
               }
             }
@@ -456,17 +458,21 @@ export class ChangelogMd extends Changelog
     }
 
 
-    async getSectionEntries(context: IContext, version?: string, versionIsContent = false): Promise<IChangelogEntry[]>
+    async getSectionEntries(context: IContext, version?: string, versionIsContent = false): Promise<IChangelogEntry[] | undefined>
     {
         const { logger } = context;
+
+        logger.log("Extracting change entries from changelog txt file section");
+
         let contents = !versionIsContent ? await this.getSections(context, version, 1, false) : version;
+        if (!contents) {
+            logger.warn("   Content is empty, no change entries to extract");
+            return undefined;
+        }
 
         const typeParts = [],
                 msgParts = [],
                 entries: IChangelogEntry[] = [];
-
-        logger.log("Determining changelog parts");
-
         //
         // Replace line feeds with html line breaks
         //
@@ -502,8 +508,8 @@ export class ChangelogMd extends Changelog
         // Get the 'msgParts', this will be the matching commit messages to the types list
         // extracted above.
         //
-        let match: RegExpExecArray,
-            regex = new RegExp(/\w*(?<=^|>)(- ){1}.+?(?=(<br>-|<br>##|$))/g);
+        let match: RegExpExecArray;
+        const regex = new RegExp(/\w*(?<=^|>)(- ){1}.+?(?=(<br>-|<br>##|$))/g);
         while ((match = regex.exec(contents)) !== null)
         {
             let value = match[0].substring(2);
