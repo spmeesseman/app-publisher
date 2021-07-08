@@ -51,12 +51,13 @@ export abstract class Changelog implements IChangelog
 
         const nextVersion = !options.tests || !options.taskMode ? nextRelease.version : "3.1.1",
               lastVersion = !options.tests || !options.taskMode ? lastRelease.version : "3.1.0",
-              getEntries = nextVersionChangelogWritten ||
-                           (!options.versionForceCurrent && (options.taskMantisbtRelease || options.taskGithubRelease || options.taskEmail)),
+              releaseTaskReqHtmlNotes =  (!options.versionForceCurrent && (options.taskMantisbtRelease || options.taskGithubRelease)),
+              releaseTaskReqFileNotes =  !options.versionForceCurrent && options.taskEmail,
+              getEntries = nextVersionChangelogWritten || releaseTaskReqHtmlNotes,
               getFileNotesLast = options.taskEmail && !nextVersionChangelogWritten,
-              getHtmlLog = !options.taskMode && (options.githubRelease === "Y" || options.mantisbtRelease === "Y"),
+              getHtmlLog = (!options.taskMode || releaseTaskReqHtmlNotes) && (options.githubRelease === "Y" || options.mantisbtRelease === "Y"),
               getHtmlLogLast = (options.taskGithubRelease || options.taskMantisbtRelease) && !nextVersionChangelogWritten,
-              getFileLog = options.taskEmail || (!options.taskMode && options.emailNotification === "Y");
+              getFileLog = options.taskEmail || releaseTaskReqFileNotes || (!options.taskMode && options.emailNotification === "Y");
 
         this.entries = getEntries ? await this.getSectionEntries(context, nextVersion) : undefined;
         this.entriesLast = getHtmlLogLast ? await this.getSectionEntries(context, lastVersion) : undefined;
