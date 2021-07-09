@@ -132,11 +132,11 @@ export abstract class Changelog implements IChangelog
                 else if (fm2 === "ref" || fm2 === "refs") { fm2 = "references"; }
                 else if (fm2 === "close" || fm2 === "resolve") { fm2 += "s"; }
                 else if (fm2 === "fixed" || fm2 === "closed" || fm2 === "resolved") { fm2 = fm2.replace("d", "s"); }
-                return fm2.replace(/[\[\]\r\n]/g, "").replace(/ +/g, " ");
+                return fm2;
             });
             // if (/(?:s|ss|sh|x|z)$/.test(m)) { fm += "e"; }
             // fm += "s";
-            let newText = "[" + properCase(m.replace(/[\[\]\r\n]/g, "").trim()) + "]";
+            let newText = "[" + properCase(m.replace(/[\[\]\r\n]/g, "").replace(/ +/g, " ").trim()) + "]";
             if (this.isTextChangelog()) {
                 newText = EOL + EOL + "    " + newText;
             }
