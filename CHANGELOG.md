@@ -1,5 +1,12 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.4.5 (July 8th, 2021)
+
+### Bug Fixes
+
+- **Changelogs:** the max line length can break up the ticket reference tags in a commit message when formatting a new changelog section, and cause the ticket id extraction to fail when building the HTML changelog for a GitHub or MantisBT release
+- **Commit:** the commit and tag stage are creating commit messages surrounded by quotes, and messages are not recognized as the subject indicates.
+
 ## Version 3.4.4 (July 8th, 2021)
 
 ### Bug Fixes
