@@ -13,7 +13,7 @@
 // ISSUES: Example: ... [Fixes #444] ...
 // Group 1 = Fixes #444
 //
-const ISSUES = /\[{0,1}(?:&nbsp;| )*((?:bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(?:&nbsp;| )*#[0-9]+(?:(&nbsp;| )*,(&nbsp;| )*#[0-9]+){0,})(&nbsp;| )*\]{0,1}/gmi;
+const ISSUES = /\[{0,1}(?:&nbsp;| )*((?:bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?){1}(?:&nbsp;| |[\r\n]+)*#[0-9]+(?:(&nbsp;| |[\r\n]+)*,(&nbsp;| |[\r\n]+)*#[0-9]+){0,})(&nbsp;| )*\]{0,1}/gmi;
 const ISSUE_TAG = /(?:bugs?|issues?|closed?s?|fixe?d?s?|resolved?s?|refs?|references?)/gmi;
 const CHANGELOG_SKIPPED_COMMIT = / *(?:chore?|progress?|style?|project?|ci|tests?) ?[:(]{1}/i;
 const CHANGELOG_SUBJECT_SCOPE = /(?:^[0-9]{1,2}\. +([\w ]+)+(?::  ([\w -_]+))*([^]*?))(?=^[0-9]{1,2}\.|###END###)/gmi;

@@ -297,6 +297,18 @@ export function isObject(value: any): value is string
 }
 
 
+export function isLowerCase(value: string)
+{
+    return value === value.toLowerCase() && value !== value.toUpperCase();
+}
+
+
+export function isUpperCase(value: string)
+{
+    return value !== value.toLowerCase() && value === value.toUpperCase();
+}
+
+
 export function logWarning(context: IContext, msg: string, err: string | Error)
 {
     context.logger.warn(msg);

@@ -406,8 +406,10 @@ pipeline {
     always { 
       script {
         if (env.SKIP_CI == "false") {
-          mantisIssueAdd keepTicketPrivate: false, threshold: 'failureOrUnstable'
-          mantisIssueUpdate keepNotePrivate: false, recordChangelog: true, setStatusResolved: true, threshold: 'failureOrUnstable'
+          if (currentBuild.result != "ABORTED" && currentBuild.result != "NOT_BUILT") {
+            mantisIssueAdd keepTicketPrivate: true, threshold: 'failureOrUnstable'
+            mantisIssueUpdate keepNotePrivate: false, recordChangelog: true, setStatusResolved: true, threshold: 'failureOrUnstable'
+          }
           //
           // send email
           // email template to be loaded from managed files

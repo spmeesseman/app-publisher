@@ -129,14 +129,21 @@ export abstract class Changelog implements IChangelog
                 let fm2 = m2;
                 if (/(?:ss|sh|x|z)$/.test(m2)) { fm2 += "es"; }
                 if (fm2 === "fix") { fm2 += "es"; }
+                else if (fm2 === "ref" || fm2 === "refs") { fm2 = "references"; }
                 else if (fm2 === "close" || fm2 === "resolve") { fm2 += "s"; }
                 else if (fm2 === "fixed" || fm2 === "closed" || fm2 === "resolved") { fm2 = fm2.replace("d", "s"); }
-                return fm2;
+                return fm2.replace(/[\[\]\r\n]/g, "").replace(/ +/g, " ");
             });
             // if (/(?:s|ss|sh|x|z)$/.test(m)) { fm += "e"; }
             // fm += "s";
-            return "[" + properCase(m.replace(/[\[\]]/g, "").trim()) + "]";
-        });
+            let newText = "[" + properCase(m.replace(/[\[\]\r\n]/g, "").trim()) + "]";
+            if (this.isTextChangelog()) {
+                newText = EOL + EOL + "    " + newText;
+            }
+            return newText;
+        })
+        .replace(/^[ ]+(?:\r\n){1}/gm, "\r\n").replace(/^[ ]+\n{1}/gm, "\n")
+        .replace("\n\n\n", "\n\n").replace("\r\n\r\n\r\n", "\r\n\r\n");
 
         if (this.isTextChangelog())
         {
@@ -150,7 +157,6 @@ export abstract class Changelog implements IChangelog
                            .replace(/[ ]+github[ \r\n]+/gmi, (s) => { return s.replace(/github/i, "GitHub"); })
                            .replace(/[ ]+app\-publisher[ \r\n]+/gmi, (s) => { return s.replace(/app\-publisher/i, "App-Publisher"); });
         }
-
         //
         // TODO - Run spell check.  Any API's for Node?
         //

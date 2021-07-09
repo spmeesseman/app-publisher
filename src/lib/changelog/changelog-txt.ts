@@ -3,7 +3,7 @@ import * as path from "path";
 import regexes from "../definitions/regexes";
 import { IChangelogEntry, IContext } from "../../interface";
 import { appendFile, createDir, deleteFile, pathExists, readFile, writeFile } from "../utils/fs";
-import { editFile, properCase } from "../utils/utils";
+import { editFile, isUpperCase, properCase } from "../utils/utils";
 import { Changelog } from "./changelog";
 const os = require("os"), EOL = os.EOL;
 
@@ -144,7 +144,7 @@ export class ChangelogTxt extends Changelog
                 //
                 let newText,
                     match: RegExpExecArray;
-                let regex = new RegExp(/(?<=[^ ])[\(][a-z0-9\- ]*[\)]\s*[:][ ]{0,}/gm);
+                const regex = new RegExp(/(?<=[^ ])[\(][a-z0-9\- ]*[\)]\s*[:][ ]{0,}/gmi);
                 while ((match = regex.exec(msg)) !== null) // subject - all lower case, or numbers
                 {
                     newText = match[0].replace("(", "");
@@ -153,21 +153,12 @@ export class ChangelogTxt extends Changelog
                     if (newText.toLowerCase() === "ap") {
                         newText = "App-Publisher";
                     }
-                    newText = properCase(newText); // title case
-                    msg = msg.replace(match[0], `:  ${newText}${EOL}${EOL}`);
-                }
-
-                regex = new RegExp(/[^ ][(][a-z\- _.A-Z]*[)]\s*[:][ ]{0,}/gm);
-                while ((match = regex.exec(msg)) !== null) // scope - all thats left (all caps or user formatted)
-                {
-                    newText = match[0].replace("(", "");
-                    newText = newText.replace(")", "");
-                    newText = newText.replace(":", "").trim();
-                    if (newText.toLowerCase() === "ap") {
-                        newText = "App-Publisher";
+                    if (!isUpperCase(newText)) {
+                        newText = properCase(newText); // title case
                     }
                     msg = msg.replace(match[0], `:  ${newText}${EOL}${EOL}`);
                 }
+
                 //
                 // Typically when writing the commit messages all lowercase is used.  Capitalize the first
                 // letter following the commit message subject
