@@ -190,12 +190,6 @@ To install locally per project, run the following command from the directory con
 
     npm install @spmeesseman/app-publisher
 
-Currently, a powershell script is the backbone to the multi-release publish.  The powershell execution policy needs to be set with the following command if it has not been already done so on the computer app-publisher is executing on at some point in the past:
-
-    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine
-
-After the port to NodeJS, this step will no longer be required.
-
 ### Installation - NodeJS
 
 To run App-Publisher, nodejs and npm are required.  These are by default installed with the *Code Package* installer.
