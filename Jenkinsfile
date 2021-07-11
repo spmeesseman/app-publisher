@@ -443,7 +443,7 @@ pipeline {
           //
           // Production release only post success tasks
           //
-          if (env.RELEASE_PRODUCTION == "true" && currentBuild.result == "SUCCESS") {
+          if (env.RELEASE_PRODUCTION == "true") {
             //
             // Format the extracted changelog to display as text/html email mime
             //
