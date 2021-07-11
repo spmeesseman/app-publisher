@@ -1202,11 +1202,11 @@ export const publishRcOpts =
         }
     ],
 
-    taskGenerateHelp: [
+    taskGenerateCommands: [
         true,
         "boolean",
         false,
-        [ "-tgh", "--task-generate-help" ],
+        [ "-tgc", "--task-generate-cmds" ],
         {
             help: "Generate help markdown from help output.  Internal tool.",
             helpPrivate: true

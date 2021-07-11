@@ -142,7 +142,7 @@ async function runStart(context: IContext)
     //
     // Check CI environment
     //
-    const tasksPassCiCheck = options.taskGenerateHelp || options.taskDevTest || options.taskChangelogHdrPrint ||
+    const tasksPassCiCheck = options.taskGenerateCommands || options.taskDevTest || options.taskChangelogHdrPrint ||
                              options.taskChangelogHdrPrintVersion || options.taskVersionPreReleaseId;
     if (!isCi && !options.dryRun && !options.noCi && !tasksPassCiCheck)
     {
@@ -937,7 +937,7 @@ async function processTasksLevel1(context: IContext): Promise<string | boolean>
         return true;
     }
 
-    if (options.taskGenerateHelp)
+    if (options.taskGenerateCommands)
     {
         return generateHelp(context);
     }

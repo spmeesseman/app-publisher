@@ -148,7 +148,7 @@ async function generateHelp(context: IContext): Promise<string | boolean>
         argsContent += `${S3}help: `;
         argsContent += buildHelp(a.help, 70, SHELP, true, "\"", "\\n\" +", "\",");
         argsContent += `
-            helpPrivate: ${a.name === "taskGenerateHelp" || a.name === "taskDevTest" || a.name.includes("Private.") ? "true" : "false"}
+            helpPrivate: ${a.name === "taskGenerateCommands" || a.name === "taskDevTest" || a.name.includes("Private.") ? "true" : "false"}
         }
     ],
 `;

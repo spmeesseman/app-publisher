@@ -769,7 +769,7 @@ export interface IArgs
     /**
      * Generate help markdown from help output.  Internal tool.
      */
-    taskGenerateHelp: boolean;
+    taskGenerateCommands: boolean;
     /**
      * Perform a 'Github' release.  The changelog produced for the Github release will be
      * created from the most recent entry of the changelog/history file.
