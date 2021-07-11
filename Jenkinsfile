@@ -30,8 +30,6 @@ pipeline {
         // to grab the SVN changes by timestamp even though the HEAD commit id is known.  If the
         // server clock is off by even one half of a second, the last change will not be grabbed
         //
-        echo "Subversion checkout delay 5 seconds..."
-        sleep(time:5, unit:"SECONDS")
         echo "Subversion checkout..."
         checkout(
           poll: false,
