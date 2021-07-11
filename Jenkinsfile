@@ -68,9 +68,11 @@ pipeline {
         // Check for [skip ci] tag on last commit
         //
         script {
+          echo "here"
           def allJob = env.JOB_NAME.replace("%2F", "/").tokenize('/') as String[]
           env.PROJECT_NAME = allJob[0]    // required for email template
           env.PROJECT_BRANCH = allJob[1]  // required for email template - [1] assumes /trunk
+          echo "here2"
           env.SKIP_CI = "false"
           env.RELEASE_PRODUCTION = "false"
           //
@@ -79,6 +81,10 @@ pipeline {
           // Overrides build parameters.
           //
           def changeLogSets = currentBuild.changeSets
+          if (changeLogSets.size() == 0) {
+            echo "   No commits exist, probably another f*over by this dumb SVN plugin using timestamps"
+            env.SKIP_CI = "true";
+          }
           for (int i = 0; i < changeLogSets.size(); i++) {
             def entries = changeLogSets[i].items
             //
