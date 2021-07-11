@@ -70,6 +70,9 @@ pipeline {
         // Check for [skip ci] tag on last commit
         //
         script {
+          def allJob = env.JOB_NAME.replace("%2F", "/").tokenize('/') as String[]
+          env.PROJECT_NAME = allJob[0]    // required for email template
+          env.PROJECT_BRANCH = allJob[1]  // required for email template - [1] assumes /trunk
           env.SKIP_CI = "false"
           env.RELEASE_PRODUCTION = "false"
           //
@@ -120,18 +123,30 @@ pipeline {
           if (params.RELEASE_PRODUCTION == true) {
             env.RELEASE_PRODUCTION = params.RELEASE_PRODUCTION
           }
-          if (env.TAG_NAME != null || env.BRANCH_NAME != "trunk") {
+           if (env.BRANCH_NAME != null && env.BRANCH_NAME != "trunk")) {
+            env.PROJECT_BRANCH = allJob[2]  // [2] is branch name project/branches/branchname
+          }
+          if (env.TAG_NAME != null) {
             env.RELEASE_PRODUCTION = "false"
+            env.PROJECT_BRANCH = allJob[2]  // [2] is branch name project/branches/branchname
           }
           echo "Release Parameters:"
           echo "   Production release  : ${env.RELEASE_PRODUCTION} (tbd)"
           echo "Build Environment:"
+          echo "   Project             : ${env.PROJECT_NAME}" 
+          echo "   Project branch/teg  : ${env.PROJECT_BRANCH}" 
           echo "   Skip CI             : ${env.SKIP_CI}" 
           if (env.BRANCH_NAME != null) {
             echo "   Branch              : ${env.BRANCH_NAME}"
           }
+          else {
+            echo "   Branch              : N/A"
+          }
           if (env.TAG_NAME != null ) {
             echo "   Tag                 : ${env.TAG_NAME}"
+          }
+          else {
+            echo "   Tag                 : N/A"
           }
         }
         //
@@ -291,8 +306,8 @@ pipeline {
           emailext body: 'App-Publisher Jenkins build requires user input',
                 attachLog: false,
                 mimeType: 'text/html',
-                subject: "User Input Required for Build ${BUILD_NUMBER}: ${env.JOB_NAME} v${env.NEXTVERSION}",
-                to: "smeesseman@pjats.com" // "${env.EMAIL_RECIPIENTS}"
+                subject: "Changelog Approval Required - GEMS2 v${env.NEXTVERSION}: Build : " + env.PROJECT_BRANCH,
+                to: "cibuild@pjats.com" // "${env.EMAIL_RECIPIENTS}"
                 //body: '''${SCRIPT, template="groovy-html.template"}''', 
                 //body: '${SCRIPT,template="managed:EmailTemplate"}',
                 //attachLog: true,
@@ -418,11 +433,11 @@ pipeline {
           // send email
           // email template to be loaded from managed files
           //  
-          emailext body: '${JELLY_SCRIPT,template="html"}', 
+          emailext body: '${SCRIPT,template="release.groovy"}',
                   attachLog: true,
                   compressLog: true,
                   mimeType: 'text/html',
-                  subject: "Build ${BUILD_NUMBER} : " + currentBuild.currentResult + " : " + env.JOB_NAME,
+                  subject: "Build ${BUILD_NUMBER} : " + currentBuild.currentResult + " : " + env.PROJECT_BRANCH,
                   to: "smeesseman@pjats.com"
         }
       }
@@ -444,26 +459,6 @@ pipeline {
               bat "app-publisher --config-name pja --task-email --version-force-current"
             }
           }
-        }
-      }
-    }
-    //
-    // FAILURE
-    //
-    failure {
-      // when {
-      //   allOf {
-      //     branch 'trunk';
-      //     // branch pattern: "release-\\d+", comparator: "REGEXP"
-      //     changelog '.+ \\[production-release\\]$'
-      //     // changelog '.*^\\[DEPENDENCY\\] .+$'
-      //     // tag "release-*"
-      //   }
-      // }
-      script {
-        if (env.SKIP_CI == "false") {
-          echo "Failed build"
-          echo "    1. Notify."
         }
       }
     }
