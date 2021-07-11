@@ -298,7 +298,7 @@ pipeline {
             historyEntry = bat(returnStdout: true,
                                 script: """
                                   @echo off
-                                  app-publisher --config-name pja --task-changelog-print --version-force-next ${env.NEXTVERSION}
+                                  app-publisher --config-name pja --task-changelog-print-version ${env.NEXTVERSION}
                                 """)
             //
             // Set in environment for email template scripts
@@ -419,70 +419,94 @@ pipeline {
       }
     }
 
-  //
-  // END STAGES
-  //
-  }
+    //
+    // MANTIS
+    //
+    stage("Mantis") {
+      when {
+        expression { env.SKIP_CI == "false" && currentBuild.result != "NOT_BUILT" && currentBuild.result != "ABORTED" }
+      }
+      steps {
+        mantisIssueAdd keepTicketPrivate: true, threshold: 'failureOrUnstable'
+        mantisIssueUpdate keepNotePrivate: false, recordChangelog: true, setStatusResolved: true, threshold: 'failureOrUnstable'
+      }
+    }
 
-  post { 
     //
-    // ALWAYS RUN
+    // NOTIFY
     //
-    always { 
-      script {
-        if (env.SKIP_CI == "false") {
-          if (currentBuild.result != "ABORTED" && currentBuild.result != "NOT_BUILT") {
-            mantisIssueAdd keepTicketPrivate: true, threshold: 'failureOrUnstable'
-            mantisIssueUpdate keepNotePrivate: false, recordChangelog: true, setStatusResolved: true, threshold: 'failureOrUnstable'
-          }
+    stage("Notify") {
+      when {
+        expression { env.SKIP_CI == "false" && currentBuild.result != "NOT_BUILT" }
+      }
+      steps {
+        //
+        // Release notifications
+        //
+        echo "Send notification email"
+        script {
           //
           // Send build status notification email
           // Skip on sucess since Success stage will send notification
-          //
+          //  
           if (currentBuild.result != "SUCCESS") {
-            emailext body: '${SCRIPT,template="release.groovy"}',
-                    attachLog: true,
-                    compressLog: true,
-                    mimeType: 'text/html',
-                    subject: "Build ${BUILD_NUMBER} : " + currentBuild.currentResult + " : " + env.PROJECT_BRANCH,
-                    to: "cirelease@pjats.com"
+            emailext body: '${SCRIPT,template="release.groovy"}', 
+                      attachLog: true,
+                      compressLog: true,
+                      mimeType: 'text/html',
+                      subject: "Build ${BUILD_NUMBER} : " + currentBuild.currentResult + " : " + env.PROJECT_BRANCH,
+                      to: "cirelease@pjats.com"
           }
-        }
-      }
-    }
-    //
-    // SUCCESS
-    //
-    success {
-      script {
-        if (env.SKIP_CI == "false") {
           //
           // Production release only post success tasks
           //
-          if (env.RELEASE_PRODUCTION == "true") {
-            //
-            // Release notifications
-            //
-            echo "Send release notification email"
+          else if (env.RELEASE_PRODUCTION == "true") {
             //
             // Format the extracted changelog to display as text/html email mime
             //
             env.VERSION_CHANGELOG = "<font face=\"courier new\"><br>" + env.VERSION_CHANGELOG.replace("\r\n", "<br>").replace(" ", "&nbsp;") + "</font>"
             emailext body: '${SCRIPT,template="release.groovy"}',
-                     attachLog: true,
-                     compressLog: true,
-                     mimeType: 'text/html',
-                     subject: "GEMS2 v${env.NEXTVERSION}",
-                     to: "techsupport@pjats.com,cirelease@pjats.com"
-                     // to: "techsupport@pjats.com,Sott Meesseman <smeesseman@pjats.com>",
-                     recipientProviders: [developers(), requestor()]
+                    attachLog: true,
+                    compressLog: true,
+                    mimeType: 'text/html',
+                    subject: "GEMS2 v${env.NEXTVERSION}",
+                    to: "techsupport@pjats.com,cirelease@pjats.com"
+                    // to: "techsupport@pjats.com,Sott Meesseman <smeesseman@pjats.com>",
+                    recipientProviders: [developers(), requestor()]
+            //
+            // AP email???
+            //
             nodejs("Node 12") {
-              // bat "app-publisher --config-name pja --task-email"
-              bat "app-publisher --config-name pja --task-email --version-force-current"
+              // bat "app-publisher --task-email"
+              bat "app-publisher --task-email --version-force-current"
             }
+          }
+          else {
+            echo "   No notification email sent"
           }
         }
       }
+    }
+  //
+  // END STAGES
+  //
+  }
+
+  //
+  // POST PROCESSING
+  //
+  post { 
+    //
+    // FAILURE
+    //
+    failure { 
+      echo "Build failed"
+    }
+    //
+    // SUCCESS
+    //
+    success {
+      echo "Build successful"
     }
   }
 
