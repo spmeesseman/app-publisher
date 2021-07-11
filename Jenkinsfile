@@ -388,7 +388,7 @@ pipeline {
           //
           if (env.RELEASE_PRODUCTION == "true") {
             nodejs("Node 12") {
-              echo "Publish for production release"
+              echo "Publish production release"
               //
               // NPM and MantisBT Release
               //
@@ -408,13 +408,9 @@ pipeline {
         expression { env.RELEASE_PRODUCTION == "true" && env.SKIP_CI == "false"  }
       }
       steps {
-        echo "Perform production build post-build tasks"
-        echo "    1. Commit modified files to SVN."
-        echo "    2. Tag version ${env.NEXTVERSION} in SVN."
+        echo "Commit modified files and tag version ${env.NEXTVERSION} in SVN."
         nodejs("Node 12") {
-          script {
-            bat "app-publisher --config-name pja --task-commit --task-tag"
-          }
+          bat "app-publisher --config-name pja --task-commit --task-tag"
         }
       }
     }
