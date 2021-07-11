@@ -121,7 +121,7 @@ pipeline {
           if (params.RELEASE_PRODUCTION == true) {
             env.RELEASE_PRODUCTION = params.RELEASE_PRODUCTION
           }
-           if (env.BRANCH_NAME != null && env.BRANCH_NAME != "trunk")) {
+          if (env.BRANCH_NAME != null && env.BRANCH_NAME != "trunk") {
             env.PROJECT_BRANCH = allJob[2]  // [2] is branch name project/branches/branchname
           }
           if (env.TAG_NAME != null) {
