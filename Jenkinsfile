@@ -451,16 +451,16 @@ pipeline {
                      attachLog: true,
                      compressLog: true,
                      mimeType: 'text/html',
-                     subject: "App Publisher v${env.NEXTVERSION}",
+                     subject: "App Publisher v${env.NEXTVERSION} Has Been Released",
                      to: "productbuild@pjats.com",
                      recipientProviders: [developers(), requestor()]
             //
             // AP email???
             //
-            nodejs("Node 12") {
-              // bat "app-publisher --task-email"
-              bat "app-publisher --task-email --version-force-current"
-            }
+            // nodejs("Node 12") {
+            //   // bat "app-publisher --task-email"
+            //   bat "app-publisher --task-email --version-force-current"
+            // }
           }
         }
       }
