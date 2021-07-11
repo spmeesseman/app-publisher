@@ -294,7 +294,9 @@ pipeline {
           // Populate and open history.txt in Notepad, then will wait for user intervention
           //
           nodejs("Node 12") {
+            echo "Write history file"
             bat "app-publisher --config-name pja --task-changelog --version-force-next ${env.NEXTVERSION}" 
+            echo "Retrieve new history file section"
             historyEntry = bat(returnStdout: true,
                                 script: """
                                   @echo off
@@ -303,27 +305,24 @@ pipeline {
             //
             // Set in environment for email template scripts
             //
-            env.VERSION_CHANGELOG = historyEntry;
+            env.VERSION_CHANGELOG = "<font face=\"courier new\"><br>" + historyEntry.replace("\r\n", "<br>").replace(" ", "&nbsp;") + "</font>"
           }
           //
           // Notify of input required
           //
           echo "Notify approvers of pending approval wait"
-          emailext body: 'App-Publisher Jenkins build requires user input',
-                attachLog: false,
-                mimeType: 'text/html',
-                subject: "Changelog Approval Required - GEMS2 v${env.NEXTVERSION}: Build : " + env.PROJECT_BRANCH,
-                to: "cibuild@pjats.com" // "${env.EMAIL_RECIPIENTS}"
-                //body: '''${SCRIPT, template="groovy-html.template"}''', 
-                //body: '${SCRIPT,template="managed:EmailTemplate"}',
-                //attachLog: true,
-                //compressLog: true,
+          emailext body: '${SCRIPT,template="changelog-approval.groovy"}',
+                   attachLog: false,
+                   mimeType: 'text/html',
+                   subject: "Changelog Approval Required - App Publisher v${env.NEXTVERSION}: Build : " + env.PROJECT_BRANCH,
+                   to: "cibuild@pjats.com",
+                   recipientProviders: [developers(), requestor()] 
           //
           // Wait for user intervention, approval of new version # and history entry
           //
           echo "Waiting for user approval..."
-          def changelogLoc = "c:\\Users\\administrator.TR\\AppData\\Local\\Jenkins\\.jenkins\\workspace\\app-publisher_trunk\\doc\\history.txt"
-          def inputMessage = "Approve Version ${env.NEXTVERSION} History File Changelog\n${changelogLoc}"
+          def changelogLoc = "c:\\Users\\administrator.TR\\AppData\\Local\\Jenkins\\.jenkins\\workspace\\${PROJECT_NAME}_${PROJECT_BRANCH}\\doc\\history.txt"
+          def inputMessage = "Approve Version ${env.NEXTVERSION} History File Changelog"
           def userInput = input id: 'history_file_approval',
                                 message: inputMessage,
                                 ok: 'Approve', 
@@ -333,6 +332,7 @@ pipeline {
                                   string(defaultValue: 'smeesseman', description: 'Network User ID of approver', name: 'UserID', trim: true),
                                   string(defaultValue: env.NEXTVERSION, description: 'Next version #', name: 'Version', trim: true),
                                   choice(choices: ['No', 'Yes'], description: 'Append changelog to history file (if not, manually edit and save)', name: 'Append'),
+                                  string(defaultValue: changelogLoc, description: 'History File Location (Read Only)', name: 'File', trim: true),
                                   text(defaultValue: historyEntry, description: 'History File Entry', name: 'Changelog')
                                 ]
           //
@@ -348,7 +348,7 @@ pipeline {
           echo "   Version : ${inputVersion}"
           env.NEXTVERSION = inputVersion
           if (inputAppend == "Yes") {
-            bat "svn revert .\\doc\\history.txt"
+            bat "svn revert doc\\history.txt"
             nodejs("Node 12") {
               historyHeader = bat(returnStdout: true,
                                     script: """
@@ -364,6 +364,7 @@ pipeline {
             // bat "echo Version ${env.NEXTVERSION} >> .\\doc\\history.txt"
             bat "echo Version ${historyHeader} >> .\\doc\\history.txt"
             bat "echo Version ${historyEntry} >> .\\doc\\history.txt"
+            env.VERSION_CHANGELOG = "<font face=\"courier new\"><br>" + historyEntry.replace("\r\n", "<br>").replace(" ", "&nbsp;") + "</font>"
           }
         }
       }
@@ -416,19 +417,6 @@ pipeline {
     }
 
     //
-    // MANTIS
-    //
-    stage("Mantis") {
-      when {
-        expression { env.SKIP_CI == "false" && currentBuild.result != "NOT_BUILT" && currentBuild.result != "ABORTED" }
-      }
-      steps {
-        mantisIssueAdd keepTicketPrivate: true, threshold: 'failureOrUnstable'
-        mantisIssueUpdate keepNotePrivate: false, recordChangelog: true, setStatusResolved: true, threshold: 'failureOrUnstable'
-      }
-    }
-
-    //
     // NOTIFY
     //
     stage("Notify") {
@@ -445,30 +433,27 @@ pipeline {
           // Send build status notification email
           // Skip on sucess since Success stage will send notification
           //  
-          if (currentBuild.result != "SUCCESS") {
-            emailext body: '${SCRIPT,template="release.groovy"}', 
-                      attachLog: true,
-                      compressLog: true,
-                      mimeType: 'text/html',
-                      subject: "Build ${BUILD_NUMBER} : " + currentBuild.currentResult + " : " + env.PROJECT_BRANCH,
-                      to: "cirelease@pjats.com"
-          }
+          emailext body: '${SCRIPT,template="release.groovy"}', 
+                   attachLog: true,
+                   compressLog: true,
+                   mimeType: 'text/html',
+                   subject: "Build ${BUILD_NUMBER} : " + currentBuild.currentResult + " : " + env.PROJECT_BRANCH,
+                   to: "cirelease@pjats.com",
+                   recipientProviders: [developers(), requestor()]
           //
           // Production release only post success tasks
           //
-          else if (env.RELEASE_PRODUCTION == "true") {
+          if (env.RELEASE_PRODUCTION == "true" && currentBuild.result == "SUCCESS") {
             //
             // Format the extracted changelog to display as text/html email mime
             //
-            env.VERSION_CHANGELOG = "<font face=\"courier new\"><br>" + env.VERSION_CHANGELOG.replace("\r\n", "<br>").replace(" ", "&nbsp;") + "</font>"
             emailext body: '${SCRIPT,template="release.groovy"}',
-                    attachLog: true,
-                    compressLog: true,
-                    mimeType: 'text/html',
-                    subject: "GEMS2 v${env.NEXTVERSION}",
-                    to: "techsupport@pjats.com,cirelease@pjats.com"
-                    // to: "techsupport@pjats.com,Sott Meesseman <smeesseman@pjats.com>",
-                    recipientProviders: [developers(), requestor()]
+                     attachLog: true,
+                     compressLog: true,
+                     mimeType: 'text/html',
+                     subject: "App Publisher v${env.NEXTVERSION}",
+                     to: "productbuild@pjats.com",
+                     recipientProviders: [developers(), requestor()]
             //
             // AP email???
             //
@@ -476,9 +461,6 @@ pipeline {
               // bat "app-publisher --task-email"
               bat "app-publisher --task-email --version-force-current"
             }
-          }
-          else {
-            echo "   No notification email sent"
           }
         }
       }
@@ -489,20 +471,48 @@ pipeline {
   }
 
   //
-  // POST PROCESSING
+  // POST PROCESSING / MANTIS
   //
-  post { 
+  post {
+    //
+    // ALWAYS
+    //
+    always {
+      echo "Build finished: Status ${currentBuild.result}" 
+    }
     //
     // FAILURE
     //
     failure { 
-      echo "Build failed"
+      echo "Build failed" 
+      script {
+        if (env.SKIP_CI == "false") {
+          if (currentBuild.result != "NOT_BUILT") {
+            echo "Add issue to Mantis"
+            mantisIssueAdd keepTicketPrivate: true, threshold: 'failureOrUnstable'
+          }
+        }
+      }
+      echo "Send notification email"
+      emailext body: '${SCRIPT,template="release.groovy"}', 
+               attachLog: true,
+               compressLog: true,
+               mimeType: 'text/html',
+               subject: "Build ${BUILD_NUMBER} : " + currentBuild.currentResult + " : " + env.PROJECT_BRANCH,
+               to: "cirelease@pjats.com",
+               recipientProviders: [developers(), requestor()]
     }
     //
     // SUCCESS
     //
     success {
       echo "Build successful"
+      script {
+        if (env.SKIP_CI == "false") {
+          echo "Update issues in Mantis"
+          mantisIssueUpdate keepNotePrivate: false, recordChangelog: true, setStatusResolved: true, threshold: 'failureOrUnstable'
+        }
+      }
     }
   }
 
