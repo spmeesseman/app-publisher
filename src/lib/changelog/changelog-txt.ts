@@ -527,7 +527,7 @@ export class ChangelogTxt extends Changelog
                     {   //
                         logger.log("Generate dynamic section for HTML changelog generation");
                         tmpCommits = await this.getHeader(context, version) + // add the header since getPartsFromSection() expects it
-                                      EOL + (context.changelog.notes || this.createSectionFromCommits(context));
+                                     EOL + (context.changelog.notes || this.createSectionFromCommits(context));
                         entries = this.getPartsFromSection(context, tmpCommits);
                         tmpCommits = await this.createHtmlChangelog(context, entries, options.mantisbtRelease === "Y");
                     }
@@ -576,8 +576,20 @@ export class ChangelogTxt extends Changelog
             }
             else if (options.taskChangelogHtmlPrint || options.taskChangelogHtmlPrintVersion)
             {   //
-                // Tasks --task-changelog-print and --task-changelog-print-version
+                // Tasks --task-changelog-html-print and --task-changelog-html-print-version
                 //
+                if (tmpCommits !== "- No relevant changes.")
+                {
+                    if (context.changelog.htmlNotes) {
+                        tmpCommits = context.changelog.htmlNotes;
+                    }
+                    else {
+                        tmpCommits = await this.getHeader(context, version) + // add the header since getPartsFromSection() expects it
+                                EOL + (context.changelog.notes || this.createSectionFromCommits(context));
+                        const entries = this.getPartsFromSection(context, tmpCommits);
+                        tmpCommits = await this.createHtmlChangelog(context, entries, true);
+                    }
+                }
                 context.stdout.write(tmpCommits.trim());
                 return;
             }

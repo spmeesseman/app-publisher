@@ -339,23 +339,23 @@ export class ChangelogMd extends Changelog
                     tmpCommits = context.changelog.htmlNotes;
                 }
                 else { //
-                    // Check 'next' version, on a full publish w/ changelog already written, so that
-                   // the notes are formatted by user (non-ci)
-                  //
-                  let entries = await this.getSectionEntries(context, version);
-                  if (entries && entries.length > 0) {
-                      tmpCommits = await this.createHtmlChangelog(context, entries, options.mantisbtRelease === "Y");
-                  }     //
-                  else // Get the section from the commits, these are unformatted by user
-                  {   //
-                      logger.log("Generate dynamic section for HTML changelog generation");
-                      tmpCommits = await this.getHeader(context, version) + // add the header since getPartsFromSection() expects it
-                                    EOL + (context.changelog.notes || this.createSectionFromCommits(context));
-                      entries = await this.getSectionEntries(context, tmpCommits, true);
-                      if (entries && entries.length > 0) {
+                      // Check 'next' version, on a full publish w/ changelog already written, so that
+                     // the notes are formatted by user (non-ci)
+                    //
+                    let entries = await this.getSectionEntries(context, version);
+                    if (entries && entries.length > 0) {
                         tmpCommits = await this.createHtmlChangelog(context, entries, options.mantisbtRelease === "Y");
-                      }
-                  }
+                    }     //
+                    else // Get the section from the commits, these are unformatted by user
+                    {   //
+                        logger.log("Generate dynamic section for HTML changelog generation");
+                        tmpCommits = await this.getHeader(context, version) + // add the header since getPartsFromSection() expects it
+                                        EOL + (context.changelog.notes || this.createSectionFromCommits(context));
+                        entries = await this.getSectionEntries(context, tmpCommits, true);
+                        if (entries && entries.length > 0) {
+                            tmpCommits = await this.createHtmlChangelog(context, entries, options.mantisbtRelease === "Y");
+                        }
+                    }
               }
             }
             if (!tmpCommits || tmpCommits.trim() === "") {
@@ -369,6 +369,28 @@ export class ChangelogMd extends Changelog
             }
             else if (options.taskChangelogHtmlPrint || options.taskChangelogHtmlPrintVersion)
             {
+                if (tmpCommits !== "- No relevant changes.")
+                {
+                    if (context.changelog.htmlNotes) {
+                        tmpCommits = context.changelog.htmlNotes;
+                    }
+                    else {
+                        if (options.taskChangelogHtmlPrintVersion) {
+                            const entries = await this.getSectionEntries(context, version);
+                            if (entries && entries.length > 0) {
+                                tmpCommits = await this.createHtmlChangelog(context, entries, true);
+                            }
+                        }
+                        else {
+                            tmpCommits = await this.getHeader(context, version) + // add the header since getPartsFromSection() expects it
+                                               EOL + (context.changelog.notes || this.createSectionFromCommits(context));
+                            const entries = await this.getSectionEntries(context, tmpCommits, true);
+                            if (entries && entries.length > 0) {
+                                tmpCommits = await this.createHtmlChangelog(context, entries, true);
+                            }
+                        }
+                    }
+                }
                 context.stdout.write(tmpCommits);
                 return;
             }

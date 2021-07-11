@@ -867,7 +867,7 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
                     if (o !== "taskVersionCurrent" && o !== "taskVersionNext" && o !== "taskVersionInfo" &&
                         o !== "taskChangelogPrint" && o !== "taskCiEnvInfo" && o !== "taskVersionPreReleaseId" &&
                         o !== "taskReleaseLevel" && o !== "taskMode" && o !== "taskModeStdOut" &&
-                        o !== "taskChangelogHdrPrint" && o !== "taskChangelogHdrPrintVersion")
+                        o !== "taskChangelogHdrPrint" && o !== "taskChangelogHtmlPrint")
                     {
                         logger.error("The specified task cannot be used with a 'stdout' type task:");
                         logger.error("   " + o);
