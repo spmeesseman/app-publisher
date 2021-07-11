@@ -296,6 +296,10 @@ pipeline {
                                   @echo off
                                   app-publisher --config-name pja --task-changelog-print --version-force-next ${env.NEXTVERSION}
                                 """)
+            //
+            // Set in environment for email template scripts
+            //
+            env.VERSION_CHANGELOG = historyEntry;
           }
           //
           // Notify of input required
@@ -428,15 +432,17 @@ pipeline {
             mantisIssueUpdate keepNotePrivate: false, recordChangelog: true, setStatusResolved: true, threshold: 'failureOrUnstable'
           }
           //
-          // send email
-          // email template to be loaded from managed files
-          //  
-          emailext body: '${SCRIPT,template="release.groovy"}',
-                  attachLog: true,
-                  compressLog: true,
-                  mimeType: 'text/html',
-                  subject: "Build ${BUILD_NUMBER} : " + currentBuild.currentResult + " : " + env.PROJECT_BRANCH,
-                  to: "smeesseman@pjats.com"
+          // Send build status notification email
+          // Skip on sucess since Success stage will send notification
+          //
+          if (currentBuild.result != "SUCCESS") {
+            emailext body: '${SCRIPT,template="release.groovy"}',
+                    attachLog: true,
+                    compressLog: true,
+                    mimeType: 'text/html',
+                    subject: "Build ${BUILD_NUMBER} : " + currentBuild.currentResult + " : " + env.PROJECT_BRANCH,
+                    to: "cirelease@pjats.com"
+          }
         }
       }
     }
@@ -450,8 +456,22 @@ pipeline {
           // Production release only post success tasks
           //
           if (env.RELEASE_PRODUCTION == "true") {
-            echo "Successful build"
-            echo "    1. Send release email."
+            //
+            // Release notifications
+            //
+            echo "Send release notification email"
+            //
+            // Format the extracted changelog to display as text/html email mime
+            //
+            env.VERSION_CHANGELOG = "<font face=\"courier new\"><br>" + env.VERSION_CHANGELOG.replace("\r\n", "<br>").replace(" ", "&nbsp;") + "</font>"
+            emailext body: '${SCRIPT,template="release.groovy"}',
+                     attachLog: true,
+                     compressLog: true,
+                     mimeType: 'text/html',
+                     subject: "GEMS2 v${env.NEXTVERSION}",
+                     to: "techsupport@pjats.com,cirelease@pjats.com"
+                     // to: "techsupport@pjats.com,Sott Meesseman <smeesseman@pjats.com>",
+                     recipientProviders: [developers(), requestor()]
             nodejs("Node 12") {
               // bat "app-publisher --config-name pja --task-email"
               bat "app-publisher --config-name pja --task-email --version-force-current"
