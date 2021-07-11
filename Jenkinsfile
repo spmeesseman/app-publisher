@@ -305,7 +305,7 @@ pipeline {
             //
             // Set in environment for email template scripts
             //
-            env.VERSION_CHANGELOG = "<font face=\"courier new\"><br>" + historyEntry.replace("\r\n", "<br>").replace(" ", "&nbsp;") + "</font>"
+            env.VERSION_CHANGELOG = "<font face=\"courier new\">" + historyEntry.replace("\r\n", "<br>").replace(" ", "&nbsp;") + "</font>"
           }
           //
           // Notify of input required
@@ -364,7 +364,7 @@ pipeline {
             // bat "echo Version ${env.NEXTVERSION} >> .\\doc\\history.txt"
             bat "echo Version ${historyHeader} >> .\\doc\\history.txt"
             bat "echo Version ${historyEntry} >> .\\doc\\history.txt"
-            env.VERSION_CHANGELOG = "<font face=\"courier new\"><br>" + historyEntry.replace("\r\n", "<br>").replace(" ", "&nbsp;") + "</font>"
+            env.VERSION_CHANGELOG = "<font face=\"courier new\">" + historyEntry.replace("\r\n", "<br>").replace(" ", "&nbsp;") + "</font>"
           }
         }
       }
