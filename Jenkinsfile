@@ -153,35 +153,7 @@ pipeline {
             echo "   Tag                 : N/A"
           }
         }
-        //
-        // NPM Install
-        //
-        nodejs("Node 12") {
-          bat "npm install"
-        }
       } 
-    }
-
-    //
-    // TESTS
-    //
-    stage("Tests") {
-      when {
-        expression { env.SKIP_CI == "false" }
-      }
-      // environment {
-      //   CODECOV_TOKEN = env.CODEDOV_TOKEN_AP
-      // }
-      steps {
-        echo "Run tests"
-        // nodejs("Node 12") {
-        //   bat "npm run clean-build"
-        //   bat "npm run build"
-        //   bat "npm run test"
-        //   echo "Publish test results"
-        //   // sh "tools/codecov.sh"
-        // }
-      }
     }
 
     //
@@ -199,6 +171,10 @@ pipeline {
           script {
             env.NEXTVERSION  = ""
             env.CURRENTVERSION  = ""
+            //
+            // NPM Install
+            //
+            bat "npm install"
             //
             // app-publisher is used so check for .publishrc file
             //
@@ -273,6 +249,28 @@ pipeline {
           bat "npm run clean-build"
           bat "npm run build"
         }
+      }
+    }
+
+    //
+    // TESTS
+    //
+    stage("Tests") {
+      when {
+        expression { env.SKIP_CI == "false" }
+      }
+      // environment {
+      //   CODECOV_TOKEN = env.CODEDOV_TOKEN_AP
+      // }
+      steps {
+        echo "Run tests"
+        // nodejs("Node 12") {
+        //   bat "npm run clean-build"
+        //   bat "npm run build"
+        //   bat "npm run test"
+        //   echo "Publish test results"
+        //   // sh "tools/codecov.sh"
+        // }
       }
     }
 
