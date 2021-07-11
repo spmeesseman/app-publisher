@@ -437,7 +437,7 @@ pipeline {
                    attachLog: true,
                    compressLog: true,
                    mimeType: 'text/html',
-                   subject: "Build ${BUILD_NUMBER} : " + currentBuild.currentResult + " : " + env.PROJECT_BRANCH,
+                   subject: "App Publisher Build ${BUILD_NUMBER} : " + currentBuild.currentResult + " : " + env.PROJECT_BRANCH,
                    to: "cirelease@pjats.com",
                    recipientProviders: [developers(), requestor()]
           //
