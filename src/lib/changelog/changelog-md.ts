@@ -281,12 +281,12 @@ export class ChangelogMd extends Changelog
         let newChangelog = false;
         const { options, logger, lastRelease, nextRelease } = context,
               originalFile = options.changelogFile,
-              taskSpecVersion = options.taskChangelogPrintVersion || options.taskChangelogViewVersion,
+              taskSpecVersion = options.taskChangelogPrintVersion || options.taskChangelogViewVersion || options.taskChangelogHtmlPrintVersion,
               version = !taskSpecVersion ? nextRelease.version : taskSpecVersion;
 
         logger.log("Start changelog file edit");
 
-        if (!options.taskChangelogPrint && !options.taskChangelogPrintVersion)
+        if (!options.taskChangelogPrint && !options.taskChangelogPrintVersion && !options.taskChangelogHtmlPrint && !options.taskChangelogHtmlPrintVersion)
         {
             if (options.taskChangelogFile || options.taskChangelogHtmlFile)
             {
@@ -363,6 +363,11 @@ export class ChangelogMd extends Changelog
             }
 
             if (options.taskChangelogPrint || options.taskChangelogPrintVersion)
+            {
+                context.stdout.write(tmpCommits);
+                return;
+            }
+            else if (options.taskChangelogHtmlPrint || options.taskChangelogHtmlPrintVersion)
             {
                 context.stdout.write(tmpCommits);
                 return;

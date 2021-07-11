@@ -81,7 +81,8 @@ export async function editFile(context: IContext, editFile: string, isChangelog 
         let recordEdit = !options.taskMode;
         const fSkipEdits = !isChangelog ? options.skipVersionEdits === "Y" : options.skipChangelogEdits === "Y";
         let skipEdit = !!((fSkipEdits || options.taskVersionUpdate || options.taskChangelogFile) &&
-                          !options.taskChangelogView && !options.taskChangelogHtmlView && !options.taskChangelogPrint);
+                          !options.taskChangelogView && !options.taskChangelogHtmlView && !options.taskChangelogPrint &&
+                          !options.taskChangelogPrintVersion && !options.taskChangelogHtmlPrint && !options.taskChangelogHtmlPrintVersion);
         if (!options.taskMode && options.versionFilesEditAlways && options.versionFilesEditAlways.includes(editFile)) {
             skipEdit = false;
         }

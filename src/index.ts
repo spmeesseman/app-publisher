@@ -406,7 +406,8 @@ async function runRelease(context: IContext)
     // section from the changelog (specified by version), so its referencing an existing
     // version, no need to look at ay commits or anything like that.
     //
-    const needNoCommits = options.taskChangelogPrintVersion || options.taskChangelogViewVersion;
+    const needNoCommits = options.taskChangelogPrintVersion || options.taskChangelogHtmlPrintVersion ||
+                          options.taskChangelogViewVersion;
     //
     // Populate context with commits.  Retrieve all commits since the previous version tag,
     // or all commits if a version tag does not exist.
@@ -439,7 +440,8 @@ async function runRelease(context: IContext)
         // Certain tasks don't need this check...
         //
         const tasksCanPass = options.taskChangelogPrint || options.taskChangelogPrintVersion || options.taskChangelogHdrPrint ||
-                             options.taskChangelogHdrPrintVersion || options.taskChangelogView || options.taskChangelogViewVersion;
+                             options.taskChangelogHdrPrintVersion || options.taskChangelogView || options.taskChangelogViewVersion ||
+                             options.taskChangelogHtmlPrint || options.taskChangelogHtmlPrintVersion || options.taskChangelogHtmlView;
         //
         // There are certain tasks a user may want to run after a release is made.  e.g. re-send
         // a notification email, or redo a Mantis or GitHub release. In these cases, user must
@@ -556,13 +558,14 @@ async function runRelease(context: IContext)
     //
     const doChangelog = !options.versionForceCurrent && (options.taskChangelog || options.taskChangelogView ||
                         options.taskChangelogPrint || options.taskChangelogHtmlView || options.taskChangelogFile ||
-                        options.taskChangelogPrintVersion || options.taskChangelogViewVersion || !options.taskMode);
+                        options.taskChangelogPrintVersion || options.taskChangelogViewVersion ||
+                        options.taskChangelogHtmlPrint || options.taskChangelogHtmlPrintVersion || !options.taskMode);
     if (doChangelog)
     {   //
         // We need to populate 'notes' right now for the changelog/history file edit.
         // populateChangelogs() does the rest of the work below after the changelog file edit
         //
-        if (!options.taskChangelogPrintVersion && !options.taskChangelogViewVersion) {
+        if (!options.taskChangelogPrintVersion && !options.taskChangelogViewVersion && !options.taskChangelogHtmlPrintVersion) {
             context.changelog.notes = context.changelog.createSectionFromCommits(context);
         }
         //

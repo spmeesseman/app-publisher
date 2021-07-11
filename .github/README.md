@@ -1217,37 +1217,6 @@ Usage:
     app-publisher -tcf c:\\projects\\changelogs\\projectname\\cl.md
     app-publisher --task-changelog-file build/tmp/version_notes.txt
 
-### taskChangelogHtmlFile
-
-|**Value Type**      |*__string__*|
-| :----------------- | :--------- |
-|**Value Default**   ||
-|**Command Line Arg**|*__-tchf \| --task-changelog-html-file__*|
-
-Export the next release's current changelog in HTML release format to the specified file, can be a relative or an absolute path.  Ignored if the option '--task-changelog-view' is used.
-
-Usage:
-
-    app-publisher --task-changelog-html-file install/tmp/version_notes.html
-
-### taskChangelogHtmlView
-
-|**Value Type**      |*__boolean__*|
-| :----------------- | :--------- |
-|**Value Default**   |false|
-|**Command Line Arg**|*__-tchv \| --task-changelog-html-view__*|
-
-Export the next release's current changelog in HTML release format and view using the editor specified in the .publishrc file. The created file is a copy stored in a temporary directory specified by the OS.
-
-### taskChangelogPrint
-
-|**Value Type**      |*__boolean__*|
-| :----------------- | :--------- |
-|**Value Default**   |false|
-|**Command Line Arg**|*__-tcp \| --task-changelog-print__*|
-
-Export the next release's pending changelog and output to stdout.
-
 ### taskChangelogHdrPrint
 
 |**Value Type**      |*__boolean__*|
@@ -1257,6 +1226,55 @@ Export the next release's pending changelog and output to stdout.
 
 Read the changelog's header from disk and output to stdout.
 
+### taskChangelogHtmlFile
+
+|**Value Type**      |*__string__*|
+| :----------------- | :--------- |
+|**Value Default**   ||
+|**Command Line Arg**|*__-tchf \| --task-changelog-html-file__*|
+
+Export the next release's pending changelog in HTML release format to the specified file, can be a relative or an absolute path.  Ignored if the option '--task-changelog-view' is used.
+
+Usage:
+
+    app-publisher --task-changelog-html-file install/tmp/version_notes.html
+
+### taskChangelogHtmlPrint
+
+|**Value Type**      |*__boolean__*|
+| :----------------- | :--------- |
+|**Value Default**   |false|
+|**Command Line Arg**|*__-tchp \| --task-changelog-html-print__*|
+
+Export the next release's pending changelog in HTML release format and output to stdout.  Constructed from commits made since the last release.
+
+### taskChangelogHtmlPrintVersion
+
+|**Value Type**      |*__string__*|
+| :----------------- | :--------- |
+|**Value Default**   ||
+|**Command Line Arg**|*__-tchpv \| --task-changelog-html-print-version__*|
+
+Export the specified version's changelog in HTML release format and output to stdout.  Reads directly from the changelog file.
+
+### taskChangelogHtmlView
+
+|**Value Type**      |*__boolean__*|
+| :----------------- | :--------- |
+|**Value Default**   |false|
+|**Command Line Arg**|*__-tchv \| --task-changelog-html-view__*|
+
+Export the next release's pending changelog in HTML release format and view using the editor specified in the .publishrc file. The created file is a copy stored in a temporary directory specified by the OS.
+
+### taskChangelogPrint
+
+|**Value Type**      |*__boolean__*|
+| :----------------- | :--------- |
+|**Value Default**   |false|
+|**Command Line Arg**|*__-tcp \| --task-changelog-print__*|
+
+Export the next release's pending changelog and output to stdout.  Constructed from commits made since the last release.
+
 ### taskChangelogPrintVersion
 
 |**Value Type**      |*__string__*|
@@ -1264,7 +1282,7 @@ Read the changelog's header from disk and output to stdout.
 |**Value Default**   ||
 |**Command Line Arg**|*__-tcpv \| --task-changelog-print-version__*|
 
-Export the specified release's current changelog and output to stdout.
+Export the specified version's changelog and output to stdout.  Reads directly from the changelog file.
 
 Usage:
 
@@ -1370,14 +1388,14 @@ Perform a `dist` release.
 
 Re-send the latest notification email.
 
-### taskGenerateHelp
+### taskGenerateCommands
 
 |**Value Type**      |*__boolean__*|
 | :----------------- | :--------- |
 |**Value Default**   |false|
-|**Command Line Arg**|*__-tgh \| --task-generate-help__*|
+|**Command Line Arg**|*__-tgc \| --task-generate-commands__*|
 
-Generate help markdown from help output.  Internal tool.
+Generate commands interface from readme file.  Internal tool.
 
 ### taskGithubRelease
 

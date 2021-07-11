@@ -681,7 +681,11 @@ export interface IArgs
      */
     taskChangelogFile: string;
     /**
-     * Export the next release's current changelog in HTML release format to the specified file,
+     * Read the changelog's header from disk and output to stdout.
+     */
+    taskChangelogHdrPrint: boolean;
+    /**
+     * Export the next release's pending changelog in HTML release format to the specified file,
      * can be a relative or an absolute path.  Ignored if the option '--task-changelog-view' is
      * used.
      *
@@ -691,21 +695,29 @@ export interface IArgs
      */
     taskChangelogHtmlFile: string;
     /**
-     * Export the next release's current changelog in HTML release format and view using the
+     * Export the next release's pending changelog in HTML release format and output to stdout.
+     * Constructed from commits made since the last release.
+     */
+    taskChangelogHtmlPrint: boolean;
+    /**
+     * Export the specified version's changelog in HTML release format and output to stdout.
+     * Reads directly from the changelog file.
+     */
+    taskChangelogHtmlPrintVersion: string;
+    /**
+     * Export the next release's pending changelog in HTML release format and view using the
      * editor specified in the .publishrc file. The created file is a copy stored in a temporary
      * directory specified by the OS.
      */
     taskChangelogHtmlView: boolean;
     /**
-     * Export the next release's pending changelog and output to stdout.
+     * Export the next release's pending changelog and output to stdout.  Constructed from
+     * commits made since the last release.
      */
     taskChangelogPrint: boolean;
     /**
-     * Read the changelog's header from disk and output to stdout.
-     */
-    taskChangelogHdrPrint: boolean;
-    /**
-     * Export the specified release's current changelog and output to stdout.
+     * Export the specified version's changelog and output to stdout.  Reads directly from the
+     * changelog file.
      *
      * Usage:
      *
@@ -767,7 +779,7 @@ export interface IArgs
      */
     taskEmail: boolean;
     /**
-     * Generate help markdown from help output.  Internal tool.
+     * Generate commands interface from readme file.  Internal tool.
      */
     taskGenerateCommands: boolean;
     /**

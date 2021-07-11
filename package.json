@@ -82,7 +82,7 @@
     },
     "scripts": {
         "build": "npx tsc -p ./",
-        "build_commands": "npx ./build/bin/app-publisher.js --task-generate-cmds",
+        "build_commands": "npx ./build/bin/app-publisher.js --task-generate-commands",
         "clean-build": "rimraf build && npm run coverage-clean",
         "coverage-clean": "rimraf .nyc_output && rimraf .coverage",
         "coverage-open_report": "cmd /c \"C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe\" file://c:/Projects/app-publisher/.coverage/index.html",

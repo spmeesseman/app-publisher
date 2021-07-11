@@ -1001,13 +1001,24 @@ export const publishRcOpts =
         }
     ],
 
+    taskChangelogHdrPrint: [
+        true,
+        "boolean",
+        false,
+        [ "-tchp", "--task-changelog-hdr-print" ],
+        {
+            help: "Read the changelog's header from disk and output to stdout.",
+            helpPrivate: false
+        }
+    ],
+
     taskChangelogHtmlFile: [
         true,
         "string",
         "",
         [ "-tchf", "--task-changelog-html-file" ],
         {
-            help: "Export the next release's current changelog in HTML release format to\n" +
+            help: "Export the next release's pending changelog in HTML release format to\n" +
                   "the specified file, can be a relative or an absolute path.  Ignored\n" +
                   "if the option '--task-changelog-view' is used.\n" +
                   "\n" +
@@ -1019,13 +1030,38 @@ export const publishRcOpts =
         }
     ],
 
+    taskChangelogHtmlPrint: [
+        true,
+        "boolean",
+        false,
+        [ "-tchp", "--task-changelog-html-print" ],
+        {
+            help: "Export the next release's pending changelog in HTML release format\n" +
+                  "and output to stdout.  Constructed from commits made since the last\n" +
+                  "release.",
+            helpPrivate: false
+        }
+    ],
+
+    taskChangelogHtmlPrintVersion: [
+        true,
+        "string",
+        "",
+        [ "-tchpv", "--task-changelog-html-print-version" ],
+        {
+            help: "Export the specified version's changelog in HTML release format and\n" +
+                  "output to stdout.  Reads directly from the changelog file.",
+            helpPrivate: false
+        }
+    ],
+
     taskChangelogHtmlView: [
         true,
         "boolean",
         false,
         [ "-tchv", "--task-changelog-html-view" ],
         {
-            help: "Export the next release's current changelog in HTML release format\n" +
+            help: "Export the next release's pending changelog in HTML release format\n" +
                   "and view using the editor specified in the .publishrc file. The\n" +
                   "created file is a copy stored in a temporary directory specified by\n" +
                   "the OS.",
@@ -1039,18 +1075,8 @@ export const publishRcOpts =
         false,
         [ "-tcp", "--task-changelog-print" ],
         {
-            help: "Export the next release's pending changelog and output to stdout.",
-            helpPrivate: false
-        }
-    ],
-
-    taskChangelogHdrPrint: [
-        true,
-        "boolean",
-        false,
-        [ "-tchp", "--task-changelog-hdr-print" ],
-        {
-            help: "Read the changelog's header from disk and output to stdout.",
+            help: "Export the next release's pending changelog and output to stdout.\n" +
+                  "Constructed from commits made since the last release.",
             helpPrivate: false
         }
     ],
@@ -1061,8 +1087,8 @@ export const publishRcOpts =
         "",
         [ "-tcpv", "--task-changelog-print-version" ],
         {
-            help: "Export the specified release's current changelog and output to\n" +
-                  "stdout.\n" +
+            help: "Export the specified version's changelog and output to stdout.  Reads\n" +
+                  "directly from the changelog file.\n" +
                   "\n" +
                   "Usage:\n" +
                   "\n" +
@@ -1206,9 +1232,9 @@ export const publishRcOpts =
         true,
         "boolean",
         false,
-        [ "-tgc", "--task-generate-cmds" ],
+        [ "-tgc", "--task-generate-commands" ],
         {
-            help: "Generate help markdown from help output.  Internal tool.",
+            help: "Generate commands interface from readme file.  Internal tool.",
             helpPrivate: true
         }
     ],

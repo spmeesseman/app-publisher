@@ -431,12 +431,12 @@ export class ChangelogTxt extends Changelog
             isNewHistoryFileHasContent = false;
         const { options, logger, lastRelease, nextRelease} = context,
               originalFile = options.changelogFile,
-              taskSpecVersion = options.taskChangelogPrintVersion || options.taskChangelogViewVersion,
+              taskSpecVersion = options.taskChangelogPrintVersion || options.taskChangelogViewVersion || options.taskChangelogHtmlPrintVersion,
               version = !taskSpecVersion ? nextRelease.version : taskSpecVersion;
 
         logger.log("Start changelog txt file edit");
 
-        if (!options.taskChangelogPrint && !options.taskChangelogPrintVersion)
+        if (!options.taskChangelogPrint && !options.taskChangelogPrintVersion && !options.taskChangelogHtmlPrint && !options.taskChangelogHtmlPrintVersion)
         {
             if (options.taskChangelogFile || options.taskChangelogHtmlFile)
             {
@@ -568,6 +568,13 @@ export class ChangelogTxt extends Changelog
                 await appendFile(options.changelogFile, `${EOL}${header}${EOL}${tmpCommits}`);
             }
             else if (options.taskChangelogPrint || options.taskChangelogPrintVersion)
+            {   //
+                // Tasks --task-changelog-print and --task-changelog-print-version
+                //
+                context.stdout.write(tmpCommits.trim());
+                return;
+            }
+            else if (options.taskChangelogHtmlPrint || options.taskChangelogHtmlPrintVersion)
             {   //
                 // Tasks --task-changelog-print and --task-changelog-print-version
                 //

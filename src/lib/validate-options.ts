@@ -760,7 +760,8 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
         (options.taskGithubRelease && options.taskEmail) || (options.taskGithubRelease && options.taskVersionUpdate) ||
         (options.taskGithubRelease && options.taskChangelog) || (options.taskChangelogView && options.taskChangelogHtmlView) ||
         (options.taskChangelogView && options.taskChangelogPrint) || (options.taskChangelogPrint && options.taskChangelogHtmlView) ||
-        (options.taskChangelogFile && options.taskChangelogHtmlFile) ||
+        (options.taskChangelogFile && options.taskChangelogHtmlFile) || (options.taskChangelogPrint && options.taskChangelogHtmlPrint) ||
+        (options.taskChangelogPrint && options.taskChangelogHtmlPrintVersion) || (options.taskChangelogHtmlPrint && options.taskChangelogPrintVersion) ||
         (options.taskChangelog && (options.taskChangelogFile || options.taskChangelogHtmlFile)) ||
         (options.taskChangelog && (options.taskChangelogView || options.taskChangelogHtmlView || options.taskChangelogPrint)) ||
         (options.taskVersionUpdate && options.versionForceCurrent))
@@ -770,8 +771,10 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
         logger.error("    changeLog           : " + options.taskChangelog);
         logger.error("    changeLog view      : " + options.taskChangelogView);
         logger.error("    changeLog view hmtl : " + options.taskChangelogHtmlView);
-        logger.error("    changeLog file     : " + options.taskChangelogFile);
+        logger.error("    changeLog file      : " + options.taskChangelogFile);
         logger.error("    changeLog file hmtl : " + options.taskChangelogHtmlFile);
+        logger.error("    changeLog print     : " + options.taskChangelogPrint);
+        logger.error("    changeLog htm print : " + options.taskChangelogHtmlPrint);
         logger.error("    email               : " + options.taskEmail);
         logger.error("    githubRelease       : " + options.taskGithubRelease);
         logger.error("    mantisRelease       : " + options.taskMantisbtRelease);
@@ -812,12 +815,14 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
         return true;
     }
 
-    if (!enforceingleTask("taskChangelogView"))         { return false; };
-    if (!enforceingleTask("taskChangelogViewVersion"))  { return false; };
-    if (!enforceingleTask("taskChangelogPrint"))        { return false; };
-    if (!enforceingleTask("taskChangelogPrintVersion")) { return false; };
-    if (!enforceingleTask("taskChangelogHdrPrint"))     { return false; };
-    if (!enforceingleTask("taskChangelogHdrPrintVersion"))     { return false; };
+    if (!enforceingleTask("taskChangelogView"))             { return false; };
+    if (!enforceingleTask("taskChangelogViewVersion"))      { return false; };
+    if (!enforceingleTask("taskChangelogPrint"))            { return false; };
+    if (!enforceingleTask("taskChangelogPrintVersion"))     { return false; };
+    if (!enforceingleTask("taskChangelogHtmlPrint"))        { return false; };
+    if (!enforceingleTask("taskChangelogHtmlPrintVersion")) { return false; };
+    if (!enforceingleTask("taskChangelogHdrPrint"))         { return false; };
+    if (!enforceingleTask("taskChangelogHdrPrintVersion"))  { return false; };
 
     //
     // Only certain tasks are allowed with --version-force-current.  e.g. re-send a notification
@@ -877,13 +882,9 @@ async function validateOptions({cwd, env, logger, options}: IContext, suppressAr
     // Valudate version specified by taskChangelogPrintVersion or taskChangelogViewVersion
     // Only allow one of theseocmmands at a time.  TODO - allow running both at same time
     //
-    if (options.taskChangelogPrintVersion && options.taskChangelogViewVersion) {
-        logger.error("Tasks changelogPrintVersion and changelogViewVersion cannot be used in the same run");
-        return false;
-    }
-    if (options.taskChangelogPrintVersion || options.taskChangelogViewVersion) {
-        if (!validateVersion(options.taskChangelogPrintVersion || options.taskChangelogViewVersion)) {
-            logger.error(`Invalid version ${options.taskChangelogPrintVersion} specified for taskChangelogPrintVersion`);
+    if (options.taskChangelogPrintVersion || options.taskChangelogViewVersion || options.taskChangelogHtmlPrintVersion) {
+        if (!validateVersion(options.taskChangelogPrintVersion || options.taskChangelogViewVersion || options.taskChangelogHtmlPrintVersion)) {
+            logger.error(`Invalid version ${options.taskChangelogPrintVersion} specified for task`);
             return false;
         }
     }
