@@ -1,5 +1,15 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.5.0 (July 11th, 2021)
+
+### Documentation
+
+- **Readme:** remove reference to old powershell script
+
+### Features
+
+- **Tasks:** add new task to output a changelog section in html release notes format:: --task-changelog-html-print, --task-changelog-html-print-version
+
 ## Version 3.4.5 (July 8th, 2021)
 
 ### Bug Fixes
