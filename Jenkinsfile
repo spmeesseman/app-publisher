@@ -310,7 +310,7 @@ pipeline {
           //
           // Notify of input required
           //
-          echo "Notify approvers of pending approval wait"
+          echo "Notify of pending required changelog approval"
           emailext body: '${SCRIPT,template="changelog-approval.groovy"}',
                    attachLog: false,
                    mimeType: 'text/html',
