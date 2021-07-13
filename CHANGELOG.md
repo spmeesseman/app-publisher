@@ -1,5 +1,11 @@
 # APP-PUBLISHER CHANGE LOG
 
+## Version 3.5.1 (July 13th, 2021)
+
+### Bug Fixes
+
+- merged commits from a pre-release branch are not found by a production build.
+
 ## Version 3.5.0 (July 11th, 2021)
 
 ### Documentation
