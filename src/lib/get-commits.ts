@@ -87,11 +87,11 @@ async function getCommits(context: IContext): Promise<ICommit[]>
         logger.info(`Retrieving commits since last version (revision ${head})`);
 
         if (svnUser && svnToken) {
-            xml = await execa.stdout("svn", ["log", "--xml", `${options.repo}`, "--verbose", "--limit", "250", "-r", `${head}:HEAD`,
+            xml = await execa.stdout("svn", ["log", "--use-merge-history", "--xml", `${options.repo}`, "--verbose", "--limit", "250", "-r", `${head}:HEAD`,
                                              "--non-interactive", "--no-auth-cache", "--username", svnUser, "--password", `${svnToken}`]);
         }
         else {
-            xml = await execa.stdout("svn", ["log", "--xml", `${options.repo}`, "--verbose", "--limit", "250", "-r", `${head}:HEAD`,
+            xml = await execa.stdout("svn", ["log", "--use-merge-history", "--xml", `${options.repo}`, "--verbose", "--limit", "250", "-r", `${head}:HEAD`,
                                              "--non-interactive", "--no-auth-cache"]);
         }
         //
@@ -103,6 +103,34 @@ async function getCommits(context: IContext): Promise<ICommit[]>
         // }
         logger.info("Parsing commits response from SVN");
 
+        function parseCommits(logEntries: any)
+        {
+            for (const logEntry of logEntries)
+            {
+                if (logEntry.msg && logEntry.msg[0])
+                {
+                    const commit = {
+                        author: {
+                            name: logEntry.author[0]
+                        },
+                        committer: {
+                            name: logEntry.author[0]
+                        },
+                        message: logEntry.msg[0].trim(),
+                        hash: logEntry.$.revision,
+                        committerDate: logEntry.date[0],
+                        scope: undefined,
+                        subject: undefined
+                    };
+                    parseCommitMessage(context, commit);
+                    commits.push(commit);
+                }
+                if (logEntry.logentry) { // merged commit list?
+                    parseCommits(logEntry.logentry);
+                }
+            }
+        }
+
         try {
             parser.parseString(xml, (err, result) =>
             {
@@ -113,27 +141,7 @@ async function getCommits(context: IContext): Promise<ICommit[]>
                 //
                 // Parse the commit messages
                 //
-                for (const logEntry of result.log.logentry)
-                {
-                    if (logEntry.msg && logEntry.msg[0])
-                    {
-                        const commit = {
-                            author: {
-                                name: logEntry.author[0]
-                            },
-                            committer: {
-                                name: logEntry.author[0]
-                            },
-                            message: logEntry.msg[0].trim(),
-                            hash: logEntry.$.revision,
-                            committerDate: logEntry.date[0],
-                            scope: undefined,
-                            subject: undefined
-                        };
-                        parseCommitMessage(context, commit);
-                        commits.push(commit);
-                    }
-                }
+                parseCommits(result.log.logentry);
             });
         }
         catch {
